@@ -34,6 +34,16 @@ openKeyNav.init();
 
 ```
 
+To use in a React app, initiate after your app mounts:
+
+```javascript
+public componentDidMount() {
+    ...
+    const openKeyNav = new OpenKeyNav();
+    openKeyNav.init()
+}
+```
+
 Then press `k`
 to label clickable elements with keyboard shortcuts.
 Press the key combinations on the labels to "click" their respective buttons.
@@ -93,6 +103,34 @@ openKeyNav.init({
         }
     }
 });
+```
+
+### Customization
+
+You can override these default settings to suit your needs:
+```javascript
+config = {
+    spot: {
+        fontColor: 'white',
+        backgroundColor: '#333',
+        insetColor: '#000',
+        fontSize: 'inherit',
+        arrowSize_px: 4
+    },
+    focus: {
+        outlineColor: '#0088cc',
+        outlineStyle: 'solid'
+    },
+    keys: {
+        escape: 'q', // alternative escape key, for when escape key is too far or not available. // q works great because top left of letters, plus removes confusion with g, p
+        click: 'k', // enter click mode, to click on clickable elements, such as links. Was g, now k, for kanga. Plus NVDA uses k to focus on link elements, which prevents conflicting modes as it's either openkeynav or NVDA.
+        scroll: 's', // focus on the next scrollable region
+        move: 'm', // enter move mode, to move elements from and to, aka keyboard drag and drop // not yet fully wired
+        heading: 'h', // focus on the next heading // as seen in JAWS, NVDA
+    }
+}
+
+openKeyNav.init(config)
 ```
 
 ## License
