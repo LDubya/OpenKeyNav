@@ -44,8 +44,8 @@ public componentDidMount() {
 }
 ```
 
-Then press `k`
-to label clickable elements with keyboard shortcuts.
+You can press `k`
+to enter click mode, which labels clickable elements with keyboard shortcuts.
 Press the key combinations on the labels to "click" their respective buttons.
 
 You can press `h` to navigate through headers within the viewport.
@@ -53,6 +53,11 @@ You can press `h` to navigate through headers within the viewport.
 You can also press `1`,`2`,`3`,`4`,`5`, or `6` to navigate through headers of the respective level
 
 You can press `s` to cycle through different scrollable regions within the viewport.
+
+You can press `m`
+to enter drag mode, which enabled keyboard-accessible drag-and-drop by labeling pre-configured draggable elements with keyboard shortcuts, and then the selected draggable element's applicable drop zones.
+Press the key combinations on the labels to "select" the respective element.
+See [To customize drag-and-drop](#to-customize-draganddrop)
 
 ### Disabling debug mode for production
 
