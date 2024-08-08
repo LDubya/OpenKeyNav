@@ -12,6 +12,9 @@ OpenKeyNav is a JavaScript library designed to enhance keyboard accessibility on
 
 ## Installation
 
+Basic installation and setup instructions are below. For detailed documentation, guides, and tutorials, visit the [OpenKeyNav Documentation](https://openkeynav.github.io).
+
+
 To install OpenKeyNav, you can use npm:
 
 ```bash
@@ -20,7 +23,7 @@ npm install openkeynav
 
 ## Usage
 
-### Basic usage
+### Basic Usage
 
 Here is a basic example of how to use OpenKeyNav in your project:
 
@@ -31,7 +34,6 @@ const openKeyNav = new OpenKeyNav();
 
 // initialize with default settings
 openKeyNav.init();
-
 ```
 
 To use in a React app, initiate after your app mounts:
@@ -40,47 +42,37 @@ To use in a React app, initiate after your app mounts:
 public componentDidMount() {
     ...
     const openKeyNav = new OpenKeyNav();
-    openKeyNav.init()
+    openKeyNav.init();
 }
 ```
 
-You can press `k`
-to enter click mode, which labels clickable elements with keyboard shortcuts.
-Press the key combinations on the labels to "click" their respective buttons.
+### Key Commands
 
-You can press `h` to navigate through headers within the viewport.
+- **Click Mode**: Press `k` to enter click mode, which labels clickable elements with keyboard shortcuts. Press the key combinations on the labels to "click" their respective buttons.
+- **Heading Navigation**: Press `h` to navigate through headers within the viewport. Press `1`,`2`,`3`,`4`,`5`, or `6` to navigate through headers of the respective level.
+- **Scroll Navigation**: Press `s` to cycle through different scrollable regions within the viewport.
+- **Drag-and-Drop Mode**: Press `m` to enter drag mode, which enables keyboard-accessible drag-and-drop by labeling pre-configured draggable elements with keyboard shortcuts, and then the selected draggable element's applicable drop zones. See [To customize drag-and-drop](#to-customize-draganddrop).
 
-You can also press `1`,`2`,`3`,`4`,`5`, or `6` to navigate through headers of the respective level
+### Disabling Debug Mode for Production
 
-You can press `s` to cycle through different scrollable regions within the viewport.
+By default, OpenKeyNav initiates in debug mode, which adds red labels to elements that are mouse-clickable but not tab-focusable. These elements are not WCAG-compliant, since they are not keyboard accessible. The elements with black labels are keyboard accessible. This enables you to identify the elements that need remediation.
 
-You can press `m`
-to enter drag mode, which enabled keyboard-accessible drag-and-drop by labeling pre-configured draggable elements with keyboard shortcuts, and then the selected draggable element's applicable drop zones.
-Press the key combinations on the labels to "select" the respective element.
-See [To customize drag-and-drop](#to-customize-draganddrop)
-
-### Disabling debug mode for production
-
-By default, OpenKeyNav initiates in debug mode, which adds red labels to elements that are mouse-clickable but not tab-focusable. These elements are not WCAG-compliant, since they are not keyboard accessible. The elements with black labels are keyboard accessible. This enables you to identify the elements that need remediation. 
-
-It is recommended to keep debug mode turned on while developing, and to remediate any keyboard access barriers that you can find in this mode.
+It is recommended to keep debug mode turned on while developing and to remediate any keyboard access barriers that you find in this mode.
 
 However, you should not present debug mode to your end users. Therefore, when you are ready to go into production, make sure to disable the debug mode:
 
 ```javascript
-
 openKeyNav.init({
     ...
-    debug : {
-            keyboardAccessible : false // set this to false when done debugging inaccessible keyboard elements.
+    debug: {
+        keyboardAccessible: false // set this to false when done debugging inaccessible keyboard elements.
     }
-})
+});
 ```
 
-### To customize drag-and-drop:
+### To Customize Drag-and-Drop:
 
 ```javascript
-
 // Example drag-and-drop configuration
 const moveConfig = [
   {
@@ -113,8 +105,9 @@ openKeyNav.init({
 ### Customization
 
 You can override these default settings to suit your needs:
+
 ```javascript
-config = {
+const config = {
     spot: {
         fontColor: 'white',
         backgroundColor: '#333',
@@ -130,13 +123,18 @@ config = {
         escape: 'q', // alternative escape key, for when escape key is too far or not available. // q works great because top left of letters, plus removes confusion with g, p
         click: 'k', // enter click mode, to click on clickable elements, such as links. Was g, now k, for kanga. Plus NVDA uses k to focus on link elements, which prevents conflicting modes as it's either openkeynav or NVDA.
         scroll: 's', // focus on the next scrollable region
-        move: 'm', // enter move mode, to move elements from and to, aka keyboard drag and drop // not yet fully wired
+        move: 'm', // enter move mode, to move elements from and to, aka keyboard drag and drop
         heading: 'h', // focus on the next heading // as seen in JAWS, NVDA
     }
-}
+};
 
-openKeyNav.init(config)
+const openKeyNav = new OpenKeyNav();
+openKeyNav.init(config);
 ```
+
+## Documentation
+
+For detailed documentation, guides, and tutorials, visit the [OpenKeyNav Documentation](https://openkeynav.github.io).
 
 ## License
 
