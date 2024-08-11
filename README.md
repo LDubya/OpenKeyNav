@@ -4,10 +4,10 @@ OpenKeyNav™ is an open-source JavaScript library designed to enhance keyboard 
 
 OpenKeyNav is available for developers to fork, modify, and use via its [GitHub repository](https://github.com/LDubya/OpenKeyNav) and [NPM](https://www.npmjs.com/package/openkeynav).
 
-## Read the preprint
+## Read the paper
 
-The developer of OpenKeyNav, Lawrence Weru, who is also a researcher at Harvard Medical School*, introduces the methodology behind the tool in the paper ["Using OpenKeyNav to Enhance the Keyboard-Accessibility of Web-based Data Visualization Tools,"](https://osf.io/preprints/osf/3wjsa). 
-This paper will be presented at the AccessViz workshop, part of IEEE VIS 2024, one of the leading conferences on data visualization and visual analytics.
+The founder of OpenKeyNav, who is also a researcher at Harvard Medical School (*), introduces the methodology behind his tool in the paper *"Using OpenKeyNav to Enhance the Keyboard-Accessibility of Web-based Data Visualization Tools"* [(OSF Preprint)](https://osf.io/preprints/osf/3wjsa). 
+This paper will be presented at the AccessViz workshop, part of IEEE VIS 2024 conference.
 
 ## Features
 
@@ -207,6 +207,6 @@ OpenKeyNav is licensed under the MIT License. See the LICENSE file for more deta
 
 © 2014 Lawrence Weru, Aster Enterprises LLC.
 
-## Disclaimer
+## (*) Disclaimer
 
 Any references to organizations or institutions are for informational purposes only and do not imply endorsement, sponsorship, or partnership.
