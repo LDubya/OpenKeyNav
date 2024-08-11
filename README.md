@@ -1,6 +1,13 @@
-# OpenKeyNav
+# OpenKeyNav™
 
-OpenKeyNav is a JavaScript library designed to enhance keyboard accessibility on websites. It generates keyboard shortcuts on the fly and presents them to the user on-demand, reducing cognitive load and supporting complex interactions like drag-and-drop entirely with the keyboard.
+OpenKeyNav™ is an open-source JavaScript library designed to enhance keyboard accessibility on websites. Originally developed to improve the keyboard accessibility of the best-selling [Columns](https://apps.apple.com/us/app/columns-two-column-notes/id1493839821) app, it generates keyboard shortcuts on the fly and presents them to users on-demand, supporting complex interactions like drag-and-drop entirely with the keyboard.
+
+OpenKeyNav is available for developers to fork, modify, and use via its [GitHub repository](https://github.com/LDubya/OpenKeyNav) and [NPM](https://www.npmjs.com/package/openkeynav).
+
+## Read the preprint
+
+The developer of OpenKeyNav, Lawrence Weru, who is also a researcher at Harvard Medical School*, introduces the methodology behind the tool in the paper ["Using OpenKeyNav to Enhance the Keyboard-Accessibility of Web-based Data Visualization Tools,"](https://osf.io/preprints/osf/3wjsa). 
+This paper will be presented at the AccessViz workshop, part of IEEE VIS 2024, one of the leading conferences on data visualization and visual analytics.
 
 ## Features
 
@@ -27,23 +34,81 @@ npm install openkeynav
 
 Here is a basic example of how to use OpenKeyNav in your project:
 
+
+
+#### Installing via NPM
+
+To install OpenKeyNav&trade; using npm, run the following command in your terminal:
+
+```bash
+npm install openkeynav
+```
+
+Then, you can import and use it in your JavaScript file:
+
 ```javascript
 import OpenKeyNav from 'openkeynav';
 
 const openKeyNav = new OpenKeyNav();
-
 // initialize with default settings
 openKeyNav.init();
 ```
 
-To use in a React app, initiate after your app mounts:
+#### Including the Script from a CDN
 
-```javascript
-public componentDidMount() {
-    ...
-    const openKeyNav = new OpenKeyNav();
-    openKeyNav.init();
+If you prefer not to use npm, you can include OpenKeyNav directly from a CDN. Add the following script tag to your HTML file:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/openkeynav/dist/openkeynav.min.js"></script>
+```
+
+After including the script, you can initialize OpenKeyNav like this:
+
+```html
+<script>
+  const openKeyNav = new OpenKeyNav();
+  // initialize with default settings
+  openKeyNav.init();
+</script>
+```
+#### Initiating in a React app
+
+To use in a React app, initiate in the main component (e.g., App or its equivalent):
+
+For functional components:
+
+```jsx
+import { useEffect } from 'react';
+import OpenKeyNav from 'openkeynav';
+
+const App = () => {
+    useEffect(() => {
+        const openKeyNav = new OpenKeyNav();
+        openKeyNav.init();
+    }, []);
+
+    // ...
+};
+
+export default App;
+```
+
+For class components:
+
+```jsx
+import React, { Component } from 'react';
+import OpenKeyNav from 'openkeynav';
+
+class App extends Component {
+    componentDidMount() {
+        const openKeyNav = new OpenKeyNav();
+        openKeyNav.init();
+    }
+
+    // ...
 }
+
+export default App;
 ```
 
 ### Key Commands
@@ -139,3 +204,9 @@ For detailed documentation, guides, and tutorials, visit the [OpenKeyNav Documen
 ## License
 
 OpenKeyNav is licensed under the MIT License. See the LICENSE file for more details.
+
+© 2014 Lawrence Weru, Aster Enterprises LLC.
+
+## Disclaimer
+
+Any references to organizations or institutions are for informational purposes only and do not imply endorsement, sponsorship, or partnership.
