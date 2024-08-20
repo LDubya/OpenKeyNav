@@ -503,8 +503,8 @@ class OpenKeyNav {
   
         // Try placing overlay to the left of the element
         overlay.style.position = 'absolute';
-        overlay.style.left = `${rectAvoid.left - (overlayWidth + arrowWidth)}px`;
-        overlay.style.top = `${rectAvoid.top}px`;
+        overlay.style.left = `${rectAvoid.left - (overlayWidth + arrowWidth) + window.scrollX}px`; // Added scrollX adjustment
+        overlay.style.top = `${rectAvoid.top + window.scrollY}px`; // Added scrollY adjustment
         let position = "left";
         if (!checkOverlap(overlay)) {
           overlay.setAttribute('data-openkeynav-position', position);
@@ -512,7 +512,8 @@ class OpenKeyNav {
         }
   
         // Try placing overlay to the right of the element
-        overlay.style.left = `${rectAvoid.right + arrowWidth - 2}px`;
+        overlay.style.left = `${rectAvoid.right + arrowWidth - 2 + window.scrollX}px`; // Added scrollX adjustment
+        // overlay.style.top = `${rectAvoid.top + window.scrollY}px`; // same as above
         position = "right";
         if (!checkOverlap(overlay)) {
           overlay.setAttribute('data-openkeynav-position', position);
@@ -520,8 +521,8 @@ class OpenKeyNav {
         }
   
         // Try placing overlay above the element
-        overlay.style.left = `${rectAvoid.left}px`;
-        overlay.style.top = `${rectAvoid.top - (overlayHeight + arrowWidth)}px`;
+        overlay.style.left = `${rectAvoid.left + window.scrollX}px`; // Added scrollX adjustment
+        overlay.style.top = `${rectAvoid.top - (overlayHeight + arrowWidth) + window.scrollY}px`; // Added scrollY adjustment
         position = "top";
         if (!checkOverlap(overlay)) {
           overlay.setAttribute('data-openkeynav-position', position);
@@ -529,8 +530,8 @@ class OpenKeyNav {
         }
   
         // Try placing overlay below the element
-        overlay.style.left = `${rectAvoid.left}px`;
-        overlay.style.top = `${rectAvoid.bottom + arrowWidth}px`;
+        overlay.style.left = `${rectAvoid.left + window.scrollX}px`; // Added scrollX adjustment
+        overlay.style.top = `${rectAvoid.bottom + arrowWidth + window.scrollY}px`; // Added scrollY adjustment
         position = "bottom";
         if (!checkOverlap(overlay)) {
           overlay.setAttribute('data-openkeynav-position', position);
@@ -539,8 +540,8 @@ class OpenKeyNav {
   
         // If all placements result in overlaps or being cut off, place overlay on the element's top left position
         overlay.removeAttribute('data-openkeynav-position');
-        overlay.style.left = `${rectAvoid.left}px`;
-        overlay.style.top = `${rectAvoid.top}px`;
+        overlay.style.left = `${rectAvoid.left + window.scrollX}px`; // Added scrollX adjustment
+        overlay.style.top = `${rectAvoid.top + window.scrollY}px`; // Added scrollY adjustment
     }
   
   
