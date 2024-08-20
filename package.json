@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "babel src -d dist && terser dist/openkeynav.js -o dist/openkeynav.min.js",
-    "build_and_patch": "npm run build && git add --all; git commit -m \"update\" && npm version patch",
+    "build_and_patch": "npm run build && git add --all; git commit -m \"build and patch\" && npm version patch",
     "test": ""
   },
   "keywords": [
