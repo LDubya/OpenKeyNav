@@ -401,8 +401,8 @@ var OpenKeyNav = /*#__PURE__*/function () {
 
       // Try placing overlay to the left of the element
       overlay.style.position = 'absolute';
-      overlay.style.left = "".concat(rectAvoid.left - (overlayWidth + arrowWidth), "px");
-      overlay.style.top = "".concat(rectAvoid.top, "px");
+      overlay.style.left = "".concat(rectAvoid.left - (overlayWidth + arrowWidth) + window.scrollX, "px"); // Added scrollX adjustment
+      overlay.style.top = "".concat(rectAvoid.top + window.scrollY, "px"); // Added scrollY adjustment
       var position = "left";
       if (!checkOverlap(overlay)) {
         overlay.setAttribute('data-openkeynav-position', position);
@@ -410,7 +410,8 @@ var OpenKeyNav = /*#__PURE__*/function () {
       }
 
       // Try placing overlay to the right of the element
-      overlay.style.left = "".concat(rectAvoid.right + arrowWidth - 2, "px");
+      overlay.style.left = "".concat(rectAvoid.right + arrowWidth - 2 + window.scrollX, "px"); // Added scrollX adjustment
+      // overlay.style.top = `${rectAvoid.top + window.scrollY}px`; // same as above
       position = "right";
       if (!checkOverlap(overlay)) {
         overlay.setAttribute('data-openkeynav-position', position);
@@ -418,8 +419,8 @@ var OpenKeyNav = /*#__PURE__*/function () {
       }
 
       // Try placing overlay above the element
-      overlay.style.left = "".concat(rectAvoid.left, "px");
-      overlay.style.top = "".concat(rectAvoid.top - (overlayHeight + arrowWidth), "px");
+      overlay.style.left = "".concat(rectAvoid.left + window.scrollX, "px"); // Added scrollX adjustment
+      overlay.style.top = "".concat(rectAvoid.top - (overlayHeight + arrowWidth) + window.scrollY, "px"); // Added scrollY adjustment
       position = "top";
       if (!checkOverlap(overlay)) {
         overlay.setAttribute('data-openkeynav-position', position);
@@ -427,8 +428,8 @@ var OpenKeyNav = /*#__PURE__*/function () {
       }
 
       // Try placing overlay below the element
-      overlay.style.left = "".concat(rectAvoid.left, "px");
-      overlay.style.top = "".concat(rectAvoid.bottom + arrowWidth, "px");
+      overlay.style.left = "".concat(rectAvoid.left + window.scrollX, "px"); // Added scrollX adjustment
+      overlay.style.top = "".concat(rectAvoid.bottom + arrowWidth + window.scrollY, "px"); // Added scrollY adjustment
       position = "bottom";
       if (!checkOverlap(overlay)) {
         overlay.setAttribute('data-openkeynav-position', position);
@@ -437,8 +438,8 @@ var OpenKeyNav = /*#__PURE__*/function () {
 
       // If all placements result in overlaps or being cut off, place overlay on the element's top left position
       overlay.removeAttribute('data-openkeynav-position');
-      overlay.style.left = "".concat(rectAvoid.left, "px");
-      overlay.style.top = "".concat(rectAvoid.top, "px");
+      overlay.style.left = "".concat(rectAvoid.left + window.scrollX, "px"); // Added scrollX adjustment
+      overlay.style.top = "".concat(rectAvoid.top + window.scrollY, "px"); // Added scrollY adjustment
     }
   }, {
     key: "updateOverlayPosition_bak",
