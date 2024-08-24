@@ -1,3 +1,4 @@
+const version = "0.1.7";
 /*
 OpenKeyNav.js
 
@@ -2320,6 +2321,30 @@ class OpenKeyNav {
         }
       });
     }
+
+    applicationSupport() {
+      // Version Ping (POST https://applicationsupport.openkeynav.com/capture/)
+      // This is anonymous and minimal, only sending the library version and the date. No PII.
+      // Necessary to know which versions are being used in the wild in order to provide proper support and plan roadmaps
+      fetch("https://applicationsupport.openkeynav.com/capture/", {
+        "method": "POST",
+        "headers": {
+              "Content-Type": "application/json"
+        },
+        "body": JSON.stringify({
+              "properties": {
+                    "version": version,
+                    "timestamp": new Date().toISOString()
+              },
+              "api_key": "phc_2NVfXaBIYnZxYzEQtMJCuwB4rDbmjKkeCxlVZMK7x12",
+              "event": "openKeyNav.js version ping",
+              "distinct_id": "openKeyNav.js"
+        })
+      })
+      // .then((res) => res.text())
+      // .then(console.log.bind(console))
+      // .catch(console.error.bind(console));
+    }
   
     setupGlobalClickListenerTracking() {
       const clickEventElements = this.config.modesConfig.click.clickEventElements;
@@ -2395,6 +2420,7 @@ class OpenKeyNav {
       this.injectStylesheet();
       this.addKeydownEventListener();
       this.setupGlobalClickListenerTracking();
+      this.applicationSupport();
       console.log('Library initialized with config:', this.config);
     }
 }
