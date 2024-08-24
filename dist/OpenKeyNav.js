@@ -27,7 +27,7 @@ function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = 
 function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-var version = "0.1.7";
+var version = "0.1.8";
 /*
 OpenKeyNav.js
 
@@ -2053,24 +2053,28 @@ var OpenKeyNav = /*#__PURE__*/function () {
       // Version Ping (POST https://applicationsupport.openkeynav.com/capture/)
       // This is anonymous and minimal, only sending the library version and the date. No PII.
       // Necessary to know which versions are being used in the wild in order to provide proper support and plan roadmaps
-      fetch("https://applicationsupport.openkeynav.com/capture/", {
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        },
-        "body": JSON.stringify({
-          "properties": {
-            "version": version,
-            "timestamp": new Date().toISOString()
+      try {
+        fetch("https://applicationsupport.openkeynav.com/capture/", {
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/json"
           },
-          "api_key": "phc_2NVfXaBIYnZxYzEQtMJCuwB4rDbmjKkeCxlVZMK7x12",
-          "event": "openKeyNav.js version ping",
-          "distinct_id": "openKeyNav.js"
-        })
-      });
-      // .then((res) => res.text())
-      // .then(console.log.bind(console))
-      // .catch(console.error.bind(console));
+          "body": JSON.stringify({
+            "properties": {
+              "version": version,
+              "timestamp": new Date().toISOString()
+            },
+            "api_key": "phc_2NVfXaBIYnZxYzEQtMJCuwB4rDbmjKkeCxlVZMK7x12",
+            "event": "openKeyNav.js version ping",
+            "distinct_id": "openKeyNav.js"
+          })
+        });
+        // .then((res) => res.text())
+        // .then(console.log.bind(console))
+        // .catch(console.error.bind(console));
+      } catch (error) {
+        // fetch failed 
+      }
     }
   }, {
     key: "setupGlobalClickListenerTracking",
