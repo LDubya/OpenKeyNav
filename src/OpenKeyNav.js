@@ -1,4 +1,5 @@
-const version = "0.1.8";
+
+import { version } from "./version";
 /*
 OpenKeyNav.js
 
@@ -80,7 +81,7 @@ class OpenKeyNav {
       this.config = {
         spot: {
           fontColor: 'white',
-          backgroundColor: '#333',
+          backgroundColor: '#f00',
           insetColor: '#000',
           fontSize: 'inherit',
           arrowSize_px: 4
@@ -2326,6 +2327,14 @@ class OpenKeyNav {
       // Version Ping (POST https://applicationsupport.openkeynav.com/capture/)
       // This is anonymous and minimal, only sending the library version and the date. No PII.
       // Necessary to know which versions are being used in the wild in order to provide proper support and plan roadmaps
+
+      // no need to run app support on local develompent
+      if (window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname === '::1') {
+        return;
+      }
+
       try {
         fetch("https://applicationsupport.openkeynav.com/capture/", {
           "method": "POST",

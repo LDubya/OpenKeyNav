@@ -27,7 +27,7 @@ function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = 
 function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-var version = "0.1.8";
+var version = "0.1.10";
 /*
 OpenKeyNav.js
 
@@ -109,7 +109,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
     this.config = {
       spot: {
         fontColor: 'white',
-        backgroundColor: '#333',
+        backgroundColor: '#f00',
         insetColor: '#000',
         fontSize: 'inherit',
         arrowSize_px: 4
@@ -2053,6 +2053,11 @@ var OpenKeyNav = /*#__PURE__*/function () {
       // Version Ping (POST https://applicationsupport.openkeynav.com/capture/)
       // This is anonymous and minimal, only sending the library version and the date. No PII.
       // Necessary to know which versions are being used in the wild in order to provide proper support and plan roadmaps
+
+      // no need to run app support on local develompent
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '::1') {
+        return;
+      }
       try {
         fetch("https://applicationsupport.openkeynav.com/capture/", {
           "method": "POST",
