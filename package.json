@@ -1,6 +1,6 @@
 {
   "name": "openkeynav",
-  "version": "0.1.11",
+  "version": "0.1.16",
   "description": "OpenKeyNav: A JavaScript plugin for enhancing keyboard navigation and accessibility on web pages.",
   "main": "dist/OpenKeyNav.js",
   "module": "dist/OpenKeyNav.js",
@@ -10,10 +10,9 @@
   },
   "scripts": {
     "build": "babel src -d dist && terser dist/openkeynav.js -o dist/openkeynav.min.js",
-    "patch": "npm version patch --force && npm run update-version-js",
     "update-version-js": "node ./dev/updateVersion.js",
-    "build_patch": "npm run build && npm run patch && git add --all; git commit -m \"build and patch\"",
-    "build_pack": "npm run build && npm pack",
+    "patch_build_commit": "npm run update-version-js && npm run build && git add --all; git commit -m \"patch build and commit\" ",
+    "patch_build_pack": "npm run update-version-js && npm run build && npm pack",
     "test": ""
   },
   "keywords": [

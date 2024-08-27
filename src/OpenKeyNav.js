@@ -81,7 +81,7 @@ class OpenKeyNav {
       this.config = {
         spot: {
           fontColor: 'white',
-          backgroundColor: '#f00',
+          backgroundColor: '#333',
           insetColor: '#000',
           fontSize: 'inherit',
           arrowSize_px: 4

@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports["default"] = void 0;
+var _version = require("./version");
 function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
 function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -27,14 +28,12 @@ function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = 
 function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-var version = "0.1.10";
 /*
 OpenKeyNav.js
 
 Copyright Lawrence Weru / Aster Enterprises LLC 2014 - 2024. All rights reserved.
 
 */
-
 /*
 Usage:
 
@@ -109,7 +108,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
     this.config = {
       spot: {
         fontColor: 'white',
-        backgroundColor: '#f00',
+        backgroundColor: '#333',
         insetColor: '#000',
         fontSize: 'inherit',
         arrowSize_px: 4
@@ -2066,7 +2065,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
           },
           "body": JSON.stringify({
             "properties": {
-              "version": version,
+              "version": _version.version,
               "timestamp": new Date().toISOString()
             },
             "api_key": "phc_2NVfXaBIYnZxYzEQtMJCuwB4rDbmjKkeCxlVZMK7x12",
