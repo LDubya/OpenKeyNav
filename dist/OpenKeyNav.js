@@ -516,30 +516,58 @@ var OpenKeyNav = /*#__PURE__*/function () {
       return overlay;
     }
   }, {
-    key: "isTopLeftCornerVisible",
-    value: function isTopLeftCornerVisible(element) {
+    key: "isAnyCornerVisible",
+    value: function isAnyCornerVisible(element) {
       var isElementInIframe = function isElementInIframe(element) {
         return element.ownerDocument !== window.document;
       };
       var doc = element.ownerDocument;
       var win = doc.defaultView || doc.parentWindow;
       var rect = element.getBoundingClientRect();
-      var x = rect.left + 1; // Slightly inside to avoid borders
-      var y = rect.top + 1; // Slightly inside to avoid borders
-
+      // Coordinates for the four corners of the element
+      var corners = [{
+        x: rect.left + 1,
+        y: rect.top + 1
+      },
+      // top-left
+      {
+        x: rect.right - 1,
+        y: rect.top + 1
+      },
+      // top-right
+      {
+        x: rect.left + 1,
+        y: rect.bottom - 1
+      },
+      // bottom-left
+      {
+        x: rect.right - 1,
+        y: rect.bottom - 1
+      } // bottom-right
+      ];
       if (isElementInIframe(element)) {
         var frameElement = win.frameElement;
         if (frameElement) {
           var frameRect = frameElement.getBoundingClientRect();
-          x += frameRect.left;
-          y += frameRect.top;
+          corners.forEach(function (corner) {
+            corner.x += frameRect.left;
+            corner.y += frameRect.top;
+          });
           // Adjust `doc` and `win` to the parent document/window that contains the iframe
           doc = frameElement.ownerDocument;
           win = doc.defaultView || doc.parentWindow;
         }
       }
-      var elemAtPoint = doc.elementFromPoint(x, y);
-      return elemAtPoint === element || element.contains(elemAtPoint);
+
+      // Check if any of the corners are visible
+      for (var _i = 0, _corners = corners; _i < _corners.length; _i++) {
+        var corner = _corners[_i];
+        var elemAtPoint = doc.elementFromPoint(corner.x, corner.y);
+        if (elemAtPoint === element || element.contains(elemAtPoint) || elemAtPoint && elemAtPoint.contains(element)) {
+          return true; // At least one corner is visible
+        }
+      }
+      return false; // None of the corners are visible
     }
   }, {
     key: "getScrollableElements",
@@ -595,9 +623,9 @@ var OpenKeyNav = /*#__PURE__*/function () {
 
       // Main function to check for scrollability
       var hasScroller = function hasScroller(elem) {
-        // debug mode: do isTopLeftCornerVisible check by default and disable the check if debug.screenReaderVisible is true
+        // debug mode: do isAnyCornerVisible check by default and disable the check if debug.screenReaderVisible is true
         if (!_this4.config.debug.screenReaderVisible) {
-          return _this4.isTopLeftCornerVisible(elem) && isPotentiallyScrollable(elem) && (isYScrollable(elem) || isXScrollable(elem));
+          return _this4.isAnyCornerVisible(elem) && isPotentiallyScrollable(elem) && (isYScrollable(elem) || isXScrollable(elem));
         }
         return isPotentiallyScrollable(elem) && (isYScrollable(elem) || isXScrollable(elem));
       };
@@ -1051,10 +1079,10 @@ var OpenKeyNav = /*#__PURE__*/function () {
           var style = getComputedStyle(el);
           if (style.display === 'none' || style.visibility === 'hidden') return false;
 
-          // debug mode: debug mode: do isTopLeftCornerVisible check by default and disable the check if debug.screenReaderVisible is true
+          // debug mode: debug mode: do isAnyCornerVisible check by default and disable the check if debug.screenReaderVisible is true
           if (!_this6.config.debug.screenReaderVisible) {
             // Skip if the element's top left corner is covered by another element
-            if (!_this6.isTopLeftCornerVisible(el)) {
+            if (!_this6.isAnyCornerVisible(el)) {
               return false;
             }
           }
@@ -1277,23 +1305,27 @@ var OpenKeyNav = /*#__PURE__*/function () {
 
         // Ensure el is an Element before accessing styles
         if (!(el instanceof Element)) {
+          // console.log(`!(el instanceof Element)`, el); //debug
           return false;
         }
 
         // Skip if the element is set to not display (not the same as having zero size)
         var style = getComputedStyle(el);
         if (style.display === 'none') {
+          // console.log(`style.display === 'none'`, el); //debug
           return false;
         }
 
         // Skip if the element is hidden by a parent's overflow
         if (isHiddenByOverflow(el)) {
+          // console.log(`isHiddenByOverflow(el)`, el); //debug
           return false;
         }
 
         // Skip if the element is within a <details> that is not open, but allow if it's a <summary> or a clickable element inside a <summary>
         // aka it's hidden by the collapsed detail
         if (el.matches('details:not([open]) *') && !el.matches('details:not([open]) > summary, details:not([open]) > summary *')) {
+          // console.log(`hidden details element`, el); //debug
           return false;
         }
 
@@ -1304,28 +1336,33 @@ var OpenKeyNav = /*#__PURE__*/function () {
         // do not move this earlier in the heuristic
         var tabIndex = el.getAttribute('tabindex');
         if (tabIndex && parseInt(tabIndex, 10) > -1) {
+          // console.log(`tabindex > -1`, el); //debug
           return true;
         }
 
         // Skip if the element is visually hidden (not the same as having zero size or set to not display)
         if (style.visibility === 'hidden') {
+          // console.log(`style.visibility === 'hidden'`, el); //debug
           return false;
         }
 
         // Skip if the element has no size (another way to visually hide something)
         if (!_this6.isNonzeroSize(el)) {
+          // console.log(`!this.isNonzeroSize(el)`, el); //debug
           return false;
         }
 
         // Skip if the element's top left corner is not within the window's viewport
         if (!inViewport(el)) {
+          // console.log(`!inViewport(el)`, el); //debug
           return false;
         }
 
-        // do isTopLeftCornerVisible check by default and disable the check if debug.screenReaderVisible is true
+        // do isAnyCornerVisible check by default and disable the check if debug.screenReaderVisible is true
         if (!_this6.config.debug.screenReaderVisible) {
           // Skip if the element's top left corner is covered by another element
-          if (!_this6.isTopLeftCornerVisible(el)) {
+          if (!_this6.isAnyCornerVisible(el)) {
+            // console.log(`!this.isAnyCornerVisible(el)`, el); //debug
             return false;
           }
         }
@@ -1334,6 +1371,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
         if (el.tagName.toLowerCase() === 'summary') {
           var details = el.parentElement;
           if (details.tagName.toLowerCase() === 'details' && details.querySelector('summary') !== el) {
+            // console.log(`<summary> is not the first <summary> element of a <details>`, el); //debug
             return false;
           }
         }
@@ -1353,12 +1391,9 @@ var OpenKeyNav = /*#__PURE__*/function () {
         // Skip if the element is an <a> without an href (unless it has an ARIA role that makes it tabbable)
 
         var role = el.getAttribute('role');
-
-        // const clickableElements = ['a', 'button', 'textarea', 'select', 'input', 'iframe', 'summary', '[onclick]'];
-        // const interactiveRoles = ['button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio'];
-
         switch (el.tagName.toLowerCase()) {
           case 'a':
+            // console.log(el); //debug
             if (!el.hasAttribute('href') || el.getAttribute('href') === '') {
               if (!interactiveRoles.includes(role)) {
                 // if (this.config.modes.clicking) {
