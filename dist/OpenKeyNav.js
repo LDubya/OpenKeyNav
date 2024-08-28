@@ -5,6 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports["default"] = void 0;
 var _version = require("./version");
+var _signals = require("./signals.js");
 function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
 function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -188,19 +189,12 @@ var OpenKeyNav = /*#__PURE__*/function () {
         list: []
       },
       modes: {
-        clicking: false,
-        moving: false
+        clicking: (0, _signals.signal)(false),
+        moving: (0, _signals.signal)(false)
       },
       debug: {
         screenReaderVisible: false,
         keyboardAccessible: true
-      },
-      init: function init() {
-        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-        // Merge the options with the default settings
-        deepMerge(OpenKeyNav, options);
-        injectStylesheet();
-        addKeydownEventListener();
       }
     };
   }
@@ -299,6 +293,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
       //   'outline-offset: -1px !important;' +
       // '}'
       ;
+      style.innerHTML += "\n        .okn-logo-text {\n            font-size: 36px;\n            font-weight: 600;\n            color: #ffffff;\n            background-color: #333;\n            padding: .1em .2em;\n            border-radius: 1em;\n            box-sizing: border-box;\n            line-height: 1;\n            text-align: center;\n            position: relative;\n            z-index: 99999999;\n            display: inline-block;\n            min-width: 1rem;\n            border: max(.1em, 2px) solid #ffffff;\n        }\n\n        .okn-logo-text.small {\n            font-size: 18px;\n        }\n        .okn-logo-text.tiny {\n            font-size: 12px;\n            font-weight: 700; /* Revert to bold for better legibility */\n        }\n\n        .okn-logo-text.light {\n            color: #333; /* Dark text color */\n            background-color: #fff; /* Light background */\n            border-color: #333; /* Dark border */\n        }\n\n        .okn-logo-text .key {\n            display: inline;\n            padding: .1em .2em;\n            margin: 0 .1em;\n            background-color: #ffffff; /* Light background */\n            color: #333; /* Dark text */\n            line-height: 1;\n            font-size: 0.6em;\n            position: relative;\n            top: -.3em;\n        }\n\n        .okn-logo-text.light .key {\n            background-color: #333; /* Dark background */\n            color: #ffffff; /* Light text */\n        }\n\n        .okn-logo-text .key::before,\n        .okn-logo-text .key::after {\n            content: \"\";\n            position: absolute;\n            left: 50%;\n            transform: translateX(-50%);\n        }\n\n        .okn-logo-text .key::before {\n            --border-size: 0.5em; /* Base border size */\n            --min-border-size: 5px; /* Minimum pixel size */\n\n            border-top: max(var(--border-size), var(--min-border-size)) solid #333;\n            bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n            border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n            border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n        }\n        .okn-logo-text.light .key::before {\n            border-top-color: #fff; /* Dark top triangle */\n        }\n\n        .okn-logo-text .key::after {\n            --border-size: .4em; /* Base border size */\n            --min-border-size: 4px; /* Minimum pixel size */\n\n            border-top: max( calc( var(--border-size) + 1px) , var(--min-border-size)) solid #fff;\n            bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n            border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n            border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n        }\n\n        .okn-logo-text.light .key::after {\n            border-top-color: #333; /* Light bottom triangle */\n        }\n        ";
       document.head.appendChild(style);
     }
   }, {
@@ -363,7 +358,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
           var isOverlapping = corners.some(function (corner) {
             if (corner.x >= 0 && corner.x <= window.innerWidth && corner.y >= 0 && corner.y <= window.innerHeight) {
               var elementAtPoint = document.elementFromPoint(corner.x, corner.y);
-              return avoidEl === elementAtPoint || avoidEl.contains(elementAtPoint);
+              return avoidEl === elementAtPoint || avoidEl.contains(elementAtPoint) || elementAtPoint && (elementAtPoint.contains(element) || elementAtPoint.classList.contains("openKeyNav-ignore-overlap"));
             }
             return false;
           });
@@ -563,7 +558,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
       for (var _i = 0, _corners = corners; _i < _corners.length; _i++) {
         var corner = _corners[_i];
         var elemAtPoint = doc.elementFromPoint(corner.x, corner.y);
-        if (elemAtPoint === element || element.contains(elemAtPoint) || elemAtPoint && elemAtPoint.contains(element)) {
+        if (elemAtPoint === element || element.contains(elemAtPoint) || elemAtPoint && (elemAtPoint.contains(element) || elemAtPoint.classList.contains("openKeyNav-ignore-overlap"))) {
           return true; // At least one corner is visible
         }
       }
@@ -652,7 +647,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
       var _this5 = this;
       var resetModes = function resetModes() {
         for (var key in _this5.config.modes) {
-          _this5.config.modes[key] = false;
+          _this5.config.modes[key].value = false;
         }
 
         // reset move mode config
@@ -724,7 +719,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
       };
 
       // alert("removeOverlays()");
-      if (this.config.modes.clicking) {
+      if (this.config.modes.clicking.value) {
         enableScrolling();
       }
 
@@ -734,7 +729,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
       if (removeAll) {
         removeAllOverlays();
       } else {
-        if (!this.config.modes.moving) {
+        if (!this.config.modes.moving.value) {
           // the only special modifer case so far for removing overlays is in moving mode,
           // where we may want to keep the selected element's label as a selected indicator
           removeAllOverlays();
@@ -1020,7 +1015,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
       };
       var doEscape = function doEscape(e) {
         var returnFalse = false;
-        if (_this6.config.modes.clicking || _this6.config.modes.moving) {
+        if (_this6.config.modes.clicking.value || _this6.config.modes.moving.value) {
           e.preventDefault();
           e.stopPropagation();
           endDrag();
@@ -1380,7 +1375,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
 
         if (tabIndex && parseInt(tabIndex, 10) == -1) {
           if (isTypicallyClickableElement(el)) {
-            // if (this.config.modes.clicking) {
+            // if (this.config.modes.clicking.value) {
             _this6.flagAsInaccessible(el, "\n                <h2>Inaccessible Element</h2>\n                <h3>Problem: </h3>\n                <p>This element is not keyboard-focusable.</p>\n                <h3>Solution: </h3>\n                <p>Since this element has a tabindex attribute set to -1, it cannot be keyboard focusable.</p>\n                <p>It must have a tabindex set to a value &gt; -1, ideally 0.</p>\n                <p>You can ignore this warning if this element is not meant to be clickable.</p>\n                ", "keyboard");
             // }
           }
@@ -1396,7 +1391,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
             // console.log(el); //debug
             if (!el.hasAttribute('href') || el.getAttribute('href') === '') {
               if (!interactiveRoles.includes(role)) {
-                // if (this.config.modes.clicking) {
+                // if (this.config.modes.clicking.value) {
                 _this6.flagAsInaccessible(el, "\n                    <h2>Inaccessible Button</h2>\n                    <h3>Problem: </h3>\n                    <p>This clickable button is not keyboard-focusable.</p>\n                    <p>As a result, only mouse users can click on it.</p>\n                    <p>This usability disparity can create an accessibility barrier.</p>\n                    <h3>Solution: </h3>\n                    <p>Since it is an anchor tag (&lt;a&gt;), it needs a non-empty <em>href</em> attribute.</p>\n                    <p>Alternatively, it needs an ARIA <em>role</em> attribute set to something like 'button' or 'link' AND a tabindex attribute set to a value &gt; -1, ideally 0.</p>\n                    ", "keyboard");
                 // return false;
                 // }
@@ -1413,7 +1408,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
           default:
             if (!interactiveRoles.includes(role)) {
               // possible inaccessible button
-              // if (this.config.modes.clicking) {
+              // if (this.config.modes.clicking.value) {
 
               var fromClickEvents = "";
               if (_this6.config.modesConfig.click.clickEventElements.has(el)) {
@@ -1675,7 +1670,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
           _this6.removeOverlays();
 
           // Set moving mode and selected moveable element
-          _this6.config.modes.moving = true;
+          _this6.config.modes.moving.value = true;
           _this6.config.modesConfig.move.selectedMoveable = selectedMoveable;
           _this6.config.modesConfig.move.selectedMoveableHTML = selectedMoveable.innerHTML;
           _this6.config.modesConfig.move.modifier = modifer;
@@ -1913,10 +1908,10 @@ var OpenKeyNav = /*#__PURE__*/function () {
         }
 
         // check if currently in any openkeynav modes
-        if (_this6.config.modes.clicking) {
+        if (_this6.config.modes.clicking.value) {
           return handleClickMode(e);
         }
-        if (_this6.config.modes.moving) {
+        if (_this6.config.modes.moving.value) {
           return handleMoveMode(e);
         }
         if (_this6.isTextInputActive()) {
@@ -1946,7 +1941,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
           case _this6.config.keys.click: // possibly attempting to initiate click mode
           case _this6.config.keys.click.toUpperCase():
             e.preventDefault();
-            _this6.config.modes.clicking = true;
+            _this6.config.modes.clicking.value = true;
             if (e.key == _this6.config.keys.click.toUpperCase()) {
               _this6.config.modesConfig.click.modifier = true;
             }
@@ -1959,7 +1954,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
           case _this6.config.keys.move.toUpperCase():
             // Toggle move mode
             e.preventDefault();
-            _this6.config.modes.moving = true; // Assuming you add a 'move' flag to your modes object
+            _this6.config.modes.moving.value = true; // Assuming you add a 'move' flag to your modes object
             if (e.key == _this6.config.keys.move.toUpperCase()) {
               _this6.config.modesConfig.move.modifier = true;
             }
@@ -2082,6 +2077,111 @@ var OpenKeyNav = /*#__PURE__*/function () {
       });
     }
   }, {
+    key: "initStatusBar",
+    value: function initStatusBar() {
+      var _this7 = this;
+      // Effect to update status bar based on the current mode
+
+      var getSetNotificationContainer = function getSetNotificationContainer() {
+        // Create or select the notification container
+        var notificationContainer = document.getElementById('okn-notification-container');
+        if (!notificationContainer) {
+          notificationContainer = document.createElement('div');
+          notificationContainer.id = 'okn-notification-container';
+          notificationContainer.className = 'openKeyNav-ignore-overlap';
+          notificationContainer.style.position = 'fixed';
+          notificationContainer.style.bottom = '10px';
+          notificationContainer.style.left = '50%';
+          notificationContainer.style.transform = 'translateX(-50%)';
+          notificationContainer.style.display = 'flex';
+          notificationContainer.style.flexDirection = 'column';
+          notificationContainer.style.alignItems = 'center';
+          notificationContainer.style.gap = '10px';
+          notificationContainer.style.zIndex = '1000';
+          document.body.appendChild(notificationContainer);
+        }
+        // Append the container to the end of the document
+        document.body.appendChild(notificationContainer);
+        return notificationContainer;
+      };
+
+      // Function to emit a temporary notification
+      var emitNotification = function emitNotification(message) {
+        var duration = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 3000;
+        // Create the notification container
+        var notification = document.createElement('div');
+        notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        notification.style.color = '#fff';
+        notification.style.padding = '10px 20px';
+        notification.style.borderRadius = '5px';
+        notification.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+        notification.style.maxWidth = '300px';
+        notification.style.textAlign = 'center';
+        notification.style.position = 'relative';
+        notification.style.display = 'inline-block';
+
+        // Create the branded logo element
+        var logo = document.createElement('div');
+        logo.className = 'okn-logo-text tiny';
+        logo.innerHTML = 'Open<span class="key">Key</span>Nav';
+
+        // Append the logo and message to the notification
+        notification.appendChild(logo);
+
+        // Create the message element
+        var messageDiv = document.createElement('div');
+        messageDiv.textContent = message;
+        notification.appendChild(messageDiv);
+
+        // Append the notification to the body or a specific container
+        getSetNotificationContainer().appendChild(notification);
+
+        // Automatically remove the notification after the specified duration
+        setTimeout(function () {
+          notification.remove();
+        }, duration);
+      };
+
+      // Effect to emit notification based on the current mode
+      var lastMessage = "No mode active.";
+      (0, _signals.effect)(function () {
+        var modes = _this7.config.modes;
+        var message;
+        if (modes.clicking.value) {
+          message = "In click mode. Press Esc to exit.";
+        } else if (modes.moving.value) {
+          message = "In drag mode. Press Esc to exit.";
+        } else {
+          message = "No mode active.";
+        }
+        if (message == lastMessage) {
+          return false;
+        }
+        console.log(message);
+        emitNotification(message);
+        lastMessage = message;
+      });
+      (0, _signals.effect)(function () {
+        // statusbar
+        var modes = _this7.config.modes;
+        // DOM element to update
+        var statusBar = document.getElementById('status-bar');
+
+        // Abort if no status bar is found
+        if (!statusBar) {
+          console.warn('Status bar element not found in the DOM.');
+          return;
+        }
+        if (modes.clicking.value) {
+          statusBar.textContent = "In click mode. Press Esc to exit.";
+        } else if (modes.moving.value) {
+          statusBar.textContent = "In drag mode. Press Esc to exit.";
+        } else {
+          statusBar.textContent = "No mode active.";
+        }
+      });
+    }
+  }, {
     key: "applicationSupport",
     value: function applicationSupport() {
       // Version Ping (POST https://applicationsupport.openkeynav.com/capture/)
@@ -2197,8 +2297,10 @@ var OpenKeyNav = /*#__PURE__*/function () {
       this.injectStylesheet();
       this.addKeydownEventListener();
       this.setupGlobalClickListenerTracking();
+      this.initStatusBar();
       this.applicationSupport();
       console.log('Library initialized with config:', this.config);
+      // window["openKeyNav"] = this;
     }
   }]);
 }(); // optionally attach a syncronous event listener here for tracking the elements tied to click events, (added and removed),

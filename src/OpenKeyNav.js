@@ -1,5 +1,7 @@
 
 import { version } from "./version";
+import { signal, effect } from './signals.js';
+
 /*
 OpenKeyNav.js
 
@@ -145,18 +147,12 @@ class OpenKeyNav {
           list: []
         },
         modes: {
-          clicking: false,
-          moving: false
+          clicking: signal(false),
+          moving: signal(false)
         },
         debug: {
           screenReaderVisible: false,
           keyboardAccessible: true
-        },
-        init: (options = {}) => {
-          // Merge the options with the default settings
-          deepMerge(OpenKeyNav, options);
-          injectStylesheet();
-          addKeydownEventListener();
         }
       };
     }
@@ -394,6 +390,91 @@ class OpenKeyNav {
         //   'outline-offset: -1px !important;' +
         // '}'
         ;
+
+        style.innerHTML += `
+        .okn-logo-text {
+            font-size: 36px;
+            font-weight: 600;
+            color: #ffffff;
+            background-color: #333;
+            padding: .1em .2em;
+            border-radius: 1em;
+            box-sizing: border-box;
+            line-height: 1;
+            text-align: center;
+            position: relative;
+            z-index: 99999999;
+            display: inline-block;
+            min-width: 1rem;
+            border: max(.1em, 2px) solid #ffffff;
+        }
+
+        .okn-logo-text.small {
+            font-size: 18px;
+        }
+        .okn-logo-text.tiny {
+            font-size: 12px;
+            font-weight: 700; /* Revert to bold for better legibility */
+        }
+
+        .okn-logo-text.light {
+            color: #333; /* Dark text color */
+            background-color: #fff; /* Light background */
+            border-color: #333; /* Dark border */
+        }
+
+        .okn-logo-text .key {
+            display: inline;
+            padding: .1em .2em;
+            margin: 0 .1em;
+            background-color: #ffffff; /* Light background */
+            color: #333; /* Dark text */
+            line-height: 1;
+            font-size: 0.6em;
+            position: relative;
+            top: -.3em;
+        }
+
+        .okn-logo-text.light .key {
+            background-color: #333; /* Dark background */
+            color: #ffffff; /* Light text */
+        }
+
+        .okn-logo-text .key::before,
+        .okn-logo-text .key::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .okn-logo-text .key::before {
+            --border-size: 0.5em; /* Base border size */
+            --min-border-size: 5px; /* Minimum pixel size */
+
+            border-top: max(var(--border-size), var(--min-border-size)) solid #333;
+            bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));
+            border-left: max(var(--border-size), var(--min-border-size)) solid transparent;
+            border-right: max(var(--border-size), var(--min-border-size)) solid transparent;
+        }
+        .okn-logo-text.light .key::before {
+            border-top-color: #fff; /* Dark top triangle */
+        }
+
+        .okn-logo-text .key::after {
+            --border-size: .4em; /* Base border size */
+            --min-border-size: 4px; /* Minimum pixel size */
+
+            border-top: max( calc( var(--border-size) + 1px) , var(--min-border-size)) solid #fff;
+            bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));
+            border-left: max(var(--border-size), var(--min-border-size)) solid transparent;
+            border-right: max(var(--border-size), var(--min-border-size)) solid transparent;
+        }
+
+        .okn-logo-text.light .key::after {
+            border-top-color: #333; /* Light bottom triangle */
+        }
+        `
       document.head.appendChild(style);
     }
   
@@ -455,7 +536,7 @@ class OpenKeyNav {
                     corner.y <= window.innerHeight
                 ) {
                     const elementAtPoint = document.elementFromPoint(corner.x, corner.y);
-                    return avoidEl === elementAtPoint || avoidEl.contains(elementAtPoint);
+                    return avoidEl === elementAtPoint || avoidEl.contains(elementAtPoint) || elementAtPoint && (elementAtPoint.contains(element) || elementAtPoint.classList.contains("openKeyNav-ignore-overlap"));
                 }
                 return false;
             });
@@ -652,7 +733,7 @@ class OpenKeyNav {
       // Check if any of the corners are visible
       for (let corner of corners) {
         const elemAtPoint = doc.elementFromPoint(corner.x, corner.y);
-        if (elemAtPoint === element || element.contains(elemAtPoint) || elemAtPoint && elemAtPoint.contains(element)) {
+        if (elemAtPoint === element || element.contains(elemAtPoint) || elemAtPoint && (elemAtPoint.contains(element) || elemAtPoint.classList.contains("openKeyNav-ignore-overlap")) ) {
           return true; // At least one corner is visible
         }
       }
@@ -751,7 +832,7 @@ class OpenKeyNav {
   
       const resetModes = () => {
         for (let key in this.config.modes) {
-          this.config.modes[key] = false;
+          this.config.modes[key].value = false;
         }
   
         // reset move mode config
@@ -823,7 +904,7 @@ class OpenKeyNav {
       }
   
       // alert("removeOverlays()");
-      if (this.config.modes.clicking) {
+      if (this.config.modes.clicking.value) {
         enableScrolling();
       }
   
@@ -834,7 +915,7 @@ class OpenKeyNav {
         removeAllOverlays();
       }
       else{
-        if(!this.config.modes.moving){
+        if(!this.config.modes.moving.value){
           // the only special modifer case so far for removing overlays is in moving mode,
           // where we may want to keep the selected element's label as a selected indicator
           removeAllOverlays();
@@ -1131,7 +1212,7 @@ class OpenKeyNav {
   
       const doEscape = e => {
         let returnFalse = false;
-        if (this.config.modes.clicking || this.config.modes.moving) {
+        if (this.config.modes.clicking.value || this.config.modes.moving.value) {
           e.preventDefault();
           e.stopPropagation();
           endDrag();
@@ -1535,7 +1616,7 @@ class OpenKeyNav {
         if (tabIndex && parseInt(tabIndex, 10) == -1) {
   
           if (isTypicallyClickableElement(el)) {
-            // if (this.config.modes.clicking) {
+            // if (this.config.modes.clicking.value) {
               this.flagAsInaccessible(
                 el,
                 `
@@ -1564,7 +1645,7 @@ class OpenKeyNav {
             // console.log(el); //debug
             if (!el.hasAttribute('href') || el.getAttribute('href') === ''){
               if (!interactiveRoles.includes(role)) {
-                // if (this.config.modes.clicking) {
+                // if (this.config.modes.clicking.value) {
                   this.flagAsInaccessible(
                     el,
                     `
@@ -1596,7 +1677,7 @@ class OpenKeyNav {
           default:
             if (!interactiveRoles.includes(role)) {
               // possible inaccessible button
-              // if (this.config.modes.clicking) {
+              // if (this.config.modes.clicking.value) {
   
               let fromClickEvents = "";
               if (this.config.modesConfig.click.clickEventElements.has(el)) {
@@ -1903,7 +1984,7 @@ class OpenKeyNav {
           this.removeOverlays();
   
           // Set moving mode and selected moveable element
-          this.config.modes.moving = true;
+          this.config.modes.moving.value = true;
           this.config.modesConfig.move.selectedMoveable = selectedMoveable;
           this.config.modesConfig.move.selectedMoveableHTML = selectedMoveable.innerHTML;
           this.config.modesConfig.move.modifier = modifer;
@@ -2168,10 +2249,10 @@ class OpenKeyNav {
           }
   
           // check if currently in any openkeynav modes
-          if (this.config.modes.clicking) {
+          if (this.config.modes.clicking.value) {
             return handleClickMode(e);
           }
-          if (this.config.modes.moving) {
+          if (this.config.modes.moving.value) {
             return handleMoveMode(e);
           }
   
@@ -2201,7 +2282,7 @@ class OpenKeyNav {
             case this.config.keys.click: // possibly attempting to initiate click mode
             case this.config.keys.click.toUpperCase():
               e.preventDefault();
-              this.config.modes.clicking = true;
+              this.config.modes.clicking.value = true;
               if(e.key == this.config.keys.click.toUpperCase()){
                 this.config.modesConfig.click.modifier = true;
               }
@@ -2214,7 +2295,7 @@ class OpenKeyNav {
             case this.config.keys.move.toUpperCase():
               // Toggle move mode
               e.preventDefault();
-              this.config.modes.moving = true; // Assuming you add a 'move' flag to your modes object
+              this.config.modes.moving.value = true; // Assuming you add a 'move' flag to your modes object
               if(e.key == this.config.keys.move.toUpperCase()){
                 this.config.modesConfig.move.modifier = true;
               }
@@ -2345,6 +2426,113 @@ class OpenKeyNav {
       });
     }
 
+    initStatusBar() {
+      // Effect to update status bar based on the current mode
+
+      const getSetNotificationContainer = () => {
+        // Create or select the notification container
+        let notificationContainer = document.getElementById('okn-notification-container');
+        if (!notificationContainer) {
+            notificationContainer = document.createElement('div');
+            notificationContainer.id = 'okn-notification-container';
+            notificationContainer.className = 'openKeyNav-ignore-overlap';
+            notificationContainer.style.position = 'fixed';
+            notificationContainer.style.bottom = '10px';
+            notificationContainer.style.left = '50%';
+            notificationContainer.style.transform = 'translateX(-50%)';
+            notificationContainer.style.display = 'flex';
+            notificationContainer.style.flexDirection = 'column';
+            notificationContainer.style.alignItems = 'center';
+            notificationContainer.style.gap = '10px';
+            notificationContainer.style.zIndex = '1000';
+            document.body.appendChild(notificationContainer);
+        }
+        // Append the container to the end of the document
+        document.body.appendChild(notificationContainer);
+        return notificationContainer
+      }
+      
+      // Function to emit a temporary notification
+      const emitNotification = (message, duration = 3000) => {
+        // Create the notification container
+        const notification = document.createElement('div');
+        notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        notification.style.color = '#fff';
+        notification.style.padding = '10px 20px';
+        notification.style.borderRadius = '5px';
+        notification.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+        notification.style.maxWidth = '300px';
+        notification.style.textAlign = 'center';
+        notification.style.position = 'relative';
+        notification.style.display = 'inline-block';
+    
+        // Create the branded logo element
+        const logo = document.createElement('div');
+        logo.className = 'okn-logo-text tiny';
+        logo.innerHTML = 'Open<span class="key">Key</span>Nav';
+    
+        // Append the logo and message to the notification
+        notification.appendChild(logo);
+    
+        // Create the message element
+        const messageDiv = document.createElement('div');
+        messageDiv.textContent = message;
+        notification.appendChild(messageDiv);
+    
+        // Append the notification to the body or a specific container
+        getSetNotificationContainer().appendChild(notification);
+    
+        // Automatically remove the notification after the specified duration
+        setTimeout(() => {
+            notification.remove();
+        }, duration);
+    };
+    
+
+      // Effect to emit notification based on the current mode
+      let lastMessage = "No mode active.";
+      effect(() => {
+        const modes = this.config.modes;
+
+        let message;
+        if (modes.clicking.value) {
+          message = "In click mode. Press Esc to exit.";
+        } else if (modes.moving.value) {
+          message = "In drag mode. Press Esc to exit.";
+        } else {
+          message = "No mode active.";
+        }
+
+        if (message == lastMessage) {
+          return false;
+        }
+
+        console.log(message);
+        emitNotification(message);
+        lastMessage = message;
+      });
+      
+      effect(() => { // statusbar
+        const modes = this.config.modes;
+        // DOM element to update
+        const statusBar = document.getElementById('status-bar');
+
+        // Abort if no status bar is found
+        if (!statusBar) {
+          console.warn('Status bar element not found in the DOM.');
+          return;
+        }
+        
+        if (modes.clicking.value) {
+          statusBar.textContent = "In click mode. Press Esc to exit.";
+        } else if (modes.moving.value) {
+          statusBar.textContent = "In drag mode. Press Esc to exit.";
+        } else {
+          statusBar.textContent = "No mode active.";
+        }
+      });
+    }
+
     applicationSupport() {
       // Version Ping (POST https://applicationsupport.openkeynav.com/capture/)
       // This is anonymous and minimal, only sending the library version and the date. No PII.
@@ -2455,8 +2643,10 @@ class OpenKeyNav {
       this.injectStylesheet();
       this.addKeydownEventListener();
       this.setupGlobalClickListenerTracking();
+      this.initStatusBar();
       this.applicationSupport();
       console.log('Library initialized with config:', this.config);
+      // window["openKeyNav"] = this;
     }
 }
   
