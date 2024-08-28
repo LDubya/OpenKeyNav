@@ -118,6 +118,11 @@ var OpenKeyNav = /*#__PURE__*/function () {
         outlineColor: '#0088cc',
         outlineStyle: 'solid'
       },
+      notifications: {
+        enabled: true,
+        displayToolName: true,
+        duration: 3000
+      },
       keys: {
         escape: 'q',
         // alternative escape key, for when escape key is too far or not available. // q works great because top left of letters, plus removes confusion with g, p
@@ -293,7 +298,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
       //   'outline-offset: -1px !important;' +
       // '}'
       ;
-      style.innerHTML += "\n        .okn-logo-text {\n            font-size: 36px;\n            font-weight: 600;\n            color: #ffffff;\n            background-color: #333;\n            padding: .1em .2em;\n            border-radius: 1em;\n            box-sizing: border-box;\n            line-height: 1;\n            text-align: center;\n            position: relative;\n            z-index: 99999999;\n            display: inline-block;\n            min-width: 1rem;\n            border: max(.1em, 2px) solid #ffffff;\n        }\n\n        .okn-logo-text.small {\n            font-size: 18px;\n        }\n        .okn-logo-text.tiny {\n            font-size: 12px;\n            font-weight: 700; /* Revert to bold for better legibility */\n        }\n\n        .okn-logo-text.light {\n            color: #333; /* Dark text color */\n            background-color: #fff; /* Light background */\n            border-color: #333; /* Dark border */\n        }\n\n        .okn-logo-text .key {\n            display: inline;\n            padding: .1em .2em;\n            margin: 0 .1em;\n            background-color: #ffffff; /* Light background */\n            color: #333; /* Dark text */\n            line-height: 1;\n            font-size: 0.6em;\n            position: relative;\n            top: -.3em;\n        }\n\n        .okn-logo-text.light .key {\n            background-color: #333; /* Dark background */\n            color: #ffffff; /* Light text */\n        }\n\n        .okn-logo-text .key::before,\n        .okn-logo-text .key::after {\n            content: \"\";\n            position: absolute;\n            left: 50%;\n            transform: translateX(-50%);\n        }\n\n        .okn-logo-text .key::before {\n            --border-size: 0.5em; /* Base border size */\n            --min-border-size: 5px; /* Minimum pixel size */\n\n            border-top: max(var(--border-size), var(--min-border-size)) solid #333;\n            bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n            border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n            border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n        }\n        .okn-logo-text.light .key::before {\n            border-top-color: #fff; /* Dark top triangle */\n        }\n\n        .okn-logo-text .key::after {\n            --border-size: .4em; /* Base border size */\n            --min-border-size: 4px; /* Minimum pixel size */\n\n            border-top: max( calc( var(--border-size) + 1px) , var(--min-border-size)) solid #fff;\n            bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n            border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n            border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n        }\n\n        .okn-logo-text.light .key::after {\n            border-top-color: #333; /* Light bottom triangle */\n        }\n        ";
+      style.innerHTML += "\n        .okn-logo-text {\n            font-size: 36px;\n            font-weight: 600;\n            color: #ffffff;\n            background-color: #333;\n            padding: .1em .2em;\n            border-radius: 1em;\n            box-sizing: border-box;\n            line-height: 1;\n            text-align: center;\n            position: relative;\n            display: inline-block;\n            min-width: 1rem;\n            border: max(.1em, 2px) solid #ffffff;\n            white-space: nowrap;\n        }\n\n        .okn-logo-text.small {\n            font-size: 18px;\n        }\n        .okn-logo-text.tiny {\n            font-size: 10px;\n            /* border-width: 1px; */\n            border: none;\n        }\n        .okn-logo-text.tiny .key {\n            font-weight: 700;\n        }\n\n        .okn-logo-text.light {\n            color: #333; /* Dark text color */\n            background-color: #fff; /* Light background */\n            border-color: #333; /* Dark border */\n        }\n\n        .okn-logo-text .key {\n            display: inline;\n            padding: .1em .2em;\n            margin: 0 .1em;\n            background-color: #ffffff; /* Light background */\n            color: #333; /* Dark text */\n            line-height: 1;\n            /* font-size: 0.6em; */\n            position: relative;\n            top: -.3em;\n        }\n\n        .okn-logo-text.light .key {\n            background-color: #333; /* Dark background */\n            color: #ffffff; /* Light text */\n        }\n\n        .okn-logo-text .key::before,\n        .okn-logo-text .key::after {\n            content: \"\";\n            position: absolute;\n            left: 50%;\n            transform: translateX(-50%);\n        }\n\n        .okn-logo-text .key::before {\n            --border-size: 0.5em; /* Base border size */\n            --min-border-size: 5px; /* Minimum pixel size */\n\n            border-top: max(var(--border-size), var(--min-border-size)) solid #333;\n            bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n            border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n            border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n        }\n        .okn-logo-text.light .key::before {\n            border-top-color: #fff; /* Dark top triangle */\n        }\n\n        .okn-logo-text .key::after {\n            --border-size: .4em; /* Base border size */\n            --min-border-size: 4px; /* Minimum pixel size */\n\n            border-top: max( calc( var(--border-size) + 2px) , var(--min-border-size)) solid #fff;\n            bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n            border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n            border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n        }\n\n        .okn-logo-text.light .key::after {\n            border-top-color: #333; /* Light bottom triangle */\n        }\n        ";
       document.head.appendChild(style);
     }
   }, {
@@ -2080,8 +2085,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
     key: "initStatusBar",
     value: function initStatusBar() {
       var _this7 = this;
-      // Effect to update status bar based on the current mode
-
+      // Function to create or select the notification container
       var getSetNotificationContainer = function getSetNotificationContainer() {
         // Create or select the notification container
         var notificationContainer = document.getElementById('okn-notification-container');
@@ -2100,15 +2104,17 @@ var OpenKeyNav = /*#__PURE__*/function () {
           notificationContainer.style.zIndex = '1000';
           document.body.appendChild(notificationContainer);
         }
-        // Append the container to the end of the document
-        document.body.appendChild(notificationContainer);
         return notificationContainer;
       };
 
       // Function to emit a temporary notification
       var emitNotification = function emitNotification(message) {
-        var duration = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 3000;
-        // Create the notification container
+        // Check if notifications are enabled
+        if (!_this7.config.notifications.enabled) {
+          return;
+        }
+
+        // Create the notification element
         var notification = document.createElement('div');
         notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
         notification.style.color = '#fff';
@@ -2120,33 +2126,37 @@ var OpenKeyNav = /*#__PURE__*/function () {
         notification.style.position = 'relative';
         notification.style.display = 'inline-block';
 
-        // Create the branded logo element
-        var logo = document.createElement('div');
-        logo.className = 'okn-logo-text tiny';
-        logo.innerHTML = 'Open<span class="key">Key</span>Nav';
-
-        // Append the logo and message to the notification
-        notification.appendChild(logo);
+        // Optionally display the tool name in the notification
+        if (_this7.config.notifications.displayToolName) {
+          var logo = document.createElement('div');
+          logo.className = 'okn-logo-text tiny';
+          logo.setAttribute('aria-label', 'OpenKeyNav');
+          logo.innerHTML = 'Open<span class="key">Key</span>Nav';
+          notification.appendChild(logo);
+        }
 
         // Create the message element
         var messageDiv = document.createElement('div');
         messageDiv.textContent = message;
+        // Append the message to the notification
         notification.appendChild(messageDiv);
 
-        // Append the notification to the body or a specific container
+        // Append the notification to the notification container
         getSetNotificationContainer().appendChild(notification);
 
         // Automatically remove the notification after the specified duration
         setTimeout(function () {
           notification.remove();
-        }, duration);
+        }, _this7.config.notifications.duration);
       };
 
-      // Effect to emit notification based on the current mode
+      // Effect to emit a notification based on the current mode
       var lastMessage = "No mode active.";
       (0, _signals.effect)(function () {
         var modes = _this7.config.modes;
         var message;
+
+        // Determine the message based on the current mode
         if (modes.clicking.value) {
           message = "In click mode. Press Esc to exit.";
         } else if (modes.moving.value) {
@@ -2154,15 +2164,20 @@ var OpenKeyNav = /*#__PURE__*/function () {
         } else {
           message = "No mode active.";
         }
-        if (message == lastMessage) {
-          return false;
+
+        // Only emit the notification if the message has changed
+        if (message === lastMessage) {
+          return;
         }
+
+        // Emit the notification with the current message
         console.log(message);
         emitNotification(message);
         lastMessage = message;
       });
+
+      // Effect to update the status bar based on the current mode
       (0, _signals.effect)(function () {
-        // statusbar
         var modes = _this7.config.modes;
         // DOM element to update
         var statusBar = document.getElementById('status-bar');
@@ -2172,6 +2187,8 @@ var OpenKeyNav = /*#__PURE__*/function () {
           console.warn('Status bar element not found in the DOM.');
           return;
         }
+
+        // Update the status bar content based on the current mode
         if (modes.clicking.value) {
           statusBar.textContent = "In click mode. Press Esc to exit.";
         } else if (modes.moving.value) {

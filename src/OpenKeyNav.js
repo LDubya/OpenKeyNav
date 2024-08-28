@@ -92,6 +92,11 @@ class OpenKeyNav {
           outlineColor: '#0088cc',
           outlineStyle: 'solid'
         },
+        notifications : {
+          enabled: true,
+          displayToolName: true,
+          duration: 3000
+        },
         keys: {
           escape: 'q', // alternative escape key, for when escape key is too far or not available. // q works great because top left of letters, plus removes confusion with g, p
           click: 'k', // enter click mode, to click on clickable elements, such as links. Was g, now k, for kanga. Plus NVDA uses k to focus on link elements, which prevents conflicting modes as it's either openkeynav or NVDA.
@@ -403,18 +408,22 @@ class OpenKeyNav {
             line-height: 1;
             text-align: center;
             position: relative;
-            z-index: 99999999;
             display: inline-block;
             min-width: 1rem;
             border: max(.1em, 2px) solid #ffffff;
+            white-space: nowrap;
         }
 
         .okn-logo-text.small {
             font-size: 18px;
         }
         .okn-logo-text.tiny {
-            font-size: 12px;
-            font-weight: 700; /* Revert to bold for better legibility */
+            font-size: 10px;
+            /* border-width: 1px; */
+            border: none;
+        }
+        .okn-logo-text.tiny .key {
+            font-weight: 700;
         }
 
         .okn-logo-text.light {
@@ -430,7 +439,7 @@ class OpenKeyNav {
             background-color: #ffffff; /* Light background */
             color: #333; /* Dark text */
             line-height: 1;
-            font-size: 0.6em;
+            /* font-size: 0.6em; */
             position: relative;
             top: -.3em;
         }
@@ -465,7 +474,7 @@ class OpenKeyNav {
             --border-size: .4em; /* Base border size */
             --min-border-size: 4px; /* Minimum pixel size */
 
-            border-top: max( calc( var(--border-size) + 1px) , var(--min-border-size)) solid #fff;
+            border-top: max( calc( var(--border-size) + 2px) , var(--min-border-size)) solid #fff;
             bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));
             border-left: max(var(--border-size), var(--min-border-size)) solid transparent;
             border-right: max(var(--border-size), var(--min-border-size)) solid transparent;
@@ -2427,8 +2436,7 @@ class OpenKeyNav {
     }
 
     initStatusBar() {
-      // Effect to update status bar based on the current mode
-
+      // Function to create or select the notification container
       const getSetNotificationContainer = () => {
         // Create or select the notification container
         let notificationContainer = document.getElementById('okn-notification-container');
@@ -2447,14 +2455,17 @@ class OpenKeyNav {
             notificationContainer.style.zIndex = '1000';
             document.body.appendChild(notificationContainer);
         }
-        // Append the container to the end of the document
-        document.body.appendChild(notificationContainer);
-        return notificationContainer
-      }
-      
+        return notificationContainer;
+      };
+    
       // Function to emit a temporary notification
-      const emitNotification = (message, duration = 3000) => {
-        // Create the notification container
+      const emitNotification = (message) => {
+        // Check if notifications are enabled
+        if (!this.config.notifications.enabled) {
+          return;
+        }
+    
+        // Create the notification element
         const notification = document.createElement('div');
         notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
         notification.style.color = '#fff';
@@ -2466,35 +2477,38 @@ class OpenKeyNav {
         notification.style.position = 'relative';
         notification.style.display = 'inline-block';
     
-        // Create the branded logo element
-        const logo = document.createElement('div');
-        logo.className = 'okn-logo-text tiny';
-        logo.innerHTML = 'Open<span class="key">Key</span>Nav';
-    
-        // Append the logo and message to the notification
-        notification.appendChild(logo);
+        // Optionally display the tool name in the notification
+        if (this.config.notifications.displayToolName) {
+          const logo = document.createElement('div');
+          logo.className = 'okn-logo-text tiny';
+          logo.setAttribute('aria-label', 'OpenKeyNav');
+          logo.innerHTML = 'Open<span class="key">Key</span>Nav';
+          notification.appendChild(logo);
+        }
     
         // Create the message element
         const messageDiv = document.createElement('div');
         messageDiv.textContent = message;
+        // Append the message to the notification
         notification.appendChild(messageDiv);
     
-        // Append the notification to the body or a specific container
+        // Append the notification to the notification container
         getSetNotificationContainer().appendChild(notification);
     
         // Automatically remove the notification after the specified duration
         setTimeout(() => {
-            notification.remove();
-        }, duration);
-    };
+          notification.remove();
+        }, this.config.notifications.duration);
+      };
     
-
-      // Effect to emit notification based on the current mode
+      // Effect to emit a notification based on the current mode
       let lastMessage = "No mode active.";
+      
       effect(() => {
         const modes = this.config.modes;
-
         let message;
+    
+        // Determine the message based on the current mode
         if (modes.clicking.value) {
           message = "In click mode. Press Esc to exit.";
         } else if (modes.moving.value) {
@@ -2502,27 +2516,31 @@ class OpenKeyNav {
         } else {
           message = "No mode active.";
         }
-
-        if (message == lastMessage) {
-          return false;
+    
+        // Only emit the notification if the message has changed
+        if (message === lastMessage) {
+          return;
         }
-
+    
+        // Emit the notification with the current message
         console.log(message);
         emitNotification(message);
         lastMessage = message;
       });
-      
-      effect(() => { // statusbar
+    
+      // Effect to update the status bar based on the current mode
+      effect(() => {
         const modes = this.config.modes;
         // DOM element to update
         const statusBar = document.getElementById('status-bar');
-
+    
         // Abort if no status bar is found
         if (!statusBar) {
           console.warn('Status bar element not found in the DOM.');
           return;
         }
-        
+    
+        // Update the status bar content based on the current mode
         if (modes.clicking.value) {
           statusBar.textContent = "In click mode. Press Esc to exit.";
         } else if (modes.moving.value) {
@@ -2532,6 +2550,7 @@ class OpenKeyNav {
         }
       });
     }
+    
 
     applicationSupport() {
       // Version Ping (POST https://applicationsupport.openkeynav.com/capture/)
