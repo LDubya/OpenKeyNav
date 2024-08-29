@@ -59,7 +59,7 @@ openKeyNav.init();
 If you prefer not to use npm, you can include OpenKeyNav directly from a CDN. Add the following script tag to your HTML file:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/openkeynav/dist/openkeynav.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/openkeynav/dist/openkeynav.umd.min.js"></script>
 ```
 
 After including the script, you can initialize OpenKeyNav like this:

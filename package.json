@@ -1,6 +1,6 @@
 {
   "name": "openkeynav",
-  "version": "0.1.43",
+  "version": "0.1.44",
   "description": "OpenKeyNav: A JavaScript plugin for enhancing keyboard navigation and accessibility on web pages.",
   "main": "dist/OpenKeyNav.js",
   "module": "dist/OpenKeyNav.js",
@@ -9,12 +9,17 @@
     "url": "https://github.com/LDubya/OpenKeyNav.git"
   },
   "scripts": {
-    "build": "babel src -d dist && terser dist/openkeynav.js -o dist/openkeynav.min.js",
+    "build": "babel src -d dist && rollup -c && terser dist/OpenKeyNav.js -o dist/openkeynav.min.js && terser dist/openkeynav.umd.js -o dist/openkeynav.umd.min.js",
     "update-version-js": "node ./dev/updateVersion.js",
     "patch_build_commit": "npm run update-version-js && npm run build && git add --all; git commit -m \"patch build and commit\" ",
     "patch_build_pack": "npm run update-version-js && npm run build && npm pack",
     "test": ""
   },
+  "files": [
+    "dist/",
+    "README.md",
+    "package.json"
+  ],
   "keywords": [
     "keyboard",
     "accessibility",
@@ -35,6 +40,10 @@
     "@babel/cli": "^7.24.8",
     "@babel/core": "^7.25.2",
     "@babel/preset-env": "^7.25.3",
+    "@rollup/plugin-commonjs": "^26.0.1",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "rollup": "^4.21.1",
+    "rollup-plugin-babel": "^4.4.0",
     "terser": "^5.31.3"
   }
 }
