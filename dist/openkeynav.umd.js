@@ -16,7 +16,7 @@
 	  value: true
 	});
 	version.version = void 0;
-	version.version = "0.1.45";
+	version.version = "0.1.48";
 
 	var signals = {};
 
@@ -2270,10 +2270,16 @@
 	          notification.style.position = 'relative';
 	          notification.style.display = 'inline-block';
 
+	          // Add ARIA role for accessibility
+	          notification.setAttribute('role', 'alert');
+	          notification.setAttribute('aria-live', 'assertive');
+	          notification.setAttribute('aria-atomic', 'true');
+
 	          // Optionally display the tool name in the notification
 	          if (_this7.config.notifications.displayToolName) {
 	            var logo = document.createElement('div');
 	            logo.className = 'okn-logo-text tiny';
+	            logo.setAttribute('role', 'img'); // Assigning an image role
 	            logo.setAttribute('aria-label', 'OpenKeyNav');
 	            logo.innerHTML = 'Open<span class="key">Key</span>Nav';
 	            notification.appendChild(logo);
