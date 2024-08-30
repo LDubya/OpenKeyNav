@@ -16,7 +16,7 @@
 	  value: true
 	});
 	version.version = void 0;
-	version.version = "0.1.44";
+	version.version = "0.1.45";
 
 	var signals = {};
 
@@ -2250,6 +2250,14 @@
 	            return;
 	          }
 
+	          // Get the notification container
+	          var notificationContainer = getSetNotificationContainer();
+
+	          // Remove any existing notification before creating a new one
+	          while (notificationContainer.firstChild) {
+	            notificationContainer.firstChild.remove();
+	          }
+
 	          // Create the notification element
 	          var notification = document.createElement('div');
 	          notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
@@ -2278,7 +2286,7 @@
 	          notification.appendChild(messageDiv);
 
 	          // Append the notification to the notification container
-	          getSetNotificationContainer().appendChild(notification);
+	          notificationContainer.appendChild(notification);
 
 	          // Automatically remove the notification after the specified duration
 	          setTimeout(function () {

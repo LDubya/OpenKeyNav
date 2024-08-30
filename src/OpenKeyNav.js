@@ -2462,9 +2462,17 @@ class OpenKeyNav {
       const emitNotification = (message) => {
         // Check if notifications are enabled
         if (!this.config.notifications.enabled) {
-          return;
+            return;
         }
-    
+
+        // Get the notification container
+        const notificationContainer = getSetNotificationContainer();
+
+        // Remove any existing notification before creating a new one
+        while (notificationContainer.firstChild) {
+            notificationContainer.firstChild.remove();
+        }
+
         // Create the notification element
         const notification = document.createElement('div');
         notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
@@ -2476,30 +2484,31 @@ class OpenKeyNav {
         notification.style.textAlign = 'center';
         notification.style.position = 'relative';
         notification.style.display = 'inline-block';
-    
+
         // Optionally display the tool name in the notification
         if (this.config.notifications.displayToolName) {
-          const logo = document.createElement('div');
-          logo.className = 'okn-logo-text tiny';
-          logo.setAttribute('aria-label', 'OpenKeyNav');
-          logo.innerHTML = 'Open<span class="key">Key</span>Nav';
-          notification.appendChild(logo);
+            const logo = document.createElement('div');
+            logo.className = 'okn-logo-text tiny';
+            logo.setAttribute('aria-label', 'OpenKeyNav');
+            logo.innerHTML = 'Open<span class="key">Key</span>Nav';
+            notification.appendChild(logo);
         }
-    
+
         // Create the message element
         const messageDiv = document.createElement('div');
         messageDiv.textContent = message;
         // Append the message to the notification
         notification.appendChild(messageDiv);
-    
+
         // Append the notification to the notification container
-        getSetNotificationContainer().appendChild(notification);
-    
+        notificationContainer.appendChild(notification);
+
         // Automatically remove the notification after the specified duration
         setTimeout(() => {
-          notification.remove();
+            notification.remove();
         }, this.config.notifications.duration);
       };
+
     
       // Effect to emit a notification based on the current mode
       let lastMessage = "No mode active.";
