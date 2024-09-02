@@ -1,6 +1,6 @@
-# OpenKeyNav™
+# OpenKeyNav
 
-OpenKeyNav™ is an open-source JavaScript library designed to enhance keyboard accessibility on websites. Originally developed to improve the keyboard accessibility of the best-selling [Columns](https://apps.apple.com/us/app/columns-two-column-notes/id1493839821) app, it generates keyboard shortcuts on the fly and presents them to users on-demand, supporting complex interactions like drag-and-drop entirely with the keyboard.
+OpenKeyNav is an open-source JavaScript library designed to enhance keyboard accessibility on websites. Originally developed to improve the keyboard accessibility of the best-selling [Columns](https://apps.apple.com/us/app/columns-two-column-notes/id1493839821) app, it generates keyboard shortcuts on the fly and presents them to users on-demand, supporting complex interactions like drag-and-drop entirely with the keyboard.
 
 OpenKeyNav is available for developers to fork, modify, and use via its [GitHub repository](https://github.com/LDubya/OpenKeyNav) and [NPM](https://www.npmjs.com/package/openkeynav).
 
