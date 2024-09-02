@@ -16,7 +16,7 @@
 	  value: true
 	});
 	version.version = void 0;
-	version.version = "0.1.48";
+	version.version = "0.1.49";
 
 	var signals = {};
 
@@ -2352,7 +2352,7 @@
 	      key: "applicationSupport",
 	      value: function applicationSupport() {
 	        // Version Ping (POST https://applicationsupport.openkeynav.com/capture/)
-	        // This is anonymous and minimal, only sending the library version and the date. No PII.
+	        // This is anonymous and minimal, only sending the library version. No PII.
 	        // Necessary to know which versions are being used in the wild in order to provide proper support and plan roadmaps
 
 	        // no need to run app support on local develompent
@@ -2367,12 +2367,9 @@
 	            },
 	            "body": JSON.stringify({
 	              "properties": {
-	                "version": _version.version,
-	                "timestamp": new Date().toISOString()
+	                "version": _version.version
 	              },
-	              "api_key": "phc_2NVfXaBIYnZxYzEQtMJCuwB4rDbmjKkeCxlVZMK7x12",
-	              "event": "openKeyNav.js version ping",
-	              "distinct_id": "openKeyNav.js"
+	              "event": "openKeyNav.js version ping"
 	            })
 	          });
 	          // .then((res) => res.text())

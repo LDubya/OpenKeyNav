@@ -2569,7 +2569,7 @@ class OpenKeyNav {
 
     applicationSupport() {
       // Version Ping (POST https://applicationsupport.openkeynav.com/capture/)
-      // This is anonymous and minimal, only sending the library version and the date. No PII.
+      // This is anonymous and minimal, only sending the library version. No PII.
       // Necessary to know which versions are being used in the wild in order to provide proper support and plan roadmaps
 
       // no need to run app support on local develompent
@@ -2588,11 +2588,8 @@ class OpenKeyNav {
           "body": JSON.stringify({
                 "properties": {
                       "version": version,
-                      "timestamp": new Date().toISOString()
                 },
-                "api_key": "phc_2NVfXaBIYnZxYzEQtMJCuwB4rDbmjKkeCxlVZMK7x12",
                 "event": "openKeyNav.js version ping",
-                "distinct_id": "openKeyNav.js"
           })
         })
         // .then((res) => res.text())
