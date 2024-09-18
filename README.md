@@ -4,12 +4,21 @@ OpenKeyNav is an open-source JavaScript library designed to enhance keyboard acc
 
 OpenKeyNav is available for developers to fork, modify, and use via its [GitHub repository](https://github.com/LDubya/OpenKeyNav) and [NPM](https://www.npmjs.com/package/openkeynav).
 
+## Watch the Video
+
+### Featured by Harvard Innovation Labs and Harvard Medical School
+[![Watch the Video](https://img.youtube.com/vi/xIShByl7baE/0.jpg)](https://www.youtube.com/watch?v=xIShByl7baE)
+
+[Watch Video on the Harvard Innovation Labs Youtube](https://www.youtube.com/watch?v=xIShByl7baE)
+
+[Watch Reel on the Harvard Medical School Instagram](https://www.instagram.com/p/C_1Fl9GJSUq/)
+
+
 ## Read the preprint
 
-The creator of OpenKeyNav, who is also a researcher at Harvard Medical School (*), 
-introduces the methodology behind his tool in the preprint 
-*"Using OpenKeyNav to Enhance the Keyboard-Accessibility of Web-based Data Visualization Tools"* [(OSF Preprint)](https://osf.io/preprints/osf/3wjsa). 
-This paper will be presented at the AccessViz workshop, part of IEEE VIS 2024 conference.
+The preprint 
+[*"Using OpenKeyNav to Enhance the Keyboard-Accessibility of Web-based Data Visualization Tools"* (OSF Preprint)](https://osf.io/preprints/osf/3wjsa) 
+will be presented at the AccessViz workshop, part of IEEE VIS 2024 conference.
 
 ## Features
 
