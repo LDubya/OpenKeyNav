@@ -20,6 +20,8 @@ The preprint
 [*"Using OpenKeyNav to Enhance the Keyboard-Accessibility of Web-based Data Visualization Tools"* (OSF Preprint)](https://osf.io/preprints/osf/3wjsa) 
 will be presented at the AccessViz workshop, part of IEEE VIS 2024 conference.
 
+This research paper is funded by the National Institutes of Health through the HIDIVE lab at Harvard University*.
+
 ## Features
 
 - **Automatic Keyboard Shortcuts**: Generate and display keyboard shortcuts dynamically.
@@ -220,4 +222,4 @@ OpenKeyNav is licensed under the MIT License. See the LICENSE file for more deta
 
 ## (*) Disclaimer
 
-Any references to organizations or institutions are for informational purposes only and do not imply endorsement, sponsorship, or partnership.
+Any references to organizations or institutions are for informational purposes only and do not imply endorsement or an affiliation beyond the stated context.
