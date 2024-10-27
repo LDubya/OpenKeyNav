@@ -2,6 +2,8 @@
 
 OpenKeyNav is an open-source JavaScript library designed to enhance keyboard accessibility on websites. Originally developed to improve the keyboard accessibility of the best-selling [Columns](https://apps.apple.com/us/app/columns-two-column-notes/id1493839821) app, it generates keyboard shortcuts on the fly and presents them to users on-demand, supporting complex interactions like drag-and-drop entirely with the keyboard.
 
+OpenKeyNav aims to improve website accessibility by enabling keyboard navigation for elements that are traditionally only accessible with a mouse. OpenKeyNav achieves this by adding visual "labels" to clickable elements on the page, which display key combinations. Users can then press these key combinations to "click" on the labeled element. OpenKeyNav also supports features like keyboard-based scrolling and navigation of headings. The code includes various utility functions and event listeners to manage the labeling, keybindings, and user interactions. It also implements a notification system to inform users about active modes and provides a framework for keyboard drag-and-drop functionality.
+
 OpenKeyNav is available for developers to fork, modify, and use via its [GitHub repository](https://github.com/LDubya/OpenKeyNav) and [NPM](https://www.npmjs.com/package/openkeynav).
 
 Featured by [Harvard Innovation Labs](https://www.youtube.com/watch?v=xIShByl7baE) and [Harvard Medical School](https://www.instagram.com/p/C_1Fl9GJSUq/)
