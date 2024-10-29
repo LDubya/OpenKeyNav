@@ -16,7 +16,7 @@
 	  value: true
 	});
 	version.version = void 0;
-	version.version = "0.1.87";
+	version.version = "0.1.117";
 
 	var signals = {};
 
@@ -235,12 +235,15 @@
 	  value: true
 	});
 	keyButton.keyButton = void 0;
-	keyButton.keyButton = function keyButton(keyCode, text) {
+	keyButton.keyButton = function keyButton(keyCode, text, reverseOrder) {
 	  var styledKeyCode = "<span class=\"keyButton\">".concat(keyCode, "</span>");
 	  if (!text) {
 	    return "".concat(styledKeyCode);
 	  }
-	  return "".concat(text, " ").concat(styledKeyCode);
+	  if (reverseOrder) {
+	    return "\n        <span class=\"keyButtonContainer\"> \n            ".concat(styledKeyCode, "\n            <span class=\"keyButtonLabel\">").concat(text, "</span> \n        </span>\n    ");
+	  }
+	  return "\n        <span class=\"keyButtonContainer\"> \n            <span class=\"keyButtonLabel\">".concat(text, "</span> \n            ").concat(styledKeyCode, "\n        </span>\n    ");
 	};
 
 	Object.defineProperty(toolbar, "__esModule", {
@@ -249,7 +252,11 @@
 	toolbar.handleToolBar = void 0;
 	var _signals = signals;
 	var _keyButton = keyButton;
-	toolbar.handleToolBar = function handleToolBar(openKeyNav) {
+	// unified status bar and toolbar
+
+	var openKeyNav$1;
+	toolbar.handleToolBar = function handleToolBar(parent) {
+	  openKeyNav$1 = parent;
 	  var toolBarElement = document.querySelector('.openKeyNav-toolBar');
 	  if (!toolBarElement) {
 	    return;
@@ -259,29 +266,51 @@
 	  // 5. Handle mode changes 
 	  var lastMessage;
 	  (0, _signals.effect)(function () {
-	    openKeyNav.config.modes;
-	    updateToolbar(toolBarElement, openKeyNav, lastMessage);
-	  });
-	  (0, _signals.effect)(function () {
-	    openKeyNav.config.typedLabel.value;
-	    updateToolbar(toolBarElement, openKeyNav, lastMessage);
+	    openKeyNav$1.config.modes;
+	    openKeyNav$1.config.typedLabel.value;
+	    updateToolbar(toolBarElement, lastMessage);
 	  });
 	};
-	var updateToolbar = function updateToolbar(toolBarElement, openKeyNav, lastMessage) {
+	var toolbarTemplates = {
+	  "default": function _default() {
+	    //  default message
+	    // press k for click mode ( Click [ k ] )
+	    // press m for drag mode ( Drag [ m ] )
+	    var dragButton;
+	    if (!!openKeyNav$1.config.modesConfig.move.config) {
+	      // if drag mode is configured
+	      dragButton = (0, _keyButton.keyButton)(openKeyNav$1.config.keys.move, "Drag");
+	    }
+	    return "<p>\n                    ".concat((0, _keyButton.keyButton)(openKeyNav$1.config.keys.menu, "..."), "\n                    ").concat(dragButton, "\n                    ").concat((0, _keyButton.keyButton)(openKeyNav$1.config.keys.click, "Click"), " \n                </p>\n            ");
+	  },
+	  clickMode: function clickMode(typedLabel) {
+	    return "<p>".concat((0, _keyButton.keyButton)("Esc", "Click Mode", true), "</p>");
+	  },
+	  dragMode: function dragMode(typedLabel) {
+	    return "<p>".concat((0, _keyButton.keyButton)("Esc", "Drag Mode", true), "</p>");
+	  },
+	  menu: function menu(typedLabel) {
+	    return "\n            <p>".concat((0, _keyButton.keyButton)("Esc", "Shortcuts", true), "</p>\n            <div class=\"openKeyNav-toolBar-expanded\">\n                ").concat((0, _keyButton.keyButton)(openKeyNav$1.config.keys.click, "Click"), "\n                ").concat((0, _keyButton.keyButton)(openKeyNav$1.config.keys.move, "Drag"), "\n            </div>\n        ");
+	  }
+	};
+	var updateElement = function updateElement(element, html) {
+	  element.innerHTML = html;
+	};
+	var updateToolbar = function updateToolbar(toolBarElement, lastMessage) {
 	  if (!toolBarElement) {
 	    return;
 	  }
 	  var message;
-	  openKeyNav.config.typedLabel.value;
-	  if (openKeyNav.config.modes.clicking.value) {
-	    message = "Click Mode ".concat((0, _keyButton.keyButton)("Esc"));
-	  } else if (openKeyNav.config.modes.moving.value) {
-	    message = "Drag Mode ".concat((0, _keyButton.keyButton)("Esc"));
+	  var typedLabel = openKeyNav$1.config.typedLabel.value;
+	  if (openKeyNav$1.config.modes.clicking.value) {
+	    message = toolbarTemplates.clickMode(typedLabel);
+	  } else if (openKeyNav$1.config.modes.moving.value) {
+	    message = toolbarTemplates.dragMode(typedLabel);
+	    // message = toolbarTemplates.menu(typedLabel);
+	  } else if (openKeyNav$1.config.modes.menu.value) {
+	    message = toolbarTemplates.menu(typedLabel);
 	  } else {
-	    //  default message
-	    // press k for click mode ( Click [ k ] )
-	    // press m for drag mode ( Drag [ m ] )
-	    message = " ".concat((0, _keyButton.keyButton)(openKeyNav.config.keys.click, "Click"), " ").concat((0, _keyButton.keyButton)(openKeyNav.config.keys.move, "Drag"), " "); // Default message
+	    message = toolbarTemplates["default"](); // Default message
 	  }
 
 	  // Only emit the notification if the message has changed
@@ -293,13 +322,16 @@
 	  console.log(message);
 	  // emitNotification(message);
 	  // Update the toolbar content
-	  toolBarElement.innerHTML = "<p> ".concat(message, " </p>");
+	  updateElement(toolBarElement, message);
 	  lastMessage = message;
 	};
 	var injectToolbarStyleSheet = function injectToolbarStyleSheet() {
 	  var style = document.createElement('style');
+	  var toolBarHeight = openKeyNav$1.config.toolBar.height;
+	  var toolBarVerticalPadding = 6;
+	  var toolbarBackground = "\n        background-color: hsl(210 10% 95% / 1);\n        border: 1px solid hsl(210, 8%, 68%);\n        border-radius: 4px;\n        padding: 3px ".concat(toolBarVerticalPadding, "px;\n    ");
 	  style.type = 'text/css';
-	  style.innerHTML += "\n    .openKeyNav-toolBar {\n        width: 200px;\n        // background-color: #333;\n        color: #333;\n        padding: 3px 10px;\n        z-index: 10000;\n        background-color: hsl(210 10% 95% / 1);\n        border: 1px solid hsl(210, 8%, 68%);\n        border-radius: 4px;\n        font-size:12px;\n        display: flex;\n        align-items: center;\n    }\n    .openKeyNav-toolBar p{\n        font-size: 16px;\n        margin-bottom: 0;\n    }\n    ";
+	  style.innerHTML += "\n    .openKeyNav-toolBar {\n        width: 200px; // needs to have a set width since the content changes inside...\n        // max-width: 200px;\n        // background-color: #333;\n        color: #333;\n        z-index: 10000;\n        ".concat(toolbarBackground, "\n        font-size:12px;\n        display: flex;\n        align-items: center;\n        // align-items: end;\n        flex-direction: column;\n        direction: rtl;\n        max-height: ").concat(toolBarHeight, "px;\n        position:relative;\n    }\n    .openKeyNav-toolBar > p{\n        overflow: hidden;\n    }\n    .openKeyNav-toolBar p{\n        font-size: 16px;\n        margin-bottom: 0;\n        line-height: ").concat(toolBarHeight - toolBarVerticalPadding, "px;\n        text-align: left;\n    }\n    .openKeyNav-toolBar-expanded {\n        position: absolute;\n        top: 0;\n        margin-top: 40px;\n        width: 100%;\n        ").concat(toolbarBackground, "\n        display: grid;\n        justify-content: left;\n    }\n    // .openKeyNav-toolBar span.stacked {\n    //     display: inline-grid;\n    //     grid-template-rows: auto auto;\n    // }\n    ");
 	  document.head.appendChild(style);
 	};
 
@@ -577,6 +609,9 @@
 	          outlineColor: '#0088cc',
 	          outlineStyle: 'solid'
 	        },
+	        toolBar: {
+	          height: 32
+	        },
 	        notifications: {
 	          enabled: true,
 	          displayToolName: true,
@@ -611,7 +646,9 @@
 	          // focus on the next heading of level 4 // as seen in JAWS, NVDA // do not modify
 	          heading_5: '5',
 	          // focus on the next heading of level 5 // as seen in JAWS, NVDA // do not modify
-	          heading_6: '6' // focus on the next heading of level 6 // as seen in JAWS, NVDA // do not modify
+	          heading_6: '6',
+	          // focus on the next heading of level 6 // as seen in JAWS, NVDA // do not modify
+	          menu: 'o'
 	        },
 	        modesConfig: {
 	          move: {
@@ -638,6 +675,9 @@
 	            modifier: false,
 	            clickEventElements: new Set(),
 	            eventListenersMap: new Map()
+	          },
+	          menu: {
+	            modifier: false
 	          }
 	        },
 	        log: [],
@@ -654,7 +694,8 @@
 	        },
 	        modes: {
 	          clicking: (0, _signals.signal)(false),
-	          moving: (0, _signals.signal)(false)
+	          moving: (0, _signals.signal)(false),
+	          menu: (0, _signals.signal)(false)
 	        },
 	        debug: {
 	          screenReaderVisible: false,
@@ -762,7 +803,7 @@
 	        // '}'
 	        ;
 	        style.innerHTML += "\n        .okn-logo-text {\n            font-size: 36px;\n            font-weight: 600;\n            color: #ffffff;\n            background-color: #333;\n            padding: .1em .2em;\n            border-radius: 1em;\n            box-sizing: border-box;\n            line-height: 1;\n            text-align: center;\n            position: relative;\n            display: inline-block;\n            min-width: 1rem;\n            border: max(.1em, 2px) solid #ffffff;\n            white-space: nowrap;\n        }\n\n        .okn-logo-text.small {\n            font-size: 18px;\n        }\n        .okn-logo-text.tiny {\n            font-size: 10px;\n            /* border-width: 1px; */\n            border: none;\n        }\n        .okn-logo-text.tiny .key {\n            font-weight: 700;\n        }\n\n        .okn-logo-text.light {\n            color: #333; /* Dark text color */\n            background-color: #fff; /* Light background */\n            border-color: #333; /* Dark border */\n        }\n\n        .okn-logo-text .key {\n            display: inline;\n            padding: .1em .2em;\n            margin: 0 .1em;\n            background-color: #ffffff; /* Light background */\n            color: #333; /* Dark text */\n            line-height: 1;\n            /* font-size: 0.6em; */\n            position: relative;\n            top: -.3em;\n        }\n\n        .okn-logo-text.light .key {\n            background-color: #333; /* Dark background */\n            color: #ffffff; /* Light text */\n        }\n\n        .okn-logo-text .key::before,\n        .okn-logo-text .key::after {\n            content: \"\";\n            position: absolute;\n            left: 50%;\n            transform: translateX(-50%);\n        }\n\n        .okn-logo-text .key::before {\n            --border-size: 0.5em; /* Base border size */\n            --min-border-size: 5px; /* Minimum pixel size */\n\n            border-top: max(var(--border-size), var(--min-border-size)) solid #333;\n            bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n            border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n            border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n        }\n        .okn-logo-text.light .key::before {\n            border-top-color: #fff; /* Dark top triangle */\n        }\n\n        .okn-logo-text .key::after {\n            --border-size: .4em; /* Base border size */\n            --min-border-size: 4px; /* Minimum pixel size */\n\n            border-top: max( calc( var(--border-size) + 2px) , var(--min-border-size)) solid #fff;\n            bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n            border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n            border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n        }\n\n        .okn-logo-text.light .key::after {\n            border-top-color: #333; /* Light bottom triangle */\n        }\n        ";
-	        style.innerHTML += "\n          .keyButton {\n            display: inline-block;\n            margin: 0 .1em;\n            padding: 1px 4px;\n            min-width: 1.3em;\n            text-align: center;\n            line-height: 1;\n            color: hsl(210, 8%, 5%);\n            text-shadow: 0 1px 0 hsl(0, 0%, 100%);\n            background-color: hsl(210, 8%, 90%);\n            border: 1px solid hsl(210, 8%, 68%);\n            border-radius: 3px;\n            box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);\n            white-space: nowrap;\n        }\n        ";
+	        style.innerHTML += "\n          .keyButtonContainer {\n              margin: 0 .1em;\n              display: inline-grid;\n              grid-template-columns: min-content auto;\n              align-items: baseline;\n              column-gap: 4px;\n          }\n          .keyButton {\n            display: inline-block;\n            padding: 1px 4px;\n            min-width: 1.3em;\n            text-align: center;\n            line-height: 1;\n            color: hsl(210, 8%, 5%);\n            text-shadow: 0 1px 0 hsl(0, 0%, 100%);\n            background-color: hsl(210, 8%, 90%);\n            border: 1px solid hsl(210, 8%, 68%);\n            border-radius: 3px;\n            box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);\n            white-space: nowrap;\n        }\n        ";
 	        document.head.appendChild(style);
 	      }
 	    }, {
@@ -1127,6 +1168,9 @@
 
 	          // reset click mode config
 	          _this5.config.modesConfig.click.modifier = false;
+
+	          // reset menu mode config
+	          _this5.config.modesConfig.menu.modifier = false;
 	        };
 	        var clearInaccessibleWarnings = function clearInaccessibleWarnings() {
 	          document.querySelectorAll('.openKeyNav-inaccessible').forEach(function (el) {
@@ -1441,7 +1485,7 @@
 	        };
 	        var doEscape = function doEscape(e) {
 	          var returnFalse = false;
-	          if (_this6.config.modes.clicking.value || _this6.config.modes.moving.value) {
+	          if (_this6.config.modes.clicking.value || _this6.config.modes.moving.value || _this6.config.modes.menu.value) {
 	            e.preventDefault();
 	            e.stopPropagation();
 	            endDrag();
@@ -2156,6 +2200,7 @@
 	          if (_this6.config.modes.moving.value) {
 	            return handleMoveMode(e);
 	          }
+	          if (_this6.config.modes.menu.value) ;
 	          if (_this6.isTextInputActive()) {
 	            if (!e.ctrlKey) {
 	              return true;
@@ -2199,6 +2244,13 @@
 	                _this6.config.modesConfig.move.modifier = true;
 	              }
 	              showMoveableFromOverlays(); // This will be a new function similar to showClickableOverlays
+	              return true;
+	            case _this6.config.keys.menu:
+	            case _this6.config.keys.menu.toUpperCase():
+	              _this6.config.modes.menu.value = true;
+	              if (e.key == _this6.config.keys.menu.toUpperCase()) {
+	                _this6.config.modesConfig.menu.modifier = true;
+	              }
 	              return true;
 	          }
 

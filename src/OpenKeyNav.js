@@ -95,6 +95,9 @@ class OpenKeyNav {
           outlineColor: '#0088cc',
           outlineStyle: 'solid'
         },
+        toolBar: {
+          height: 32
+        },
         notifications : {
           enabled: true,
           displayToolName: true,
@@ -115,7 +118,8 @@ class OpenKeyNav {
           heading_3: '3', // focus on the next heading of level 3 // as seen in JAWS, NVDA // do not modify
           heading_4: '4', // focus on the next heading of level 4 // as seen in JAWS, NVDA // do not modify
           heading_5: '5', // focus on the next heading of level 5 // as seen in JAWS, NVDA // do not modify
-          heading_6: '6' // focus on the next heading of level 6 // as seen in JAWS, NVDA // do not modify
+          heading_6: '6', // focus on the next heading of level 6 // as seen in JAWS, NVDA // do not modify
+          menu: 'o'
         },
         modesConfig: {
           move: {
@@ -142,6 +146,9 @@ class OpenKeyNav {
             modifier: false,
             clickEventElements: new Set(),
             eventListenersMap : new Map()
+          },
+          menu : {
+            modifier: false,
           }
         },
         log: [],
@@ -156,7 +163,8 @@ class OpenKeyNav {
         },
         modes: {
           clicking: signal(false),
-          moving: signal(false)
+          moving: signal(false),
+          menu: signal(false),
         },
         debug: {
           screenReaderVisible: false,
@@ -489,9 +497,15 @@ class OpenKeyNav {
         `;
 
         style.innerHTML+=`
+          .keyButtonContainer {
+              margin: 0 .1em;
+              display: inline-grid;
+              grid-template-columns: min-content auto;
+              align-items: baseline;
+              column-gap: 4px;
+          }
           .keyButton {
             display: inline-block;
-            margin: 0 .1em;
             padding: 1px 4px;
             min-width: 1.3em;
             text-align: center;
@@ -878,6 +892,9 @@ class OpenKeyNav {
   
         // reset click mode config
         this.config.modesConfig.click.modifier = false;
+
+        // reset menu mode config
+        this.config.modesConfig.menu.modifier = false;
       }
   
       const clearInaccessibleWarnings = () => {
@@ -1246,7 +1263,11 @@ class OpenKeyNav {
   
       const doEscape = e => {
         let returnFalse = false;
-        if (this.config.modes.clicking.value || this.config.modes.moving.value) {
+        if (
+            this.config.modes.clicking.value 
+            || this.config.modes.moving.value
+            || this.config.modes.menu.value
+          ) {
           e.preventDefault();
           e.stopPropagation();
           endDrag();
@@ -1930,6 +1951,10 @@ class OpenKeyNav {
   
         return true;
       }
+
+      const handleMenuMode = (e) => {
+        return true;
+      }
   
       const simulateDragAndDrop = (sourceElement, targetElement) => {
   
@@ -2045,6 +2070,9 @@ class OpenKeyNav {
           if (this.config.modes.moving.value) {
             return handleMoveMode(e);
           }
+          if (this.config.modes.menu.value){
+            handleMenuMode(e);
+          }
   
           if (this.isTextInputActive()) {
             if (!e.ctrlKey) {
@@ -2091,6 +2119,15 @@ class OpenKeyNav {
               }
               showMoveableFromOverlays(); // This will be a new function similar to showClickableOverlays
               return true;
+
+            case this.config.keys.menu:
+            case this.config.keys.menu.toUpperCase():
+              this.config.modes.menu.value = true;
+              if(e.key == this.config.keys.menu.toUpperCase()){
+                this.config.modesConfig.menu.modifier = true;
+              }
+              return true;
+              break;
   
             default:
               break;

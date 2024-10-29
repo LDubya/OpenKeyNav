@@ -121,6 +121,9 @@ var OpenKeyNav = /*#__PURE__*/function () {
         outlineColor: '#0088cc',
         outlineStyle: 'solid'
       },
+      toolBar: {
+        height: 32
+      },
       notifications: {
         enabled: true,
         displayToolName: true,
@@ -155,7 +158,9 @@ var OpenKeyNav = /*#__PURE__*/function () {
         // focus on the next heading of level 4 // as seen in JAWS, NVDA // do not modify
         heading_5: '5',
         // focus on the next heading of level 5 // as seen in JAWS, NVDA // do not modify
-        heading_6: '6' // focus on the next heading of level 6 // as seen in JAWS, NVDA // do not modify
+        heading_6: '6',
+        // focus on the next heading of level 6 // as seen in JAWS, NVDA // do not modify
+        menu: 'o'
       },
       modesConfig: {
         move: {
@@ -182,6 +187,9 @@ var OpenKeyNav = /*#__PURE__*/function () {
           modifier: false,
           clickEventElements: new Set(),
           eventListenersMap: new Map()
+        },
+        menu: {
+          modifier: false
         }
       },
       log: [],
@@ -198,7 +206,8 @@ var OpenKeyNav = /*#__PURE__*/function () {
       },
       modes: {
         clicking: (0, _signals.signal)(false),
-        moving: (0, _signals.signal)(false)
+        moving: (0, _signals.signal)(false),
+        menu: (0, _signals.signal)(false)
       },
       debug: {
         screenReaderVisible: false,
@@ -302,7 +311,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
       // '}'
       ;
       style.innerHTML += "\n        .okn-logo-text {\n            font-size: 36px;\n            font-weight: 600;\n            color: #ffffff;\n            background-color: #333;\n            padding: .1em .2em;\n            border-radius: 1em;\n            box-sizing: border-box;\n            line-height: 1;\n            text-align: center;\n            position: relative;\n            display: inline-block;\n            min-width: 1rem;\n            border: max(.1em, 2px) solid #ffffff;\n            white-space: nowrap;\n        }\n\n        .okn-logo-text.small {\n            font-size: 18px;\n        }\n        .okn-logo-text.tiny {\n            font-size: 10px;\n            /* border-width: 1px; */\n            border: none;\n        }\n        .okn-logo-text.tiny .key {\n            font-weight: 700;\n        }\n\n        .okn-logo-text.light {\n            color: #333; /* Dark text color */\n            background-color: #fff; /* Light background */\n            border-color: #333; /* Dark border */\n        }\n\n        .okn-logo-text .key {\n            display: inline;\n            padding: .1em .2em;\n            margin: 0 .1em;\n            background-color: #ffffff; /* Light background */\n            color: #333; /* Dark text */\n            line-height: 1;\n            /* font-size: 0.6em; */\n            position: relative;\n            top: -.3em;\n        }\n\n        .okn-logo-text.light .key {\n            background-color: #333; /* Dark background */\n            color: #ffffff; /* Light text */\n        }\n\n        .okn-logo-text .key::before,\n        .okn-logo-text .key::after {\n            content: \"\";\n            position: absolute;\n            left: 50%;\n            transform: translateX(-50%);\n        }\n\n        .okn-logo-text .key::before {\n            --border-size: 0.5em; /* Base border size */\n            --min-border-size: 5px; /* Minimum pixel size */\n\n            border-top: max(var(--border-size), var(--min-border-size)) solid #333;\n            bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n            border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n            border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n        }\n        .okn-logo-text.light .key::before {\n            border-top-color: #fff; /* Dark top triangle */\n        }\n\n        .okn-logo-text .key::after {\n            --border-size: .4em; /* Base border size */\n            --min-border-size: 4px; /* Minimum pixel size */\n\n            border-top: max( calc( var(--border-size) + 2px) , var(--min-border-size)) solid #fff;\n            bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n            border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n            border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n        }\n\n        .okn-logo-text.light .key::after {\n            border-top-color: #333; /* Light bottom triangle */\n        }\n        ";
-      style.innerHTML += "\n          .keyButton {\n            display: inline-block;\n            margin: 0 .1em;\n            padding: 1px 4px;\n            min-width: 1.3em;\n            text-align: center;\n            line-height: 1;\n            color: hsl(210, 8%, 5%);\n            text-shadow: 0 1px 0 hsl(0, 0%, 100%);\n            background-color: hsl(210, 8%, 90%);\n            border: 1px solid hsl(210, 8%, 68%);\n            border-radius: 3px;\n            box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);\n            white-space: nowrap;\n        }\n        ";
+      style.innerHTML += "\n          .keyButtonContainer {\n              margin: 0 .1em;\n              display: inline-grid;\n              grid-template-columns: min-content auto;\n              align-items: baseline;\n              column-gap: 4px;\n          }\n          .keyButton {\n            display: inline-block;\n            padding: 1px 4px;\n            min-width: 1.3em;\n            text-align: center;\n            line-height: 1;\n            color: hsl(210, 8%, 5%);\n            text-shadow: 0 1px 0 hsl(0, 0%, 100%);\n            background-color: hsl(210, 8%, 90%);\n            border: 1px solid hsl(210, 8%, 68%);\n            border-radius: 3px;\n            box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);\n            white-space: nowrap;\n        }\n        ";
       document.head.appendChild(style);
     }
   }, {
@@ -673,6 +682,9 @@ var OpenKeyNav = /*#__PURE__*/function () {
 
         // reset click mode config
         _this5.config.modesConfig.click.modifier = false;
+
+        // reset menu mode config
+        _this5.config.modesConfig.menu.modifier = false;
       };
       var clearInaccessibleWarnings = function clearInaccessibleWarnings() {
         document.querySelectorAll('.openKeyNav-inaccessible').forEach(function (el) {
@@ -1029,7 +1041,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
       };
       var doEscape = function doEscape(e) {
         var returnFalse = false;
-        if (_this6.config.modes.clicking.value || _this6.config.modes.moving.value) {
+        if (_this6.config.modes.clicking.value || _this6.config.modes.moving.value || _this6.config.modes.menu.value) {
           e.preventDefault();
           e.stopPropagation();
           endDrag();
@@ -1649,6 +1661,9 @@ var OpenKeyNav = /*#__PURE__*/function () {
         moveSelectedMoveableToTarget(selectedTarget);
         return true;
       };
+      var handleMenuMode = function handleMenuMode(e) {
+        return true;
+      };
       var simulateDragAndDrop = function simulateDragAndDrop(sourceElement, targetElement) {
         var handleStickyMove = function handleStickyMove() {
           function findMatchingElementByHTML(htmlString) {
@@ -1758,6 +1773,9 @@ var OpenKeyNav = /*#__PURE__*/function () {
         if (_this6.config.modes.moving.value) {
           return handleMoveMode(e);
         }
+        if (_this6.config.modes.menu.value) {
+          handleMenuMode(e);
+        }
         if (_this6.isTextInputActive()) {
           if (!e.ctrlKey) {
             return true;
@@ -1804,6 +1822,14 @@ var OpenKeyNav = /*#__PURE__*/function () {
             }
             showMoveableFromOverlays(); // This will be a new function similar to showClickableOverlays
             return true;
+          case _this6.config.keys.menu:
+          case _this6.config.keys.menu.toUpperCase():
+            _this6.config.modes.menu.value = true;
+            if (e.key == _this6.config.keys.menu.toUpperCase()) {
+              _this6.config.modesConfig.menu.modifier = true;
+            }
+            return true;
+            break;
           default:
             break;
         }

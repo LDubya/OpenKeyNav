@@ -6,7 +6,11 @@ Object.defineProperty(exports, "__esModule", {
 exports.handleToolBar = void 0;
 var _signals = require("./signals.js");
 var _keyButton = require("./keyButton.js");
-var handleToolBar = exports.handleToolBar = function handleToolBar(openKeyNav) {
+// unified status bar and toolbar
+
+var openKeyNav;
+var handleToolBar = exports.handleToolBar = function handleToolBar(parent) {
+  openKeyNav = parent;
   var toolBarElement = document.querySelector('.openKeyNav-toolBar');
   if (!toolBarElement) {
     return;
@@ -17,28 +21,51 @@ var handleToolBar = exports.handleToolBar = function handleToolBar(openKeyNav) {
   var lastMessage;
   (0, _signals.effect)(function () {
     var modes = openKeyNav.config.modes;
-    updateToolbar(toolBarElement, openKeyNav, lastMessage);
-  });
-  (0, _signals.effect)(function () {
     var typedLabel = openKeyNav.config.typedLabel.value;
-    updateToolbar(toolBarElement, openKeyNav, lastMessage);
+    updateToolbar(toolBarElement, lastMessage);
   });
 };
-var updateToolbar = function updateToolbar(toolBarElement, openKeyNav, lastMessage) {
+var toolbarTemplates = {
+  "default": function _default() {
+    //  default message
+    // press k for click mode ( Click [ k ] )
+    // press m for drag mode ( Drag [ m ] )
+    var dragButton;
+    if (!!openKeyNav.config.modesConfig.move.config) {
+      // if drag mode is configured
+      dragButton = (0, _keyButton.keyButton)(openKeyNav.config.keys.move, "Drag");
+    }
+    return "<p>\n                    ".concat((0, _keyButton.keyButton)(openKeyNav.config.keys.menu, "..."), "\n                    ").concat(dragButton, "\n                    ").concat((0, _keyButton.keyButton)(openKeyNav.config.keys.click, "Click"), " \n                </p>\n            ");
+  },
+  clickMode: function clickMode(typedLabel) {
+    return "<p>".concat((0, _keyButton.keyButton)("Esc", "Click Mode", true), "</p>");
+  },
+  dragMode: function dragMode(typedLabel) {
+    return "<p>".concat((0, _keyButton.keyButton)("Esc", "Drag Mode", true), "</p>");
+  },
+  menu: function menu(typedLabel) {
+    var html = "";
+    return "\n            <p>".concat((0, _keyButton.keyButton)("Esc", "Shortcuts", true), "</p>\n            <div class=\"openKeyNav-toolBar-expanded\">\n                ").concat((0, _keyButton.keyButton)(openKeyNav.config.keys.click, "Click"), "\n                ").concat((0, _keyButton.keyButton)(openKeyNav.config.keys.move, "Drag"), "\n            </div>\n        ");
+  }
+};
+var updateElement = function updateElement(element, html) {
+  element.innerHTML = html;
+};
+var updateToolbar = function updateToolbar(toolBarElement, lastMessage) {
   if (!toolBarElement) {
     return;
   }
   var message;
   var typedLabel = openKeyNav.config.typedLabel.value;
   if (openKeyNav.config.modes.clicking.value) {
-    message = "Click Mode ".concat((0, _keyButton.keyButton)("Esc"));
+    message = toolbarTemplates.clickMode(typedLabel);
   } else if (openKeyNav.config.modes.moving.value) {
-    message = "Drag Mode ".concat((0, _keyButton.keyButton)("Esc"));
+    message = toolbarTemplates.dragMode(typedLabel);
+    // message = toolbarTemplates.menu(typedLabel);
+  } else if (openKeyNav.config.modes.menu.value) {
+    message = toolbarTemplates.menu(typedLabel);
   } else {
-    //  default message
-    // press k for click mode ( Click [ k ] )
-    // press m for drag mode ( Drag [ m ] )
-    message = " ".concat((0, _keyButton.keyButton)(openKeyNav.config.keys.click, "Click"), " ").concat((0, _keyButton.keyButton)(openKeyNav.config.keys.move, "Drag"), " "); // Default message
+    message = toolbarTemplates["default"](); // Default message
   }
 
   // Only emit the notification if the message has changed
@@ -50,12 +77,15 @@ var updateToolbar = function updateToolbar(toolBarElement, openKeyNav, lastMessa
   console.log(message);
   // emitNotification(message);
   // Update the toolbar content
-  toolBarElement.innerHTML = "<p> ".concat(message, " </p>");
+  updateElement(toolBarElement, message);
   lastMessage = message;
 };
 var injectToolbarStyleSheet = function injectToolbarStyleSheet() {
   var style = document.createElement('style');
+  var toolBarHeight = openKeyNav.config.toolBar.height;
+  var toolBarVerticalPadding = 6;
+  var toolbarBackground = "\n        background-color: hsl(210 10% 95% / 1);\n        border: 1px solid hsl(210, 8%, 68%);\n        border-radius: 4px;\n        padding: 3px ".concat(toolBarVerticalPadding, "px;\n    ");
   style.type = 'text/css';
-  style.innerHTML += "\n    .openKeyNav-toolBar {\n        width: 200px;\n        // background-color: #333;\n        color: #333;\n        padding: 3px 10px;\n        z-index: 10000;\n        background-color: hsl(210 10% 95% / 1);\n        border: 1px solid hsl(210, 8%, 68%);\n        border-radius: 4px;\n        font-size:12px;\n        display: flex;\n        align-items: center;\n    }\n    .openKeyNav-toolBar p{\n        font-size: 16px;\n        margin-bottom: 0;\n    }\n    ";
+  style.innerHTML += "\n    .openKeyNav-toolBar {\n        width: 200px; // needs to have a set width since the content changes inside...\n        // max-width: 200px;\n        // background-color: #333;\n        color: #333;\n        z-index: 10000;\n        ".concat(toolbarBackground, "\n        font-size:12px;\n        display: flex;\n        align-items: center;\n        // align-items: end;\n        flex-direction: column;\n        direction: rtl;\n        max-height: ").concat(toolBarHeight, "px;\n        position:relative;\n    }\n    .openKeyNav-toolBar > p{\n        overflow: hidden;\n    }\n    .openKeyNav-toolBar p{\n        font-size: 16px;\n        margin-bottom: 0;\n        line-height: ").concat(toolBarHeight - toolBarVerticalPadding, "px;\n        text-align: left;\n    }\n    .openKeyNav-toolBar-expanded {\n        position: absolute;\n        top: 0;\n        margin-top: 40px;\n        width: 100%;\n        ").concat(toolbarBackground, "\n        display: grid;\n        justify-content: left;\n    }\n    // .openKeyNav-toolBar span.stacked {\n    //     display: inline-grid;\n    //     grid-template-rows: auto auto;\n    // }\n    ");
   document.head.appendChild(style);
 };
