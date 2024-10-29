@@ -16,7 +16,7 @@
 	  value: true
 	});
 	version.version = void 0;
-	version.version = "0.1.53";
+	version.version = "0.1.87";
 
 	var signals = {};
 
@@ -57,6 +57,252 @@
 	  return derived;
 	}
 
+	var isTabbable = {};
+
+	Object.defineProperty(isTabbable, "__esModule", {
+	  value: true
+	});
+	isTabbable.isTabbable = void 0;
+	var isTypicallyClickableElement = function isTypicallyClickableElement(el) {
+	  // Check if the element is a known clickable element
+	  if (el.matches(clickableElements.join())) {
+	    return true;
+	  }
+
+	  // Check if the element has an interactive ARIA role
+	  var role = el.getAttribute('role');
+	  if (role && interactiveRoles.includes(role)) {
+	    return true;
+	  }
+	  return false;
+	};
+	var isHiddenByOverflow = function isHiddenByOverflow(element) {
+	  var parent = element.parentNode;
+	  // Use the ownerDocument to get the correct document context
+	  var doc = element.ownerDocument;
+	  var body = doc.body;
+	  while (parent && parent !== body) {
+	    // Use the specific document body of the element
+	    // if (parent instanceof HTMLElement) {
+	    var parentStyle = getComputedStyle(parent);
+	    if (['scroll', 'auto'].includes(parentStyle.overflow) || ['scroll', 'auto'].includes(parentStyle.overflowX) || ['scroll', 'auto'].includes(parentStyle.overflowY)) {
+	      var parentRect = parent.getBoundingClientRect();
+	      var rect = element.getBoundingClientRect();
+	      if (rect.bottom < parentRect.top || rect.top > parentRect.bottom || rect.right < parentRect.left || rect.left > parentRect.right) {
+	        return true; // Element is hidden by parent's overflow
+	      }
+	    }
+	    // }
+	    parent = parent.parentNode;
+	  }
+	  return false; // No parent hides the element by overflow
+	};
+	var inViewport = function inViewport(el) {
+	  // check if the element's top left corner is within the window's viewport
+	  var rect = el.getBoundingClientRect();
+	  var isInViewport = rect.top < window.innerHeight && rect.left < window.innerWidth && rect.bottom > 0 && rect.right > 0;
+	  return isInViewport;
+	};
+	isTabbable.isTabbable = function isTabbable(el, openKeyNav) {
+	  var interactiveRoles = ['button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio'];
+
+	  // Ensure el is an Element before accessing styles
+	  if (!(el instanceof Element)) {
+	    // console.log(`!(el instanceof Element)`, el); //debug
+	    return false;
+	  }
+
+	  // Skip if the element is set to not display (not the same as having zero size)
+	  var style = getComputedStyle(el);
+	  if (style.display === 'none') {
+	    // console.log(`style.display === 'none'`, el); //debug
+	    return false;
+	  }
+
+	  // Skip if the element is hidden by a parent's overflow
+	  if (isHiddenByOverflow(el)) {
+	    // console.log(`isHiddenByOverflow(el)`, el); //debug
+	    return false;
+	  }
+
+	  // Skip if the element is within a <details> that is not open, but allow if it's a <summary> or a clickable element inside a <summary>
+	  // aka it's hidden by the collapsed detail
+	  if (el.matches('details:not([open]) *') && !el.matches('details:not([open]) > summary, details:not([open]) > summary *')) {
+	    // console.log(`hidden details element`, el); //debug
+	    return false;
+	  }
+
+	  // always include if tabindex > -1
+	  // include this after checking if the element is hidden by a parent's overflow, which most screen readers respect
+	  // (elements should not be tabbable by keyboard if they are visibly hidden,
+	  // so include visibly hidden items that are explicitly tabbable to help with accessibility bug discovery)
+	  // do not move this earlier in the heuristic
+	  var tabIndex = el.getAttribute('tabindex');
+	  if (tabIndex && parseInt(tabIndex, 10) > -1) {
+	    // console.log(`tabindex > -1`, el); //debug
+	    return true;
+	  }
+
+	  // Skip if the element is visually hidden (not the same as having zero size or set to not display)
+	  if (style.visibility === 'hidden') {
+	    // console.log(`style.visibility === 'hidden'`, el); //debug
+	    return false;
+	  }
+
+	  // Skip if the element has no size (another way to visually hide something)
+	  if (!openKeyNav.isNonzeroSize(el)) {
+	    // console.log(`!openKeyNav.isNonzeroSize(el)`, el); //debug
+	    return false;
+	  }
+
+	  // Skip if the element's top left corner is not within the window's viewport
+	  if (!inViewport(el)) {
+	    // console.log(`!inViewport(el)`, el); //debug
+	    return false;
+	  }
+
+	  // do isAnyCornerVisible check by default and disable the check if debug.screenReaderVisible is true
+	  if (!openKeyNav.config.debug.screenReaderVisible) {
+	    // Skip if the element's top left corner is covered by another element
+	    if (!openKeyNav.isAnyCornerVisible(el)) {
+	      // console.log(`!openKeyNav.isAnyCornerVisible(el)`, el); //debug
+	      return false;
+	    }
+	  }
+
+	  // Skip if <summary> is not the first <summary> element of a <details>
+	  if (el.tagName.toLowerCase() === 'summary') {
+	    var details = el.parentElement;
+	    if (details.tagName.toLowerCase() === 'details' && details.querySelector('summary') !== el) {
+	      // console.log(`<summary> is not the first <summary> element of a <details>`, el); //debug
+	      return false;
+	    }
+	  }
+
+	  // lastly, elements that are inaccessible due to not being tabbable
+
+	  if (tabIndex && parseInt(tabIndex, 10) == -1) {
+	    if (isTypicallyClickableElement(el)) {
+	      // if (openKeyNav.config.modes.clicking.value) {
+	      openKeyNav.flagAsInaccessible(el, "\n            <h2>Inaccessible Element</h2>\n            <h3>Problem: </h3>\n            <p>This element is not keyboard-focusable.</p>\n            <h3>Solution: </h3>\n            <p>Since this element has a tabindex attribute set to -1, it cannot be keyboard focusable.</p>\n            <p>It must have a tabindex set to a value &gt; -1, ideally 0.</p>\n            <p>You can ignore this warning if this element is not meant to be clickable.</p>\n            ", "keyboard");
+	      // }
+	    }
+
+	    // return false; // let's keep it, since we are flagging it
+	  }
+
+	  // Skip if the element is an <a> without an href (unless it has an ARIA role that makes it tabbable)
+
+	  var role = el.getAttribute('role');
+	  switch (el.tagName.toLowerCase()) {
+	    case 'a':
+	      // console.log(el); //debug
+	      if (!el.hasAttribute('href') || el.getAttribute('href') === '') {
+	        if (!interactiveRoles.includes(role)) {
+	          // if (openKeyNav.config.modes.clicking.value) {
+	          openKeyNav.flagAsInaccessible(el, "\n                <h2>Inaccessible Button</h2>\n                <h3>Problem: </h3>\n                <p>This clickable button is not keyboard-focusable.</p>\n                <p>As a result, only mouse users can click on it.</p>\n                <p>This usability disparity can create an accessibility barrier.</p>\n                <h3>Solution: </h3>\n                <p>Since it is an anchor tag (&lt;a&gt;), it needs a non-empty <em>href</em> attribute.</p>\n                <p>Alternatively, it needs an ARIA <em>role</em> attribute set to something like 'button' or 'link' AND a tabindex attribute set to a value &gt; -1, ideally 0.</p>\n                ", "keyboard");
+	          // return false;
+	          // }
+	        }
+	      }
+	      break;
+	    case 'button':
+	    case 'textarea':
+	    case 'select':
+	    case 'input':
+	    case 'iframe':
+	    case 'summary':
+	      break;
+	    default:
+	      if (!interactiveRoles.includes(role)) {
+	        if (openKeyNav.config.modesConfig.click.clickEventElements.has(el)) ;
+	        openKeyNav.flagAsInaccessible(el, "\n            <!--\n              !el(a,button,textarea,select,input,iframe,summary)\n              !el[role('button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio')]\n              fromClickEvents\n            -->\n            <h2>Possibly Inaccessible Clickable Element</h2>\n            <h3>Problem: </h3>\n            <p>This element has a mouse click event handler attached to it, but it is not keyboard-focusable.</p>\n            <p>As a result, only mouse users can click on it.</p>\n            <p>This usability disparity can create an accessibility barrier.</p>\n            <h3>Solution Options: </h3>\n            <ol>\n              <li>\n                <p>If clicking this element takes the user to a different location, convert this element to an anchor link (&lt;a&gt;) with a non-empty <em>href</em> attribute.</p>\n              </li>\n              <li>\n                <p>Otherwise if clicking this element triggers an action on the page, convert this element to a &lt;button&gt; without a <em>disabled</em> attribute.</p>\n                <p>Alternatively, it needs an ARIA <em>role</em> attribute set to something like 'button' or 'link' AND a tabindex attribute set to a value &gt; -1, ideally 0.</p>\n              </li>\n              <li>\n                <p>Otherwise, if clicking this element does not do anything, then consider removing the click event handler attached to this element.</p>\n              </li>\n            </ol>\n            ", "keyboard");
+	        // return false;
+	        // }
+	      }
+	      break;
+	  }
+
+	  // it must be a valid tabbable element
+	  return true;
+	};
+
+	var toolbar = {};
+
+	var keyButton = {};
+
+	Object.defineProperty(keyButton, "__esModule", {
+	  value: true
+	});
+	keyButton.keyButton = void 0;
+	keyButton.keyButton = function keyButton(keyCode, text) {
+	  var styledKeyCode = "<span class=\"keyButton\">".concat(keyCode, "</span>");
+	  if (!text) {
+	    return "".concat(styledKeyCode);
+	  }
+	  return "".concat(text, " ").concat(styledKeyCode);
+	};
+
+	Object.defineProperty(toolbar, "__esModule", {
+	  value: true
+	});
+	toolbar.handleToolBar = void 0;
+	var _signals = signals;
+	var _keyButton = keyButton;
+	toolbar.handleToolBar = function handleToolBar(openKeyNav) {
+	  var toolBarElement = document.querySelector('.openKeyNav-toolBar');
+	  if (!toolBarElement) {
+	    return;
+	  }
+	  injectToolbarStyleSheet();
+
+	  // 5. Handle mode changes 
+	  var lastMessage;
+	  (0, _signals.effect)(function () {
+	    openKeyNav.config.modes;
+	    updateToolbar(toolBarElement, openKeyNav, lastMessage);
+	  });
+	  (0, _signals.effect)(function () {
+	    openKeyNav.config.typedLabel.value;
+	    updateToolbar(toolBarElement, openKeyNav, lastMessage);
+	  });
+	};
+	var updateToolbar = function updateToolbar(toolBarElement, openKeyNav, lastMessage) {
+	  if (!toolBarElement) {
+	    return;
+	  }
+	  var message;
+	  openKeyNav.config.typedLabel.value;
+	  if (openKeyNav.config.modes.clicking.value) {
+	    message = "Click Mode ".concat((0, _keyButton.keyButton)("Esc"));
+	  } else if (openKeyNav.config.modes.moving.value) {
+	    message = "Drag Mode ".concat((0, _keyButton.keyButton)("Esc"));
+	  } else {
+	    //  default message
+	    // press k for click mode ( Click [ k ] )
+	    // press m for drag mode ( Drag [ m ] )
+	    message = " ".concat((0, _keyButton.keyButton)(openKeyNav.config.keys.click, "Click"), " ").concat((0, _keyButton.keyButton)(openKeyNav.config.keys.move, "Drag"), " "); // Default message
+	  }
+
+	  // Only emit the notification if the message has changed
+	  if (message === lastMessage) {
+	    return;
+	  }
+
+	  // Emit the notification with the current message
+	  console.log(message);
+	  // emitNotification(message);
+	  // Update the toolbar content
+	  toolBarElement.innerHTML = "<p> ".concat(message, " </p>");
+	  lastMessage = message;
+	};
+	var injectToolbarStyleSheet = function injectToolbarStyleSheet() {
+	  var style = document.createElement('style');
+	  style.type = 'text/css';
+	  style.innerHTML += "\n    .openKeyNav-toolBar {\n        width: 200px;\n        // background-color: #333;\n        color: #333;\n        padding: 3px 10px;\n        z-index: 10000;\n        background-color: hsl(210 10% 95% / 1);\n        border: 1px solid hsl(210, 8%, 68%);\n        border-radius: 4px;\n        font-size:12px;\n        display: flex;\n        align-items: center;\n    }\n    .openKeyNav-toolBar p{\n        font-size: 16px;\n        margin-bottom: 0;\n    }\n    ";
+	  document.head.appendChild(style);
+	};
+
 	(function (exports) {
 
 	  Object.defineProperty(exports, "__esModule", {
@@ -65,6 +311,9 @@
 	  exports["default"] = void 0;
 	  var _version = version;
 	  var _signals = signals;
+	  var _isTabbable = isTabbable;
+	  var _toolbar = toolbar;
+	  var _keyButton = keyButton;
 	  function _createForOfIteratorHelper(r, e) {
 	    var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
 	    if (!t) {
@@ -392,7 +641,7 @@
 	          }
 	        },
 	        log: [],
-	        typedLabel: '',
+	        typedLabel: (0, _signals.signal)(''),
 	        headings: {
 	          currentHeadingIndex: 0,
 	          // Keep track of the current heading
@@ -513,7 +762,13 @@
 	        // '}'
 	        ;
 	        style.innerHTML += "\n        .okn-logo-text {\n            font-size: 36px;\n            font-weight: 600;\n            color: #ffffff;\n            background-color: #333;\n            padding: .1em .2em;\n            border-radius: 1em;\n            box-sizing: border-box;\n            line-height: 1;\n            text-align: center;\n            position: relative;\n            display: inline-block;\n            min-width: 1rem;\n            border: max(.1em, 2px) solid #ffffff;\n            white-space: nowrap;\n        }\n\n        .okn-logo-text.small {\n            font-size: 18px;\n        }\n        .okn-logo-text.tiny {\n            font-size: 10px;\n            /* border-width: 1px; */\n            border: none;\n        }\n        .okn-logo-text.tiny .key {\n            font-weight: 700;\n        }\n\n        .okn-logo-text.light {\n            color: #333; /* Dark text color */\n            background-color: #fff; /* Light background */\n            border-color: #333; /* Dark border */\n        }\n\n        .okn-logo-text .key {\n            display: inline;\n            padding: .1em .2em;\n            margin: 0 .1em;\n            background-color: #ffffff; /* Light background */\n            color: #333; /* Dark text */\n            line-height: 1;\n            /* font-size: 0.6em; */\n            position: relative;\n            top: -.3em;\n        }\n\n        .okn-logo-text.light .key {\n            background-color: #333; /* Dark background */\n            color: #ffffff; /* Light text */\n        }\n\n        .okn-logo-text .key::before,\n        .okn-logo-text .key::after {\n            content: \"\";\n            position: absolute;\n            left: 50%;\n            transform: translateX(-50%);\n        }\n\n        .okn-logo-text .key::before {\n            --border-size: 0.5em; /* Base border size */\n            --min-border-size: 5px; /* Minimum pixel size */\n\n            border-top: max(var(--border-size), var(--min-border-size)) solid #333;\n            bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n            border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n            border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n        }\n        .okn-logo-text.light .key::before {\n            border-top-color: #fff; /* Dark top triangle */\n        }\n\n        .okn-logo-text .key::after {\n            --border-size: .4em; /* Base border size */\n            --min-border-size: 4px; /* Minimum pixel size */\n\n            border-top: max( calc( var(--border-size) + 2px) , var(--min-border-size)) solid #fff;\n            bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n            border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n            border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n        }\n\n        .okn-logo-text.light .key::after {\n            border-top-color: #333; /* Light bottom triangle */\n        }\n        ";
+	        style.innerHTML += "\n          .keyButton {\n            display: inline-block;\n            margin: 0 .1em;\n            padding: 1px 4px;\n            min-width: 1.3em;\n            text-align: center;\n            line-height: 1;\n            color: hsl(210, 8%, 5%);\n            text-shadow: 0 1px 0 hsl(0, 0%, 100%);\n            background-color: hsl(210, 8%, 90%);\n            border: 1px solid hsl(210, 8%, 68%);\n            border-radius: 3px;\n            box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);\n            white-space: nowrap;\n        }\n        ";
 	        document.head.appendChild(style);
+	      }
+	    }, {
+	      key: "initToolBar",
+	      value: function initToolBar() {
+	        (0, _toolbar.handleToolBar)(this);
 	      }
 	    }, {
 	      key: "isNonzeroSize",
@@ -535,7 +790,7 @@
 	    }, {
 	      key: "updateOverlayPosition",
 	      value: function updateOverlayPosition(element, overlay) {
-	        var elementsToAvoid = document.querySelectorAll('[data-openkeynav-label], .openKeyNav-label-selected');
+	        var elementsToAvoid = document.querySelectorAll('[data-openkeynav-label], .openKeyNav-label-selected, .openKeyNav-toolBar');
 	        var rectAvoid = element.getBoundingClientRect();
 	        var overlayWidth = overlay.getBoundingClientRect().width;
 	        var overlayHeight = overlay.getBoundingClientRect().height;
@@ -949,12 +1204,12 @@
 	          } else {
 	            // in moving mode.
 	            // keep the selected element's label as a selected indicator
-	            var selectedLabel = document.querySelector(".openKeyNav-label[data-openkeynav-label=\"".concat(this.config.typedLabel, "\"]"));
+	            var selectedLabel = document.querySelector(".openKeyNav-label[data-openkeynav-label=\"".concat(this.config.typedLabel.value, "\"]"));
 	            if (!selectedLabel) {
 	              removeAllOverlays();
 	            } else {
 	              this.config.modesConfig.move.selectedLabel = selectedLabel;
-	              removeAllOverlaysExceptThis(selectedLabel, this.config.typedLabel);
+	              removeAllOverlaysExceptThis(selectedLabel, this.config.typedLabel.value);
 	            }
 	          }
 	        }
@@ -962,7 +1217,7 @@
 	          el.removeAttribute('data-openkeynav-label'); // Clean up data-openkeynav-label attributes
 	        });
 	        resetModes();
-	        this.config.typedLabel = '';
+	        this.config.typedLabel.value = '';
 	      }
 	    }, {
 	      key: "flagAsInaccessible",
@@ -1329,7 +1584,7 @@
 	            var label = overlay.textContent;
 
 	            // If the current typedLabel no longer matches the beginning of this element's label, remove both the overlay and clean up the target element
-	            if (!label.startsWith(_this6.config.typedLabel)) {
+	            if (!label.startsWith(_this6.config.typedLabel.value)) {
 	              var targetElement = document.querySelector("[data-openkeynav-label=\"".concat(label, "\"]"));
 	              targetElement && targetElement.removeAttribute('data-openkeynav-label'); // Clean up the target element's attribute
 	              overlay.remove(); // Remove the overlay
@@ -1416,170 +1671,6 @@
 
 	          return labels; // unshuffled
 	        };
-	        var isTabbable = function isTabbable(el) {
-	          var clickableElements = ['a', 'button', 'textarea', 'select', 'input', 'iframe', 'summary', '[onclick]'];
-	          var interactiveRoles = ['button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio'];
-	          var isTypicallyClickableElement = function isTypicallyClickableElement(el) {
-	            // Check if the element is a known clickable element
-	            if (el.matches(clickableElements.join())) {
-	              return true;
-	            }
-
-	            // Check if the element has an interactive ARIA role
-	            var role = el.getAttribute('role');
-	            if (role && interactiveRoles.includes(role)) {
-	              return true;
-	            }
-	            return false;
-	          };
-	          var isHiddenByOverflow = function isHiddenByOverflow(element) {
-	            var parent = element.parentNode;
-	            // Use the ownerDocument to get the correct document context
-	            var doc = element.ownerDocument;
-	            var body = doc.body;
-	            while (parent && parent !== body) {
-	              // Use the specific document body of the element
-	              // if (parent instanceof HTMLElement) {
-	              var parentStyle = getComputedStyle(parent);
-	              if (['scroll', 'auto'].includes(parentStyle.overflow) || ['scroll', 'auto'].includes(parentStyle.overflowX) || ['scroll', 'auto'].includes(parentStyle.overflowY)) {
-	                var parentRect = parent.getBoundingClientRect();
-	                var rect = element.getBoundingClientRect();
-	                if (rect.bottom < parentRect.top || rect.top > parentRect.bottom || rect.right < parentRect.left || rect.left > parentRect.right) {
-	                  return true; // Element is hidden by parent's overflow
-	                }
-	              }
-	              // }
-	              parent = parent.parentNode;
-	            }
-	            return false; // No parent hides the element by overflow
-	          };
-	          var inViewport = function inViewport(el) {
-	            // check if the element's top left corner is within the window's viewport
-	            var rect = el.getBoundingClientRect();
-	            var isInViewport = rect.top < window.innerHeight && rect.left < window.innerWidth && rect.bottom > 0 && rect.right > 0;
-	            return isInViewport;
-	          };
-
-	          // Ensure el is an Element before accessing styles
-	          if (!(el instanceof Element)) {
-	            // console.log(`!(el instanceof Element)`, el); //debug
-	            return false;
-	          }
-
-	          // Skip if the element is set to not display (not the same as having zero size)
-	          var style = getComputedStyle(el);
-	          if (style.display === 'none') {
-	            // console.log(`style.display === 'none'`, el); //debug
-	            return false;
-	          }
-
-	          // Skip if the element is hidden by a parent's overflow
-	          if (isHiddenByOverflow(el)) {
-	            // console.log(`isHiddenByOverflow(el)`, el); //debug
-	            return false;
-	          }
-
-	          // Skip if the element is within a <details> that is not open, but allow if it's a <summary> or a clickable element inside a <summary>
-	          // aka it's hidden by the collapsed detail
-	          if (el.matches('details:not([open]) *') && !el.matches('details:not([open]) > summary, details:not([open]) > summary *')) {
-	            // console.log(`hidden details element`, el); //debug
-	            return false;
-	          }
-
-	          // always include if tabindex > -1
-	          // include this after checking if the element is hidden by a parent's overflow, which most screen readers respect
-	          // (elements should not be tabbable by keyboard if they are visibly hidden,
-	          // so include visibly hidden items that are explicitly tabbable to help with accessibility bug discovery)
-	          // do not move this earlier in the heuristic
-	          var tabIndex = el.getAttribute('tabindex');
-	          if (tabIndex && parseInt(tabIndex, 10) > -1) {
-	            // console.log(`tabindex > -1`, el); //debug
-	            return true;
-	          }
-
-	          // Skip if the element is visually hidden (not the same as having zero size or set to not display)
-	          if (style.visibility === 'hidden') {
-	            // console.log(`style.visibility === 'hidden'`, el); //debug
-	            return false;
-	          }
-
-	          // Skip if the element has no size (another way to visually hide something)
-	          if (!_this6.isNonzeroSize(el)) {
-	            // console.log(`!this.isNonzeroSize(el)`, el); //debug
-	            return false;
-	          }
-
-	          // Skip if the element's top left corner is not within the window's viewport
-	          if (!inViewport(el)) {
-	            // console.log(`!inViewport(el)`, el); //debug
-	            return false;
-	          }
-
-	          // do isAnyCornerVisible check by default and disable the check if debug.screenReaderVisible is true
-	          if (!_this6.config.debug.screenReaderVisible) {
-	            // Skip if the element's top left corner is covered by another element
-	            if (!_this6.isAnyCornerVisible(el)) {
-	              // console.log(`!this.isAnyCornerVisible(el)`, el); //debug
-	              return false;
-	            }
-	          }
-
-	          // Skip if <summary> is not the first <summary> element of a <details>
-	          if (el.tagName.toLowerCase() === 'summary') {
-	            var details = el.parentElement;
-	            if (details.tagName.toLowerCase() === 'details' && details.querySelector('summary') !== el) {
-	              // console.log(`<summary> is not the first <summary> element of a <details>`, el); //debug
-	              return false;
-	            }
-	          }
-
-	          // lastly, elements that are inaccessible due to not being tabbable
-
-	          if (tabIndex && parseInt(tabIndex, 10) == -1) {
-	            if (isTypicallyClickableElement(el)) {
-	              // if (this.config.modes.clicking.value) {
-	              _this6.flagAsInaccessible(el, "\n                <h2>Inaccessible Element</h2>\n                <h3>Problem: </h3>\n                <p>This element is not keyboard-focusable.</p>\n                <h3>Solution: </h3>\n                <p>Since this element has a tabindex attribute set to -1, it cannot be keyboard focusable.</p>\n                <p>It must have a tabindex set to a value &gt; -1, ideally 0.</p>\n                <p>You can ignore this warning if this element is not meant to be clickable.</p>\n                ", "keyboard");
-	              // }
-	            }
-
-	            // return false; // let's keep it, since we are flagging it
-	          }
-
-	          // Skip if the element is an <a> without an href (unless it has an ARIA role that makes it tabbable)
-
-	          var role = el.getAttribute('role');
-	          switch (el.tagName.toLowerCase()) {
-	            case 'a':
-	              // console.log(el); //debug
-	              if (!el.hasAttribute('href') || el.getAttribute('href') === '') {
-	                if (!interactiveRoles.includes(role)) {
-	                  // if (this.config.modes.clicking.value) {
-	                  _this6.flagAsInaccessible(el, "\n                    <h2>Inaccessible Button</h2>\n                    <h3>Problem: </h3>\n                    <p>This clickable button is not keyboard-focusable.</p>\n                    <p>As a result, only mouse users can click on it.</p>\n                    <p>This usability disparity can create an accessibility barrier.</p>\n                    <h3>Solution: </h3>\n                    <p>Since it is an anchor tag (&lt;a&gt;), it needs a non-empty <em>href</em> attribute.</p>\n                    <p>Alternatively, it needs an ARIA <em>role</em> attribute set to something like 'button' or 'link' AND a tabindex attribute set to a value &gt; -1, ideally 0.</p>\n                    ", "keyboard");
-	                  // return false;
-	                  // }
-	                }
-	              }
-	              break;
-	            case 'button':
-	            case 'textarea':
-	            case 'select':
-	            case 'input':
-	            case 'iframe':
-	            case 'summary':
-	              break;
-	            default:
-	              if (!interactiveRoles.includes(role)) {
-	                if (_this6.config.modesConfig.click.clickEventElements.has(el)) ;
-	                _this6.flagAsInaccessible(el, "\n                <!--\n                  !el(a,button,textarea,select,input,iframe,summary)\n                  !el[role('button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio')]\n                  fromClickEvents\n                -->\n                <h2>Possibly Inaccessible Clickable Element</h2>\n                <h3>Problem: </h3>\n                <p>This element has a mouse click event handler attached to it, but it is not keyboard-focusable.</p>\n                <p>As a result, only mouse users can click on it.</p>\n                <p>This usability disparity can create an accessibility barrier.</p>\n                <h3>Solution Options: </h3>\n                <ol>\n                  <li>\n                    <p>If clicking this element takes the user to a different location, convert this element to an anchor link (&lt;a&gt;) with a non-empty <em>href</em> attribute.</p>\n                  </li>\n                  <li>\n                    <p>Otherwise if clicking this element triggers an action on the page, convert this element to a &lt;button&gt; without a <em>disabled</em> attribute.</p>\n                    <p>Alternatively, it needs an ARIA <em>role</em> attribute set to something like 'button' or 'link' AND a tabindex attribute set to a value &gt; -1, ideally 0.</p>\n                  </li>\n                  <li>\n                    <p>Otherwise, if clicking this element does not do anything, then consider removing the click event handler attached to this element.</p>\n                  </li>\n                </ol>\n                ", "keyboard");
-	                // return false;
-	                // }
-	              }
-	              break;
-	          }
-
-	          // it must be a valid tabbable element
-	          return true;
-	        };
 	        var _getAllCandidateElements = function getAllCandidateElements(doc) {
 	          var allElements = Array.from(doc.querySelectorAll("a," +
 	          // can be made non-tabbable by removing the href attribute or setting tabindex="-1".
@@ -1643,7 +1734,7 @@
 	          disableScrolling();
 	          setTimeout(function () {
 	            var clickables = _getAllCandidateElements(document).filter(function (el) {
-	              return isTabbable(el);
+	              return (0, _isTabbable.isTabbable)(el, _this6);
 	            });
 
 	            // console.log(clickables);
@@ -1660,7 +1751,7 @@
 	        var addKeydownEventListenerToIframe = function addKeydownEventListenerToIframe(iframe) {
 	          try {
 	            var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-	            var potentialTarget = iframeDoc.querySelector("[data-openkeynav-label=\"".concat(_this6.config.typedLabel, "\"]"));
+	            var potentialTarget = iframeDoc.querySelector("[data-openkeynav-label=\"".concat(_this6.config.typedLabel.value, "\"]"));
 	            if (potentialTarget) {
 	              target = potentialTarget;
 
@@ -1745,7 +1836,7 @@
 
 	          // filter out moveables that would not be clickable
 	          moveables = moveables.filter(function (el) {
-	            return isTabbable(el);
+	            return (0, _isTabbable.isTabbable)(el, _this6);
 	          });
 	          var labels = generateLabels(moveables.length);
 	          moveables.forEach(function (element, index) {
@@ -1800,8 +1891,8 @@
 	        };
 	        var handleClickMode = function handleClickMode(e) {
 	          e.preventDefault();
-	          _this6.config.typedLabel += e.key.toLowerCase();
-	          var target = document.querySelector("[data-openkeynav-label=\"".concat(_this6.config.typedLabel, "\"]"));
+	          _this6.config.typedLabel.value += e.key.toLowerCase();
+	          var target = document.querySelector("[data-openkeynav-label=\"".concat(_this6.config.typedLabel.value, "\"]"));
 	          if (!target) {
 	            document.querySelectorAll('iframe').forEach(function (iframe) {
 	              addKeydownEventListenerToIframe(iframe);
@@ -1849,10 +1940,10 @@
 	            // let targetElements = document.querySelectorAll(moveConfig.toElements);
 
 	            // targetElements = targetElements.filter(el => {
-	            //   return isTabbable(el);
+	            //   return isTabbable(el, this);
 	            // });
 
-	            var targetElements = [].filter.call(document.querySelectorAll(moveConfig.toElements), isTabbable);
+	            var targetElements = [].filter.call(document.querySelectorAll(moveConfig.toElements), _isTabbable.isTabbable);
 
 	            // Generate labels for the target elements
 	            var labels = generateLabels(targetElements.length);
@@ -1931,8 +2022,8 @@
 	          });
 	          var selectedTarget;
 	          if (isValidLabelChar) {
-	            _this6.config.typedLabel += e.key.toLowerCase();
-	            selectedTarget = document.querySelector("[data-openkeynav-label=\"".concat(_this6.config.typedLabel, "\"]:not(.openKeyNav-label)"));
+	            _this6.config.typedLabel.value += e.key.toLowerCase();
+	            selectedTarget = document.querySelector("[data-openkeynav-label=\"".concat(_this6.config.typedLabel.value, "\"]:not(.openKeyNav-label)"));
 	          } else {
 	            // tab-based moving
 	            if (e.key === "Tab") {
@@ -1992,7 +2083,7 @@
 	            if (!_this6.config.modesConfig.move.modifier) {
 	              return false;
 	            }
-	            _this6.config.typedLabel = '';
+	            _this6.config.typedLabel.value = '';
 	            _this6.config.modesConfig.move.selectedDropZone = false;
 
 	            // if the selected element (this.config.modesConfig.move.selectedMoveable) is no longer in the DOM,
@@ -2265,7 +2356,7 @@
 	          notification.style.padding = '10px 20px';
 	          notification.style.borderRadius = '5px';
 	          notification.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-	          notification.style.maxWidth = '300px';
+	          notification.style.maxWidth = '400px';
 	          notification.style.textAlign = 'center';
 	          notification.style.position = 'relative';
 	          notification.style.display = 'inline-block';
@@ -2287,7 +2378,7 @@
 
 	          // Create the message element
 	          var messageDiv = document.createElement('div');
-	          messageDiv.textContent = message;
+	          messageDiv.innerHTML = message;
 	          // Append the message to the notification
 	          notification.appendChild(messageDiv);
 
@@ -2308,9 +2399,9 @@
 
 	          // Determine the message based on the current mode
 	          if (modes.clicking.value) {
-	            message = "In click mode. Press Esc to exit.";
+	            message = "In Click Mode. Press ".concat((0, _keyButton.keyButton)("Esc"), " to exit.");
 	          } else if (modes.moving.value) {
-	            message = "In drag mode. Press Esc to exit.";
+	            message = "In Drag Mode. Press ".concat((0, _keyButton.keyButton)("Esc"), " to exit.");
 	          } else {
 	            message = "No mode active.";
 	          }
@@ -2462,6 +2553,7 @@
 	        this.addKeydownEventListener();
 	        this.setupGlobalClickListenerTracking();
 	        this.initStatusBar();
+	        this.initToolBar();
 	        this.applicationSupport();
 	        console.log('Library initialized with config:', this.config);
 	        // window["openKeyNav"] = this;

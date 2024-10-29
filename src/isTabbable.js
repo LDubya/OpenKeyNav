@@ -52,7 +52,7 @@ const inViewport = (el) => {
     return isInViewport;
 };
 
-export const isTabbable = (el) => {
+export const isTabbable = (el, openKeyNav) => {
   
     const clickableElements = ['a', 'button', 'textarea', 'select', 'input', 'iframe', 'summary', '[onclick]'];
     const interactiveRoles = ['button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio'];
@@ -101,8 +101,8 @@ export const isTabbable = (el) => {
     }
 
     // Skip if the element has no size (another way to visually hide something)
-    if (!this.isNonzeroSize(el)) {
-      // console.log(`!this.isNonzeroSize(el)`, el); //debug
+    if (!openKeyNav.isNonzeroSize(el)) {
+      // console.log(`!openKeyNav.isNonzeroSize(el)`, el); //debug
       return false;
     }
 
@@ -113,10 +113,10 @@ export const isTabbable = (el) => {
     }
 
     // do isAnyCornerVisible check by default and disable the check if debug.screenReaderVisible is true
-    if (!this.config.debug.screenReaderVisible) {
+    if (!openKeyNav.config.debug.screenReaderVisible) {
       // Skip if the element's top left corner is covered by another element
-      if (!this.isAnyCornerVisible(el)) {
-        // console.log(`!this.isAnyCornerVisible(el)`, el); //debug
+      if (!openKeyNav.isAnyCornerVisible(el)) {
+        // console.log(`!openKeyNav.isAnyCornerVisible(el)`, el); //debug
         return false;
       }
     }
@@ -136,8 +136,8 @@ export const isTabbable = (el) => {
     if (tabIndex && parseInt(tabIndex, 10) == -1) {
 
       if (isTypicallyClickableElement(el)) {
-        // if (this.config.modes.clicking.value) {
-          this.flagAsInaccessible(
+        // if (openKeyNav.config.modes.clicking.value) {
+          openKeyNav.flagAsInaccessible(
             el,
             `
             <h2>Inaccessible Element</h2>
@@ -165,8 +165,8 @@ export const isTabbable = (el) => {
         // console.log(el); //debug
         if (!el.hasAttribute('href') || el.getAttribute('href') === ''){
           if (!interactiveRoles.includes(role)) {
-            // if (this.config.modes.clicking.value) {
-              this.flagAsInaccessible(
+            // if (openKeyNav.config.modes.clicking.value) {
+              openKeyNav.flagAsInaccessible(
                 el,
                 `
                 <h2>Inaccessible Button</h2>
@@ -197,13 +197,13 @@ export const isTabbable = (el) => {
       default:
         if (!interactiveRoles.includes(role)) {
           // possible inaccessible button
-          // if (this.config.modes.clicking.value) {
+          // if (openKeyNav.config.modes.clicking.value) {
 
           let fromClickEvents = "";
-          if (this.config.modesConfig.click.clickEventElements.has(el)) {
+          if (openKeyNav.config.modesConfig.click.clickEventElements.has(el)) {
             fromClickEvents = "fromClickEvents";
           }
-          this.flagAsInaccessible(
+          openKeyNav.flagAsInaccessible(
             el,
             `
             <!--

@@ -209,6 +209,11 @@ openKeyNav.init(config);
 
 For detailed documentation, guides, and tutorials, visit the [OpenKeyNav Documentation](https://openkeynav.github.io).
 
+## Local build and install
+
+Build: npm run patch_build_pack
+Intall: npm install /path/to/openkeynav-version.tgz
+
 ## License
 
 OpenKeyNav is licensed under the MIT License. See the LICENSE file for more details.

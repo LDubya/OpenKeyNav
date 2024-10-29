@@ -2,6 +2,8 @@
 import { version } from "./version";
 import { signal, effect } from './signals.js';
 import { isTabbable } from './isTabbable.js';
+import { handleToolBar } from './toolbar.js'
+import { keyButton } from './keyButton.js';
 
 /*
 OpenKeyNav.js
@@ -143,7 +145,7 @@ class OpenKeyNav {
           }
         },
         log: [],
-        typedLabel: '',
+        typedLabel: signal(''),
         headings: {
           currentHeadingIndex: 0, // Keep track of the current heading
           list: []
@@ -484,17 +486,30 @@ class OpenKeyNav {
         .okn-logo-text.light .key::after {
             border-top-color: #333; /* Light bottom triangle */
         }
-        `
+        `;
+
+        style.innerHTML+=`
+          .keyButton {
+            display: inline-block;
+            margin: 0 .1em;
+            padding: 1px 4px;
+            min-width: 1.3em;
+            text-align: center;
+            line-height: 1;
+            color: hsl(210, 8%, 5%);
+            text-shadow: 0 1px 0 hsl(0, 0%, 100%);
+            background-color: hsl(210, 8%, 90%);
+            border: 1px solid hsl(210, 8%, 68%);
+            border-radius: 3px;
+            box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);
+            white-space: nowrap;
+        }
+        `;
       document.head.appendChild(style);
     }
 
     initToolBar() {
-      const toolBarElement = document.querySelector('.openKeyNav-toolBar'); 
-
-      if (!toolBarElement) {
-          return;
-      }
-
+      handleToolBar(this);
     }
   
     isNonzeroSize(element) {
@@ -513,7 +528,7 @@ class OpenKeyNav {
   
     // avoids overlaps
     updateOverlayPosition(element, overlay) {
-        const elementsToAvoid = document.querySelectorAll('[data-openkeynav-label], .openKeyNav-label-selected');
+        const elementsToAvoid = document.querySelectorAll('[data-openkeynav-label], .openKeyNav-label-selected, .openKeyNav-toolBar');
         const rectAvoid = element.getBoundingClientRect();
         const overlayWidth = overlay.getBoundingClientRect().width;
         const overlayHeight = overlay.getBoundingClientRect().height;
@@ -942,13 +957,13 @@ class OpenKeyNav {
         else{
           // in moving mode.
           // keep the selected element's label as a selected indicator
-          let selectedLabel = document.querySelector(`.openKeyNav-label[data-openkeynav-label="${this.config.typedLabel}"]`);
+          let selectedLabel = document.querySelector(`.openKeyNav-label[data-openkeynav-label="${this.config.typedLabel.value}"]`);
           if(!selectedLabel){
             removeAllOverlays();
           }
           else{
             this.config.modesConfig.move.selectedLabel = selectedLabel;
-            removeAllOverlaysExceptThis(selectedLabel, this.config.typedLabel);
+            removeAllOverlaysExceptThis(selectedLabel, this.config.typedLabel.value);
           }
         }
       }
@@ -958,7 +973,7 @@ class OpenKeyNav {
       });
   
       resetModes();
-      this.config.typedLabel = '';
+      this.config.typedLabel.value = '';
   
     }
   
@@ -1387,7 +1402,7 @@ class OpenKeyNav {
           const label = overlay.textContent;
   
           // If the current typedLabel no longer matches the beginning of this element's label, remove both the overlay and clean up the target element
-          if (!label.startsWith(this.config.typedLabel)) {
+          if (!label.startsWith(this.config.typedLabel.value)) {
             const targetElement = document.querySelector(`[data-openkeynav-label="${label}"]`);
             targetElement && targetElement.removeAttribute('data-openkeynav-label'); // Clean up the target element's attribute
             overlay.remove(); // Remove the overlay
@@ -1546,7 +1561,7 @@ class OpenKeyNav {
         disableScrolling();
         setTimeout(() => {
           let clickables = getAllCandidateElements(document).filter(el => {
-            return isTabbable(el);
+            return isTabbable(el, this);
           });
   
           // console.log(clickables);
@@ -1565,7 +1580,7 @@ class OpenKeyNav {
       const addKeydownEventListenerToIframe = iframe => {
         try {
           const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-          const potentialTarget = iframeDoc.querySelector(`[data-openkeynav-label="${this.config.typedLabel}"]`);
+          const potentialTarget = iframeDoc.querySelector(`[data-openkeynav-label="${this.config.typedLabel.value}"]`);
           if (potentialTarget) {
             target = potentialTarget;
   
@@ -1656,7 +1671,7 @@ class OpenKeyNav {
   
         // filter out moveables that would not be clickable
         moveables = moveables.filter(el => {
-          return isTabbable(el);
+          return isTabbable(el, this);
         });
   
   
@@ -1728,9 +1743,9 @@ class OpenKeyNav {
   
       const handleClickMode = (e) => {
         e.preventDefault();
-        this.config.typedLabel += e.key.toLowerCase();
+        this.config.typedLabel.value += e.key.toLowerCase();
   
-        let target = document.querySelector(`[data-openkeynav-label="${this.config.typedLabel}"]`);
+        let target = document.querySelector(`[data-openkeynav-label="${this.config.typedLabel.value}"]`);
         if (!target) {
           document.querySelectorAll('iframe').forEach(iframe => {
             addKeydownEventListenerToIframe(iframe);
@@ -1782,7 +1797,7 @@ class OpenKeyNav {
           // let targetElements = document.querySelectorAll(moveConfig.toElements);
   
           // targetElements = targetElements.filter(el => {
-          //   return isTabbable(el);
+          //   return isTabbable(el, this);
           // });
   
           const targetElements = [].filter.call( document.querySelectorAll(moveConfig.toElements), isTabbable)
@@ -1884,8 +1899,8 @@ class OpenKeyNav {
         let selectedTarget;
   
         if(isValidLabelChar){
-          this.config.typedLabel += e.key.toLowerCase();
-          selectedTarget = document.querySelector(`[data-openkeynav-label="${this.config.typedLabel}"]:not(.openKeyNav-label)`);
+          this.config.typedLabel.value += e.key.toLowerCase();
+          selectedTarget = document.querySelector(`[data-openkeynav-label="${this.config.typedLabel.value}"]:not(.openKeyNav-label)`);
         }
         else{ // tab-based moving
           if(e.key === "Tab"){
@@ -1948,7 +1963,7 @@ class OpenKeyNav {
             return false;
           }
   
-          this.config.typedLabel = '';
+          this.config.typedLabel.value = '';
           this.config.modesConfig.move.selectedDropZone = false;
   
           // if the selected element (this.config.modesConfig.move.selectedMoveable) is no longer in the DOM,
@@ -2246,7 +2261,7 @@ class OpenKeyNav {
         notification.style.padding = '10px 20px';
         notification.style.borderRadius = '5px';
         notification.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-        notification.style.maxWidth = '300px';
+        notification.style.maxWidth = '400px';
         notification.style.textAlign = 'center';
         notification.style.position = 'relative';
         notification.style.display = 'inline-block';
@@ -2268,7 +2283,7 @@ class OpenKeyNav {
 
         // Create the message element
         const messageDiv = document.createElement('div');
-        messageDiv.textContent = message;
+        messageDiv.innerHTML = message;
         // Append the message to the notification
         notification.appendChild(messageDiv);
 
@@ -2291,9 +2306,9 @@ class OpenKeyNav {
     
         // Determine the message based on the current mode
         if (modes.clicking.value) {
-          message = "In click mode. Press Esc to exit.";
+          message = `In Click Mode. Press ${ keyButton("Esc")} to exit.`;
         } else if (modes.moving.value) {
-          message = "In drag mode. Press Esc to exit.";
+          message = `In Drag Mode. Press ${ keyButton("Esc")} to exit.`;
         } else {
           message = "No mode active.";
         }
