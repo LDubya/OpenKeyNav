@@ -30,17 +30,41 @@ export const handleToolBar = (parent) => {
 
 const toolbarTemplates = {
     default : () => { 
+
+        const toolBarElement = document.querySelector('.openKeyNav-toolBar'); 
+
+        if (!toolBarElement) {
+            return;
+        }
+
+        toolBarElement.style.minWidth = "150px"
+
+        let numButtons = 0;
         //  default message
         // press k for click mode ( Click [ k ] )
         // press m for drag mode ( Drag [ m ] )
-        let dragButton;
-        if(!!openKeyNav.config.modesConfig.move.config){ // if drag mode is configured
-            dragButton = keyButton(openKeyNav.config.keys.move, "Drag")
-        }
+
+
+        let clickButton = "";
+        // clickButton = keyButton(openKeyNav.config.keys.click, "Click");
+        // numButtons += 1;
+
+        let dragButton = "";
+        // if(openKeyNav.config.modesConfig.move.config.length){ // if drag mode is configured
+        //     dragButton = keyButton(openKeyNav.config.keys.move, "Drag");
+        //     numButtons += 1;
+        // }
+
+        let menuButton = keyButton(openKeyNav.config.keys.menu, "Shortcuts");
+        // if(numButtons > 1){
+        //     toolBarElement.style.minWidth = "200px"
+        //     menuButton = keyButton(openKeyNav.config.keys.menu, "Shortcuts");
+        // }
+
         return `<p>
-                    ${keyButton(openKeyNav.config.keys.menu, "...")}
+                    ${menuButton}
                     ${dragButton}
-                    ${keyButton(openKeyNav.config.keys.click, "Click")} 
+                    ${clickButton} 
                 </p>
             `;
     },
@@ -54,12 +78,15 @@ const toolbarTemplates = {
     },
 
     menu : (typedLabel) => {
-        let html = "";
+        let dragButton = "";
+        if(openKeyNav.config.modesConfig.move.config.length){ // if drag mode is configured
+            dragButton = keyButton(openKeyNav.config.keys.move, "Drag")
+        }
         return `
             <p>${ keyButton("Esc", "Shortcuts", true)}</p>
             <div class="openKeyNav-toolBar-expanded">
                 ${keyButton(openKeyNav.config.keys.click, "Click")}
-                ${keyButton(openKeyNav.config.keys.move, "Drag")}
+                ${dragButton}
             </div>
         `;
     }
@@ -118,7 +145,8 @@ const injectToolbarStyleSheet = () => {
     style.type = 'text/css';
     style.innerHTML += `
     .openKeyNav-toolBar {
-        width: 200px; // needs to have a set width since the content changes inside...
+        // width: 200px;    // needs to have a set width (or a min-width) since the content changes inside... 
+                            // min-widh is set inside the init depending on number of keys
         // max-width: 200px;
         // background-color: #333;
         color: #333;
