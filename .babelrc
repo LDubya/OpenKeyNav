@@ -1,3 +1,16 @@
 {
-    "presets": ["@babel/preset-env"]
-}
+    "presets": [
+      ["@babel/preset-env", {
+        "targets": {
+          "browsers": [
+            "defaults",          // Covers a wide range of browsers
+            "ie 11"              // Ensures support for Internet Explorer 11
+          ],
+          "node": "current"                       // Or specific Node.js versions
+        },
+        "useBuiltIns": "entry",  // Include polyfills if needed
+        "corejs": 3
+      }]
+    ]
+  }
+  

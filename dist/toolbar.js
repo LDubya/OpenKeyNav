@@ -26,7 +26,7 @@ var handleToolBar = exports.handleToolBar = function handleToolBar(parent) {
   });
 };
 var toolbarTemplates = {
-  "default": function _default() {
+  default: function _default() {
     var toolBarElement = document.querySelector('.openKeyNav-toolBar');
     if (!toolBarElement) {
       return;
@@ -87,7 +87,7 @@ var updateToolbar = function updateToolbar(toolBarElement, lastMessage) {
   } else if (openKeyNav.config.modes.menu.value) {
     message = toolbarTemplates.menu(typedLabel);
   } else {
-    message = toolbarTemplates["default"](); // Default message
+    message = toolbarTemplates.default(); // Default message
   }
 
   // Only emit the notification if the message has changed

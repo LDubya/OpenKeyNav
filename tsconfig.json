@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "target": "ES2021",        // Target ECMAScript 2015 (ES6) or later
+        "lib": ["ES2021", "DOM"],  // Include standard libraries, including ES2015+ and DOM
+        "strict": true,           // Enables all strict checks
+        "noImplicitAny": false,   // Disables 'implicitly has an any type' error
+        "checkJs": true,          // If using JavaScript files, continue checking them
+        "noEmit": true            // Avoid emitting output files
+    },
+    "include": ["src/**/*", "**/*.js", "**/*.ts"],  // Update to match your file structure
+    "exclude": ["node_modules", "dist"]  // Ignore generated files and dependencies
+}

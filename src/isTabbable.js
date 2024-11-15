@@ -1,18 +1,4 @@
-const isTypicallyClickableElement = (el) => {
 
-    // Check if the element is a known clickable element
-    if (el.matches(clickableElements.join())) {
-        return true;
-    }
-
-    // Check if the element has an interactive ARIA role
-    const role = el.getAttribute('role');
-    if (role && interactiveRoles.includes(role)) {
-        return true;
-    }
-
-    return false;
-}
 
 const isHiddenByOverflow = (element) => {
     let parent = element.parentNode;
@@ -57,6 +43,22 @@ export const isTabbable = (el, openKeyNav) => {
     const clickableElements = ['a', 'button', 'textarea', 'select', 'input', 'iframe', 'summary', '[onclick]'];
     const interactiveRoles = ['button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio'];
 
+    const isTypicallyClickableElement = (el) => {
+
+      // Check if the element is a known clickable element
+      if (el.matches(clickableElements.join())) {
+          return true;
+      }
+  
+      // Check if the element has an interactive ARIA role
+      const role = el.getAttribute('role');
+      if (role && interactiveRoles.includes(role)) {
+          return true;
+      }
+  
+      return false;
+    }
+
     // Ensure el is an Element before accessing styles
     if (!(el instanceof Element)) {
       // console.log(`!(el instanceof Element)`, el); //debug
@@ -100,6 +102,8 @@ export const isTabbable = (el, openKeyNav) => {
       return false;
     }
 
+    console.log("isTabbable() -> openKeyNav", openKeyNav);
+    
     // Skip if the element has no size (another way to visually hide something)
     if (!openKeyNav.isNonzeroSize(el)) {
       // console.log(`!openKeyNav.isNonzeroSize(el)`, el); //debug
@@ -124,7 +128,7 @@ export const isTabbable = (el, openKeyNav) => {
     // Skip if <summary> is not the first <summary> element of a <details>
     if (el.tagName.toLowerCase() === 'summary') {
       const details = el.parentElement;
-      if (details.tagName.toLowerCase() === 'details' && details.querySelector('summary') !== el) {
+      if (details && details.tagName.toLowerCase() === 'details' && details.querySelector('summary') !== el) {
         // console.log(`<summary> is not the first <summary> element of a <details>`, el); //debug
         return false;
       }
