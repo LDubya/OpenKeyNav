@@ -199,43 +199,43 @@ export const isTabbable = (el, openKeyNav) => {
         break;
 
       default:
-        if (!interactiveRoles.includes(role)) {
+        if (!!role && !interactiveRoles.includes(role)) {
           // possible inaccessible button
           // if (openKeyNav.config.modes.clicking.value) {
 
           let fromClickEvents = "";
           if (openKeyNav.config.modesConfig.click.clickEventElements.has(el)) {
             fromClickEvents = "fromClickEvents";
+            openKeyNav.flagAsInaccessible(
+              el,
+              `
+              <!--
+                !el(a,button,textarea,select,input,iframe,summary)
+                !el[role('button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio')]
+                fromClickEvents
+              -->
+              <h2>Possibly Inaccessible Clickable Element</h2>
+              <h3>Problem: </h3>
+              <p>This element has a mouse click event handler attached to it, but it is not keyboard-focusable.</p>
+              <p>As a result, only mouse users can click on it.</p>
+              <p>This usability disparity can create an accessibility barrier.</p>
+              <h3>Solution Options: </h3>
+              <ol>
+                <li>
+                  <p>If clicking this element takes the user to a different location, convert this element to an anchor link (&lt;a&gt;) with a non-empty <em>href</em> attribute.</p>
+                </li>
+                <li>
+                  <p>Otherwise if clicking this element triggers an action on the page, convert this element to a &lt;button&gt; without a <em>disabled</em> attribute.</p>
+                  <p>Alternatively, it needs an ARIA <em>role</em> attribute set to something like 'button' or 'link' AND a tabindex attribute set to a value &gt; -1, ideally 0.</p>
+                </li>
+                <li>
+                  <p>Otherwise, if clicking this element does not do anything, then consider removing the click event handler attached to this element.</p>
+                </li>
+              </ol>
+              `,
+              "keyboard"
+            );
           }
-          openKeyNav.flagAsInaccessible(
-            el,
-            `
-            <!--
-              !el(a,button,textarea,select,input,iframe,summary)
-              !el[role('button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio')]
-              fromClickEvents
-            -->
-            <h2>Possibly Inaccessible Clickable Element</h2>
-            <h3>Problem: </h3>
-            <p>This element has a mouse click event handler attached to it, but it is not keyboard-focusable.</p>
-            <p>As a result, only mouse users can click on it.</p>
-            <p>This usability disparity can create an accessibility barrier.</p>
-            <h3>Solution Options: </h3>
-            <ol>
-              <li>
-                <p>If clicking this element takes the user to a different location, convert this element to an anchor link (&lt;a&gt;) with a non-empty <em>href</em> attribute.</p>
-              </li>
-              <li>
-                <p>Otherwise if clicking this element triggers an action on the page, convert this element to a &lt;button&gt; without a <em>disabled</em> attribute.</p>
-                <p>Alternatively, it needs an ARIA <em>role</em> attribute set to something like 'button' or 'link' AND a tabindex attribute set to a value &gt; -1, ideally 0.</p>
-              </li>
-              <li>
-                <p>Otherwise, if clicking this element does not do anything, then consider removing the click event handler attached to this element.</p>
-              </li>
-            </ol>
-            `,
-            "keyboard"
-          );
           // return false;
         // }
         }

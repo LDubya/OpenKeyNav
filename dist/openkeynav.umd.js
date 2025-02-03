@@ -12,7 +12,7 @@
     value: true
   });
   version.version = void 0;
-  version.version = "0.1.135";
+  version.version = "0.1.142";
 
   var signals = {};
 
@@ -81,8 +81,8 @@
   // unified status bar and toolbar
 
   var openKeyNav$1;
-  toolbar.handleToolBar = function handleToolBar(parent) {
-    openKeyNav$1 = parent;
+  toolbar.handleToolBar = function handleToolBar(openKeyNav_obj) {
+    openKeyNav$1 = openKeyNav_obj;
     var toolBarElement = document.querySelector('.openKeyNav-toolBar');
     if (!toolBarElement) {
       return;
@@ -172,7 +172,11 @@
     lastMessage = message;
   };
   var injectToolbarStyleSheet = function injectToolbarStyleSheet() {
+    if (!!document.querySelector('.okn-toolbar-stylesheet')) {
+      return false;
+    }
     var style = document.createElement('style');
+    style.setAttribute("class", "okn-toolbar-stylesheet");
     var toolBarHeight = openKeyNav$1.config.toolBar.height;
     var toolBarVerticalPadding = 6;
     var toolbarBackground = "\n        background-color: hsl(210 10% 95% / 1);\n        border: 1px solid hsl(210, 8%, 68%);\n        border-radius: 4px;\n        padding: 3px ".concat(toolBarVerticalPadding, "px;\n    ");
@@ -929,9 +933,10 @@
       case 'summary':
         break;
       default:
-        if (!interactiveRoles.includes(role)) {
-          if (openKeyNav.config.modesConfig.click.clickEventElements.has(el)) ;
-          openKeyNav.flagAsInaccessible(el, "\n            <!--\n              !el(a,button,textarea,select,input,iframe,summary)\n              !el[role('button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio')]\n              fromClickEvents\n            -->\n            <h2>Possibly Inaccessible Clickable Element</h2>\n            <h3>Problem: </h3>\n            <p>This element has a mouse click event handler attached to it, but it is not keyboard-focusable.</p>\n            <p>As a result, only mouse users can click on it.</p>\n            <p>This usability disparity can create an accessibility barrier.</p>\n            <h3>Solution Options: </h3>\n            <ol>\n              <li>\n                <p>If clicking this element takes the user to a different location, convert this element to an anchor link (&lt;a&gt;) with a non-empty <em>href</em> attribute.</p>\n              </li>\n              <li>\n                <p>Otherwise if clicking this element triggers an action on the page, convert this element to a &lt;button&gt; without a <em>disabled</em> attribute.</p>\n                <p>Alternatively, it needs an ARIA <em>role</em> attribute set to something like 'button' or 'link' AND a tabindex attribute set to a value &gt; -1, ideally 0.</p>\n              </li>\n              <li>\n                <p>Otherwise, if clicking this element does not do anything, then consider removing the click event handler attached to this element.</p>\n              </li>\n            </ol>\n            ", "keyboard");
+        if (!!role && !interactiveRoles.includes(role)) {
+          if (openKeyNav.config.modesConfig.click.clickEventElements.has(el)) {
+            openKeyNav.flagAsInaccessible(el, "\n              <!--\n                !el(a,button,textarea,select,input,iframe,summary)\n                !el[role('button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio')]\n                fromClickEvents\n              -->\n              <h2>Possibly Inaccessible Clickable Element</h2>\n              <h3>Problem: </h3>\n              <p>This element has a mouse click event handler attached to it, but it is not keyboard-focusable.</p>\n              <p>As a result, only mouse users can click on it.</p>\n              <p>This usability disparity can create an accessibility barrier.</p>\n              <h3>Solution Options: </h3>\n              <ol>\n                <li>\n                  <p>If clicking this element takes the user to a different location, convert this element to an anchor link (&lt;a&gt;) with a non-empty <em>href</em> attribute.</p>\n                </li>\n                <li>\n                  <p>Otherwise if clicking this element triggers an action on the page, convert this element to a &lt;button&gt; without a <em>disabled</em> attribute.</p>\n                  <p>Alternatively, it needs an ARIA <em>role</em> attribute set to something like 'button' or 'link' AND a tabindex attribute set to a value &gt; -1, ideally 0.</p>\n                </li>\n                <li>\n                  <p>Otherwise, if clicking this element does not do anything, then consider removing the click event handler attached to this element.</p>\n                </li>\n              </ol>\n              ", "keyboard");
+          }
           // return false;
           // }
         }
@@ -2504,9 +2509,48 @@
               return false;
             }
         }
+        var openKeyNav = this;
+        function createTooltip(el, innerHTML) {
+          // Create the tooltip element
+          var tooltip = document.createElement('div');
+          tooltip.className = 'openKeyNav-mouseover-tooltip';
+          tooltip.innerHTML = innerHTML;
+          tooltip.style.display = 'none';
+          document.body.appendChild(tooltip);
+          // Function to show the tooltip
+          function showTooltip() {
+            var rect = el.getBoundingClientRect();
+            tooltip.style.left = "".concat(rect.left + window.scrollX, "px");
+            tooltip.style.top = "".concat(rect.bottom + window.scrollY - 2, "px");
+            tooltip.style.display = 'block';
+          }
+          // Function to hide the tooltip
+          function hideTooltip() {
+            // Get the mouse coordinates from the event
+            var mouseX = event.clientX;
+            var mouseY = event.clientY;
 
-        // createTooltip(el, reason);
+            // Get the bounding rectangle of the tooltip
+            var tooltipRect = tooltip.getBoundingClientRect();
 
+            // Check if the mouse is currently over the tooltip
+            var isMouseOverTooltip = mouseX >= tooltipRect.left && mouseX <= tooltipRect.right && mouseY >= tooltipRect.top && mouseY <= tooltipRect.bottom;
+
+            // Only hide the tooltip if the mouse is not over it
+            if (!isMouseOverTooltip) {
+              tooltip.style.display = 'none';
+            }
+          }
+          el.addEventListener('mouseover', showTooltip);
+          el.addEventListener('mouseleave', hideTooltip);
+          tooltip.addEventListener('mouseleave', hideTooltip);
+          // Store the event listeners for el in the map
+          openKeyNav.config.modesConfig.click.eventListenersMap.set(el, {
+            showTooltip: showTooltip,
+            hideTooltip: hideTooltip
+          });
+        }
+        createTooltip(el, reason);
         el.classList.add('openKeyNav-inaccessible');
         el.setAttribute('data-openkeynav-inaccessible-reason', reason);
         return true;
@@ -2791,7 +2835,7 @@
         this.deepMerge(this.config, options);
         this.injectStyles();
         this.addKeydownEventListener();
-        this.setupGlobalClickListenerTracking();
+        // this.setupGlobalClickListenerTracking();
         this.initStatusBar();
         this.initToolBar();
         this.applicationSupport();

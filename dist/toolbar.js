@@ -9,8 +9,8 @@ var _keyButton = require("./keyButton.js");
 // unified status bar and toolbar
 
 var openKeyNav;
-var handleToolBar = exports.handleToolBar = function handleToolBar(parent) {
-  openKeyNav = parent;
+var handleToolBar = exports.handleToolBar = function handleToolBar(openKeyNav_obj) {
+  openKeyNav = openKeyNav_obj;
   var toolBarElement = document.querySelector('.openKeyNav-toolBar');
   if (!toolBarElement) {
     return;
@@ -101,7 +101,11 @@ var updateToolbar = function updateToolbar(toolBarElement, lastMessage) {
   lastMessage = message;
 };
 var injectToolbarStyleSheet = function injectToolbarStyleSheet() {
+  if (!!document.querySelector('.okn-toolbar-stylesheet')) {
+    return false;
+  }
   var style = document.createElement('style');
+  style.setAttribute("class", "okn-toolbar-stylesheet");
   var toolBarHeight = openKeyNav.config.toolBar.height;
   var toolBarVerticalPadding = 6;
   var toolbarBackground = "\n        background-color: hsl(210 10% 95% / 1);\n        border: 1px solid hsl(210, 8%, 68%);\n        border-radius: 4px;\n        padding: 3px ".concat(toolBarVerticalPadding, "px;\n    ");

@@ -5,7 +5,9 @@ import { keyButton } from './keyButton.js';
 
 let openKeyNav;
 
-export const handleToolBar = (openKeyNav) => {
+export const handleToolBar = (openKeyNav_obj) => {
+
+    openKeyNav = openKeyNav_obj;
 
     const toolBarElement = document.querySelector('.openKeyNav-toolBar'); 
 

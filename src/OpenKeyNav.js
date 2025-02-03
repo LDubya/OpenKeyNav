@@ -705,6 +705,7 @@ class OpenKeyNav {
           break;
       }
   
+      let openKeyNav = this;
       function createTooltip(el, innerHTML){
         // Create the tooltip element
         const tooltip = document.createElement('div');
@@ -744,10 +745,10 @@ class OpenKeyNav {
         el.addEventListener('mouseleave', hideTooltip);
         tooltip.addEventListener('mouseleave', hideTooltip);
         // Store the event listeners for el in the map
-        this.config.modesConfig.click.eventListenersMap.set(el, { showTooltip, hideTooltip });
+        openKeyNav.config.modesConfig.click.eventListenersMap.set(el, { showTooltip, hideTooltip });
       }
   
-      // createTooltip(el, reason);
+      createTooltip(el, reason);
   
       el.classList.add('openKeyNav-inaccessible');
       el.setAttribute('data-openkeynav-inaccessible-reason', reason);
@@ -1037,7 +1038,7 @@ class OpenKeyNav {
       this.deepMerge(this.config, options);
       this.injectStyles();
       this.addKeydownEventListener();
-      this.setupGlobalClickListenerTracking();
+      // this.setupGlobalClickListenerTracking();
       this.initStatusBar();
       this.initToolBar();
       this.applicationSupport();
