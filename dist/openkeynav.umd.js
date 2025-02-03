@@ -12,7 +12,7 @@
     value: true
   });
   version.version = void 0;
-  version.version = "0.1.133";
+  version.version = "0.1.135";
 
   var signals = {};
 
@@ -166,9 +166,7 @@
       return;
     }
 
-    // Emit the notification with the current message
-    console.log(message);
-    // emitNotification(message);
+    // console.log(message);
     // Update the toolbar content
     updateElement(toolBarElement, message);
     lastMessage = message;
@@ -863,7 +861,8 @@
       // console.log(`style.visibility === 'hidden'`, el); //debug
       return false;
     }
-    console.log("isTabbable() -> openKeyNav", openKeyNav);
+
+    // console.log("isTabbable() -> openKeyNav", openKeyNav);
 
     // Skip if the element has no size (another way to visually hide something)
     if (!openKeyNav.isNonzeroSize(el)) {
@@ -1245,7 +1244,6 @@
   var _focus = focus;
   var _isTabbable = isTabbable;
   var _keylabels = keylabels;
-  var _this = void 0;
   keypress.handleKeyPress = function handleKeyPress(openKeyNav, e) {
     // first check for modifier keys and escape
     switch (e.key) {
@@ -1565,7 +1563,7 @@
       // setting selectedTarget as selectedMoveable
       console.log("Selected element to move:", selectedTarget);
       showMoveableToOverlays(selectedTarget);
-      (0, _dragAndDrop.beginDrag)(_this);
+      (0, _dragAndDrop.beginDrag)(openKeyNav);
       return true;
     }
 

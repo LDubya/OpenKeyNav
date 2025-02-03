@@ -6,24 +6,21 @@ OpenKeyNav helps you enhance the accessibility of your website or web app by all
 
 OpenKeyNav is available for developers to fork, modify, and use via its [GitHub repository](https://github.com/LDubya/OpenKeyNav) and [NPM](https://www.npmjs.com/package/openkeynav).
 
-Featured by [Harvard Innovation Labs](https://www.youtube.com/watch?v=xIShByl7baE) and [Harvard Medical School](https://www.instagram.com/p/C_1Fl9GJSUq/)
-
-[![Watch the Video](https://img.youtube.com/vi/xIShByl7baE/0.jpg)](https://www.youtube.com/watch?v=xIShByl7baE)
-*[Watch the Harvard Innovation Labs video](https://img.youtube.com/vi/xIShByl7baE/0.jpg)*
-
-## Read the preprint
-
-The preprint 
-[*"Using OpenKeyNav to Enhance the Keyboard-Accessibility of Web-based Data Visualization Tools"* (OSF Preprint)](https://osf.io/preprints/osf/3wjsa) 
-was presented at the AccessViz workshop, part of IEEE VIS 2024 conference. [Watch the AccessViz presentation](https://img.youtube.com/vi/qWbKjQ_Behk/0.jpg). The research paper is funded by the National Institutes of Health through the HIDIVE lab at Harvard University*.
+Featured by [Harvard Innovation Labs](https://www.youtube.com/watch?v=xIShByl7baE) and [Harvard Medical School](https://www.instagram.com/p/C_1Fl9GJSUq/). *[Watch the Harvard Innovation Labs video](https://img.youtube.com/vi/xIShByl7baE/0.jpg)*
 
 ## Features
 
 - **Automatic Keyboard Shortcuts**: Generate and display keyboard shortcuts dynamically.
 - **Complex Interactions**: Support for keyboard-based drag-and-drop and other complex interactions.
 - **Customizable Activation Keys**: Configure different keys to trigger various behaviors.
-- **Accessibility Compliance**: Identify and highlight elements that are not accessible via screen readers.
-- **Empowerment Intervention**: Enable users to navigate and interact with web content using their keyboards despite existing accessibility barriers.
+- **Accessibility Compliance**: Identify and highlight elements that are not keyboard accessible, helping you fix the elements that are not keyboard accessible.
+- **Empowerment**: Enable users to navigate and interact with web content using their keyboards.
+
+## Read the preprint
+
+The preprint 
+[*"Using OpenKeyNav to Enhance the Keyboard-Accessibility of Web-based Data Visualization Tools"* (OSF Preprint)](https://osf.io/preprints/osf/3wjsa) 
+was presented at the AccessViz workshop, part of IEEE VIS 2024 conference. [Watch the AccessViz presentation](https://img.youtube.com/vi/qWbKjQ_Behk/0.jpg). The research paper is funded by the National Institutes of Health through the HIDIVE lab at Harvard University*.
 
 ## Installation
 
@@ -128,7 +125,7 @@ export default App;
 
 ### Disabling Debug Mode for Production
 
-By default, OpenKeyNav initiates in debug mode, which adds red labels to elements that are mouse-clickable but not tab-focusable. These elements are not WCAG-compliant, since they are not keyboard accessible. The elements with black labels are keyboard accessible. This enables you to identify the elements that need remediation.
+By default, OpenKeyNav initiates in debug mode, which adds red labels to inaccessible elements (that are mouse-clickable but not tab-focusable). These elements are not WCAG-compliant, since they are not keyboard accessible. The elements with black labels are keyboard accessible. This enables you to identify the elements that need remediation.
 
 It is recommended to keep debug mode turned on while developing and to remediate any keyboard access barriers that you find in this mode.
 

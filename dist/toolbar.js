@@ -95,9 +95,7 @@ var updateToolbar = function updateToolbar(toolBarElement, lastMessage) {
     return;
   }
 
-  // Emit the notification with the current message
-  console.log(message);
-  // emitNotification(message);
+  // console.log(message);
   // Update the toolbar content
   updateElement(toolBarElement, message);
   lastMessage = message;

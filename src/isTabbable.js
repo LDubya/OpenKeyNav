@@ -102,7 +102,7 @@ export const isTabbable = (el, openKeyNav) => {
       return false;
     }
 
-    console.log("isTabbable() -> openKeyNav", openKeyNav);
+    // console.log("isTabbable() -> openKeyNav", openKeyNav);
     
     // Skip if the element has no size (another way to visually hide something)
     if (!openKeyNav.isNonzeroSize(el)) {

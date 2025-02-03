@@ -90,7 +90,8 @@ var isTabbable = exports.isTabbable = function isTabbable(el, openKeyNav) {
     // console.log(`style.visibility === 'hidden'`, el); //debug
     return false;
   }
-  console.log("isTabbable() -> openKeyNav", openKeyNav);
+
+  // console.log("isTabbable() -> openKeyNav", openKeyNav);
 
   // Skip if the element has no size (another way to visually hide something)
   if (!openKeyNav.isNonzeroSize(el)) {

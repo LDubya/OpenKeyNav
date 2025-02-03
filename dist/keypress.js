@@ -10,7 +10,6 @@ var _escape = require("./escape");
 var _focus = require("./focus");
 var _isTabbable = require("./isTabbable");
 var _keylabels = require("./keylabels");
-var _this = void 0;
 var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav, e) {
   // first check for modifier keys and escape
   switch (e.key) {
@@ -346,7 +345,7 @@ var handleMoveMode = function handleMoveMode(openKeyNav, e) {
     // setting selectedTarget as selectedMoveable
     console.log("Selected element to move:", selectedTarget);
     showMoveableToOverlays(selectedTarget);
-    (0, _dragAndDrop.beginDrag)(_this);
+    (0, _dragAndDrop.beginDrag)(openKeyNav);
     return true;
   }
 

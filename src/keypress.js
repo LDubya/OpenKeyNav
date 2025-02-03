@@ -378,7 +378,7 @@ const handleMoveMode = (openKeyNav, e) => {
       // setting selectedTarget as selectedMoveable
       console.log(`Selected element to move:`, selectedTarget);
       showMoveableToOverlays(selectedTarget);
-      beginDrag(this);
+      beginDrag(openKeyNav);
       return true;
     }
 

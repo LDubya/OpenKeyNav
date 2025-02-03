@@ -5,9 +5,7 @@ import { keyButton } from './keyButton.js';
 
 let openKeyNav;
 
-export const handleToolBar = (parent) => {
-
-    openKeyNav = parent;
+export const handleToolBar = (openKeyNav) => {
 
     const toolBarElement = document.querySelector('.openKeyNav-toolBar'); 
 
@@ -124,16 +122,20 @@ const updateToolbar = (toolBarElement, lastMessage) => {
       return;
     }
 
-    // Emit the notification with the current message
-    console.log(message);
-    // emitNotification(message);
+    // console.log(message);
     // Update the toolbar content
     updateElement(toolBarElement, message);
     lastMessage = message;
 }
 
 const injectToolbarStyleSheet = () => {
+
+    if(!!document.querySelector('.okn-toolbar-stylesheet')){
+        return false;
+    }
+
     const style = document.createElement('style');
+    style.setAttribute("class","okn-toolbar-stylesheet")
     const toolBarHeight = openKeyNav.config.toolBar.height;
     const toolBarVerticalPadding = 6;
     const toolbarBackground = `
