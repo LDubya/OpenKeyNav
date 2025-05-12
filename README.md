@@ -178,6 +178,7 @@ You can override these default settings to suit your needs:
 
 ```javascript
 const config = {
+    enabled: false; // by default, openKeyNav is disabled. Users must press "shift" + keys.menu to enable.
     spot: {
         fontColor: 'white',
         backgroundColor: '#333',
@@ -195,6 +196,7 @@ const config = {
         scroll: 's', // focus on the next scrollable region
         move: 'm', // enter move mode, to move elements from and to, aka keyboard drag and drop
         heading: 'h', // focus on the next heading // as seen in JAWS, NVDA
+        menu: 'o' // for enabling/disabling OpenKeyNav when pressed with shift key.
     }
 };
 

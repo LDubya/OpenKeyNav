@@ -11,16 +11,21 @@ var _focus = require("./focus");
 var _isTabbable = require("./isTabbable");
 var _keylabels = require("./keylabels");
 var _lifecycle = require("./lifecycle");
+var _keyButton = require("./keyButton.js");
 var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav, e) {
   // check if openKeyNav is enabled
   if (e.shiftKey && openKeyNav.config.keys.menu.toLowerCase() == e.key.toLowerCase()) {
     if (!openKeyNav.config.enabled.value) {
       // if openKeyNav disabled
       openKeyNav.config.enabled.value = true;
+      var message = "openKeyNav enabled. Press ".concat((0, _keyButton.keyButton)(["shift", openKeyNav.config.keys.menu]), " to disable.");
+      openKeyNav.emitNotification(message);
       return true;
     } else {
       (0, _escape.handleEscape)(openKeyNav, e);
       openKeyNav.config.enabled.value = false;
+      var _message = "openKeyNav disabled. Press ".concat((0, _keyButton.keyButton)(["shift", openKeyNav.config.keys.menu]), " to enable.");
+      openKeyNav.emitNotification(_message);
       return true;
     }
   }

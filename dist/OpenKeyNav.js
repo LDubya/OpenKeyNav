@@ -830,10 +830,11 @@ var OpenKeyNav = /*#__PURE__*/function () {
         }
       });
     }
+
+    // Function to emit a temporary notification
   }, {
-    key: "initStatusBar",
-    value: function initStatusBar() {
-      var _this7 = this;
+    key: "emitNotification",
+    value: function emitNotification(message) {
       // Function to create or select the notification container
       var getSetNotificationContainer = function getSetNotificationContainer() {
         // Create or select the notification container
@@ -856,63 +857,64 @@ var OpenKeyNav = /*#__PURE__*/function () {
         return notificationContainer;
       };
 
-      // Function to emit a temporary notification
-      var emitNotification = function emitNotification(message) {
-        // Check if notifications are enabled
-        if (!_this7.config.notifications.enabled) {
-          return;
-        }
+      // Check if notifications are enabled
+      if (!this.config.notifications.enabled) {
+        return;
+      }
 
-        // Get the notification container
-        var notificationContainer = getSetNotificationContainer();
+      // Get the notification container
+      var notificationContainer = getSetNotificationContainer();
 
-        // Remove any existing notification before creating a new one
-        while (notificationContainer.firstChild) {
-          notificationContainer.firstChild.remove();
-        }
+      // Remove any existing notification before creating a new one
+      while (notificationContainer.firstChild) {
+        notificationContainer.firstChild.remove();
+      }
 
-        // Create the notification element
-        var notification = document.createElement('div');
-        notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-        notification.style.color = '#fff';
-        notification.style.padding = '10px 20px';
-        notification.style.borderRadius = '5px';
-        notification.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-        notification.style.maxWidth = '400px';
-        notification.style.textAlign = 'center';
-        notification.style.position = 'relative';
-        notification.style.display = 'inline-block';
+      // Create the notification element
+      var notification = document.createElement('div');
+      notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+      notification.style.color = '#fff';
+      notification.style.padding = '10px 20px';
+      notification.style.borderRadius = '5px';
+      notification.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+      notification.style.maxWidth = '400px';
+      notification.style.textAlign = 'center';
+      notification.style.position = 'relative';
+      notification.style.display = 'inline-block';
 
-        // Add ARIA role for accessibility
-        notification.setAttribute('role', 'alert');
-        notification.setAttribute('aria-live', 'assertive');
-        notification.setAttribute('aria-atomic', 'true');
+      // Add ARIA role for accessibility
+      notification.setAttribute('role', 'alert');
+      notification.setAttribute('aria-live', 'assertive');
+      notification.setAttribute('aria-atomic', 'true');
 
-        // Optionally display the tool name in the notification
-        if (_this7.config.notifications.displayToolName) {
-          var logo = document.createElement('div');
-          logo.className = 'okn-logo-text tiny';
-          logo.setAttribute('role', 'img'); // Assigning an image role
-          logo.setAttribute('aria-label', 'OpenKeyNav');
-          logo.innerHTML = 'Open<span class="key">Key</span>Nav';
-          notification.appendChild(logo);
-        }
+      // Optionally display the tool name in the notification
+      if (this.config.notifications.displayToolName) {
+        var logo = document.createElement('div');
+        logo.className = 'okn-logo-text tiny';
+        logo.setAttribute('role', 'img'); // Assigning an image role
+        logo.setAttribute('aria-label', 'OpenKeyNav');
+        logo.innerHTML = 'Open<span class="key">Key</span>Nav';
+        notification.appendChild(logo);
+      }
 
-        // Create the message element
-        var messageDiv = document.createElement('div');
-        messageDiv.innerHTML = message;
-        // Append the message to the notification
-        notification.appendChild(messageDiv);
+      // Create the message element
+      var messageDiv = document.createElement('div');
+      messageDiv.innerHTML = message;
+      // Append the message to the notification
+      notification.appendChild(messageDiv);
 
-        // Append the notification to the notification container
-        notificationContainer.appendChild(notification);
+      // Append the notification to the notification container
+      notificationContainer.appendChild(notification);
 
-        // Automatically remove the notification after the specified duration
-        setTimeout(function () {
-          notification.remove();
-        }, _this7.config.notifications.duration);
-      };
-
+      // Automatically remove the notification after the specified duration
+      setTimeout(function () {
+        notification.remove();
+      }, this.config.notifications.duration);
+    }
+  }, {
+    key: "initStatusBar",
+    value: function initStatusBar() {
+      var _this7 = this;
       // Effect to emit a notification based on the current mode
       var lastMessage = "No mode active.";
       (0, _signals.effect)(function () {
@@ -924,7 +926,14 @@ var OpenKeyNav = /*#__PURE__*/function () {
           message = "In Click Mode. Press ".concat((0, _keyButton.keyButton)(["Esc"]), " to exit.");
         } else if (modes.moving.value) {
           message = "In Drag Mode. Press ".concat((0, _keyButton.keyButton)(["Esc"]), " to exit.");
-        } else {
+        }
+        // else if (this.config.enabled.value){
+        //   message = `openKeyNav enabled. Press ${ keyButton(["shift", this.config.keys.menu])} to disable.`;
+        // }
+        // else if (!this.config.enabled.value){
+        //   message = `openKeyNav disabled. Press ${ keyButton(["shift", this.config.keys.menu])} to enable.`;
+        // }
+        else {
           message = "No mode active.";
         }
 
@@ -935,7 +944,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
 
         // Emit the notification with the current message
         console.log(message);
-        emitNotification(message);
+        _this7.emitNotification(message);
         lastMessage = message;
       });
 

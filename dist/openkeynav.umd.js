@@ -12,7 +12,7 @@
     value: true
   });
   version.version = void 0;
-  version.version = "0.1.158";
+  version.version = "0.1.166";
 
   var signals = {};
 
@@ -80,7 +80,7 @@
   });
   toolbar.handleToolBar = void 0;
   var _signals$1 = signals;
-  var _keyButton$1 = keyButton;
+  var _keyButton$2 = keyButton;
   // unified status bar and toolbar
 
   var openKeyNav$1;
@@ -109,25 +109,25 @@
       toolBarElement.style.minWidth = "150px";
       var clickButton = "";
       var dragButton = "";
-      var menuButton = (0, _keyButton$1.keyButton)([openKeyNav$1.config.keys.menu, "shift"], "Shortcuts");
+      var menuButton = (0, _keyButton$2.keyButton)([openKeyNav$1.config.keys.menu, "shift"], "Shortcuts");
       if (openKeyNav$1.config.enabled.value) {
-        menuButton = (0, _keyButton$1.keyButton)([openKeyNav$1.config.keys.menu], "Shortcuts");
+        menuButton = (0, _keyButton$2.keyButton)([openKeyNav$1.config.keys.menu], "Shortcuts");
       }
       return "<p>\n                    ".concat(menuButton, "\n                    ").concat(dragButton, "\n                    ").concat(clickButton, " \n                </p>\n            ");
     },
     clickMode: function clickMode(typedLabel) {
-      return "<p>".concat((0, _keyButton$1.keyButton)(["Esc"], "Click Mode", true), "</p>");
+      return "<p>".concat((0, _keyButton$2.keyButton)(["Esc"], "Click Mode", true), "</p>");
     },
     dragMode: function dragMode(typedLabel) {
-      return "<p>".concat((0, _keyButton$1.keyButton)(["Esc"], "Drag Mode", true), "</p>");
+      return "<p>".concat((0, _keyButton$2.keyButton)(["Esc"], "Drag Mode", true), "</p>");
     },
     menu: function menu(typedLabel) {
       var dragButton = "";
       if (openKeyNav$1.config.modesConfig.move.config.length) {
         // if drag mode is configured
-        dragButton = (0, _keyButton$1.keyButton)([openKeyNav$1.config.keys.move], "Drag");
+        dragButton = (0, _keyButton$2.keyButton)([openKeyNav$1.config.keys.move], "Drag");
       }
-      return "\n            <p>".concat((0, _keyButton$1.keyButton)(["Esc"], "Shortcuts", true), "</p>\n            <div class=\"openKeyNav-toolBar-expanded\">\n                ").concat((0, _keyButton$1.keyButton)([openKeyNav$1.config.keys.click], "Click"), "\n                ").concat(dragButton, "\n            </div>\n        ");
+      return "\n            <p>".concat((0, _keyButton$2.keyButton)(["Esc"], "Shortcuts", true), "</p>\n            <div class=\"openKeyNav-toolBar-expanded\">\n                ").concat((0, _keyButton$2.keyButton)([openKeyNav$1.config.keys.click], "Click"), "\n                ").concat(dragButton, "\n            </div>\n        ");
     }
   };
   var updateElement = function updateElement(element, html) {
@@ -226,7 +226,7 @@
     // '}'
     ;
     style.innerHTML += "\n      .okn-logo-text {\n          font-size: 36px;\n          font-weight: 600;\n          color: #ffffff;\n          background-color: #333;\n          padding: .1em .2em;\n          border-radius: 1em;\n          box-sizing: border-box;\n          line-height: 1;\n          text-align: center;\n          position: relative;\n          display: inline-block;\n          min-width: 1rem;\n          border: max(.1em, 2px) solid #ffffff;\n          white-space: nowrap;\n      }\n\n      .okn-logo-text.small {\n          font-size: 18px;\n      }\n      .okn-logo-text.tiny {\n          font-size: 10px;\n          /* border-width: 1px; */\n          border: none;\n      }\n      .okn-logo-text.tiny .key {\n          font-weight: 700;\n      }\n\n      .okn-logo-text.light {\n          color: #333; /* Dark text color */\n          background-color: #fff; /* Light background */\n          border-color: #333; /* Dark border */\n      }\n\n      .okn-logo-text .key {\n          display: inline;\n          padding: .1em .2em;\n          margin: 0 .1em;\n          background-color: #ffffff; /* Light background */\n          color: #333; /* Dark text */\n          line-height: 1;\n          /* font-size: 0.6em; */\n          position: relative;\n          top: -.3em;\n      }\n\n      .okn-logo-text.light .key {\n          background-color: #333; /* Dark background */\n          color: #ffffff; /* Light text */\n      }\n\n      .okn-logo-text .key::before,\n      .okn-logo-text .key::after {\n          content: \"\";\n          position: absolute;\n          left: 50%;\n          transform: translateX(-50%);\n      }\n\n      .okn-logo-text .key::before {\n          --border-size: 0.5em; /* Base border size */\n          --min-border-size: 5px; /* Minimum pixel size */\n\n          border-top: max(var(--border-size), var(--min-border-size)) solid #333;\n          bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n          border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n          border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n      }\n      .okn-logo-text.light .key::before {\n          border-top-color: #fff; /* Dark top triangle */\n      }\n\n      .okn-logo-text .key::after {\n          --border-size: .4em; /* Base border size */\n          --min-border-size: 4px; /* Minimum pixel size */\n\n          border-top: max( calc( var(--border-size) + 2px) , var(--min-border-size)) solid #fff;\n          bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n          border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n          border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n      }\n\n      .okn-logo-text.light .key::after {\n          border-top-color: #333; /* Light bottom triangle */\n      }\n      ";
-    style.innerHTML += "\n        .keyButtonContainer {\n            margin: 0 .1em;\n            display: inline-grid;\n            grid-template-columns: min-content auto;\n            align-items: baseline;\n            column-gap: 4px;\n        }\n        .keyButton {\n          display: inline-block;\n          padding: 1px 4px;\n          min-width: 1.3em;\n          text-align: center;\n          line-height: 1;\n          color: hsl(210, 8%, 5%);\n          text-shadow: 0 1px 0 hsl(0, 0%, 100%);\n          background-color: hsl(210, 8%, 90%);\n          border: 1px solid hsl(210, 8%, 68%);\n          border-radius: 3px;\n          box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);\n          white-space: nowrap;\n      }\n      ";
+    style.innerHTML += "\n        .keyButtonContainer {\n            margin: 0 .1em;\n            display: inline-grid;\n            grid-template-columns: min-content auto;\n            align-items: baseline;\n            column-gap: 4px;\n        }\n        .keyButton {\n          display: inline-block;\n          padding: 1px 4px;\n          min-width: 1.3em;\n          text-align: center;\n          line-height: 1;\n          color: hsl(210, 8%, 5%);\n          text-shadow: 0 1px 0 hsl(0, 0%, 100%);\n          background-color: hsl(210, 8%, 90%);\n          border: 1px solid hsl(210, 8%, 68%);\n          border-radius: 3px;\n          box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);\n          white-space: nowrap;\n          margin: 0 1px;\n      }\n      ";
     document.head.appendChild(style);
   };
 
@@ -1247,16 +1247,21 @@
   var _focus = focus;
   var _isTabbable = isTabbable;
   var _keylabels = keylabels;
+  var _keyButton$1 = keyButton;
   keypress.handleKeyPress = function handleKeyPress(openKeyNav, e) {
     // check if openKeyNav is enabled
     if (e.shiftKey && openKeyNav.config.keys.menu.toLowerCase() == e.key.toLowerCase()) {
       if (!openKeyNav.config.enabled.value) {
         // if openKeyNav disabled
         openKeyNav.config.enabled.value = true;
+        var message = "openKeyNav enabled. Press ".concat((0, _keyButton$1.keyButton)(["shift", openKeyNav.config.keys.menu]), " to disable.");
+        openKeyNav.emitNotification(message);
         return true;
       } else {
         (0, _escape$1.handleEscape)(openKeyNav, e);
         openKeyNav.config.enabled.value = false;
+        var _message = "openKeyNav disabled. Press ".concat((0, _keyButton$1.keyButton)(["shift", openKeyNav.config.keys.menu]), " to enable.");
+        openKeyNav.emitNotification(_message);
         return true;
       }
     }
@@ -2606,10 +2611,11 @@
           }
         });
       }
+
+      // Function to emit a temporary notification
     }, {
-      key: "initStatusBar",
-      value: function initStatusBar() {
-        var _this7 = this;
+      key: "emitNotification",
+      value: function emitNotification(message) {
         // Function to create or select the notification container
         var getSetNotificationContainer = function getSetNotificationContainer() {
           // Create or select the notification container
@@ -2632,63 +2638,64 @@
           return notificationContainer;
         };
 
-        // Function to emit a temporary notification
-        var emitNotification = function emitNotification(message) {
-          // Check if notifications are enabled
-          if (!_this7.config.notifications.enabled) {
-            return;
-          }
+        // Check if notifications are enabled
+        if (!this.config.notifications.enabled) {
+          return;
+        }
 
-          // Get the notification container
-          var notificationContainer = getSetNotificationContainer();
+        // Get the notification container
+        var notificationContainer = getSetNotificationContainer();
 
-          // Remove any existing notification before creating a new one
-          while (notificationContainer.firstChild) {
-            notificationContainer.firstChild.remove();
-          }
+        // Remove any existing notification before creating a new one
+        while (notificationContainer.firstChild) {
+          notificationContainer.firstChild.remove();
+        }
 
-          // Create the notification element
-          var notification = document.createElement('div');
-          notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-          notification.style.color = '#fff';
-          notification.style.padding = '10px 20px';
-          notification.style.borderRadius = '5px';
-          notification.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-          notification.style.maxWidth = '400px';
-          notification.style.textAlign = 'center';
-          notification.style.position = 'relative';
-          notification.style.display = 'inline-block';
+        // Create the notification element
+        var notification = document.createElement('div');
+        notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        notification.style.color = '#fff';
+        notification.style.padding = '10px 20px';
+        notification.style.borderRadius = '5px';
+        notification.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+        notification.style.maxWidth = '400px';
+        notification.style.textAlign = 'center';
+        notification.style.position = 'relative';
+        notification.style.display = 'inline-block';
 
-          // Add ARIA role for accessibility
-          notification.setAttribute('role', 'alert');
-          notification.setAttribute('aria-live', 'assertive');
-          notification.setAttribute('aria-atomic', 'true');
+        // Add ARIA role for accessibility
+        notification.setAttribute('role', 'alert');
+        notification.setAttribute('aria-live', 'assertive');
+        notification.setAttribute('aria-atomic', 'true');
 
-          // Optionally display the tool name in the notification
-          if (_this7.config.notifications.displayToolName) {
-            var logo = document.createElement('div');
-            logo.className = 'okn-logo-text tiny';
-            logo.setAttribute('role', 'img'); // Assigning an image role
-            logo.setAttribute('aria-label', 'OpenKeyNav');
-            logo.innerHTML = 'Open<span class="key">Key</span>Nav';
-            notification.appendChild(logo);
-          }
+        // Optionally display the tool name in the notification
+        if (this.config.notifications.displayToolName) {
+          var logo = document.createElement('div');
+          logo.className = 'okn-logo-text tiny';
+          logo.setAttribute('role', 'img'); // Assigning an image role
+          logo.setAttribute('aria-label', 'OpenKeyNav');
+          logo.innerHTML = 'Open<span class="key">Key</span>Nav';
+          notification.appendChild(logo);
+        }
 
-          // Create the message element
-          var messageDiv = document.createElement('div');
-          messageDiv.innerHTML = message;
-          // Append the message to the notification
-          notification.appendChild(messageDiv);
+        // Create the message element
+        var messageDiv = document.createElement('div');
+        messageDiv.innerHTML = message;
+        // Append the message to the notification
+        notification.appendChild(messageDiv);
 
-          // Append the notification to the notification container
-          notificationContainer.appendChild(notification);
+        // Append the notification to the notification container
+        notificationContainer.appendChild(notification);
 
-          // Automatically remove the notification after the specified duration
-          setTimeout(function () {
-            notification.remove();
-          }, _this7.config.notifications.duration);
-        };
-
+        // Automatically remove the notification after the specified duration
+        setTimeout(function () {
+          notification.remove();
+        }, this.config.notifications.duration);
+      }
+    }, {
+      key: "initStatusBar",
+      value: function initStatusBar() {
+        var _this7 = this;
         // Effect to emit a notification based on the current mode
         var lastMessage = "No mode active.";
         (0, _signals.effect)(function () {
@@ -2700,7 +2707,14 @@
             message = "In Click Mode. Press ".concat((0, _keyButton.keyButton)(["Esc"]), " to exit.");
           } else if (modes.moving.value) {
             message = "In Drag Mode. Press ".concat((0, _keyButton.keyButton)(["Esc"]), " to exit.");
-          } else {
+          }
+          // else if (this.config.enabled.value){
+          //   message = `openKeyNav enabled. Press ${ keyButton(["shift", this.config.keys.menu])} to disable.`;
+          // }
+          // else if (!this.config.enabled.value){
+          //   message = `openKeyNav disabled. Press ${ keyButton(["shift", this.config.keys.menu])} to enable.`;
+          // }
+          else {
             message = "No mode active.";
           }
 
@@ -2711,7 +2725,7 @@
 
           // Emit the notification with the current message
           console.log(message);
-          emitNotification(message);
+          _this7.emitNotification(message);
           lastMessage = message;
         });
 
