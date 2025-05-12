@@ -40,26 +40,15 @@ const toolbarTemplates = {
         toolBarElement.style.minWidth = "150px"
 
         let numButtons = 0;
-        //  default message
-        // press k for click mode ( Click [ k ] )
-        // press m for drag mode ( Drag [ m ] )
-
 
         let clickButton = "";
-        // clickButton = keyButton(openKeyNav.config.keys.click, "Click");
-        // numButtons += 1;
 
         let dragButton = "";
-        // if(openKeyNav.config.modesConfig.move.config.length){ // if drag mode is configured
-        //     dragButton = keyButton(openKeyNav.config.keys.move, "Drag");
-        //     numButtons += 1;
-        // }
 
-        let menuButton = keyButton(openKeyNav.config.keys.menu, "Shortcuts");
-        // if(numButtons > 1){
-        //     toolBarElement.style.minWidth = "200px"
-        //     menuButton = keyButton(openKeyNav.config.keys.menu, "Shortcuts");
-        // }
+        let menuButton = keyButton([openKeyNav.config.keys.menu, "shift"], "Shortcuts");
+        if(openKeyNav.config.enabled.value){
+            menuButton = keyButton([openKeyNav.config.keys.menu], "Shortcuts");
+        }
 
         return `<p>
                     ${menuButton}
@@ -70,22 +59,22 @@ const toolbarTemplates = {
     },
 
     clickMode : (typedLabel) => {
-        return `<p>${ keyButton("Esc", "Click Mode", true)}</p>`
+        return `<p>${ keyButton(["Esc"], "Click Mode", true)}</p>`
     },
 
     dragMode : (typedLabel) => { 
-        return `<p>${ keyButton("Esc", "Drag Mode", true)}</p>`
+        return `<p>${ keyButton(["Esc"], "Drag Mode", true)}</p>`
     },
 
     menu : (typedLabel) => {
         let dragButton = "";
         if(openKeyNav.config.modesConfig.move.config.length){ // if drag mode is configured
-            dragButton = keyButton(openKeyNav.config.keys.move, "Drag")
+            dragButton = keyButton([openKeyNav.config.keys.move], "Drag")
         }
         return `
-            <p>${ keyButton("Esc", "Shortcuts", true)}</p>
+            <p>${ keyButton(["Esc"], "Shortcuts", true)}</p>
             <div class="openKeyNav-toolBar-expanded">
-                ${keyButton(openKeyNav.config.keys.click, "Click")}
+                ${keyButton([openKeyNav.config.keys.click], "Click")}
                 ${dragButton}
             </div>
         `;
@@ -104,7 +93,6 @@ const updateToolbar = (toolBarElement, lastMessage) => {
 
     let message;
     const typedLabel = openKeyNav.config.typedLabel.value;
-    
     if (openKeyNav.config.modes.clicking.value) {
         message = toolbarTemplates.clickMode(typedLabel);
     } 

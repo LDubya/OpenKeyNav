@@ -10,7 +10,21 @@ var _escape = require("./escape");
 var _focus = require("./focus");
 var _isTabbable = require("./isTabbable");
 var _keylabels = require("./keylabels");
+var _lifecycle = require("./lifecycle");
 var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav, e) {
+  // check if openKeyNav is enabled
+  if (e.shiftKey && openKeyNav.config.keys.menu.toLowerCase() == e.key.toLowerCase()) {
+    if (!openKeyNav.config.enabled.value) {
+      // if openKeyNav disabled
+      openKeyNav.config.enabled.value = true;
+      return true;
+    } else {
+      (0, _escape.handleEscape)(openKeyNav, e);
+      openKeyNav.config.enabled.value = false;
+      return true;
+    }
+  }
+
   // first check for modifier keys and escape
   switch (e.key) {
     case 'Shift': // exit this event listener if it's the shift key press
@@ -47,7 +61,9 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
       return true;
     }
   }
-
+  if (!openKeyNav.config.enabled.value) {
+    return true;
+  }
   // escape and toggles
   switch (e.key) {
     case openKeyNav.config.keys.escape:

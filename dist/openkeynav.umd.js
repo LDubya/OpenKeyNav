@@ -12,7 +12,7 @@
     value: true
   });
   version.version = void 0;
-  version.version = "0.1.143";
+  version.version = "0.1.158";
 
   var signals = {};
 
@@ -61,15 +61,18 @@
     value: true
   });
   keyButton.keyButton = void 0;
-  keyButton.keyButton = function keyButton(keyCode, text, reverseOrder) {
-    var styledKeyCode = "<span class=\"keyButton\">".concat(keyCode, "</span>");
+  keyButton.keyButton = function keyButton(keyCodes, text, reverseOrder) {
+    // let styledKeyCode = `<span class="keyButton">${keyCode}</span>`;
+    var styledKeyCodes = keyCodes.map(function (keyCode) {
+      return "<span class=\"keyButton\">".concat(keyCode, "</span>");
+    }).join("");
     if (!text) {
-      return "".concat(styledKeyCode);
+      return "".concat(styledKeyCodes);
     }
     if (reverseOrder) {
-      return "\n        <span class=\"keyButtonContainer\"> \n            ".concat(styledKeyCode, "\n            <span class=\"keyButtonLabel\">").concat(text, "</span> \n        </span>\n    ");
+      return "\n            <span class=\"keyButtonContainer\"> \n                <span>\n                    ".concat(styledKeyCodes, "\n                </span>\n                <span class=\"keyButtonLabel\">").concat(text, "</span> \n            </span>\n        ");
     }
-    return "\n        <span class=\"keyButtonContainer\"> \n            <span class=\"keyButtonLabel\">".concat(text, "</span> \n            ").concat(styledKeyCode, "\n        </span>\n    ");
+    return "\n        <span class=\"keyButtonContainer\"> \n            <span class=\"keyButtonLabel\">".concat(text, "</span> \n            <span>\n                ").concat(styledKeyCodes, "\n            </span>\n        </span>\n    ");
   };
 
   Object.defineProperty(toolbar, "__esModule", {
@@ -104,41 +107,27 @@
         return;
       }
       toolBarElement.style.minWidth = "150px";
-      //  default message
-      // press k for click mode ( Click [ k ] )
-      // press m for drag mode ( Drag [ m ] )
-
       var clickButton = "";
-      // clickButton = keyButton(openKeyNav.config.keys.click, "Click");
-      // numButtons += 1;
-
       var dragButton = "";
-      // if(openKeyNav.config.modesConfig.move.config.length){ // if drag mode is configured
-      //     dragButton = keyButton(openKeyNav.config.keys.move, "Drag");
-      //     numButtons += 1;
-      // }
-
-      var menuButton = (0, _keyButton$1.keyButton)(openKeyNav$1.config.keys.menu, "Shortcuts");
-      // if(numButtons > 1){
-      //     toolBarElement.style.minWidth = "200px"
-      //     menuButton = keyButton(openKeyNav.config.keys.menu, "Shortcuts");
-      // }
-
+      var menuButton = (0, _keyButton$1.keyButton)([openKeyNav$1.config.keys.menu, "shift"], "Shortcuts");
+      if (openKeyNav$1.config.enabled.value) {
+        menuButton = (0, _keyButton$1.keyButton)([openKeyNav$1.config.keys.menu], "Shortcuts");
+      }
       return "<p>\n                    ".concat(menuButton, "\n                    ").concat(dragButton, "\n                    ").concat(clickButton, " \n                </p>\n            ");
     },
     clickMode: function clickMode(typedLabel) {
-      return "<p>".concat((0, _keyButton$1.keyButton)("Esc", "Click Mode", true), "</p>");
+      return "<p>".concat((0, _keyButton$1.keyButton)(["Esc"], "Click Mode", true), "</p>");
     },
     dragMode: function dragMode(typedLabel) {
-      return "<p>".concat((0, _keyButton$1.keyButton)("Esc", "Drag Mode", true), "</p>");
+      return "<p>".concat((0, _keyButton$1.keyButton)(["Esc"], "Drag Mode", true), "</p>");
     },
     menu: function menu(typedLabel) {
       var dragButton = "";
       if (openKeyNav$1.config.modesConfig.move.config.length) {
         // if drag mode is configured
-        dragButton = (0, _keyButton$1.keyButton)(openKeyNav$1.config.keys.move, "Drag");
+        dragButton = (0, _keyButton$1.keyButton)([openKeyNav$1.config.keys.move], "Drag");
       }
-      return "\n            <p>".concat((0, _keyButton$1.keyButton)("Esc", "Shortcuts", true), "</p>\n            <div class=\"openKeyNav-toolBar-expanded\">\n                ").concat((0, _keyButton$1.keyButton)(openKeyNav$1.config.keys.click, "Click"), "\n                ").concat(dragButton, "\n            </div>\n        ");
+      return "\n            <p>".concat((0, _keyButton$1.keyButton)(["Esc"], "Shortcuts", true), "</p>\n            <div class=\"openKeyNav-toolBar-expanded\">\n                ").concat((0, _keyButton$1.keyButton)([openKeyNav$1.config.keys.click], "Click"), "\n                ").concat(dragButton, "\n            </div>\n        ");
     }
   };
   var updateElement = function updateElement(element, html) {
@@ -1239,6 +1228,15 @@
     // return allElements;
   };
 
+  var lifecycle = {};
+
+  Object.defineProperty(lifecycle, "__esModule", {
+    value: true
+  });
+  lifecycle.enable = lifecycle.disable = void 0;
+  lifecycle.enable = function enable() {};
+  lifecycle.disable = function disable() {};
+
   Object.defineProperty(keypress, "__esModule", {
     value: true
   });
@@ -1250,6 +1248,19 @@
   var _isTabbable = isTabbable;
   var _keylabels = keylabels;
   keypress.handleKeyPress = function handleKeyPress(openKeyNav, e) {
+    // check if openKeyNav is enabled
+    if (e.shiftKey && openKeyNav.config.keys.menu.toLowerCase() == e.key.toLowerCase()) {
+      if (!openKeyNav.config.enabled.value) {
+        // if openKeyNav disabled
+        openKeyNav.config.enabled.value = true;
+        return true;
+      } else {
+        (0, _escape$1.handleEscape)(openKeyNav, e);
+        openKeyNav.config.enabled.value = false;
+        return true;
+      }
+    }
+
     // first check for modifier keys and escape
     switch (e.key) {
       case 'Shift': // exit this event listener if it's the shift key press
@@ -1285,7 +1296,9 @@
         return true;
       }
     }
-
+    if (!openKeyNav.config.enabled.value) {
+      return true;
+    }
     // escape and toggles
     switch (e.key) {
       case openKeyNav.config.keys.escape:
@@ -1981,7 +1994,8 @@
         debug: {
           screenReaderVisible: false,
           keyboardAccessible: true
-        }
+        },
+        enabled: (0, _signals.signal)(false)
       };
     }
 
@@ -2068,7 +2082,7 @@
     }, {
       key: "updateOverlayPosition",
       value: function updateOverlayPosition(element, overlay) {
-        var elementsToAvoid = document.querySelectorAll('[data-openkeynav-label], .openKeyNav-label-selected, .openKeyNav-toolBar');
+        var elementsToAvoid = document.querySelectorAll('[data-openkeynav-label], .openKeyNav-label-selected, .openKeyNav-toolBar'); // maybe also add labeled elements to this list dynamically
         var rectAvoid = element.getBoundingClientRect();
         var overlayWidth = overlay.getBoundingClientRect().width;
         var overlayHeight = overlay.getBoundingClientRect().height;
@@ -2683,9 +2697,9 @@
 
           // Determine the message based on the current mode
           if (modes.clicking.value) {
-            message = "In Click Mode. Press ".concat((0, _keyButton.keyButton)("Esc"), " to exit.");
+            message = "In Click Mode. Press ".concat((0, _keyButton.keyButton)(["Esc"]), " to exit.");
           } else if (modes.moving.value) {
-            message = "In Drag Mode. Press ".concat((0, _keyButton.keyButton)("Esc"), " to exit.");
+            message = "In Drag Mode. Press ".concat((0, _keyButton.keyButton)(["Esc"]), " to exit.");
           } else {
             message = "No mode active.";
           }

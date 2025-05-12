@@ -303,6 +303,7 @@ export const injectStylesheet = (parent) => {
           border-radius: 3px;
           box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);
           white-space: nowrap;
+          margin: 0 1px;
       }
       `;
     document.head.appendChild(style);

@@ -4,8 +4,27 @@ import { handleEscape } from "./escape";
 import { focusOnHeadings, focusOnScrollables } from "./focus";
 import { isTabbable } from "./isTabbable";
 import { filterRemainingOverlays, generateLabels, generateValidKeyChars, showClickableOverlays, showMoveableFromOverlays } from "./keylabels";
+import { enable, disable } from "./lifecycle";
+import { keyButton } from './keyButton.js';
 
 export const handleKeyPress = (openKeyNav, e) => {
+
+    // check if openKeyNav is enabled
+    if (e.shiftKey && openKeyNav.config.keys.menu.toLowerCase() == e.key.toLowerCase()) {
+      if(!openKeyNav.config.enabled.value){ // if openKeyNav disabled
+        openKeyNav.config.enabled.value = true;
+        let message = `openKeyNav enabled. Press ${ keyButton(["shift", openKeyNav.config.keys.menu])} to disable.`;
+        openKeyNav.emitNotification(message);
+        return true;
+      }
+      else{
+        handleEscape(openKeyNav, e);
+        openKeyNav.config.enabled.value = false;
+        let message = `openKeyNav disabled. Press ${ keyButton(["shift", openKeyNav.config.keys.menu])} to enable.`;
+        openKeyNav.emitNotification(message);
+        return true;
+      }
+    }
 
     // first check for modifier keys and escape
     switch (e.key) {
@@ -43,6 +62,9 @@ export const handleKeyPress = (openKeyNav, e) => {
         }
       }
   
+      if(!openKeyNav.config.enabled.value){
+        return true;
+      }
       // escape and toggles
       switch (e.key) {
         case openKeyNav.config.keys.escape: // escaping

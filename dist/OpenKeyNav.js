@@ -210,7 +210,8 @@ var OpenKeyNav = /*#__PURE__*/function () {
       debug: {
         screenReaderVisible: false,
         keyboardAccessible: true
-      }
+      },
+      enabled: (0, _signals.signal)(false)
     };
   }
 
@@ -297,7 +298,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
   }, {
     key: "updateOverlayPosition",
     value: function updateOverlayPosition(element, overlay) {
-      var elementsToAvoid = document.querySelectorAll('[data-openkeynav-label], .openKeyNav-label-selected, .openKeyNav-toolBar');
+      var elementsToAvoid = document.querySelectorAll('[data-openkeynav-label], .openKeyNav-label-selected, .openKeyNav-toolBar'); // maybe also add labeled elements to this list dynamically
       var rectAvoid = element.getBoundingClientRect();
       var overlayWidth = overlay.getBoundingClientRect().width;
       var overlayHeight = overlay.getBoundingClientRect().height;
@@ -920,9 +921,9 @@ var OpenKeyNav = /*#__PURE__*/function () {
 
         // Determine the message based on the current mode
         if (modes.clicking.value) {
-          message = "In Click Mode. Press ".concat((0, _keyButton.keyButton)("Esc"), " to exit.");
+          message = "In Click Mode. Press ".concat((0, _keyButton.keyButton)(["Esc"]), " to exit.");
         } else if (modes.moving.value) {
-          message = "In Drag Mode. Press ".concat((0, _keyButton.keyButton)("Esc"), " to exit.");
+          message = "In Drag Mode. Press ".concat((0, _keyButton.keyButton)(["Esc"]), " to exit.");
         } else {
           message = "No mode active.";
         }

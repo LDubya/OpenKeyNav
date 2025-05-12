@@ -33,41 +33,27 @@ var toolbarTemplates = {
     }
     toolBarElement.style.minWidth = "150px";
     var numButtons = 0;
-    //  default message
-    // press k for click mode ( Click [ k ] )
-    // press m for drag mode ( Drag [ m ] )
-
     var clickButton = "";
-    // clickButton = keyButton(openKeyNav.config.keys.click, "Click");
-    // numButtons += 1;
-
     var dragButton = "";
-    // if(openKeyNav.config.modesConfig.move.config.length){ // if drag mode is configured
-    //     dragButton = keyButton(openKeyNav.config.keys.move, "Drag");
-    //     numButtons += 1;
-    // }
-
-    var menuButton = (0, _keyButton.keyButton)(openKeyNav.config.keys.menu, "Shortcuts");
-    // if(numButtons > 1){
-    //     toolBarElement.style.minWidth = "200px"
-    //     menuButton = keyButton(openKeyNav.config.keys.menu, "Shortcuts");
-    // }
-
+    var menuButton = (0, _keyButton.keyButton)([openKeyNav.config.keys.menu, "shift"], "Shortcuts");
+    if (openKeyNav.config.enabled.value) {
+      menuButton = (0, _keyButton.keyButton)([openKeyNav.config.keys.menu], "Shortcuts");
+    }
     return "<p>\n                    ".concat(menuButton, "\n                    ").concat(dragButton, "\n                    ").concat(clickButton, " \n                </p>\n            ");
   },
   clickMode: function clickMode(typedLabel) {
-    return "<p>".concat((0, _keyButton.keyButton)("Esc", "Click Mode", true), "</p>");
+    return "<p>".concat((0, _keyButton.keyButton)(["Esc"], "Click Mode", true), "</p>");
   },
   dragMode: function dragMode(typedLabel) {
-    return "<p>".concat((0, _keyButton.keyButton)("Esc", "Drag Mode", true), "</p>");
+    return "<p>".concat((0, _keyButton.keyButton)(["Esc"], "Drag Mode", true), "</p>");
   },
   menu: function menu(typedLabel) {
     var dragButton = "";
     if (openKeyNav.config.modesConfig.move.config.length) {
       // if drag mode is configured
-      dragButton = (0, _keyButton.keyButton)(openKeyNav.config.keys.move, "Drag");
+      dragButton = (0, _keyButton.keyButton)([openKeyNav.config.keys.move], "Drag");
     }
-    return "\n            <p>".concat((0, _keyButton.keyButton)("Esc", "Shortcuts", true), "</p>\n            <div class=\"openKeyNav-toolBar-expanded\">\n                ").concat((0, _keyButton.keyButton)(openKeyNav.config.keys.click, "Click"), "\n                ").concat(dragButton, "\n            </div>\n        ");
+    return "\n            <p>".concat((0, _keyButton.keyButton)(["Esc"], "Shortcuts", true), "</p>\n            <div class=\"openKeyNav-toolBar-expanded\">\n                ").concat((0, _keyButton.keyButton)([openKeyNav.config.keys.click], "Click"), "\n                ").concat(dragButton, "\n            </div>\n        ");
   }
 };
 var updateElement = function updateElement(element, html) {
