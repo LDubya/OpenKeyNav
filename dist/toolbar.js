@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.handleToolBar = void 0;
 var _signals = require("./signals.js");
 var _keyButton = require("./keyButton.js");
+var _keypress = require("./keypress.js");
 // unified status bar and toolbar
 
 var openKeyNav;
@@ -24,6 +25,14 @@ var handleToolBar = exports.handleToolBar = function handleToolBar(openKeyNav_ob
     var typedLabel = openKeyNav.config.typedLabel.value;
     updateToolbar(toolBarElement, lastMessage);
   });
+  (0, _signals.effect)(function () {
+    var backgroundColor = openKeyNav.config.toolBar.backgroundColor.value;
+    var contentColor = openKeyNav.config.toolBar.contentColor.value;
+    updateToolbarColors({
+      backgroundColor: backgroundColor,
+      contentColor: contentColor
+    });
+  });
 };
 var toolbarTemplates = {
   default: function _default() {
@@ -35,7 +44,7 @@ var toolbarTemplates = {
     var numButtons = 0;
     var clickButton = "";
     var dragButton = "";
-    var menuButton = (0, _keyButton.keyButton)([openKeyNav.config.keys.menu, "shift"], "Shortcuts");
+    var menuButton = (0, _keyButton.keyButton)([openKeyNav.config.keys.menu, (0, _keypress.modiferKeyString)(openKeyNav)], "Shortcuts");
     if (openKeyNav.config.enabled.value) {
       menuButton = (0, _keyButton.keyButton)([openKeyNav.config.keys.menu], "Shortcuts");
     }
@@ -94,8 +103,22 @@ var injectToolbarStyleSheet = function injectToolbarStyleSheet() {
   style.setAttribute("class", "okn-toolbar-stylesheet");
   var toolBarHeight = openKeyNav.config.toolBar.height;
   var toolBarVerticalPadding = 6;
-  var toolbarBackground = "\n        background-color: hsl(210 10% 95% / 1);\n        border: 1px solid hsl(210, 8%, 68%);\n        border-radius: 4px;\n        padding: 3px ".concat(toolBarVerticalPadding, "px;\n    ");
+  var toolbarBackground = "\n        background-color: ".concat(openKeyNav.config.toolBar.backgroundColor.value, ";\n        color: ").concat(openKeyNav.config.toolBar.contentColor.value, ";\n        border: 1px solid hsl(210, 8%, 68%);\n        border-radius: 4px;\n        padding: 3px ").concat(toolBarVerticalPadding, "px;\n    ");
   style.type = 'text/css';
   style.innerHTML += "\n    .openKeyNav-toolBar {\n        // width: 200px;    // needs to have a set width (or a min-width) since the content changes inside... \n                            // min-widh is set inside the init depending on number of keys\n        // max-width: 200px;\n        // background-color: #333;\n        color: #333;\n        z-index: 10000;\n        ".concat(toolbarBackground, "\n        font-size:12px;\n        display: flex;\n        align-items: center;\n        // align-items: end;\n        flex-direction: column;\n        direction: rtl;\n        max-height: ").concat(toolBarHeight, "px;\n        position:relative;\n    }\n    .openKeyNav-toolBar > p{\n        overflow: hidden;\n    }\n    .openKeyNav-toolBar p{\n        font-size: 16px;\n        margin-bottom: 0;\n        line-height: ").concat(toolBarHeight - toolBarVerticalPadding, "px;\n        text-align: left;\n    }\n    .openKeyNav-toolBar-expanded {\n        position: absolute;\n        top: 0;\n        margin-top: 40px;\n        width: 100%;\n        ").concat(toolbarBackground, "\n        display: grid;\n        justify-content: left;\n    }\n    // .openKeyNav-toolBar span.stacked {\n    //     display: inline-grid;\n    //     grid-template-rows: auto auto;\n    // }\n    ");
   document.head.appendChild(style);
+};
+var updateToolbarColors = function updateToolbarColors(_ref) {
+  var backgroundColor = _ref.backgroundColor,
+    contentColor = _ref.contentColor;
+  var toolbar = document.querySelector('.openKeyNav-toolBar');
+  if (!toolbar) {
+    return false;
+  }
+  if (backgroundColor) {
+    toolbar.style.backgroundColor = backgroundColor;
+  }
+  if (contentColor) {
+    toolbar.style.color = contentColor;
+  }
 };

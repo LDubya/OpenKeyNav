@@ -7,20 +7,52 @@ import { filterRemainingOverlays, generateLabels, generateValidKeyChars, showCli
 import { enable, disable } from "./lifecycle";
 import { keyButton } from './keyButton.js';
 
+function getMetaKeyName() {
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  if (userAgent.indexOf('mac') >= 0) return 'Cmd';
+  if (userAgent.indexOf('win') >= 0) return 'Win';
+  if (userAgent.indexOf('linux') >= 0) return 'Super';
+  // fallback
+  return 'Meta';
+}
+
+export const modiferKeyString = (openKeyNav) => {
+  switch (openKeyNav.config.keys.modifierKey) {
+    case 'shiftKey':
+      return 'Shift';
+    case 'altKey':
+      return 'Alt';
+    case 'metaKey':
+      return getMetaKeyName();
+    default:
+      return openKeyNav.config.keys.modifierKey; 
+  }
+}
+
 export const handleKeyPress = (openKeyNav, e) => {
 
-    // check if openKeyNav is enabled
-    if (e.shiftKey && openKeyNav.config.keys.menu.toLowerCase() == e.key.toLowerCase()) {
+  
+
+  const isTextInputActive = openKeyNav.isTextInputActive();
+
+    // enable / disable openKeyNav
+    if (e[openKeyNav.config.keys.modifierKey] && openKeyNav.config.keys.menu.toLowerCase() == e.key.toLowerCase()) {
+      if (isTextInputActive) {
+        if (!e[openKeyNav.config.keys.inputEscape]) {
+          return true;
+        }
+      }
+      
       if(!openKeyNav.config.enabled.value){ // if openKeyNav disabled
         openKeyNav.config.enabled.value = true;
-        let message = `openKeyNav enabled. Press ${ keyButton(["shift", openKeyNav.config.keys.menu])} to disable.`;
+        let message = `openKeyNav enabled. Press ${ keyButton([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu])} to disable.`;
         openKeyNav.emitNotification(message);
         return true;
       }
       else{
         handleEscape(openKeyNav, e);
         openKeyNav.config.enabled.value = false;
-        let message = `openKeyNav disabled. Press ${ keyButton(["shift", openKeyNav.config.keys.menu])} to enable.`;
+        let message = `openKeyNav disabled. Press ${ keyButton([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu])} to enable.`;
         openKeyNav.emitNotification(message);
         return true;
       }
@@ -56,8 +88,8 @@ export const handleKeyPress = (openKeyNav, e) => {
         handleMenuMode(e);
       }
   
-      if (openKeyNav.isTextInputActive()) {
-        if (!e.ctrlKey) {
+      if (isTextInputActive) {
+        if (!e[openKeyNav.config.keys.inputEscape]) {
           return true;
         }
       }

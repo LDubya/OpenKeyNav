@@ -120,7 +120,9 @@ var OpenKeyNav = /*#__PURE__*/function () {
         outlineStyle: 'solid'
       },
       toolBar: {
-        height: 32
+        height: 32,
+        backgroundColor: (0, _signals.signal)('hsl(210 10% 95% / 1)'),
+        contentColor: (0, _signals.signal)('#000')
       },
       notifications: {
         enabled: true,
@@ -158,7 +160,10 @@ var OpenKeyNav = /*#__PURE__*/function () {
         // focus on the next heading of level 5 // as seen in JAWS, NVDA // do not modify
         heading_6: '6',
         // focus on the next heading of level 6 // as seen in JAWS, NVDA // do not modify
-        menu: 'o'
+        menu: 'o',
+        inputEscape: 'ctrlKey',
+        // for escaping input to trigger a command
+        modifierKey: 'shiftKey' // one of: [altKey, shiftKey, metaKey] // useful for on/off switch. Avoid ctrlKey, which is used to escape input.
       },
       modesConfig: {
         move: {

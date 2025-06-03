@@ -117,7 +117,7 @@ export default App;
 ```
 
 ### Key Commands
-
+- **Turn OpenKeyNav on / off**: After the page loads, press `Shift + o` to turn OpenKeyNav on/off. To avoid accidental activation, OpenKeyNav's shortcuts are disabled by default, in compliance with [WCAG Success Criterion 2.1.4 character key shortcuts](https://www.w3.org/TR/WCAG21/#character-key-shortcuts).
 - **Click Mode**: Press `k` to enter click mode, which labels clickable elements with keyboard shortcuts. Press the key combinations on the labels to "click" their respective buttons.
 - **Heading Navigation**: Press `h` to navigate through headers within the viewport. Press `1`,`2`,`3`,`4`,`5`, or `6` to navigate through headers of the respective level.
 - **Scroll Navigation**: Press `s` to cycle through different scrollable regions within the viewport.

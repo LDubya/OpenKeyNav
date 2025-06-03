@@ -12,7 +12,7 @@
     value: true
   });
   version.version = void 0;
-  version.version = "0.1.167";
+  version.version = "0.1.180";
 
   var signals = {};
 
@@ -73,161 +73,6 @@
       return "\n            <span class=\"keyButtonContainer\"> \n                <span>\n                    ".concat(styledKeyCodes, "\n                </span>\n                <span class=\"keyButtonLabel\">").concat(text, "</span> \n            </span>\n        ");
     }
     return "\n        <span class=\"keyButtonContainer\"> \n            <span class=\"keyButtonLabel\">".concat(text, "</span> \n            <span>\n                ").concat(styledKeyCodes, "\n            </span>\n        </span>\n    ");
-  };
-
-  Object.defineProperty(toolbar, "__esModule", {
-    value: true
-  });
-  toolbar.handleToolBar = void 0;
-  var _signals$1 = signals;
-  var _keyButton$2 = keyButton;
-  // unified status bar and toolbar
-
-  var openKeyNav$1;
-  toolbar.handleToolBar = function handleToolBar(openKeyNav_obj) {
-    openKeyNav$1 = openKeyNav_obj;
-    var toolBarElement = document.querySelector('.openKeyNav-toolBar');
-    if (!toolBarElement) {
-      return;
-    }
-    injectToolbarStyleSheet();
-
-    // 5. Handle mode changes 
-    var lastMessage;
-    (0, _signals$1.effect)(function () {
-      openKeyNav$1.config.modes;
-      openKeyNav$1.config.typedLabel.value;
-      updateToolbar(toolBarElement, lastMessage);
-    });
-  };
-  var toolbarTemplates = {
-    default: function _default() {
-      var toolBarElement = document.querySelector('.openKeyNav-toolBar');
-      if (!toolBarElement) {
-        return;
-      }
-      toolBarElement.style.minWidth = "150px";
-      var clickButton = "";
-      var dragButton = "";
-      var menuButton = (0, _keyButton$2.keyButton)([openKeyNav$1.config.keys.menu, "shift"], "Shortcuts");
-      if (openKeyNav$1.config.enabled.value) {
-        menuButton = (0, _keyButton$2.keyButton)([openKeyNav$1.config.keys.menu], "Shortcuts");
-      }
-      return "<p>\n                    ".concat(menuButton, "\n                    ").concat(dragButton, "\n                    ").concat(clickButton, " \n                </p>\n            ");
-    },
-    clickMode: function clickMode(typedLabel) {
-      return "<p>".concat((0, _keyButton$2.keyButton)(["Esc"], "Click Mode", true), "</p>");
-    },
-    dragMode: function dragMode(typedLabel) {
-      return "<p>".concat((0, _keyButton$2.keyButton)(["Esc"], "Drag Mode", true), "</p>");
-    },
-    menu: function menu(typedLabel) {
-      var dragButton = "";
-      if (openKeyNav$1.config.modesConfig.move.config.length) {
-        // if drag mode is configured
-        dragButton = (0, _keyButton$2.keyButton)([openKeyNav$1.config.keys.move], "Drag");
-      }
-      return "\n            <p>".concat((0, _keyButton$2.keyButton)(["Esc"], "Shortcuts", true), "</p>\n            <div class=\"openKeyNav-toolBar-expanded\">\n                ").concat((0, _keyButton$2.keyButton)([openKeyNav$1.config.keys.click], "Click"), "\n                ").concat(dragButton, "\n            </div>\n        ");
-    }
-  };
-  var updateElement = function updateElement(element, html) {
-    element.innerHTML = html;
-  };
-  var updateToolbar = function updateToolbar(toolBarElement, lastMessage) {
-    if (!toolBarElement) {
-      return;
-    }
-    var message;
-    var typedLabel = openKeyNav$1.config.typedLabel.value;
-    if (openKeyNav$1.config.modes.clicking.value) {
-      message = toolbarTemplates.clickMode(typedLabel);
-    } else if (openKeyNav$1.config.modes.moving.value) {
-      message = toolbarTemplates.dragMode(typedLabel);
-      // message = toolbarTemplates.menu(typedLabel);
-    } else if (openKeyNav$1.config.modes.menu.value) {
-      message = toolbarTemplates.menu(typedLabel);
-    } else {
-      message = toolbarTemplates.default(); // Default message
-    }
-
-    // Only emit the notification if the message has changed
-    if (message === lastMessage) {
-      return;
-    }
-
-    // console.log(message);
-    // Update the toolbar content
-    updateElement(toolBarElement, message);
-    lastMessage = message;
-  };
-  var injectToolbarStyleSheet = function injectToolbarStyleSheet() {
-    if (!!document.querySelector('.okn-toolbar-stylesheet')) {
-      return false;
-    }
-    var style = document.createElement('style');
-    style.setAttribute("class", "okn-toolbar-stylesheet");
-    var toolBarHeight = openKeyNav$1.config.toolBar.height;
-    var toolBarVerticalPadding = 6;
-    var toolbarBackground = "\n        background-color: hsl(210 10% 95% / 1);\n        border: 1px solid hsl(210, 8%, 68%);\n        border-radius: 4px;\n        padding: 3px ".concat(toolBarVerticalPadding, "px;\n    ");
-    style.type = 'text/css';
-    style.innerHTML += "\n    .openKeyNav-toolBar {\n        // width: 200px;    // needs to have a set width (or a min-width) since the content changes inside... \n                            // min-widh is set inside the init depending on number of keys\n        // max-width: 200px;\n        // background-color: #333;\n        color: #333;\n        z-index: 10000;\n        ".concat(toolbarBackground, "\n        font-size:12px;\n        display: flex;\n        align-items: center;\n        // align-items: end;\n        flex-direction: column;\n        direction: rtl;\n        max-height: ").concat(toolBarHeight, "px;\n        position:relative;\n    }\n    .openKeyNav-toolBar > p{\n        overflow: hidden;\n    }\n    .openKeyNav-toolBar p{\n        font-size: 16px;\n        margin-bottom: 0;\n        line-height: ").concat(toolBarHeight - toolBarVerticalPadding, "px;\n        text-align: left;\n    }\n    .openKeyNav-toolBar-expanded {\n        position: absolute;\n        top: 0;\n        margin-top: 40px;\n        width: 100%;\n        ").concat(toolbarBackground, "\n        display: grid;\n        justify-content: left;\n    }\n    // .openKeyNav-toolBar span.stacked {\n    //     display: inline-grid;\n    //     grid-template-rows: auto auto;\n    // }\n    ");
-    document.head.appendChild(style);
-  };
-
-  var styles = {};
-
-  Object.defineProperty(styles, "__esModule", {
-    value: true
-  });
-  styles.injectStylesheet = void 0;
-  var openKeyNav;
-  styles.injectStylesheet = function injectStylesheet(parent) {
-    openKeyNav = parent;
-    var style = document.createElement('style');
-    style.type = 'text/css';
-    style.innerHTML = '' + '.openKeyNav-label {' + 'font: inherit;' + 'vertical-align: baseline;' + 'box-sizing: border-box;' + 'white-space: nowrap;' + "border: 1px solid ".concat(openKeyNav.config.spot.fontColor, ";") +
-    //   `box-shadow: inset 0 -2.5px 0 ${openKeyNav.config.spot.insetColor}, inset 0 -3px 0 #999, 0 0 4px #fff;` +
-    //   `background: linear-gradient(to top, #999 5%, ${openKeyNav.config.spot.backgroundColor} 20%);` +
-    "background-color: ".concat(openKeyNav.config.spot.backgroundColor, ";") +
-    //   'border-radius: calc( 4px );' +
-    "color: ".concat(openKeyNav.config.spot.fontColor, ";") + 'display: inline-block;' + "font-size: ".concat(openKeyNav.config.spot.fontSize, ";") +
-    // `outline : 2px solid ${openKeyNav.config.focus.outlineColor};` +
-    'outline-offset: -2px !important;' +
-    // +"font-weight: bold;"
-    'font-weight: inherit;' +
-    //   'line-height: 1.5;' +
-    'line-height: 1;' + 'margin: 0 .1em 0 1px;' + 'overflow-wrap: break-word;' +
-    //   'padding: .0 .15em .1em;' +
-    'padding: 3px;' + "text-shadow: 0 1px 0 ".concat(openKeyNav.config.spot.insetColor, ";") + 'min-width: 1rem;' + 'text-align: center;' + 'position: absolute;' + 'z-index: 99999999;' + 'font-family: monospace;' + '}' + '.openKeyNav-label[data-openkeynav-position="left"]::after, ' + '.openKeyNav-label[data-openkeynav-position="right"]::before, ' + '.openKeyNav-label[data-openkeynav-position="top"]::after, ' + '.openKeyNav-label[data-openkeynav-position="bottom"]::before, ' + '.openKeyNav-label[data-openkeynav-position="left"]::before, ' + '.openKeyNav-label[data-openkeynav-position="right"]::after, ' + '.openKeyNav-label[data-openkeynav-position="top"]::before, ' + '.openKeyNav-label[data-openkeynav-position="bottom"]::after {' + 'content: "";' + 'position: absolute;' + '}' + '.openKeyNav-label[data-openkeynav-position="left"]::after, ' + '.openKeyNav-label[data-openkeynav-position="right"]::before, ' + '.openKeyNav-label[data-openkeynav-position="left"]::before, ' + '.openKeyNav-label[data-openkeynav-position="right"]::after {' + 'top: 50%;' + 'transform: translateY(-50%);' + '}' + '.openKeyNav-label[data-openkeynav-position="top"]::after, ' + '.openKeyNav-label[data-openkeynav-position="bottom"]::before, ' + '.openKeyNav-label[data-openkeynav-position="top"]::before, ' + '.openKeyNav-label[data-openkeynav-position="bottom"]::after {' + 'left: 50%;' + 'transform: translateX(-50%);' + '}' + '.openKeyNav-label[data-openkeynav-position="left"]::before {' + "border-left: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff;") + "right: -".concat(openKeyNav.config.spot.arrowSize_px + 1, "px;") + "border-top: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent;") + "border-bottom: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent;") + '}' + '.openKeyNav-label[data-openkeynav-position="left"]::after {' + "border-left: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, ";") + "right: -".concat(openKeyNav.config.spot.arrowSize_px, "px;") + "border-top: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent;") + "border-bottom: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent;") + '}' + '.openKeyNav-label[data-openkeynav-position="right"]::before {' + "border-right: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff;") + "left: -".concat(openKeyNav.config.spot.arrowSize_px + 1, "px;") + "border-top: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent;") + "border-bottom: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent;") + '}' + '.openKeyNav-label[data-openkeynav-position="right"]::after {' + "border-right: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, ";") + "left: -".concat(openKeyNav.config.spot.arrowSize_px, "px;") + "border-top: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent;") + "border-bottom: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent;") + '}' + '.openKeyNav-label[data-openkeynav-position="top"]{' + 'padding-bottom: 0;' + '}' + '.openKeyNav-label[data-openkeynav-position="top"]::before {' + "border-top: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff;") + "bottom: -".concat(openKeyNav.config.spot.arrowSize_px + 1, "px;") + "border-left: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent;") + "border-right: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent;") + '}' + '.openKeyNav-label[data-openkeynav-position="top"]::after {' + "border-top: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, ";") + "bottom: -".concat(openKeyNav.config.spot.arrowSize_px, "px;") + "border-left: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent;") + "border-right: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent;") + '}' + '.openKeyNav-label[data-openkeynav-position="bottom"]{' + 'padding-top: 0;' + '}' + '.openKeyNav-label[data-openkeynav-position="bottom"]::before {' + "border-bottom: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff;") + "top: -".concat(openKeyNav.config.spot.arrowSize_px + 1, "px;") + "border-left: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent;") + "border-right: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent;") + '}' + '.openKeyNav-label[data-openkeynav-position="bottom"]::after {' + "border-bottom: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, ";") + "top: -".concat(openKeyNav.config.spot.arrowSize_px, "px;") + "border-left: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent;") + "border-right: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent;") + '}' + '.openKeyNav-label-selected{' +
-    // 'padding : 0;' +
-    // 'margin : 0;' +
-    'display : grid;' + 'align-content : center;' + "color : ".concat(openKeyNav.config.spot.fontColor, ";") + "background : ".concat(openKeyNav.config.spot.backgroundColor, ";") +
-    // `outline : 4px solid ${openKeyNav.config.focus.outlineColor};` +
-    "outline: none;" +
-    // `border-radius: 100%;` +
-    // `width: 1rem;` +
-    // `height: 1rem;` +
-    // 'text-shadow : none;' +
-    // 'padding : 0 !important;' +
-    // 'margin: 0 !important;' +
-    '}' + '[data-openkeynav-label]:not(.openKeyNav-label):not(button){' +
-    // `outline: 2px double ${openKeyNav.config.focus.outlineColor} !important;` +
-    // 'outline-offset: 2px !important;' +
-    "box-shadow:  inset 0 0 0 .5px #000,\n                      0 0 0 .75px #000,\n                      0 0 0 1.5px rgba(255,255,255,1);" + 'outline:none !important;' +
-    // 'border-radius: 3px;' +
-    'border-color: #000;' + 'border-radius: 3px;' + '}' + 'button[data-openkeynav-label]{' + 'outline:2px solid #000 !important;' + '}' + '.openKeyNav-inaccessible:not(.openKeyNav-label):not(button){' + "box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1);" + 'outline:none !important;' + 'border-color: #f00;' + 'border-radius: 3px;' + '}' + 'button.openKeyNav-inaccessible{' + 'outline:2px solid #f00 !important;' + '}' + '.openKeyNav-inaccessible.openKeyNav-label{' + "box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1);" + 'border-color: #f00;' + 'border-radius: 3px;' + '}' +
-    //   +"span[data-openkeynav-label]{"
-    //       +"display: inherit;"
-    //   +"}"
-    '.openKeyNav-noCursor *{' + 'cursor: none !important;' + '}' + '*:focus {' + "outline: 2px ".concat(openKeyNav.config.focus.outlineStyle, " ").concat(openKeyNav.config.focus.outlineColor, " !important;") + 'outline-offset: -2px !important;' + '}' + '.openKeyNav-mouseover-tooltip{' + 'position: absolute;' + 'background-color: #333;' + 'color: #fff;' + 'padding: 5px;' + 'border-radius: 5px;' + 'display: none;' + 'z-index: 1000;' + 'font-size: 12px;' + '}' + '.openKeyNav-mouseover-tooltip::before{' + 'content: "Debug mode"' + '}'
-    //   '[data-openkeynav-draggable="true"] {' +
-    //   `outline: 2px solid ${openKeyNav.config.focus.outlineColor};` +
-    //   'outline-offset: -1px !important;' +
-    // '}'
-    ;
-    style.innerHTML += "\n      .okn-logo-text {\n          font-size: 36px;\n          font-weight: 600;\n          color: #ffffff;\n          background-color: #333;\n          padding: .1em .2em;\n          border-radius: 1em;\n          box-sizing: border-box;\n          line-height: 1;\n          text-align: center;\n          position: relative;\n          display: inline-block;\n          min-width: 1rem;\n          border: max(.1em, 2px) solid #ffffff;\n          white-space: nowrap;\n      }\n\n      .okn-logo-text.small {\n          font-size: 18px;\n      }\n      .okn-logo-text.tiny {\n          font-size: 10px;\n          /* border-width: 1px; */\n          border: none;\n      }\n      .okn-logo-text.tiny .key {\n          font-weight: 700;\n      }\n\n      .okn-logo-text.light {\n          color: #333; /* Dark text color */\n          background-color: #fff; /* Light background */\n          border-color: #333; /* Dark border */\n      }\n\n      .okn-logo-text .key {\n          display: inline;\n          padding: .1em .2em;\n          margin: 0 .1em;\n          background-color: #ffffff; /* Light background */\n          color: #333; /* Dark text */\n          line-height: 1;\n          /* font-size: 0.6em; */\n          position: relative;\n          top: -.3em;\n      }\n\n      .okn-logo-text.light .key {\n          background-color: #333; /* Dark background */\n          color: #ffffff; /* Light text */\n      }\n\n      .okn-logo-text .key::before,\n      .okn-logo-text .key::after {\n          content: \"\";\n          position: absolute;\n          left: 50%;\n          transform: translateX(-50%);\n      }\n\n      .okn-logo-text .key::before {\n          --border-size: 0.5em; /* Base border size */\n          --min-border-size: 5px; /* Minimum pixel size */\n\n          border-top: max(var(--border-size), var(--min-border-size)) solid #333;\n          bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n          border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n          border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n      }\n      .okn-logo-text.light .key::before {\n          border-top-color: #fff; /* Dark top triangle */\n      }\n\n      .okn-logo-text .key::after {\n          --border-size: .4em; /* Base border size */\n          --min-border-size: 4px; /* Minimum pixel size */\n\n          border-top: max( calc( var(--border-size) + 2px) , var(--min-border-size)) solid #fff;\n          bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n          border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n          border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n      }\n\n      .okn-logo-text.light .key::after {\n          border-top-color: #333; /* Light bottom triangle */\n      }\n      ";
-    style.innerHTML += "\n        .keyButtonContainer {\n            margin: 0 .1em;\n            display: inline-grid;\n            grid-template-columns: min-content auto;\n            align-items: baseline;\n            column-gap: 4px;\n        }\n        .keyButton {\n          display: inline-block;\n          padding: 1px 4px;\n          min-width: 1.3em;\n          text-align: center;\n          line-height: 1;\n          color: hsl(210, 8%, 5%);\n          text-shadow: 0 1px 0 hsl(0, 0%, 100%);\n          background-color: hsl(210, 8%, 90%);\n          border: 1px solid hsl(210, 8%, 68%);\n          border-radius: 3px;\n          box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);\n          white-space: nowrap;\n          margin: 0 1px;\n      }\n      ";
-    document.head.appendChild(style);
   };
 
   var keypress = {};
@@ -1240,27 +1085,54 @@
   Object.defineProperty(keypress, "__esModule", {
     value: true
   });
-  keypress.handleKeyPress = void 0;
+  keypress.modiferKeyString = keypress.handleKeyPress = void 0;
   var _clicking = clicking;
   var _dragAndDrop = dragAndDrop;
   var _escape$1 = _escape$3;
   var _focus = focus;
   var _isTabbable = isTabbable;
   var _keylabels = keylabels;
-  var _keyButton$1 = keyButton;
+  var _keyButton$2 = keyButton;
+  function getMetaKeyName() {
+    var userAgent = window.navigator.userAgent.toLowerCase();
+    if (userAgent.indexOf('mac') >= 0) return 'Cmd';
+    if (userAgent.indexOf('win') >= 0) return 'Win';
+    if (userAgent.indexOf('linux') >= 0) return 'Super';
+    // fallback
+    return 'Meta';
+  }
+  var modiferKeyString = keypress.modiferKeyString = function modiferKeyString(openKeyNav) {
+    switch (openKeyNav.config.keys.modifierKey) {
+      case 'shiftKey':
+        return 'Shift';
+      case 'altKey':
+        return 'Alt';
+      case 'metaKey':
+        return getMetaKeyName();
+      default:
+        return openKeyNav.config.keys.modifierKey;
+    }
+  };
   keypress.handleKeyPress = function handleKeyPress(openKeyNav, e) {
-    // check if openKeyNav is enabled
-    if (e.shiftKey && openKeyNav.config.keys.menu.toLowerCase() == e.key.toLowerCase()) {
+    var isTextInputActive = openKeyNav.isTextInputActive();
+
+    // enable / disable openKeyNav
+    if (e[openKeyNav.config.keys.modifierKey] && openKeyNav.config.keys.menu.toLowerCase() == e.key.toLowerCase()) {
+      if (isTextInputActive) {
+        if (!e[openKeyNav.config.keys.inputEscape]) {
+          return true;
+        }
+      }
       if (!openKeyNav.config.enabled.value) {
         // if openKeyNav disabled
         openKeyNav.config.enabled.value = true;
-        var message = "openKeyNav enabled. Press ".concat((0, _keyButton$1.keyButton)(["shift", openKeyNav.config.keys.menu]), " to disable.");
+        var message = "openKeyNav enabled. Press ".concat((0, _keyButton$2.keyButton)([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu]), " to disable.");
         openKeyNav.emitNotification(message);
         return true;
       } else {
         (0, _escape$1.handleEscape)(openKeyNav, e);
         openKeyNav.config.enabled.value = false;
-        var _message = "openKeyNav disabled. Press ".concat((0, _keyButton$1.keyButton)(["shift", openKeyNav.config.keys.menu]), " to enable.");
+        var _message = "openKeyNav disabled. Press ".concat((0, _keyButton$2.keyButton)([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu]), " to enable.");
         openKeyNav.emitNotification(_message);
         return true;
       }
@@ -1296,8 +1168,8 @@
     if (openKeyNav.config.modes.menu.value) {
       handleMenuMode();
     }
-    if (openKeyNav.isTextInputActive()) {
-      if (!e.ctrlKey) {
+    if (isTextInputActive) {
+      if (!e[openKeyNav.config.keys.inputEscape]) {
         return true;
       }
     }
@@ -1633,6 +1505,184 @@
     }
   };
 
+  Object.defineProperty(toolbar, "__esModule", {
+    value: true
+  });
+  toolbar.handleToolBar = void 0;
+  var _signals$1 = signals;
+  var _keyButton$1 = keyButton;
+  var _keypress$1 = keypress;
+  // unified status bar and toolbar
+
+  var openKeyNav$1;
+  toolbar.handleToolBar = function handleToolBar(openKeyNav_obj) {
+    openKeyNav$1 = openKeyNav_obj;
+    var toolBarElement = document.querySelector('.openKeyNav-toolBar');
+    if (!toolBarElement) {
+      return;
+    }
+    injectToolbarStyleSheet();
+
+    // 5. Handle mode changes 
+    var lastMessage;
+    (0, _signals$1.effect)(function () {
+      openKeyNav$1.config.modes;
+      openKeyNav$1.config.typedLabel.value;
+      updateToolbar(toolBarElement, lastMessage);
+    });
+    (0, _signals$1.effect)(function () {
+      var backgroundColor = openKeyNav$1.config.toolBar.backgroundColor.value;
+      var contentColor = openKeyNav$1.config.toolBar.contentColor.value;
+      updateToolbarColors({
+        backgroundColor: backgroundColor,
+        contentColor: contentColor
+      });
+    });
+  };
+  var toolbarTemplates = {
+    default: function _default() {
+      var toolBarElement = document.querySelector('.openKeyNav-toolBar');
+      if (!toolBarElement) {
+        return;
+      }
+      toolBarElement.style.minWidth = "150px";
+      var clickButton = "";
+      var dragButton = "";
+      var menuButton = (0, _keyButton$1.keyButton)([openKeyNav$1.config.keys.menu, (0, _keypress$1.modiferKeyString)(openKeyNav$1)], "Shortcuts");
+      if (openKeyNav$1.config.enabled.value) {
+        menuButton = (0, _keyButton$1.keyButton)([openKeyNav$1.config.keys.menu], "Shortcuts");
+      }
+      return "<p>\n                    ".concat(menuButton, "\n                    ").concat(dragButton, "\n                    ").concat(clickButton, " \n                </p>\n            ");
+    },
+    clickMode: function clickMode(typedLabel) {
+      return "<p>".concat((0, _keyButton$1.keyButton)(["Esc"], "Click Mode", true), "</p>");
+    },
+    dragMode: function dragMode(typedLabel) {
+      return "<p>".concat((0, _keyButton$1.keyButton)(["Esc"], "Drag Mode", true), "</p>");
+    },
+    menu: function menu(typedLabel) {
+      var dragButton = "";
+      if (openKeyNav$1.config.modesConfig.move.config.length) {
+        // if drag mode is configured
+        dragButton = (0, _keyButton$1.keyButton)([openKeyNav$1.config.keys.move], "Drag");
+      }
+      return "\n            <p>".concat((0, _keyButton$1.keyButton)(["Esc"], "Shortcuts", true), "</p>\n            <div class=\"openKeyNav-toolBar-expanded\">\n                ").concat((0, _keyButton$1.keyButton)([openKeyNav$1.config.keys.click], "Click"), "\n                ").concat(dragButton, "\n            </div>\n        ");
+    }
+  };
+  var updateElement = function updateElement(element, html) {
+    element.innerHTML = html;
+  };
+  var updateToolbar = function updateToolbar(toolBarElement, lastMessage) {
+    if (!toolBarElement) {
+      return;
+    }
+    var message;
+    var typedLabel = openKeyNav$1.config.typedLabel.value;
+    if (openKeyNav$1.config.modes.clicking.value) {
+      message = toolbarTemplates.clickMode(typedLabel);
+    } else if (openKeyNav$1.config.modes.moving.value) {
+      message = toolbarTemplates.dragMode(typedLabel);
+      // message = toolbarTemplates.menu(typedLabel);
+    } else if (openKeyNav$1.config.modes.menu.value) {
+      message = toolbarTemplates.menu(typedLabel);
+    } else {
+      message = toolbarTemplates.default(); // Default message
+    }
+
+    // Only emit the notification if the message has changed
+    if (message === lastMessage) {
+      return;
+    }
+
+    // console.log(message);
+    // Update the toolbar content
+    updateElement(toolBarElement, message);
+    lastMessage = message;
+  };
+  var injectToolbarStyleSheet = function injectToolbarStyleSheet() {
+    if (!!document.querySelector('.okn-toolbar-stylesheet')) {
+      return false;
+    }
+    var style = document.createElement('style');
+    style.setAttribute("class", "okn-toolbar-stylesheet");
+    var toolBarHeight = openKeyNav$1.config.toolBar.height;
+    var toolBarVerticalPadding = 6;
+    var toolbarBackground = "\n        background-color: ".concat(openKeyNav$1.config.toolBar.backgroundColor.value, ";\n        color: ").concat(openKeyNav$1.config.toolBar.contentColor.value, ";\n        border: 1px solid hsl(210, 8%, 68%);\n        border-radius: 4px;\n        padding: 3px ").concat(toolBarVerticalPadding, "px;\n    ");
+    style.type = 'text/css';
+    style.innerHTML += "\n    .openKeyNav-toolBar {\n        // width: 200px;    // needs to have a set width (or a min-width) since the content changes inside... \n                            // min-widh is set inside the init depending on number of keys\n        // max-width: 200px;\n        // background-color: #333;\n        color: #333;\n        z-index: 10000;\n        ".concat(toolbarBackground, "\n        font-size:12px;\n        display: flex;\n        align-items: center;\n        // align-items: end;\n        flex-direction: column;\n        direction: rtl;\n        max-height: ").concat(toolBarHeight, "px;\n        position:relative;\n    }\n    .openKeyNav-toolBar > p{\n        overflow: hidden;\n    }\n    .openKeyNav-toolBar p{\n        font-size: 16px;\n        margin-bottom: 0;\n        line-height: ").concat(toolBarHeight - toolBarVerticalPadding, "px;\n        text-align: left;\n    }\n    .openKeyNav-toolBar-expanded {\n        position: absolute;\n        top: 0;\n        margin-top: 40px;\n        width: 100%;\n        ").concat(toolbarBackground, "\n        display: grid;\n        justify-content: left;\n    }\n    // .openKeyNav-toolBar span.stacked {\n    //     display: inline-grid;\n    //     grid-template-rows: auto auto;\n    // }\n    ");
+    document.head.appendChild(style);
+  };
+  var updateToolbarColors = function updateToolbarColors(_ref) {
+    var backgroundColor = _ref.backgroundColor,
+      contentColor = _ref.contentColor;
+    var toolbar = document.querySelector('.openKeyNav-toolBar');
+    if (!toolbar) {
+      return false;
+    }
+    if (backgroundColor) {
+      toolbar.style.backgroundColor = backgroundColor;
+    }
+    if (contentColor) {
+      toolbar.style.color = contentColor;
+    }
+  };
+
+  var styles = {};
+
+  Object.defineProperty(styles, "__esModule", {
+    value: true
+  });
+  styles.injectStylesheet = void 0;
+  var openKeyNav;
+  styles.injectStylesheet = function injectStylesheet(parent) {
+    openKeyNav = parent;
+    var style = document.createElement('style');
+    style.type = 'text/css';
+    style.innerHTML = '' + '.openKeyNav-label {' + 'font: inherit;' + 'vertical-align: baseline;' + 'box-sizing: border-box;' + 'white-space: nowrap;' + "border: 1px solid ".concat(openKeyNav.config.spot.fontColor, ";") +
+    //   `box-shadow: inset 0 -2.5px 0 ${openKeyNav.config.spot.insetColor}, inset 0 -3px 0 #999, 0 0 4px #fff;` +
+    //   `background: linear-gradient(to top, #999 5%, ${openKeyNav.config.spot.backgroundColor} 20%);` +
+    "background-color: ".concat(openKeyNav.config.spot.backgroundColor, ";") +
+    //   'border-radius: calc( 4px );' +
+    "color: ".concat(openKeyNav.config.spot.fontColor, ";") + 'display: inline-block;' + "font-size: ".concat(openKeyNav.config.spot.fontSize, ";") +
+    // `outline : 2px solid ${openKeyNav.config.focus.outlineColor};` +
+    'outline-offset: -2px !important;' +
+    // +"font-weight: bold;"
+    'font-weight: inherit;' +
+    //   'line-height: 1.5;' +
+    'line-height: 1;' + 'margin: 0 .1em 0 1px;' + 'overflow-wrap: break-word;' +
+    //   'padding: .0 .15em .1em;' +
+    'padding: 3px;' + "text-shadow: 0 1px 0 ".concat(openKeyNav.config.spot.insetColor, ";") + 'min-width: 1rem;' + 'text-align: center;' + 'position: absolute;' + 'z-index: 99999999;' + 'font-family: monospace;' + '}' + '.openKeyNav-label[data-openkeynav-position="left"]::after, ' + '.openKeyNav-label[data-openkeynav-position="right"]::before, ' + '.openKeyNav-label[data-openkeynav-position="top"]::after, ' + '.openKeyNav-label[data-openkeynav-position="bottom"]::before, ' + '.openKeyNav-label[data-openkeynav-position="left"]::before, ' + '.openKeyNav-label[data-openkeynav-position="right"]::after, ' + '.openKeyNav-label[data-openkeynav-position="top"]::before, ' + '.openKeyNav-label[data-openkeynav-position="bottom"]::after {' + 'content: "";' + 'position: absolute;' + '}' + '.openKeyNav-label[data-openkeynav-position="left"]::after, ' + '.openKeyNav-label[data-openkeynav-position="right"]::before, ' + '.openKeyNav-label[data-openkeynav-position="left"]::before, ' + '.openKeyNav-label[data-openkeynav-position="right"]::after {' + 'top: 50%;' + 'transform: translateY(-50%);' + '}' + '.openKeyNav-label[data-openkeynav-position="top"]::after, ' + '.openKeyNav-label[data-openkeynav-position="bottom"]::before, ' + '.openKeyNav-label[data-openkeynav-position="top"]::before, ' + '.openKeyNav-label[data-openkeynav-position="bottom"]::after {' + 'left: 50%;' + 'transform: translateX(-50%);' + '}' + '.openKeyNav-label[data-openkeynav-position="left"]::before {' + "border-left: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff;") + "right: -".concat(openKeyNav.config.spot.arrowSize_px + 1, "px;") + "border-top: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent;") + "border-bottom: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent;") + '}' + '.openKeyNav-label[data-openkeynav-position="left"]::after {' + "border-left: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, ";") + "right: -".concat(openKeyNav.config.spot.arrowSize_px, "px;") + "border-top: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent;") + "border-bottom: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent;") + '}' + '.openKeyNav-label[data-openkeynav-position="right"]::before {' + "border-right: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff;") + "left: -".concat(openKeyNav.config.spot.arrowSize_px + 1, "px;") + "border-top: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent;") + "border-bottom: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent;") + '}' + '.openKeyNav-label[data-openkeynav-position="right"]::after {' + "border-right: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, ";") + "left: -".concat(openKeyNav.config.spot.arrowSize_px, "px;") + "border-top: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent;") + "border-bottom: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent;") + '}' + '.openKeyNav-label[data-openkeynav-position="top"]{' + 'padding-bottom: 0;' + '}' + '.openKeyNav-label[data-openkeynav-position="top"]::before {' + "border-top: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff;") + "bottom: -".concat(openKeyNav.config.spot.arrowSize_px + 1, "px;") + "border-left: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent;") + "border-right: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent;") + '}' + '.openKeyNav-label[data-openkeynav-position="top"]::after {' + "border-top: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, ";") + "bottom: -".concat(openKeyNav.config.spot.arrowSize_px, "px;") + "border-left: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent;") + "border-right: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent;") + '}' + '.openKeyNav-label[data-openkeynav-position="bottom"]{' + 'padding-top: 0;' + '}' + '.openKeyNav-label[data-openkeynav-position="bottom"]::before {' + "border-bottom: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff;") + "top: -".concat(openKeyNav.config.spot.arrowSize_px + 1, "px;") + "border-left: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent;") + "border-right: ".concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent;") + '}' + '.openKeyNav-label[data-openkeynav-position="bottom"]::after {' + "border-bottom: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, ";") + "top: -".concat(openKeyNav.config.spot.arrowSize_px, "px;") + "border-left: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent;") + "border-right: ".concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent;") + '}' + '.openKeyNav-label-selected{' +
+    // 'padding : 0;' +
+    // 'margin : 0;' +
+    'display : grid;' + 'align-content : center;' + "color : ".concat(openKeyNav.config.spot.fontColor, ";") + "background : ".concat(openKeyNav.config.spot.backgroundColor, ";") +
+    // `outline : 4px solid ${openKeyNav.config.focus.outlineColor};` +
+    "outline: none;" +
+    // `border-radius: 100%;` +
+    // `width: 1rem;` +
+    // `height: 1rem;` +
+    // 'text-shadow : none;' +
+    // 'padding : 0 !important;' +
+    // 'margin: 0 !important;' +
+    '}' + '[data-openkeynav-label]:not(.openKeyNav-label):not(button){' +
+    // `outline: 2px double ${openKeyNav.config.focus.outlineColor} !important;` +
+    // 'outline-offset: 2px !important;' +
+    "box-shadow:  inset 0 0 0 .5px #000,\n                      0 0 0 .75px #000,\n                      0 0 0 1.5px rgba(255,255,255,1);" + 'outline:none !important;' +
+    // 'border-radius: 3px;' +
+    'border-color: #000;' + 'border-radius: 3px;' + '}' + 'button[data-openkeynav-label]{' + 'outline:2px solid #000 !important;' + '}' + '.openKeyNav-inaccessible:not(.openKeyNav-label):not(button){' + "box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1);" + 'outline:none !important;' + 'border-color: #f00;' + 'border-radius: 3px;' + '}' + 'button.openKeyNav-inaccessible{' + 'outline:2px solid #f00 !important;' + '}' + '.openKeyNav-inaccessible.openKeyNav-label{' + "box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1);" + 'border-color: #f00;' + 'border-radius: 3px;' + '}' +
+    //   +"span[data-openkeynav-label]{"
+    //       +"display: inherit;"
+    //   +"}"
+    '.openKeyNav-noCursor *{' + 'cursor: none !important;' + '}' + '*:focus {' + "outline: 2px ".concat(openKeyNav.config.focus.outlineStyle, " ").concat(openKeyNav.config.focus.outlineColor, " !important;") + 'outline-offset: -2px !important;' + '}' + '.openKeyNav-mouseover-tooltip{' + 'position: absolute;' + 'background-color: #333;' + 'color: #fff;' + 'padding: 5px;' + 'border-radius: 5px;' + 'display: none;' + 'z-index: 1000;' + 'font-size: 12px;' + '}' + '.openKeyNav-mouseover-tooltip::before{' + 'content: "Debug mode"' + '}'
+    //   '[data-openkeynav-draggable="true"] {' +
+    //   `outline: 2px solid ${openKeyNav.config.focus.outlineColor};` +
+    //   'outline-offset: -1px !important;' +
+    // '}'
+    ;
+    style.innerHTML += "\n      .okn-logo-text {\n          font-size: 36px;\n          font-weight: 600;\n          color: #ffffff;\n          background-color: #333;\n          padding: .1em .2em;\n          border-radius: 1em;\n          box-sizing: border-box;\n          line-height: 1;\n          text-align: center;\n          position: relative;\n          display: inline-block;\n          min-width: 1rem;\n          border: max(.1em, 2px) solid #ffffff;\n          white-space: nowrap;\n      }\n\n      .okn-logo-text.small {\n          font-size: 18px;\n      }\n      .okn-logo-text.tiny {\n          font-size: 10px;\n          /* border-width: 1px; */\n          border: none;\n      }\n      .okn-logo-text.tiny .key {\n          font-weight: 700;\n      }\n\n      .okn-logo-text.light {\n          color: #333; /* Dark text color */\n          background-color: #fff; /* Light background */\n          border-color: #333; /* Dark border */\n      }\n\n      .okn-logo-text .key {\n          display: inline;\n          padding: .1em .2em;\n          margin: 0 .1em;\n          background-color: #ffffff; /* Light background */\n          color: #333; /* Dark text */\n          line-height: 1;\n          /* font-size: 0.6em; */\n          position: relative;\n          top: -.3em;\n      }\n\n      .okn-logo-text.light .key {\n          background-color: #333; /* Dark background */\n          color: #ffffff; /* Light text */\n      }\n\n      .okn-logo-text .key::before,\n      .okn-logo-text .key::after {\n          content: \"\";\n          position: absolute;\n          left: 50%;\n          transform: translateX(-50%);\n      }\n\n      .okn-logo-text .key::before {\n          --border-size: 0.5em; /* Base border size */\n          --min-border-size: 5px; /* Minimum pixel size */\n\n          border-top: max(var(--border-size), var(--min-border-size)) solid #333;\n          bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n          border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n          border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n      }\n      .okn-logo-text.light .key::before {\n          border-top-color: #fff; /* Dark top triangle */\n      }\n\n      .okn-logo-text .key::after {\n          --border-size: .4em; /* Base border size */\n          --min-border-size: 4px; /* Minimum pixel size */\n\n          border-top: max( calc( var(--border-size) + 2px) , var(--min-border-size)) solid #fff;\n          bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n          border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n          border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n      }\n\n      .okn-logo-text.light .key::after {\n          border-top-color: #333; /* Light bottom triangle */\n      }\n      ";
+    style.innerHTML += "\n        .keyButtonContainer {\n            margin: 0 .1em;\n            display: inline-grid;\n            grid-template-columns: min-content auto;\n            align-items: baseline;\n            column-gap: 4px;\n        }\n        .keyButton {\n          display: inline-block;\n          padding: 1px 4px;\n          min-width: 1.3em;\n          text-align: center;\n          line-height: 1;\n          color: hsl(210, 8%, 5%);\n          text-shadow: 0 1px 0 hsl(0, 0%, 100%);\n          background-color: hsl(210, 8%, 90%);\n          border: 1px solid hsl(210, 8%, 68%);\n          border-radius: 3px;\n          box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);\n          white-space: nowrap;\n          margin: 0 1px;\n      }\n      ";
+    document.head.appendChild(style);
+  };
+
   Object.defineProperty(OpenKeyNav$1, "__esModule", {
     value: true
   });
@@ -1909,7 +1959,9 @@
           outlineStyle: 'solid'
         },
         toolBar: {
-          height: 32
+          height: 32,
+          backgroundColor: (0, _signals.signal)('hsl(210 10% 95% / 1)'),
+          contentColor: (0, _signals.signal)('#000')
         },
         notifications: {
           enabled: true,
@@ -1947,7 +1999,10 @@
           // focus on the next heading of level 5 // as seen in JAWS, NVDA // do not modify
           heading_6: '6',
           // focus on the next heading of level 6 // as seen in JAWS, NVDA // do not modify
-          menu: 'o'
+          menu: 'o',
+          inputEscape: 'ctrlKey',
+          // for escaping input to trigger a command
+          modifierKey: 'shiftKey' // one of: [altKey, shiftKey, metaKey] // useful for on/off switch. Avoid ctrlKey, which is used to escape input.
         },
         modesConfig: {
           move: {

@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.handleKeyPress = void 0;
+exports.modiferKeyString = exports.handleKeyPress = void 0;
 var _clicking = require("./clicking");
 var _dragAndDrop = require("./dragAndDrop");
 var _escape = require("./escape");
@@ -12,19 +12,46 @@ var _isTabbable = require("./isTabbable");
 var _keylabels = require("./keylabels");
 var _lifecycle = require("./lifecycle");
 var _keyButton = require("./keyButton.js");
+function getMetaKeyName() {
+  var userAgent = window.navigator.userAgent.toLowerCase();
+  if (userAgent.indexOf('mac') >= 0) return 'Cmd';
+  if (userAgent.indexOf('win') >= 0) return 'Win';
+  if (userAgent.indexOf('linux') >= 0) return 'Super';
+  // fallback
+  return 'Meta';
+}
+var modiferKeyString = exports.modiferKeyString = function modiferKeyString(openKeyNav) {
+  switch (openKeyNav.config.keys.modifierKey) {
+    case 'shiftKey':
+      return 'Shift';
+    case 'altKey':
+      return 'Alt';
+    case 'metaKey':
+      return getMetaKeyName();
+    default:
+      return openKeyNav.config.keys.modifierKey;
+  }
+};
 var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav, e) {
-  // check if openKeyNav is enabled
-  if (e.shiftKey && openKeyNav.config.keys.menu.toLowerCase() == e.key.toLowerCase()) {
+  var isTextInputActive = openKeyNav.isTextInputActive();
+
+  // enable / disable openKeyNav
+  if (e[openKeyNav.config.keys.modifierKey] && openKeyNav.config.keys.menu.toLowerCase() == e.key.toLowerCase()) {
+    if (isTextInputActive) {
+      if (!e[openKeyNav.config.keys.inputEscape]) {
+        return true;
+      }
+    }
     if (!openKeyNav.config.enabled.value) {
       // if openKeyNav disabled
       openKeyNav.config.enabled.value = true;
-      var message = "openKeyNav enabled. Press ".concat((0, _keyButton.keyButton)(["shift", openKeyNav.config.keys.menu]), " to disable.");
+      var message = "openKeyNav enabled. Press ".concat((0, _keyButton.keyButton)([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu]), " to disable.");
       openKeyNav.emitNotification(message);
       return true;
     } else {
       (0, _escape.handleEscape)(openKeyNav, e);
       openKeyNav.config.enabled.value = false;
-      var _message = "openKeyNav disabled. Press ".concat((0, _keyButton.keyButton)(["shift", openKeyNav.config.keys.menu]), " to enable.");
+      var _message = "openKeyNav disabled. Press ".concat((0, _keyButton.keyButton)([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu]), " to enable.");
       openKeyNav.emitNotification(_message);
       return true;
     }
@@ -61,8 +88,8 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
   if (openKeyNav.config.modes.menu.value) {
     handleMenuMode(e);
   }
-  if (openKeyNav.isTextInputActive()) {
-    if (!e.ctrlKey) {
+  if (isTextInputActive) {
+    if (!e[openKeyNav.config.keys.inputEscape]) {
       return true;
     }
   }

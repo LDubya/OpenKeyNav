@@ -98,7 +98,9 @@ class OpenKeyNav {
           outlineStyle: 'solid'
         },
         toolBar: {
-          height: 32
+          height: 32,
+          backgroundColor: signal('hsl(210 10% 95% / 1)'),
+          contentColor: signal('#000')
         },
         notifications : {
           enabled: true,
@@ -121,7 +123,9 @@ class OpenKeyNav {
           heading_4: '4', // focus on the next heading of level 4 // as seen in JAWS, NVDA // do not modify
           heading_5: '5', // focus on the next heading of level 5 // as seen in JAWS, NVDA // do not modify
           heading_6: '6', // focus on the next heading of level 6 // as seen in JAWS, NVDA // do not modify
-          menu: 'o'
+          menu: 'o',
+          inputEscape: 'ctrlKey', // for escaping input to trigger a command
+          modifierKey: 'shiftKey' // one of: [altKey, shiftKey, metaKey] // useful for on/off switch. Avoid ctrlKey, which is used to escape input.
         },
         modesConfig: {
           move: {

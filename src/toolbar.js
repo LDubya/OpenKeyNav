@@ -2,6 +2,7 @@
 
 import { effect } from './signals.js';
 import { keyButton } from './keyButton.js';
+import { modiferKeyString } from "./keypress.js";
 
 let openKeyNav;
 
@@ -25,6 +26,12 @@ export const handleToolBar = (openKeyNav_obj) => {
       const typedLabel = openKeyNav.config.typedLabel.value;
       updateToolbar(toolBarElement, lastMessage);
     });
+
+    effect(() => {
+        const backgroundColor = openKeyNav.config.toolBar.backgroundColor.value;
+        const contentColor = openKeyNav.config.toolBar.contentColor.value;
+        updateToolbarColors({backgroundColor, contentColor});
+    })
     
 }
 
@@ -45,7 +52,7 @@ const toolbarTemplates = {
 
         let dragButton = "";
 
-        let menuButton = keyButton([openKeyNav.config.keys.menu, "shift"], "Shortcuts");
+        let menuButton = keyButton([openKeyNav.config.keys.menu, modiferKeyString(openKeyNav)], "Shortcuts");
         if(openKeyNav.config.enabled.value){
             menuButton = keyButton([openKeyNav.config.keys.menu], "Shortcuts");
         }
@@ -129,7 +136,8 @@ const injectToolbarStyleSheet = () => {
     const toolBarHeight = openKeyNav.config.toolBar.height;
     const toolBarVerticalPadding = 6;
     const toolbarBackground = `
-        background-color: hsl(210 10% 95% / 1);
+        background-color: ${openKeyNav.config.toolBar.backgroundColor.value};
+        color: ${openKeyNav.config.toolBar.contentColor.value};
         border: 1px solid hsl(210, 8%, 68%);
         border-radius: 4px;
         padding: 3px ${toolBarVerticalPadding}px;
@@ -177,4 +185,17 @@ const injectToolbarStyleSheet = () => {
     // }
     `;
     document.head.appendChild(style);
+}
+
+const updateToolbarColors = ({backgroundColor, contentColor}) => {
+    const toolbar = document.querySelector('.openKeyNav-toolBar');
+    if(!toolbar){
+        return false;
+    }
+    if(backgroundColor){
+        toolbar.style.backgroundColor = backgroundColor;
+    }
+    if(contentColor){
+        toolbar.style.color = contentColor;
+    }
 }
