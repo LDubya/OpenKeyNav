@@ -290,6 +290,9 @@ export const injectStylesheet = (parent) => {
             align-items: baseline;
             column-gap: 4px;
         }
+        .keyButtonContainer .keyButtonLabel{
+          white-space:nowrap;
+        }
         .keyButton {
           display: inline-block;
           padding: 1px 4px;

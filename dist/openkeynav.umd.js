@@ -12,7 +12,7 @@
     value: true
   });
   version.version = void 0;
-  version.version = "0.1.180";
+  version.version = "0.1.190";
 
   var signals = {};
 
@@ -153,10 +153,10 @@
     value: true
   });
   dragAndDrop.simulateDragAndDrop = dragAndDrop.endDrag = dragAndDrop.beginDrag = void 0;
-  function _createForOfIteratorHelper$1(r, e) {
+  function _createForOfIteratorHelper$2(r, e) {
     var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
     if (!t) {
-      if (Array.isArray(r) || (t = _unsupportedIterableToArray$2(r)) || e) {
+      if (Array.isArray(r) || (t = _unsupportedIterableToArray$3(r)) || e) {
         t && (r = t);
         var _n = 0,
           F = function F() {};
@@ -201,14 +201,14 @@
       }
     };
   }
-  function _unsupportedIterableToArray$2(r, a) {
+  function _unsupportedIterableToArray$3(r, a) {
     if (r) {
-      if ("string" == typeof r) return _arrayLikeToArray$2(r, a);
+      if ("string" == typeof r) return _arrayLikeToArray$3(r, a);
       var t = {}.toString.call(r).slice(8, -1);
-      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$2(r, a) : void 0;
+      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$3(r, a) : void 0;
     }
   }
-  function _arrayLikeToArray$2(r, a) {
+  function _arrayLikeToArray$3(r, a) {
     (null == a || a > r.length) && (a = r.length);
     for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
     return n;
@@ -225,7 +225,7 @@
 
         // Get all elements in the document
         var allElements = document.querySelectorAll('*');
-        var _iterator = _createForOfIteratorHelper$1(allElements),
+        var _iterator = _createForOfIteratorHelper$2(allElements),
           _step;
         try {
           for (_iterator.s(); !(_step = _iterator.n()).done;) {
@@ -820,25 +820,25 @@
   var _isTabbable$1 = isTabbable;
   var _scrolling = scrolling;
   function _toConsumableArray(r) {
-    return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray$1(r) || _nonIterableSpread();
+    return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray$2(r) || _nonIterableSpread();
   }
   function _nonIterableSpread() {
     throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
-  function _unsupportedIterableToArray$1(r, a) {
+  function _unsupportedIterableToArray$2(r, a) {
     if (r) {
-      if ("string" == typeof r) return _arrayLikeToArray$1(r, a);
+      if ("string" == typeof r) return _arrayLikeToArray$2(r, a);
       var t = {}.toString.call(r).slice(8, -1);
-      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$1(r, a) : void 0;
+      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$2(r, a) : void 0;
     }
   }
   function _iterableToArray(r) {
     if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
   }
   function _arrayWithoutHoles(r) {
-    if (Array.isArray(r)) return _arrayLikeToArray$1(r);
+    if (Array.isArray(r)) return _arrayLikeToArray$2(r);
   }
-  function _arrayLikeToArray$1(r, a) {
+  function _arrayLikeToArray$2(r, a) {
     (null == a || a > r.length) && (a = r.length);
     for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
     return n;
@@ -1512,31 +1512,133 @@
   var _signals$1 = signals;
   var _keyButton$1 = keyButton;
   var _keypress$1 = keypress;
-  // unified status bar and toolbar
-
+  function _createForOfIteratorHelper$1(r, e) {
+    var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+    if (!t) {
+      if (Array.isArray(r) || (t = _unsupportedIterableToArray$1(r)) || e) {
+        t && (r = t);
+        var _n = 0,
+          F = function F() {};
+        return {
+          s: F,
+          n: function n() {
+            return _n >= r.length ? {
+              done: !0
+            } : {
+              done: !1,
+              value: r[_n++]
+            };
+          },
+          e: function e(r) {
+            throw r;
+          },
+          f: F
+        };
+      }
+      throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+    }
+    var o,
+      a = !0,
+      u = !1;
+    return {
+      s: function s() {
+        t = t.call(r);
+      },
+      n: function n() {
+        var r = t.next();
+        return a = r.done, r;
+      },
+      e: function e(r) {
+        u = !0, o = r;
+      },
+      f: function f() {
+        try {
+          a || null == t.return || t.return();
+        } finally {
+          if (u) throw o;
+        }
+      }
+    };
+  }
+  function _unsupportedIterableToArray$1(r, a) {
+    if (r) {
+      if ("string" == typeof r) return _arrayLikeToArray$1(r, a);
+      var t = {}.toString.call(r).slice(8, -1);
+      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$1(r, a) : void 0;
+    }
+  }
+  function _arrayLikeToArray$1(r, a) {
+    (null == a || a > r.length) && (a = r.length);
+    for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+    return n;
+  } // unified status bar and toolbar
   var openKeyNav$1;
   toolbar.handleToolBar = function handleToolBar(openKeyNav_obj) {
     openKeyNav$1 = openKeyNav_obj;
-    var toolBarElement = document.querySelector('.openKeyNav-toolBar');
-    if (!toolBarElement) {
-      return;
-    }
-    injectToolbarStyleSheet();
+    function initToolbarLogic(toolBarElement) {
+      // Check if we've already initialized this toolbar
+      if (toolBarElement.dataset.initialized === "true") return;
 
-    // 5. Handle mode changes 
-    var lastMessage;
-    (0, _signals$1.effect)(function () {
-      openKeyNav$1.config.modes;
-      openKeyNav$1.config.typedLabel.value;
-      updateToolbar(toolBarElement, lastMessage);
-    });
-    (0, _signals$1.effect)(function () {
-      var backgroundColor = openKeyNav$1.config.toolBar.backgroundColor.value;
-      var contentColor = openKeyNav$1.config.toolBar.contentColor.value;
-      updateToolbarColors({
-        backgroundColor: backgroundColor,
-        contentColor: contentColor
+      // Mark as initialized
+      toolBarElement.dataset.initialized = "true";
+      injectToolbarStyleSheet();
+      var lastMessage;
+      (0, _signals$1.effect)(function () {
+        openKeyNav$1.config.modes;
+        openKeyNav$1.config.typedLabel.value;
+        updateToolbar(toolBarElement, lastMessage);
       });
+      (0, _signals$1.effect)(function () {
+        var backgroundColor = openKeyNav$1.config.toolBar.backgroundColor.value;
+        var contentColor = openKeyNav$1.config.toolBar.contentColor.value;
+        updateToolbarColors({
+          backgroundColor: backgroundColor,
+          contentColor: contentColor
+        });
+      });
+    }
+    var toolBarElements = document.querySelectorAll('.openKeyNav-toolBar');
+    toolBarElements.forEach(function (toolBarElement) {
+      if (toolBarElement) {
+        initToolbarLogic(toolBarElement);
+        // return;
+      }
+    });
+    var observer = new MutationObserver(function (mutationsList, observerInstance) {
+      var _iterator = _createForOfIteratorHelper$1(mutationsList),
+        _step;
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var mutation = _step.value;
+          for (var _i = 0, _Array$from = Array.from(mutation.addedNodes); _i < _Array$from.length; _i++) {
+            var node = _Array$from[_i];
+            if (node.nodeType === 1 && node.matches && node.matches('.openKeyNav-toolBar')) {
+              initToolbarLogic(node);
+              // observerInstance.disconnect();
+              return;
+            }
+            if (node.nodeType === 1) {
+              var _node$querySelectorAl;
+              var descendants = (_node$querySelectorAl = node.querySelectorAll) === null || _node$querySelectorAl === void 0 ? void 0 : _node$querySelectorAl.call(node, '.openKeyNav-toolBar');
+              descendants.forEach(function (descendant) {
+                if (descendant) {
+                  initToolbarLogic(descendant);
+                  // observerInstance.disconnect();
+                  return;
+                }
+              });
+            }
+          }
+        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
+      }
+    });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
     });
   };
   var toolbarTemplates = {
@@ -1548,7 +1650,7 @@
       toolBarElement.style.minWidth = "150px";
       var clickButton = "";
       var dragButton = "";
-      var menuButton = (0, _keyButton$1.keyButton)([openKeyNav$1.config.keys.menu, (0, _keypress$1.modiferKeyString)(openKeyNav$1)], "Shortcuts");
+      var menuButton = (0, _keyButton$1.keyButton)([openKeyNav$1.config.keys.menu, (0, _keypress$1.modiferKeyString)(openKeyNav$1)], "openKeyNav");
       if (openKeyNav$1.config.enabled.value) {
         menuButton = (0, _keyButton$1.keyButton)([openKeyNav$1.config.keys.menu], "Shortcuts");
       }
@@ -1609,7 +1711,7 @@
     var toolBarVerticalPadding = 6;
     var toolbarBackground = "\n        background-color: ".concat(openKeyNav$1.config.toolBar.backgroundColor.value, ";\n        color: ").concat(openKeyNav$1.config.toolBar.contentColor.value, ";\n        border: 1px solid hsl(210, 8%, 68%);\n        border-radius: 4px;\n        padding: 3px ").concat(toolBarVerticalPadding, "px;\n    ");
     style.type = 'text/css';
-    style.innerHTML += "\n    .openKeyNav-toolBar {\n        // width: 200px;    // needs to have a set width (or a min-width) since the content changes inside... \n                            // min-widh is set inside the init depending on number of keys\n        // max-width: 200px;\n        // background-color: #333;\n        color: #333;\n        z-index: 10000;\n        ".concat(toolbarBackground, "\n        font-size:12px;\n        display: flex;\n        align-items: center;\n        // align-items: end;\n        flex-direction: column;\n        direction: rtl;\n        max-height: ").concat(toolBarHeight, "px;\n        position:relative;\n    }\n    .openKeyNav-toolBar > p{\n        overflow: hidden;\n    }\n    .openKeyNav-toolBar p{\n        font-size: 16px;\n        margin-bottom: 0;\n        line-height: ").concat(toolBarHeight - toolBarVerticalPadding, "px;\n        text-align: left;\n    }\n    .openKeyNav-toolBar-expanded {\n        position: absolute;\n        top: 0;\n        margin-top: 40px;\n        width: 100%;\n        ").concat(toolbarBackground, "\n        display: grid;\n        justify-content: left;\n    }\n    // .openKeyNav-toolBar span.stacked {\n    //     display: inline-grid;\n    //     grid-template-rows: auto auto;\n    // }\n    ");
+    style.innerHTML += "\n    .openKeyNav-toolBar {\n        // width: 200px;    // needs to have a set width (or a min-width) since the content changes inside... \n                            // min-widh is set inside the init depending on number of keys\n        // max-width: 200px;\n        // background-color: #333;\n        color: #333;\n        // z-index: 10000;\n        ".concat(toolbarBackground, "\n        font-size:12px;\n        display: flex;\n        align-items: center;\n        // align-items: end;\n        flex-direction: column;\n        direction: rtl;\n        max-height: ").concat(toolBarHeight, "px;\n        position:relative;\n    }\n    .openKeyNav-toolBar > p{\n        overflow: hidden;\n    }\n    .openKeyNav-toolBar p{\n        font-size: 16px;\n        margin-bottom: 0;\n        line-height: ").concat(toolBarHeight - toolBarVerticalPadding, "px;\n        text-align: left;\n    }\n    .openKeyNav-toolBar-expanded {\n        position: absolute;\n        top: 0;\n        margin-top: 40px;\n        width: 100%;\n        ").concat(toolbarBackground, "\n        display: grid;\n        justify-content: left;\n    }\n    // .openKeyNav-toolBar span.stacked {\n    //     display: inline-grid;\n    //     grid-template-rows: auto auto;\n    // }\n    ");
     document.head.appendChild(style);
   };
   var updateToolbarColors = function updateToolbarColors(_ref) {
@@ -1679,7 +1781,7 @@
     // '}'
     ;
     style.innerHTML += "\n      .okn-logo-text {\n          font-size: 36px;\n          font-weight: 600;\n          color: #ffffff;\n          background-color: #333;\n          padding: .1em .2em;\n          border-radius: 1em;\n          box-sizing: border-box;\n          line-height: 1;\n          text-align: center;\n          position: relative;\n          display: inline-block;\n          min-width: 1rem;\n          border: max(.1em, 2px) solid #ffffff;\n          white-space: nowrap;\n      }\n\n      .okn-logo-text.small {\n          font-size: 18px;\n      }\n      .okn-logo-text.tiny {\n          font-size: 10px;\n          /* border-width: 1px; */\n          border: none;\n      }\n      .okn-logo-text.tiny .key {\n          font-weight: 700;\n      }\n\n      .okn-logo-text.light {\n          color: #333; /* Dark text color */\n          background-color: #fff; /* Light background */\n          border-color: #333; /* Dark border */\n      }\n\n      .okn-logo-text .key {\n          display: inline;\n          padding: .1em .2em;\n          margin: 0 .1em;\n          background-color: #ffffff; /* Light background */\n          color: #333; /* Dark text */\n          line-height: 1;\n          /* font-size: 0.6em; */\n          position: relative;\n          top: -.3em;\n      }\n\n      .okn-logo-text.light .key {\n          background-color: #333; /* Dark background */\n          color: #ffffff; /* Light text */\n      }\n\n      .okn-logo-text .key::before,\n      .okn-logo-text .key::after {\n          content: \"\";\n          position: absolute;\n          left: 50%;\n          transform: translateX(-50%);\n      }\n\n      .okn-logo-text .key::before {\n          --border-size: 0.5em; /* Base border size */\n          --min-border-size: 5px; /* Minimum pixel size */\n\n          border-top: max(var(--border-size), var(--min-border-size)) solid #333;\n          bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n          border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n          border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n      }\n      .okn-logo-text.light .key::before {\n          border-top-color: #fff; /* Dark top triangle */\n      }\n\n      .okn-logo-text .key::after {\n          --border-size: .4em; /* Base border size */\n          --min-border-size: 4px; /* Minimum pixel size */\n\n          border-top: max( calc( var(--border-size) + 2px) , var(--min-border-size)) solid #fff;\n          bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n          border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n          border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n      }\n\n      .okn-logo-text.light .key::after {\n          border-top-color: #333; /* Light bottom triangle */\n      }\n      ";
-    style.innerHTML += "\n        .keyButtonContainer {\n            margin: 0 .1em;\n            display: inline-grid;\n            grid-template-columns: min-content auto;\n            align-items: baseline;\n            column-gap: 4px;\n        }\n        .keyButton {\n          display: inline-block;\n          padding: 1px 4px;\n          min-width: 1.3em;\n          text-align: center;\n          line-height: 1;\n          color: hsl(210, 8%, 5%);\n          text-shadow: 0 1px 0 hsl(0, 0%, 100%);\n          background-color: hsl(210, 8%, 90%);\n          border: 1px solid hsl(210, 8%, 68%);\n          border-radius: 3px;\n          box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);\n          white-space: nowrap;\n          margin: 0 1px;\n      }\n      ";
+    style.innerHTML += "\n        .keyButtonContainer {\n            margin: 0 .1em;\n            display: inline-grid;\n            grid-template-columns: min-content auto;\n            align-items: baseline;\n            column-gap: 4px;\n        }\n        .keyButtonContainer .keyButtonLabel{\n          white-space:nowrap;\n        }\n        .keyButton {\n          display: inline-block;\n          padding: 1px 4px;\n          min-width: 1.3em;\n          text-align: center;\n          line-height: 1;\n          color: hsl(210, 8%, 5%);\n          text-shadow: 0 1px 0 hsl(0, 0%, 100%);\n          background-color: hsl(210, 8%, 90%);\n          border: 1px solid hsl(210, 8%, 68%);\n          border-radius: 3px;\n          box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);\n          white-space: nowrap;\n          margin: 0 1px;\n      }\n      ";
     document.head.appendChild(style);
   };
 

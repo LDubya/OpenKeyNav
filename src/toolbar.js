@@ -7,33 +7,64 @@ import { modiferKeyString } from "./keypress.js";
 let openKeyNav;
 
 export const handleToolBar = (openKeyNav_obj) => {
-
     openKeyNav = openKeyNav_obj;
 
-    const toolBarElement = document.querySelector('.openKeyNav-toolBar'); 
+    function initToolbarLogic(toolBarElement) {
+        // Check if we've already initialized this toolbar
+        if (toolBarElement.dataset.initialized === "true") return;
 
-    if (!toolBarElement) {
-        return;
+        // Mark as initialized
+        toolBarElement.dataset.initialized = "true";
+
+        injectToolbarStyleSheet();
+
+        let lastMessage;
+
+        effect(() => {
+            const modes = openKeyNav.config.modes;
+            const typedLabel = openKeyNav.config.typedLabel.value;
+            updateToolbar(toolBarElement, lastMessage);
+        });
+
+        effect(() => {
+            const backgroundColor = openKeyNav.config.toolBar.backgroundColor.value;
+            const contentColor = openKeyNav.config.toolBar.contentColor.value;
+            updateToolbarColors({backgroundColor, contentColor});
+        });
     }
 
-    injectToolbarStyleSheet();
+    let toolBarElements = document.querySelectorAll('.openKeyNav-toolBar');
+    toolBarElements.forEach((toolBarElement)=>{
+        if (toolBarElement) {
+            initToolbarLogic(toolBarElement);
+            // return;
+        }
+    })
 
-    // 5. Handle mode changes 
-    let lastMessage;
-
-    effect(() => {
-      const modes = openKeyNav.config.modes;
-      const typedLabel = openKeyNav.config.typedLabel.value;
-      updateToolbar(toolBarElement, lastMessage);
+    const observer = new MutationObserver((mutationsList, observerInstance) => {
+        for (const mutation of mutationsList) {
+            for (const node of Array.from(mutation.addedNodes)) {
+                if (node.nodeType === 1 && node.matches && node.matches('.openKeyNav-toolBar')) {
+                    initToolbarLogic(node);
+                    // observerInstance.disconnect();
+                    return;
+                }
+                if (node.nodeType === 1) {
+                    const descendants = node.querySelectorAll?.('.openKeyNav-toolBar');
+                    descendants.forEach((descendant)=>{
+                        if (descendant) {
+                            initToolbarLogic(descendant);
+                            // observerInstance.disconnect();
+                            return;
+                        }
+                    });
+                }
+            }
+        }
     });
 
-    effect(() => {
-        const backgroundColor = openKeyNav.config.toolBar.backgroundColor.value;
-        const contentColor = openKeyNav.config.toolBar.contentColor.value;
-        updateToolbarColors({backgroundColor, contentColor});
-    })
-    
-}
+    observer.observe(document.body, { childList: true, subtree: true });
+};
 
 const toolbarTemplates = {
     default : () => { 
@@ -44,7 +75,8 @@ const toolbarTemplates = {
             return;
         }
 
-        toolBarElement.style.minWidth = "150px"
+        toolBarElement.style.minWidth = "150px";
+        // toolBarElement.style.maxWidth = "300px"; // let the developer define containers and max width
 
         let numButtons = 0;
 
@@ -52,7 +84,7 @@ const toolbarTemplates = {
 
         let dragButton = "";
 
-        let menuButton = keyButton([openKeyNav.config.keys.menu, modiferKeyString(openKeyNav)], "Shortcuts");
+        let menuButton = keyButton([openKeyNav.config.keys.menu, modiferKeyString(openKeyNav)], "openKeyNav");
         if(openKeyNav.config.enabled.value){
             menuButton = keyButton([openKeyNav.config.keys.menu], "Shortcuts");
         }
@@ -150,7 +182,7 @@ const injectToolbarStyleSheet = () => {
         // max-width: 200px;
         // background-color: #333;
         color: #333;
-        z-index: 10000;
+        // z-index: 10000;
         ${toolbarBackground}
         font-size:12px;
         display: flex;
