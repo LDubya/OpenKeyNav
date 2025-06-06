@@ -92,7 +92,7 @@ var toolbarTemplates = {
     var clickButton = "";
     var dragButton = "";
     var menuButton = (0, _keyButton.keyButton)([openKeyNav.config.keys.menu, (0, _keypress.modiferKeyString)(openKeyNav)], "openKeyNav");
-    if (openKeyNav.config.enabled.value) {
+    if (openKeyNav.meta.enabled.value) {
       menuButton = (0, _keyButton.keyButton)([openKeyNav.config.keys.menu], "Shortcuts");
     }
     return "<p>\n                    ".concat(menuButton, "\n                    ").concat(dragButton, "\n                    ").concat(clickButton, " \n                </p>\n            ");

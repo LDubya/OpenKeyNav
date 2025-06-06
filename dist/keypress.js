@@ -42,15 +42,15 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
         return true;
       }
     }
-    if (!openKeyNav.config.enabled.value) {
+    if (!openKeyNav.meta.enabled.value) {
       // if openKeyNav disabled
-      openKeyNav.config.enabled.value = true;
+      openKeyNav.enable();
       var message = "openKeyNav enabled. Press ".concat((0, _keyButton.keyButton)([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu]), " to disable.");
       openKeyNav.emitNotification(message);
       return true;
     } else {
       (0, _escape.handleEscape)(openKeyNav, e);
-      openKeyNav.config.enabled.value = false;
+      openKeyNav.disable();
       var _message = "openKeyNav disabled. Press ".concat((0, _keyButton.keyButton)([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu]), " to enable.");
       openKeyNav.emitNotification(_message);
       return true;
@@ -93,7 +93,7 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
       return true;
     }
   }
-  if (!openKeyNav.config.enabled.value) {
+  if (!openKeyNav.meta.enabled.value) {
     return true;
   }
   // escape and toggles

@@ -85,7 +85,7 @@ const toolbarTemplates = {
         let dragButton = "";
 
         let menuButton = keyButton([openKeyNav.config.keys.menu, modiferKeyString(openKeyNav)], "openKeyNav");
-        if(openKeyNav.config.enabled.value){
+        if(openKeyNav.meta.enabled.value){
             menuButton = keyButton([openKeyNav.config.keys.menu], "Shortcuts");
         }
 

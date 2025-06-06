@@ -176,8 +176,19 @@ class OpenKeyNav {
           screenReaderVisible: false,
           keyboardAccessible: true
         },
-        enabled : signal(false)
+        enabled: false
       };
+      this.meta = {
+        enabled : signal(false)
+      }
+      this.enable = () => {
+        this.meta.enabled.value = true;
+        return this;
+      };
+      this.disable = () => {
+        this.meta.enabled.value = false;
+        return this;
+      }
     }
   
     // utility functions
@@ -901,10 +912,10 @@ class OpenKeyNav {
         } else if (modes.moving.value) {
           message = `In Drag Mode. Press ${ keyButton(["Esc"])} to exit.`;
         } 
-        // else if (this.config.enabled.value){
+        // else if (this.meta.enabled.value){
         //   message = `openKeyNav enabled. Press ${ keyButton(["shift", this.config.keys.menu])} to disable.`;
         // }
-        // else if (!this.config.enabled.value){
+        // else if (!this.meta.enabled.value){
         //   message = `openKeyNav disabled. Press ${ keyButton(["shift", this.config.keys.menu])} to enable.`;
         // }
         else {
@@ -930,7 +941,7 @@ class OpenKeyNav {
     
         // Abort if no status bar is found
         if (!statusBar) {
-          console.warn('Status bar element not found in the DOM.');
+          console.warn('Status bar element not found in the DOM.'); // TODO: is this depreciated?
           return;
         }
     
@@ -945,6 +956,14 @@ class OpenKeyNav {
       });
     }
     
+    checkEnabled(){
+      if(this.config.enabled == true){
+        this.enable();
+      }
+      if(this.config.enabled == false){
+        this.disable();
+      }
+    }
 
     applicationSupport() {
       // Version Ping (POST https://applicationsupport.openkeynav.com/capture/)
@@ -1052,12 +1071,12 @@ class OpenKeyNav {
       this.deepMerge(this.config, options);
       this.injectStyles();
       this.addKeydownEventListener();
-      // this.setupGlobalClickListenerTracking();
       this.initStatusBar();
       this.initToolBar();
       this.applicationSupport();
+      this.checkEnabled();
       console.log('Library initialized with config:', this.config);
-      // window["openKeyNav"] = this;
+      return this;
     }
 }
   

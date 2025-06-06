@@ -33,7 +33,7 @@ export const handleKeyPress = (openKeyNav, e) => {
 
   
 
-  const isTextInputActive = openKeyNav.isTextInputActive();
+    const isTextInputActive = openKeyNav.isTextInputActive();
 
     // enable / disable openKeyNav
     if (e[openKeyNav.config.keys.modifierKey] && openKeyNav.config.keys.menu.toLowerCase() == e.key.toLowerCase()) {
@@ -43,15 +43,15 @@ export const handleKeyPress = (openKeyNav, e) => {
         }
       }
       
-      if(!openKeyNav.config.enabled.value){ // if openKeyNav disabled
-        openKeyNav.config.enabled.value = true;
+      if(!openKeyNav.meta.enabled.value){ // if openKeyNav disabled
+        openKeyNav.enable();
         let message = `openKeyNav enabled. Press ${ keyButton([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu])} to disable.`;
         openKeyNav.emitNotification(message);
         return true;
       }
       else{
         handleEscape(openKeyNav, e);
-        openKeyNav.config.enabled.value = false;
+        openKeyNav.disable();
         let message = `openKeyNav disabled. Press ${ keyButton([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu])} to enable.`;
         openKeyNav.emitNotification(message);
         return true;
@@ -94,7 +94,7 @@ export const handleKeyPress = (openKeyNav, e) => {
         }
       }
   
-      if(!openKeyNav.config.enabled.value){
+      if(!openKeyNav.meta.enabled.value){
         return true;
       }
       // escape and toggles

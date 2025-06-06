@@ -106,6 +106,7 @@ OpenKeyNav.init({
 */
 var OpenKeyNav = /*#__PURE__*/function () {
   function OpenKeyNav() {
+    var _this = this;
     _classCallCheck(this, OpenKeyNav);
     this.config = {
       spot: {
@@ -216,7 +217,18 @@ var OpenKeyNav = /*#__PURE__*/function () {
         screenReaderVisible: false,
         keyboardAccessible: true
       },
+      enabled: false
+    };
+    this.meta = {
       enabled: (0, _signals.signal)(false)
+    };
+    this.enable = function () {
+      _this.meta.enabled.value = true;
+      return _this;
+    };
+    this.disable = function () {
+      _this.meta.enabled.value = false;
+      return _this;
     };
   }
 
@@ -226,17 +238,17 @@ var OpenKeyNav = /*#__PURE__*/function () {
     value: function setupTouchEvent() {
       window.TouchEvent = /*#__PURE__*/function (_Event) {
         function TouchEvent(type, initDict) {
-          var _this;
+          var _this2;
           _classCallCheck(this, TouchEvent);
-          _this = _callSuper(this, TouchEvent, [type, initDict]);
-          _this.touches = initDict.touches || [];
-          _this.targetTouches = initDict.targetTouches || [];
-          _this.changedTouches = initDict.changedTouches || [];
-          _this.altKey = initDict.altKey || false;
-          _this.metaKey = initDict.metaKey || false;
-          _this.ctrlKey = initDict.ctrlKey || false;
-          _this.shiftKey = initDict.shiftKey || false;
-          return _this;
+          _this2 = _callSuper(this, TouchEvent, [type, initDict]);
+          _this2.touches = initDict.touches || [];
+          _this2.targetTouches = initDict.targetTouches || [];
+          _this2.changedTouches = initDict.changedTouches || [];
+          _this2.altKey = initDict.altKey || false;
+          _this2.metaKey = initDict.metaKey || false;
+          _this2.ctrlKey = initDict.ctrlKey || false;
+          _this2.shiftKey = initDict.shiftKey || false;
+          return _this2;
         }
         _inherits(TouchEvent, _Event);
         return _createClass(TouchEvent);
@@ -260,13 +272,13 @@ var OpenKeyNav = /*#__PURE__*/function () {
   }, {
     key: "deepMerge",
     value: function deepMerge(target, source) {
-      var _this2 = this;
+      var _this3 = this;
       Object.keys(source).forEach(function (key) {
         if (source[key] && _typeof(source[key]) === 'object') {
           if (!target[key] || _typeof(target[key]) !== 'object') {
             target[key] = {};
           }
-          _this2.deepMerge(target[key], source[key]);
+          _this3.deepMerge(target[key], source[key]);
         } else {
           target[key] = source[key];
         }
@@ -446,7 +458,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
   }, {
     key: "createOverlay",
     value: function createOverlay(element, label) {
-      var _this3 = this;
+      var _this4 = this;
       function getScrollParent(element) {
         var includeHidden = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var style = getComputedStyle(element);
@@ -488,7 +500,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
       var scrollParent = getScrollParent(element);
       if (scrollParent) {
         scrollParent.addEventListener('scroll', function () {
-          return _this3.updateOverlayPosition(element, overlay);
+          return _this4.updateOverlayPosition(element, overlay);
         });
       }
       if (element.classList.contains('openKeyNav-inaccessible')) {
@@ -554,7 +566,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
   }, {
     key: "getScrollableElements",
     value: function getScrollableElements() {
-      var _this4 = this;
+      var _this5 = this;
       // Cross-browser way to get computed style
       var getComputedStyle = document.body && document.body.currentStyle ? function (elem) {
         return elem.currentStyle;
@@ -606,8 +618,8 @@ var OpenKeyNav = /*#__PURE__*/function () {
       // Main function to check for scrollability
       var hasScroller = function hasScroller(elem) {
         // debug mode: do isAnyCornerVisible check by default and disable the check if debug.screenReaderVisible is true
-        if (!_this4.config.debug.screenReaderVisible) {
-          return _this4.isAnyCornerVisible(elem) && isPotentiallyScrollable(elem) && (isYScrollable(elem) || isXScrollable(elem));
+        if (!_this5.config.debug.screenReaderVisible) {
+          return _this5.isAnyCornerVisible(elem) && isPotentiallyScrollable(elem) && (isYScrollable(elem) || isXScrollable(elem));
         }
         return isPotentiallyScrollable(elem) && (isYScrollable(elem) || isXScrollable(elem));
       };
@@ -631,24 +643,24 @@ var OpenKeyNav = /*#__PURE__*/function () {
   }, {
     key: "removeOverlays",
     value: function removeOverlays(removeAll) {
-      var _this5 = this;
+      var _this6 = this;
       var resetModes = function resetModes() {
-        for (var key in _this5.config.modes) {
-          _this5.config.modes[key].value = false;
+        for (var key in _this6.config.modes) {
+          _this6.config.modes[key].value = false;
         }
 
         // reset move mode config
-        _this5.config.modesConfig.move.selectedConfig = false;
-        _this5.config.modesConfig.move.selectedMoveable = false;
-        _this5.config.modesConfig.move.selectedMoveableHTML = false;
-        _this5.config.modesConfig.move.selectedDropZone = false;
-        _this5.config.modesConfig.move.modifier = false;
+        _this6.config.modesConfig.move.selectedConfig = false;
+        _this6.config.modesConfig.move.selectedMoveable = false;
+        _this6.config.modesConfig.move.selectedMoveableHTML = false;
+        _this6.config.modesConfig.move.selectedDropZone = false;
+        _this6.config.modesConfig.move.modifier = false;
 
         // reset click mode config
-        _this5.config.modesConfig.click.modifier = false;
+        _this6.config.modesConfig.click.modifier = false;
 
         // reset menu mode config
-        _this5.config.modesConfig.menu.modifier = false;
+        _this6.config.modesConfig.menu.modifier = false;
       };
       var clearInaccessibleWarnings = function clearInaccessibleWarnings() {
         document.querySelectorAll('.openKeyNav-inaccessible').forEach(function (el) {
@@ -656,13 +668,13 @@ var OpenKeyNav = /*#__PURE__*/function () {
           el.classList.remove('openKeyNav-inaccessible');
 
           // Remove the event listeners if they exist in the map
-          if (_this5.config.modesConfig.click.eventListenersMap.has(el)) {
-            var _this5$config$modesCo = _this5.config.modesConfig.click.eventListenersMap.get(el),
-              showTooltip = _this5$config$modesCo.showTooltip,
-              hideTooltip = _this5$config$modesCo.hideTooltip;
+          if (_this6.config.modesConfig.click.eventListenersMap.has(el)) {
+            var _this6$config$modesCo = _this6.config.modesConfig.click.eventListenersMap.get(el),
+              showTooltip = _this6$config$modesCo.showTooltip,
+              hideTooltip = _this6$config$modesCo.hideTooltip;
             el.removeEventListener('mouseover', showTooltip);
             el.removeEventListener('mouseleave', hideTooltip);
-            _this5.config.modesConfig.click.eventListenersMap.delete(el);
+            _this6.config.modesConfig.click.eventListenersMap.delete(el);
           }
         });
         document.querySelectorAll('.openKeyNav-mouseover-tooltip').forEach(function (el) {
@@ -673,19 +685,19 @@ var OpenKeyNav = /*#__PURE__*/function () {
         // Re-enable scrolling on the webpage
 
         var enableScrollingForEl = function enableScrollingForEl(el) {
-          el.removeEventListener('scroll', _this5.preventScroll, {
+          el.removeEventListener('scroll', _this6.preventScroll, {
             passive: false
           });
-          el.removeEventListener('wheel', _this5.preventScroll, {
+          el.removeEventListener('wheel', _this6.preventScroll, {
             passive: false
           });
-          el.removeEventListener('touchmove', _this5.preventScroll, {
+          el.removeEventListener('touchmove', _this6.preventScroll, {
             passive: false
           });
         };
         var enableScrollingForScrollableElements = function enableScrollingForScrollableElements() {
           enableScrollingForEl(window);
-          _this5.getScrollableElements().forEach(function (el) {
+          _this6.getScrollableElements().forEach(function (el) {
             enableScrollingForEl(el);
           });
         };
@@ -801,11 +813,11 @@ var OpenKeyNav = /*#__PURE__*/function () {
   }, {
     key: "addKeydownEventListener",
     value: function addKeydownEventListener() {
-      var _this6 = this;
+      var _this7 = this;
       // Detect this.config.keys.click to enter label mode
       // Using an arrow function to maintain 'this' context of class
       document.addEventListener('keydown', function (e) {
-        (0, _keypress.handleKeyPress)(_this6, e);
+        (0, _keypress.handleKeyPress)(_this7, e);
       }, true);
 
       // Also for the iframes
@@ -827,7 +839,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
           });
           if (newEvent.key === 'Escape') {
             // Execute escape logic
-            (0, _escape.handleEscape)(_this6, e);
+            (0, _escape.handleEscape)(_this7, e);
           }
 
           // Dispatch it on the document or specific element that your existing handler is attached to
@@ -919,11 +931,11 @@ var OpenKeyNav = /*#__PURE__*/function () {
   }, {
     key: "initStatusBar",
     value: function initStatusBar() {
-      var _this7 = this;
+      var _this8 = this;
       // Effect to emit a notification based on the current mode
       var lastMessage = "No mode active.";
       (0, _signals.effect)(function () {
-        var modes = _this7.config.modes;
+        var modes = _this8.config.modes;
         var message;
 
         // Determine the message based on the current mode
@@ -932,10 +944,10 @@ var OpenKeyNav = /*#__PURE__*/function () {
         } else if (modes.moving.value) {
           message = "In Drag Mode. Press ".concat((0, _keyButton.keyButton)(["Esc"]), " to exit.");
         }
-        // else if (this.config.enabled.value){
+        // else if (this.meta.enabled.value){
         //   message = `openKeyNav enabled. Press ${ keyButton(["shift", this.config.keys.menu])} to disable.`;
         // }
-        // else if (!this.config.enabled.value){
+        // else if (!this.meta.enabled.value){
         //   message = `openKeyNav disabled. Press ${ keyButton(["shift", this.config.keys.menu])} to enable.`;
         // }
         else {
@@ -949,19 +961,19 @@ var OpenKeyNav = /*#__PURE__*/function () {
 
         // Emit the notification with the current message
         console.log(message);
-        _this7.emitNotification(message);
+        _this8.emitNotification(message);
         lastMessage = message;
       });
 
       // Effect to update the status bar based on the current mode
       (0, _signals.effect)(function () {
-        var modes = _this7.config.modes;
+        var modes = _this8.config.modes;
         // DOM element to update
         var statusBar = document.getElementById('status-bar');
 
         // Abort if no status bar is found
         if (!statusBar) {
-          console.warn('Status bar element not found in the DOM.');
+          console.warn('Status bar element not found in the DOM.'); // TODO: is this depreciated?
           return;
         }
 
@@ -974,6 +986,16 @@ var OpenKeyNav = /*#__PURE__*/function () {
           statusBar.textContent = "No mode active.";
         }
       });
+    }
+  }, {
+    key: "checkEnabled",
+    value: function checkEnabled() {
+      if (this.config.enabled == true) {
+        this.enable();
+      }
+      if (this.config.enabled == false) {
+        this.disable();
+      }
     }
   }, {
     key: "applicationSupport",
@@ -1087,12 +1109,12 @@ var OpenKeyNav = /*#__PURE__*/function () {
       this.deepMerge(this.config, options);
       this.injectStyles();
       this.addKeydownEventListener();
-      // this.setupGlobalClickListenerTracking();
       this.initStatusBar();
       this.initToolBar();
       this.applicationSupport();
+      this.checkEnabled();
       console.log('Library initialized with config:', this.config);
-      // window["openKeyNav"] = this;
+      return this;
     }
   }]);
 }(); // optionally attach a syncronous event listener here for tracking the elements tied to click events, (added and removed),
