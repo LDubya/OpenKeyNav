@@ -12,7 +12,7 @@
     value: true
   });
   version.version = void 0;
-  version.version = "0.1.199";
+  version.version = "0.1.210";
 
   var signals = {};
 
@@ -156,7 +156,7 @@
   function _createForOfIteratorHelper$2(r, e) {
     var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
     if (!t) {
-      if (Array.isArray(r) || (t = _unsupportedIterableToArray$4(r)) || e) {
+      if (Array.isArray(r) || (t = _unsupportedIterableToArray$3(r)) || e) {
         t && (r = t);
         var _n = 0,
           F = function F() {};
@@ -201,14 +201,14 @@
       }
     };
   }
-  function _unsupportedIterableToArray$4(r, a) {
+  function _unsupportedIterableToArray$3(r, a) {
     if (r) {
-      if ("string" == typeof r) return _arrayLikeToArray$4(r, a);
+      if ("string" == typeof r) return _arrayLikeToArray$3(r, a);
       var t = {}.toString.call(r).slice(8, -1);
-      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$4(r, a) : void 0;
+      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$3(r, a) : void 0;
     }
   }
-  function _arrayLikeToArray$4(r, a) {
+  function _arrayLikeToArray$3(r, a) {
     (null == a || a > r.length) && (a = r.length);
     for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
     return n;
@@ -819,26 +819,26 @@
   var _escape$2 = _escape$3;
   var _isTabbable$1 = isTabbable;
   var _scrolling = scrolling;
-  function _toConsumableArray$1(r) {
-    return _arrayWithoutHoles$1(r) || _iterableToArray$1(r) || _unsupportedIterableToArray$3(r) || _nonIterableSpread$1();
+  function _toConsumableArray(r) {
+    return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray$2(r) || _nonIterableSpread();
   }
-  function _nonIterableSpread$1() {
+  function _nonIterableSpread() {
     throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
-  function _unsupportedIterableToArray$3(r, a) {
+  function _unsupportedIterableToArray$2(r, a) {
     if (r) {
-      if ("string" == typeof r) return _arrayLikeToArray$3(r, a);
+      if ("string" == typeof r) return _arrayLikeToArray$2(r, a);
       var t = {}.toString.call(r).slice(8, -1);
-      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$3(r, a) : void 0;
+      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$2(r, a) : void 0;
     }
   }
-  function _iterableToArray$1(r) {
+  function _iterableToArray(r) {
     if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
   }
-  function _arrayWithoutHoles$1(r) {
-    if (Array.isArray(r)) return _arrayLikeToArray$3(r);
+  function _arrayWithoutHoles(r) {
+    if (Array.isArray(r)) return _arrayLikeToArray$2(r);
   }
-  function _arrayLikeToArray$3(r, a) {
+  function _arrayLikeToArray$2(r, a) {
     (null == a || a > r.length) && (a = r.length);
     for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
     return n;
@@ -907,7 +907,7 @@
     var moveables = [];
 
     // direct selectors of from elements
-    var fromElementSelectors = _toConsumableArray$1(new Set(openKeyNav.config.modesConfig.move.config.filter(function (config) {
+    var fromElementSelectors = _toConsumableArray(new Set(openKeyNav.config.modesConfig.move.config.filter(function (config) {
       return config.fromElements;
     }).map(function (config) {
       return config.fromElements;
@@ -928,7 +928,7 @@
     }
 
     // containers of from elements
-    var fromContainerSelectors = _toConsumableArray$1(new Set(openKeyNav.config.modesConfig.move.config.filter(function (config) {
+    var fromContainerSelectors = _toConsumableArray(new Set(openKeyNav.config.modesConfig.move.config.filter(function (config) {
       return config.fromContainer;
     }).map(function (config) {
       return config.fromContainer;
@@ -1067,7 +1067,7 @@
     });
 
     // Merge with clickEventElements
-    var mergedSet = new Set([].concat(_toConsumableArray$1(allElements), _toConsumableArray$1(openKeyNav.config.modesConfig.click.clickEventElements)));
+    var mergedSet = new Set([].concat(_toConsumableArray(allElements), _toConsumableArray(openKeyNav.config.modesConfig.click.clickEventElements)));
     return Array.from(mergedSet);
 
     // return allElements;
@@ -1515,7 +1515,7 @@
   function _createForOfIteratorHelper$1(r, e) {
     var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
     if (!t) {
-      if (Array.isArray(r) || (t = _unsupportedIterableToArray$2(r)) || e) {
+      if (Array.isArray(r) || (t = _unsupportedIterableToArray$1(r)) || e) {
         t && (r = t);
         var _n = 0,
           F = function F() {};
@@ -1560,14 +1560,14 @@
       }
     };
   }
-  function _unsupportedIterableToArray$2(r, a) {
+  function _unsupportedIterableToArray$1(r, a) {
     if (r) {
-      if ("string" == typeof r) return _arrayLikeToArray$2(r, a);
+      if ("string" == typeof r) return _arrayLikeToArray$1(r, a);
       var t = {}.toString.call(r).slice(8, -1);
-      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$2(r, a) : void 0;
+      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$1(r, a) : void 0;
     }
   }
-  function _arrayLikeToArray$2(r, a) {
+  function _arrayLikeToArray$1(r, a) {
     (null == a || a > r.length) && (a = r.length);
     for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
     return n;
@@ -1735,34 +1735,16 @@
     value: true
   });
   styles.injectStylesheet = styles.deleteStylesheets = void 0;
-  function _toConsumableArray(r) {
-    return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray$1(r) || _nonIterableSpread();
-  }
-  function _nonIterableSpread() {
-    throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-  }
-  function _unsupportedIterableToArray$1(r, a) {
-    if (r) {
-      if ("string" == typeof r) return _arrayLikeToArray$1(r, a);
-      var t = {}.toString.call(r).slice(8, -1);
-      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$1(r, a) : void 0;
-    }
-  }
-  function _iterableToArray(r) {
-    if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
-  }
-  function _arrayWithoutHoles(r) {
-    if (Array.isArray(r)) return _arrayLikeToArray$1(r);
-  }
-  function _arrayLikeToArray$1(r, a) {
-    (null == a || a > r.length) && (a = r.length);
-    for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
-    return n;
-  }
   var openKeyNav;
   var styleClassname = "openKeyNav-style";
-  styles.injectStylesheet = function injectStylesheet(parent) {
+  styles.injectStylesheet = function injectStylesheet(parent, replace) {
     openKeyNav = parent;
+    if (document.querySelectorAll('.' + styleClassname).length > 0) {
+      if (!replace) {
+        return;
+      }
+      deleteStylesheets();
+    }
     var style = document.createElement('style');
     style.className = styleClassname;
     style.type = 'text/css';
@@ -1778,9 +1760,9 @@
     // `;
     document.head.appendChild(style);
   };
-  styles.deleteStylesheets = function deleteStylesheets() {
-    _toConsumableArray(document.getElementsByClassName(styleClassname)).forEach(function (el) {
-      el.parentNode.removeChild(el);
+  var deleteStylesheets = styles.deleteStylesheets = function deleteStylesheets() {
+    document.querySelectorAll('.' + styleClassname).forEach(function (el) {
+      el.parentNode && el.parentNode.removeChild(el);
     });
   };
 
@@ -2157,7 +2139,7 @@
           screenReaderVisible: false,
           keyboardAccessible: true
         },
-        enabled: false
+        enabledCookie: 'openKeyNav_enabled'
       };
       this.meta = {
         enabled: (0, _signals.signal)(false)
@@ -2165,11 +2147,13 @@
       this.enable = function () {
         _this.meta.enabled.value = true;
         _this.injectStyles();
+        _this.getSetCookie(_this.config.enabledCookie, true);
         return _this;
       };
       this.disable = function () {
         _this.meta.enabled.value = false;
-        // this.removeStyles(); // maybe this should go in the destroy();, main concern is the toolbar.
+        _this.getSetCookie(_this.config.enabledCookie, false);
+        _this.removeStyles(); // maybe this should go in the destroy();, main concern is the toolbar.
         return _this;
       };
     }
@@ -2229,8 +2213,8 @@
       }
     }, {
       key: "injectStyles",
-      value: function injectStyles() {
-        (0, _styles.injectStylesheet)(this);
+      value: function injectStyles(replace) {
+        (0, _styles.injectStylesheet)(this, replace);
       }
     }, {
       key: "removeStyles",
@@ -2929,12 +2913,32 @@
     }, {
       key: "checkEnabled",
       value: function checkEnabled() {
-        if (this.config.enabled == true) {
+        if (this.getSetCookie(this.config.enabledCookie)) {
           this.enable();
         }
-        if (this.config.enabled == false) {
-          this.disable();
+      }
+    }, {
+      key: "getSetCookie",
+      value: function getSetCookie(cookieName, value) {
+        // Helper: set cookie for domain, expires in 1 year
+        function setCookie(cookieName, v) {
+          var expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString();
+          document.cookie = "".concat(cookieName, "=").concat(v, "; expires=").concat(expires, "; path=/; domain=").concat(location.hostname);
         }
+
+        // Helper: get cookie value
+        function getCookie(cookieName) {
+          var match = document.cookie.match(new RegExp('(^|; )' + cookieName + '=([^;]*)'));
+          if (match) {
+            return match[2] === 'true';
+          }
+          return null; // not set
+        }
+        if (typeof value !== 'undefined') {
+          setCookie(cookieName, value === true || value === 'true' ? 'true' : 'false');
+          return;
+        }
+        return getCookie(cookieName);
       }
     }, {
       key: "applicationSupport",
@@ -3046,7 +3050,6 @@
       value: function init() {
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
         this.deepMerge(this.config, options);
-        this.injectStyles();
         this.addKeydownEventListener();
         this.initStatusBar();
         this.initToolBar();

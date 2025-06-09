@@ -176,19 +176,21 @@ class OpenKeyNav {
           screenReaderVisible: false,
           keyboardAccessible: true
         },
-        enabled: false
+        enabledCookie: 'openKeyNav_enabled'
       };
       this.meta = {
-        enabled : signal(false)
+        enabled : signal(false),
       }
       this.enable = () => {
         this.meta.enabled.value = true;
         this.injectStyles();
+        this.getSetCookie(this.config.enabledCookie, true);
         return this;
       };
       this.disable = () => {
         this.meta.enabled.value = false;
-        // this.removeStyles(); // maybe this should go in the destroy();, main concern is the toolbar.
+        this.getSetCookie(this.config.enabledCookie, false)
+        this.removeStyles(); // maybe this should go in the destroy();, main concern is the toolbar.
         return this;
       }
     }
@@ -236,8 +238,8 @@ class OpenKeyNav {
       return target;
     }
   
-    injectStyles() {
-      injectStylesheet(this);
+    injectStyles(replace) {
+      injectStylesheet(this, replace);
     }
 
     removeStyles(){
@@ -963,12 +965,33 @@ class OpenKeyNav {
     }
     
     checkEnabled(){
-      if(this.config.enabled == true){
+      if(this.getSetCookie(this.config.enabledCookie)){
         this.enable();
       }
-      if(this.config.enabled == false){
-        this.disable();
+    }
+
+    getSetCookie(cookieName, value) {
+      
+      // Helper: set cookie for domain, expires in 1 year
+      function setCookie(cookieName, v) {
+        const expires = new Date(Date.now() + 365*24*60*60*1000).toUTCString();
+        document.cookie = `${cookieName}=${v}; expires=${expires}; path=/; domain=${location.hostname}`;
       }
+      
+      // Helper: get cookie value
+      function getCookie(cookieName) {
+        const match = document.cookie.match(new RegExp('(^|; )' + cookieName + '=([^;]*)'));
+        if (match) {
+          return match[2] === 'true';
+        }
+        return null; // not set
+      }
+      
+      if (typeof value !== 'undefined') {
+        setCookie(cookieName, value === true || value === 'true' ? 'true' : 'false');
+        return;
+      }
+      return getCookie(cookieName);
     }
 
     applicationSupport() {
@@ -1075,7 +1098,6 @@ class OpenKeyNav {
     // Public API
     init(options = {}) {
       this.deepMerge(this.config, options);
-      this.injectStyles();
       this.addKeydownEventListener();
       this.initStatusBar();
       this.initToolBar();

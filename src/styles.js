@@ -2,8 +2,16 @@ let openKeyNav;
 
 const styleClassname = "openKeyNav-style";
 
-export const injectStylesheet = (parent) => {
+export const injectStylesheet = (parent, replace) => {
     openKeyNav = parent;
+
+
+    if(document.querySelectorAll('.'+styleClassname).length > 0){
+      if(!replace){
+        return;
+      }
+      deleteStylesheets();
+    }
 
     const style = document.createElement('style');
     style.className = styleClassname;
@@ -319,7 +327,7 @@ export const injectStylesheet = (parent) => {
   }
 
 export const deleteStylesheets = () => {
-  [...document.getElementsByClassName(styleClassname)].forEach((el)=>{
-    el.parentNode.removeChild(el)
+  document.querySelectorAll('.'+styleClassname).forEach((el)=>{
+    el.parentNode && el.parentNode.removeChild(el)
   })
 }

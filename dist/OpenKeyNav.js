@@ -217,7 +217,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
         screenReaderVisible: false,
         keyboardAccessible: true
       },
-      enabled: false
+      enabledCookie: 'openKeyNav_enabled'
     };
     this.meta = {
       enabled: (0, _signals.signal)(false)
@@ -225,11 +225,13 @@ var OpenKeyNav = /*#__PURE__*/function () {
     this.enable = function () {
       _this.meta.enabled.value = true;
       _this.injectStyles();
+      _this.getSetCookie(_this.config.enabledCookie, true);
       return _this;
     };
     this.disable = function () {
       _this.meta.enabled.value = false;
-      // this.removeStyles(); // maybe this should go in the destroy();, main concern is the toolbar.
+      _this.getSetCookie(_this.config.enabledCookie, false);
+      _this.removeStyles(); // maybe this should go in the destroy();, main concern is the toolbar.
       return _this;
     };
   }
@@ -289,8 +291,8 @@ var OpenKeyNav = /*#__PURE__*/function () {
     }
   }, {
     key: "injectStyles",
-    value: function injectStyles() {
-      (0, _styles.injectStylesheet)(this);
+    value: function injectStyles(replace) {
+      (0, _styles.injectStylesheet)(this, replace);
     }
   }, {
     key: "removeStyles",
@@ -997,12 +999,32 @@ var OpenKeyNav = /*#__PURE__*/function () {
   }, {
     key: "checkEnabled",
     value: function checkEnabled() {
-      if (this.config.enabled == true) {
+      if (this.getSetCookie(this.config.enabledCookie)) {
         this.enable();
       }
-      if (this.config.enabled == false) {
-        this.disable();
+    }
+  }, {
+    key: "getSetCookie",
+    value: function getSetCookie(cookieName, value) {
+      // Helper: set cookie for domain, expires in 1 year
+      function setCookie(cookieName, v) {
+        var expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString();
+        document.cookie = "".concat(cookieName, "=").concat(v, "; expires=").concat(expires, "; path=/; domain=").concat(location.hostname);
       }
+
+      // Helper: get cookie value
+      function getCookie(cookieName) {
+        var match = document.cookie.match(new RegExp('(^|; )' + cookieName + '=([^;]*)'));
+        if (match) {
+          return match[2] === 'true';
+        }
+        return null; // not set
+      }
+      if (typeof value !== 'undefined') {
+        setCookie(cookieName, value === true || value === 'true' ? 'true' : 'false');
+        return;
+      }
+      return getCookie(cookieName);
     }
   }, {
     key: "applicationSupport",
@@ -1114,7 +1136,6 @@ var OpenKeyNav = /*#__PURE__*/function () {
     value: function init() {
       var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
       this.deepMerge(this.config, options);
-      this.injectStyles();
       this.addKeydownEventListener();
       this.initStatusBar();
       this.initToolBar();
