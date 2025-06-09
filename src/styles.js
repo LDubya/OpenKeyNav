@@ -1,199 +1,198 @@
 let openKeyNav;
 
+const styleClassname = "openKeyNav-style";
+
 export const injectStylesheet = (parent) => {
     openKeyNav = parent;
 
     const style = document.createElement('style');
+    style.className = styleClassname;
     style.type = 'text/css';
-    style.innerHTML =
-      '' +
-      '.openKeyNav-label {' +
-        'font: inherit;' +
-        'vertical-align: baseline;' +
-        'box-sizing: border-box;' +
-        'white-space: nowrap;' +
-        `border: 1px solid ${openKeyNav.config.spot.fontColor};` +
-      //   `box-shadow: inset 0 -2.5px 0 ${openKeyNav.config.spot.insetColor}, inset 0 -3px 0 #999, 0 0 4px #fff;` +
-      //   `background: linear-gradient(to top, #999 5%, ${openKeyNav.config.spot.backgroundColor} 20%);` +
-        `background-color: ${openKeyNav.config.spot.backgroundColor};` +
-      //   'border-radius: calc( 4px );' +
-        `color: ${openKeyNav.config.spot.fontColor};` +
-        'display: inline-block;' +
-        `font-size: ${openKeyNav.config.spot.fontSize};` +
-        // `outline : 2px solid ${openKeyNav.config.focus.outlineColor};` +
-        'outline-offset: -2px !important;' +
+    style.textContent =
+      `.openKeyNav-label {
+        font: inherit;
+        vertical-align: baseline;
+        box-sizing: border-box;
+        white-space: nowrap;
+        border: 1px solid ${openKeyNav.config.spot.fontColor}; 
+        // box-shadow: inset 0 -2.5px 0 ${openKeyNav.config.spot.insetColor}, inset 0 -3px 0 #999, 0 0 4px #fff; 
+        // background: linear-gradient(to top, #999 5%, ${openKeyNav.config.spot.backgroundColor} 20%); 
+        background-color: ${openKeyNav.config.spot.backgroundColor}; 
+        // border-radius: calc( 4px );
+        color: ${openKeyNav.config.spot.fontColor}; 
+        display: inline-block;
+        font-size: ${openKeyNav.config.spot.fontSize}; 
+        // outline : 2px solid ${openKeyNav.config.focus.outlineColor}; 
+        outline-offset: -2px !important;
         // +"font-weight: bold;"
-        'font-weight: inherit;' +
-      //   'line-height: 1.5;' +
-        'line-height: 1;' +
-        'margin: 0 .1em 0 1px;' +
-        'overflow-wrap: break-word;' +
-      //   'padding: .0 .15em .1em;' +
-        'padding: 3px;' +
-        `text-shadow: 0 1px 0 ${openKeyNav.config.spot.insetColor};` +
-        'min-width: 1rem;' +
-        'text-align: center;' +
-        'position: absolute;' +
-        'z-index: 99999999;' +
-        'font-family: monospace;' +
-      '}' +
-      '.openKeyNav-label[data-openkeynav-position="left"]::after, ' +
-      '.openKeyNav-label[data-openkeynav-position="right"]::before, ' +
-      '.openKeyNav-label[data-openkeynav-position="top"]::after, ' +
-      '.openKeyNav-label[data-openkeynav-position="bottom"]::before, ' +
-      '.openKeyNav-label[data-openkeynav-position="left"]::before, ' +
-      '.openKeyNav-label[data-openkeynav-position="right"]::after, ' +
-      '.openKeyNav-label[data-openkeynav-position="top"]::before, ' +
-      '.openKeyNav-label[data-openkeynav-position="bottom"]::after {' +
-          'content: "";' +
-          'position: absolute;' +
-      '}' +
-      '.openKeyNav-label[data-openkeynav-position="left"]::after, ' +
-      '.openKeyNav-label[data-openkeynav-position="right"]::before, ' +
-      '.openKeyNav-label[data-openkeynav-position="left"]::before, ' +
-      '.openKeyNav-label[data-openkeynav-position="right"]::after {' +
-          'top: 50%;' +
-          'transform: translateY(-50%);' +
-      '}' +
-      '.openKeyNav-label[data-openkeynav-position="top"]::after, ' +
-      '.openKeyNav-label[data-openkeynav-position="bottom"]::before, ' +
-      '.openKeyNav-label[data-openkeynav-position="top"]::before, ' +
-      '.openKeyNav-label[data-openkeynav-position="bottom"]::after {' +
-          'left: 50%;' +
-          'transform: translateX(-50%);' +
-      '}' +
-      '.openKeyNav-label[data-openkeynav-position="left"]::before {' +
-          `border-left: ${openKeyNav.config.spot.arrowSize_px + 1}px solid #fff;` +
-          `right: -${openKeyNav.config.spot.arrowSize_px + 1}px;` +
-          `border-top: ${openKeyNav.config.spot.arrowSize_px + 1}px solid transparent;` +
-          `border-bottom: ${openKeyNav.config.spot.arrowSize_px + 1}px solid transparent;` +
-      '}' +
-      '.openKeyNav-label[data-openkeynav-position="left"]::after {' +
-          `border-left: ${openKeyNav.config.spot.arrowSize_px}px solid ${openKeyNav.config.spot.backgroundColor};` +
-          `right: -${openKeyNav.config.spot.arrowSize_px}px;` +
-          `border-top: ${openKeyNav.config.spot.arrowSize_px}px solid transparent;` +
-          `border-bottom: ${openKeyNav.config.spot.arrowSize_px}px solid transparent;` +
-      '}' +
-      '.openKeyNav-label[data-openkeynav-position="right"]::before {' +
-          `border-right: ${openKeyNav.config.spot.arrowSize_px + 1}px solid #fff;` +
-          `left: -${openKeyNav.config.spot.arrowSize_px + 1}px;` +
-          `border-top: ${openKeyNav.config.spot.arrowSize_px + 1}px solid transparent;` +
-          `border-bottom: ${openKeyNav.config.spot.arrowSize_px + 1}px solid transparent;` +
-      '}' +
-      '.openKeyNav-label[data-openkeynav-position="right"]::after {' +
-          `border-right: ${openKeyNav.config.spot.arrowSize_px}px solid ${openKeyNav.config.spot.backgroundColor};` +
-          `left: -${openKeyNav.config.spot.arrowSize_px}px;` +
-          `border-top: ${openKeyNav.config.spot.arrowSize_px}px solid transparent;` +
-          `border-bottom: ${openKeyNav.config.spot.arrowSize_px}px solid transparent;` +
-      '}' +
-      '.openKeyNav-label[data-openkeynav-position="top"]{' +
-          'padding-bottom: 0;' +
-      '}' +
-      '.openKeyNav-label[data-openkeynav-position="top"]::before {' +
-          `border-top: ${openKeyNav.config.spot.arrowSize_px + 1}px solid #fff;` +
-          `bottom: -${openKeyNav.config.spot.arrowSize_px + 1}px;` +
-          `border-left: ${openKeyNav.config.spot.arrowSize_px + 1}px solid transparent;` +
-          `border-right: ${openKeyNav.config.spot.arrowSize_px + 1}px solid transparent;` +
-      '}' +
-      '.openKeyNav-label[data-openkeynav-position="top"]::after {' +
-          `border-top: ${openKeyNav.config.spot.arrowSize_px}px solid ${openKeyNav.config.spot.backgroundColor};` +
-          `bottom: -${openKeyNav.config.spot.arrowSize_px}px;` +
-          `border-left: ${openKeyNav.config.spot.arrowSize_px}px solid transparent;` +
-          `border-right: ${openKeyNav.config.spot.arrowSize_px}px solid transparent;` +
-      '}' +
-      '.openKeyNav-label[data-openkeynav-position="bottom"]{' +
-          'padding-top: 0;' +
-      '}' +
-      '.openKeyNav-label[data-openkeynav-position="bottom"]::before {' +
-          `border-bottom: ${openKeyNav.config.spot.arrowSize_px + 1}px solid #fff;` +
-          `top: -${openKeyNav.config.spot.arrowSize_px + 1}px;` +
-          `border-left: ${openKeyNav.config.spot.arrowSize_px + 1}px solid transparent;` +
-          `border-right: ${openKeyNav.config.spot.arrowSize_px + 1}px solid transparent;` +
-      '}' +
-      '.openKeyNav-label[data-openkeynav-position="bottom"]::after {' +
-          `border-bottom: ${openKeyNav.config.spot.arrowSize_px}px solid ${openKeyNav.config.spot.backgroundColor};` +
-          `top: -${openKeyNav.config.spot.arrowSize_px}px;` +
-          `border-left: ${openKeyNav.config.spot.arrowSize_px}px solid transparent;` +
-          `border-right: ${openKeyNav.config.spot.arrowSize_px}px solid transparent;` +
-      '}' +
-      '.openKeyNav-label-selected{' +
-        // 'padding : 0;' +
-        // 'margin : 0;' +
-        'display : grid;' +
-        'align-content : center;' +
-        `color : ${openKeyNav.config.spot.fontColor};` +
-        `background : ${openKeyNav.config.spot.backgroundColor};` +
-        // `outline : 4px solid ${openKeyNav.config.focus.outlineColor};` +
-        `outline: none;` +
-        // `border-radius: 100%;` +
-        // `width: 1rem;` +
-        // `height: 1rem;` +
-        // 'text-shadow : none;' +
-        // 'padding : 0 !important;' +
-        // 'margin: 0 !important;' +
-      '}' +
-      '[data-openkeynav-label]:not(.openKeyNav-label):not(button){' +
-        // `outline: 2px double ${openKeyNav.config.focus.outlineColor} !important;` +
-        // 'outline-offset: 2px !important;' +
-        `box-shadow:  inset 0 0 0 .5px #000,
+        font-weight: inherit;
+        // line-height: 1.5;
+        line-height: 1;
+        margin: 0 .1em 0 1px;
+        overflow-wrap: break-word;
+        // padding: .0 .15em .1em;
+        padding: 3px;
+        text-shadow: 0 1px 0 ${openKeyNav.config.spot.insetColor}; 
+        min-width: 1rem;
+        text-align: center;
+        position: absolute;
+        z-index: 99999999;
+        font-family: monospace;
+      }
+      .openKeyNav-label[data-openkeynav-position="left"]::after,
+      .openKeyNav-label[data-openkeynav-position="right"]::before,
+      .openKeyNav-label[data-openkeynav-position="top"]::after,
+      .openKeyNav-label[data-openkeynav-position="bottom"]::before,
+      .openKeyNav-label[data-openkeynav-position="left"]::before,
+      .openKeyNav-label[data-openkeynav-position="right"]::after,
+      .openKeyNav-label[data-openkeynav-position="top"]::before,
+      .openKeyNav-label[data-openkeynav-position="bottom"]::after {
+        content: "";
+        position: absolute;
+      }
+      .openKeyNav-label[data-openkeynav-position="left"]::after,
+      .openKeyNav-label[data-openkeynav-position="right"]::before,
+      .openKeyNav-label[data-openkeynav-position="left"]::before,
+      .openKeyNav-label[data-openkeynav-position="right"]::after {
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      .openKeyNav-label[data-openkeynav-position="top"]::after,
+      .openKeyNav-label[data-openkeynav-position="bottom"]::before,
+      .openKeyNav-label[data-openkeynav-position="top"]::before,
+      .openKeyNav-label[data-openkeynav-position="bottom"]::after {
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      .openKeyNav-label[data-openkeynav-position="left"]::before {
+        border-left: ${openKeyNav.config.spot.arrowSize_px + 1}px solid #fff; 
+        right: -${openKeyNav.config.spot.arrowSize_px + 1}px; 
+        border-top: ${openKeyNav.config.spot.arrowSize_px + 1}px solid transparent; 
+        border-bottom: ${openKeyNav.config.spot.arrowSize_px + 1}px solid transparent; 
+      }
+      .openKeyNav-label[data-openkeynav-position="left"]::after {
+        border-left: ${openKeyNav.config.spot.arrowSize_px}px solid ${openKeyNav.config.spot.backgroundColor}; 
+        right: -${openKeyNav.config.spot.arrowSize_px}px; 
+        border-top: ${openKeyNav.config.spot.arrowSize_px}px solid transparent; 
+        border-bottom: ${openKeyNav.config.spot.arrowSize_px}px solid transparent; 
+      }
+      .openKeyNav-label[data-openkeynav-position="right"]::before {
+        border-right: ${openKeyNav.config.spot.arrowSize_px + 1}px solid #fff; 
+        left: -${openKeyNav.config.spot.arrowSize_px + 1}px; 
+        border-top: ${openKeyNav.config.spot.arrowSize_px + 1}px solid transparent; 
+        border-bottom: ${openKeyNav.config.spot.arrowSize_px + 1}px solid transparent; 
+      }
+      .openKeyNav-label[data-openkeynav-position="right"]::after {
+        border-right: ${openKeyNav.config.spot.arrowSize_px}px solid ${openKeyNav.config.spot.backgroundColor}; 
+        left: -${openKeyNav.config.spot.arrowSize_px}px; 
+        border-top: ${openKeyNav.config.spot.arrowSize_px}px solid transparent; 
+        border-bottom: ${openKeyNav.config.spot.arrowSize_px}px solid transparent; 
+      }
+      .openKeyNav-label[data-openkeynav-position="top"]{
+        padding-bottom: 0;
+      }
+      .openKeyNav-label[data-openkeynav-position="top"]::before {
+        border-top: ${openKeyNav.config.spot.arrowSize_px + 1}px solid #fff; 
+        bottom: -${openKeyNav.config.spot.arrowSize_px + 1}px; 
+        border-left: ${openKeyNav.config.spot.arrowSize_px + 1}px solid transparent; 
+        border-right: ${openKeyNav.config.spot.arrowSize_px + 1}px solid transparent; 
+      }
+      .openKeyNav-label[data-openkeynav-position="top"]::after {
+        border-top: ${openKeyNav.config.spot.arrowSize_px}px solid ${openKeyNav.config.spot.backgroundColor}; 
+        bottom: -${openKeyNav.config.spot.arrowSize_px}px; 
+        border-left: ${openKeyNav.config.spot.arrowSize_px}px solid transparent; 
+        border-right: ${openKeyNav.config.spot.arrowSize_px}px solid transparent; 
+      }
+      .openKeyNav-label[data-openkeynav-position="bottom"]{
+        padding-top: 0;
+      }
+      .openKeyNav-label[data-openkeynav-position="bottom"]::before {
+        border-bottom: ${openKeyNav.config.spot.arrowSize_px + 1}px solid #fff; 
+        top: -${openKeyNav.config.spot.arrowSize_px + 1}px; 
+        border-left: ${openKeyNav.config.spot.arrowSize_px + 1}px solid transparent; 
+        border-right: ${openKeyNav.config.spot.arrowSize_px + 1}px solid transparent; 
+      }
+      .openKeyNav-label[data-openkeynav-position="bottom"]::after {
+        border-bottom: ${openKeyNav.config.spot.arrowSize_px}px solid ${openKeyNav.config.spot.backgroundColor}; 
+        top: -${openKeyNav.config.spot.arrowSize_px}px; 
+        border-left: ${openKeyNav.config.spot.arrowSize_px}px solid transparent; 
+        border-right: ${openKeyNav.config.spot.arrowSize_px}px solid transparent; 
+      }
+      .openKeyNav-label-selected{
+        // padding : 0;
+        // margin : 0;
+        display : grid;
+        align-content : center;
+        color : ${openKeyNav.config.spot.fontColor}; 
+        background : ${openKeyNav.config.spot.backgroundColor}; 
+        // outline : 4px solid ${openKeyNav.config.focus.outlineColor}; 
+        outline: none; 
+        // border-radius: 100%; 
+        // width: 1rem; 
+        // height: 1rem; 
+        // text-shadow : none;
+        // padding : 0 !important;
+        // margin: 0 !important;
+      }
+      [data-openkeynav-label]:not(.openKeyNav-label):not(button){
+        // outline: 2px double ${openKeyNav.config.focus.outlineColor} !important; 
+        // outline-offset: 2px !important;
+        box-shadow:  inset 0 0 0 .5px #000,
                       0 0 0 .75px #000,
-                      0 0 0 1.5px rgba(255,255,255,1);` +
-        'outline:none !important;'+
-        // 'border-radius: 3px;' +
-        'border-color: #000;' +
-        'border-radius: 3px;' +
-      '}' +
-      'button[data-openkeynav-label]{' +
-        'outline:2px solid #000 !important;' +
-      '}' +
-      '.openKeyNav-inaccessible:not(.openKeyNav-label):not(button){' +
-        `box-shadow:  inset 0 0 0 .5px #f00,
+                      0 0 0 1.5px rgba(255,255,255,1); 
+        outline:none !important;
+        // border-radius: 3px;
+        border-color: #000;
+        border-radius: 3px;
+      }
+      button[data-openkeynav-label]{
+        outline:2px solid #000 !important;
+      }
+      .openKeyNav-inaccessible:not(.openKeyNav-label):not(button){
+        box-shadow:  inset 0 0 0 .5px #f00,
                       0 0 0 1px #f00,
-                      0 0 0 1.5px rgba(255,255,255,1);` +
-        'outline:none !important;'+
-        'border-color: #f00;' +
-        'border-radius: 3px;' +
-      '}' +
-      'button.openKeyNav-inaccessible{' +
-        'outline:2px solid #f00 !important;' +
-      '}' +
-      '.openKeyNav-inaccessible.openKeyNav-label{' +
-        `box-shadow:  inset 0 0 0 .5px #f00,
+                      0 0 0 1.5px rgba(255,255,255,1); 
+        outline:none !important;
+        border-color: #f00;
+        border-radius: 3px;
+      }
+      button.openKeyNav-inaccessible{
+        outline:2px solid #f00 !important;
+      }
+      .openKeyNav-inaccessible.openKeyNav-label{
+        box-shadow:  inset 0 0 0 .5px #f00,
                       0 0 0 1px #f00,
-                      0 0 0 1.5px rgba(255,255,255,1);` +
-        'border-color: #f00;' +
-        'border-radius: 3px;' +
-      '}' +
+                      0 0 0 1.5px rgba(255,255,255,1); 
+        border-color: #f00;
+        border-radius: 3px;
+      }
         //   +"span[data-openkeynav-label]{"
         //       +"display: inherit;"
         //   +"}"
-      '.openKeyNav-noCursor *{' +
-        'cursor: none !important;' +
-      '}' +
-      '*:focus {' +
-        `outline: 2px ${openKeyNav.config.focus.outlineStyle} ${openKeyNav.config.focus.outlineColor} !important;` +
-        'outline-offset: -2px !important;' +
-      '}' +
-      '.openKeyNav-mouseover-tooltip{' +
-        'position: absolute;' +
-        'background-color: #333;' +
-        'color: #fff;' +
-        'padding: 5px;' +
-        'border-radius: 5px;' +
-        'display: none;' +
-        'z-index: 1000;' +
-        'font-size: 12px;' +
-      '}' +
-      '.openKeyNav-mouseover-tooltip::before{' +
-        'content: "Debug mode"' +
-      '}'
-      //   '[data-openkeynav-draggable="true"] {' +
-      //   `outline: 2px solid ${openKeyNav.config.focus.outlineColor};` +
-      //   'outline-offset: -1px !important;' +
-      // '}'
+      .openKeyNav-noCursor *{
+        cursor: none !important;
+      }
+      .openKeyNav-mouseover-tooltip{
+        position: absolute;
+        background-color: #333;
+        color: #fff;
+        padding: 5px;
+        border-radius: 5px;
+        display: none;
+        z-index: 1000;
+        font-size: 12px;
+      }
+      .openKeyNav-mouseover-tooltip::before{
+        content: "Debug mode"
+      }
+      //   [data-openkeynav-draggable="true"] {
+      //   outline: 2px solid ${openKeyNav.config.focus.outlineColor}; 
+      //   outline-offset: -1px !important;
+      // }
       ;
+      `
 
-      style.innerHTML += `
+      style.textContent += `
       .okn-logo-text {
           font-size: 36px;
           font-weight: 600;
@@ -282,7 +281,7 @@ export const injectStylesheet = (parent) => {
       }
       `;
 
-      style.innerHTML+=`
+      style.textContent+=`
         .keyButtonContainer {
             margin: 0 .1em;
             display: inline-grid;
@@ -309,5 +308,18 @@ export const injectStylesheet = (parent) => {
           margin: 0 1px;
       }
       `;
+
+      // style.textContent+=`
+      // *:focus { // could be problematic to edit focus states throughout a website
+      //   outline: 2px ${openKeyNav.config.focus.outlineStyle} ${openKeyNav.config.focus.outlineColor} !important; 
+      //   outline-offset: -2px !important;
+      // }
+      // `;
     document.head.appendChild(style);
   }
+
+export const deleteStylesheets = () => {
+  [...document.getElementsByClassName(styleClassname)].forEach((el)=>{
+    el.parentNode.removeChild(el)
+  })
+}

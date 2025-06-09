@@ -3,7 +3,7 @@ import { version } from "./version";
 import { signal, effect } from './signals.js';
 import { handleToolBar } from './toolbar.js'
 import { keyButton } from './keyButton.js';
-import { injectStylesheet } from './styles.js';
+import { injectStylesheet, deleteStylesheets } from './styles.js';
 import { handleKeyPress } from "./keypress.js";
 import { handleEscape } from "./escape";
 
@@ -183,10 +183,12 @@ class OpenKeyNav {
       }
       this.enable = () => {
         this.meta.enabled.value = true;
+        this.injectStyles();
         return this;
       };
       this.disable = () => {
         this.meta.enabled.value = false;
+        // this.removeStyles(); // maybe this should go in the destroy();, main concern is the toolbar.
         return this;
       }
     }
@@ -236,6 +238,10 @@ class OpenKeyNav {
   
     injectStyles() {
       injectStylesheet(this);
+    }
+
+    removeStyles(){
+      deleteStylesheets();
     }
 
     initToolBar() {

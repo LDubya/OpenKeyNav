@@ -224,10 +224,12 @@ var OpenKeyNav = /*#__PURE__*/function () {
     };
     this.enable = function () {
       _this.meta.enabled.value = true;
+      _this.injectStyles();
       return _this;
     };
     this.disable = function () {
       _this.meta.enabled.value = false;
+      // this.removeStyles(); // maybe this should go in the destroy();, main concern is the toolbar.
       return _this;
     };
   }
@@ -289,6 +291,11 @@ var OpenKeyNav = /*#__PURE__*/function () {
     key: "injectStyles",
     value: function injectStyles() {
       (0, _styles.injectStylesheet)(this);
+    }
+  }, {
+    key: "removeStyles",
+    value: function removeStyles() {
+      (0, _styles.deleteStylesheets)();
     }
   }, {
     key: "initToolBar",
