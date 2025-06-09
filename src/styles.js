@@ -1,6 +1,35 @@
 let openKeyNav;
 
 const styleClassname = "openKeyNav-style";
+const toolbarStyleClassname ="okn-toolbar-stylesheet";
+
+const keyButtonStyles = `
+  .keyButtonContainer {
+      margin: 0 .1em;
+      display: inline-grid;
+      grid-template-columns: min-content auto;
+      align-items: baseline;
+      column-gap: 4px;
+  }
+  .keyButtonContainer .keyButtonLabel{
+    white-space:nowrap;
+  }
+  .keyButton {
+    display: inline-block;
+    padding: 1px 4px;
+    min-width: 1.3em;
+    text-align: center;
+    line-height: 1;
+    color: hsl(210, 8%, 5%);
+    text-shadow: 0 1px 0 hsl(0, 0%, 100%);
+    background-color: hsl(210, 8%, 90%);
+    border: 1px solid hsl(210, 8%, 68%);
+    border-radius: 3px;
+    box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);
+    white-space: nowrap;
+    margin: 0 1px;
+  }
+`
 
 export const injectStylesheet = (parent, replace) => {
     openKeyNav = parent;
@@ -289,33 +318,7 @@ export const injectStylesheet = (parent, replace) => {
       }
       `;
 
-      style.textContent+=`
-        .keyButtonContainer {
-            margin: 0 .1em;
-            display: inline-grid;
-            grid-template-columns: min-content auto;
-            align-items: baseline;
-            column-gap: 4px;
-        }
-        .keyButtonContainer .keyButtonLabel{
-          white-space:nowrap;
-        }
-        .keyButton {
-          display: inline-block;
-          padding: 1px 4px;
-          min-width: 1.3em;
-          text-align: center;
-          line-height: 1;
-          color: hsl(210, 8%, 5%);
-          text-shadow: 0 1px 0 hsl(0, 0%, 100%);
-          background-color: hsl(210, 8%, 90%);
-          border: 1px solid hsl(210, 8%, 68%);
-          border-radius: 3px;
-          box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);
-          white-space: nowrap;
-          margin: 0 1px;
-      }
-      `;
+      style.textContent+= keyButtonStyles;
 
       // style.textContent+=`
       // *:focus { // could be problematic to edit focus states throughout a website
@@ -330,4 +333,69 @@ export const deleteStylesheets = () => {
   document.querySelectorAll('.'+styleClassname).forEach((el)=>{
     el.parentNode && el.parentNode.removeChild(el)
   })
+}
+
+export const injectToolbarStyleSheet = (parent) => {
+
+  openKeyNav = parent;
+
+  if(!!document.querySelector(toolbarStyleClassname)){
+      return false;
+  }
+
+  const style = document.createElement('style');
+  style.setAttribute("class", toolbarStyleClassname)
+  const toolBarHeight = openKeyNav.config.toolBar.height;
+  const toolBarVerticalPadding = 6;
+  const toolbarBackground = `
+      background-color: ${openKeyNav.config.toolBar.backgroundColor.value};
+      color: ${openKeyNav.config.toolBar.contentColor.value};
+      border: 1px solid hsl(210, 8%, 68%);
+      border-radius: 4px;
+      padding: 3px ${toolBarVerticalPadding}px;
+  `;
+  style.type = 'text/css';
+  style.textContent = `
+  .openKeyNav-toolBar {
+      // width: 200px;    // needs to have a set width (or a min-width) since the content changes inside... 
+                          // min-widh is set inside the init depending on number of keys
+      // max-width: 200px;
+      // background-color: #333;
+      color: #333;
+      // z-index: 10000;
+      ${toolbarBackground}
+      font-size:12px;
+      display: flex;
+      align-items: center;
+      // align-items: end;
+      flex-direction: column;
+      // direction: rtl;
+      max-height: ${toolBarHeight}px;
+      position:relative;
+  }
+  .openKeyNav-toolBar > p{
+      overflow: hidden;
+  }
+  .openKeyNav-toolBar p{
+      font-size: 16px;
+      margin-bottom: 0;
+      line-height: ${toolBarHeight - toolBarVerticalPadding}px;
+      text-align: left;
+  }
+  .openKeyNav-toolBar-expanded {
+      position: absolute;
+      top: 0;
+      margin-top: 40px;
+      width: 100%;
+      ${toolbarBackground}
+      display: grid;
+      justify-content: left;
+  }
+  // .openKeyNav-toolBar span.stacked {
+  //     display: inline-grid;
+  //     grid-template-rows: auto auto;
+  // }
+  `;
+  style.textContent+= keyButtonStyles;
+  document.head.appendChild(style);
 }

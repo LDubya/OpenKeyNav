@@ -952,14 +952,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
           message = "In Click Mode. Press ".concat((0, _keyButton.keyButton)(["Esc"]), " to exit.");
         } else if (modes.moving.value) {
           message = "In Drag Mode. Press ".concat((0, _keyButton.keyButton)(["Esc"]), " to exit.");
-        }
-        // else if (this.meta.enabled.value){
-        //   message = `openKeyNav enabled. Press ${ keyButton(["shift", this.config.keys.menu])} to disable.`;
-        // }
-        // else if (!this.meta.enabled.value){
-        //   message = `openKeyNav disabled. Press ${ keyButton(["shift", this.config.keys.menu])} to enable.`;
-        // }
-        else {
+        } else {
           message = "No mode active.";
         }
 

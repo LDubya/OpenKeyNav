@@ -12,7 +12,7 @@
     value: true
   });
   version.version = void 0;
-  version.version = "0.1.210";
+  version.version = "0.1.217";
 
   var signals = {};
 
@@ -1505,6 +1505,60 @@
     }
   };
 
+  var styles = {};
+
+  Object.defineProperty(styles, "__esModule", {
+    value: true
+  });
+  styles.injectToolbarStyleSheet = styles.injectStylesheet = styles.deleteStylesheets = void 0;
+  var openKeyNav$1;
+  var styleClassname = "openKeyNav-style";
+  var toolbarStyleClassname = "okn-toolbar-stylesheet";
+  var keyButtonStyles = "\n  .keyButtonContainer {\n      margin: 0 .1em;\n      display: inline-grid;\n      grid-template-columns: min-content auto;\n      align-items: baseline;\n      column-gap: 4px;\n  }\n  .keyButtonContainer .keyButtonLabel{\n    white-space:nowrap;\n  }\n  .keyButton {\n    display: inline-block;\n    padding: 1px 4px;\n    min-width: 1.3em;\n    text-align: center;\n    line-height: 1;\n    color: hsl(210, 8%, 5%);\n    text-shadow: 0 1px 0 hsl(0, 0%, 100%);\n    background-color: hsl(210, 8%, 90%);\n    border: 1px solid hsl(210, 8%, 68%);\n    border-radius: 3px;\n    box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);\n    white-space: nowrap;\n    margin: 0 1px;\n  }\n";
+  styles.injectStylesheet = function injectStylesheet(parent, replace) {
+    openKeyNav$1 = parent;
+    if (document.querySelectorAll('.' + styleClassname).length > 0) {
+      if (!replace) {
+        return;
+      }
+      deleteStylesheets();
+    }
+    var style = document.createElement('style');
+    style.className = styleClassname;
+    style.type = 'text/css';
+    style.textContent = ".openKeyNav-label {\n        font: inherit;\n        vertical-align: baseline;\n        box-sizing: border-box;\n        white-space: nowrap;\n        border: 1px solid ".concat(openKeyNav$1.config.spot.fontColor, "; \n        // box-shadow: inset 0 -2.5px 0 ").concat(openKeyNav$1.config.spot.insetColor, ", inset 0 -3px 0 #999, 0 0 4px #fff; \n        // background: linear-gradient(to top, #999 5%, ").concat(openKeyNav$1.config.spot.backgroundColor, " 20%); \n        background-color: ").concat(openKeyNav$1.config.spot.backgroundColor, "; \n        // border-radius: calc( 4px );\n        color: ").concat(openKeyNav$1.config.spot.fontColor, "; \n        display: inline-block;\n        font-size: ").concat(openKeyNav$1.config.spot.fontSize, "; \n        // outline : 2px solid ").concat(openKeyNav$1.config.focus.outlineColor, "; \n        outline-offset: -2px !important;\n        // +\"font-weight: bold;\"\n        font-weight: inherit;\n        // line-height: 1.5;\n        line-height: 1;\n        margin: 0 .1em 0 1px;\n        overflow-wrap: break-word;\n        // padding: .0 .15em .1em;\n        padding: 3px;\n        text-shadow: 0 1px 0 ").concat(openKeyNav$1.config.spot.insetColor, "; \n        min-width: 1rem;\n        text-align: center;\n        position: absolute;\n        z-index: 99999999;\n        font-family: monospace;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        content: \"\";\n        position: absolute;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        top: 50%;\n        transform: translateY(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        left: 50%;\n        transform: translateX(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before {\n        border-left: ").concat(openKeyNav$1.config.spot.arrowSize_px + 1, "px solid #fff; \n        right: -").concat(openKeyNav$1.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav$1.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav$1.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after {\n        border-left: ").concat(openKeyNav$1.config.spot.arrowSize_px, "px solid ").concat(openKeyNav$1.config.spot.backgroundColor, "; \n        right: -").concat(openKeyNav$1.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav$1.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav$1.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before {\n        border-right: ").concat(openKeyNav$1.config.spot.arrowSize_px + 1, "px solid #fff; \n        left: -").concat(openKeyNav$1.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav$1.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav$1.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        border-right: ").concat(openKeyNav$1.config.spot.arrowSize_px, "px solid ").concat(openKeyNav$1.config.spot.backgroundColor, "; \n        left: -").concat(openKeyNav$1.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav$1.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav$1.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]{\n        padding-bottom: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before {\n        border-top: ").concat(openKeyNav$1.config.spot.arrowSize_px + 1, "px solid #fff; \n        bottom: -").concat(openKeyNav$1.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav$1.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav$1.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after {\n        border-top: ").concat(openKeyNav$1.config.spot.arrowSize_px, "px solid ").concat(openKeyNav$1.config.spot.backgroundColor, "; \n        bottom: -").concat(openKeyNav$1.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav$1.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav$1.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]{\n        padding-top: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before {\n        border-bottom: ").concat(openKeyNav$1.config.spot.arrowSize_px + 1, "px solid #fff; \n        top: -").concat(openKeyNav$1.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav$1.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav$1.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        border-bottom: ").concat(openKeyNav$1.config.spot.arrowSize_px, "px solid ").concat(openKeyNav$1.config.spot.backgroundColor, "; \n        top: -").concat(openKeyNav$1.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav$1.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav$1.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label-selected{\n        // padding : 0;\n        // margin : 0;\n        display : grid;\n        align-content : center;\n        color : ").concat(openKeyNav$1.config.spot.fontColor, "; \n        background : ").concat(openKeyNav$1.config.spot.backgroundColor, "; \n        // outline : 4px solid ").concat(openKeyNav$1.config.focus.outlineColor, "; \n        outline: none; \n        // border-radius: 100%; \n        // width: 1rem; \n        // height: 1rem; \n        // text-shadow : none;\n        // padding : 0 !important;\n        // margin: 0 !important;\n      }\n      [data-openkeynav-label]:not(.openKeyNav-label):not(button){\n        // outline: 2px double ").concat(openKeyNav$1.config.focus.outlineColor, " !important; \n        // outline-offset: 2px !important;\n        box-shadow:  inset 0 0 0 .5px #000,\n                      0 0 0 .75px #000,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        // border-radius: 3px;\n        border-color: #000;\n        border-radius: 3px;\n      }\n      button[data-openkeynav-label]{\n        outline:2px solid #000 !important;\n      }\n      .openKeyNav-inaccessible:not(.openKeyNav-label):not(button){\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        border-color: #f00;\n        border-radius: 3px;\n      }\n      button.openKeyNav-inaccessible{\n        outline:2px solid #f00 !important;\n      }\n      .openKeyNav-inaccessible.openKeyNav-label{\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        border-color: #f00;\n        border-radius: 3px;\n      }\n        //   +\"span[data-openkeynav-label]{\"\n        //       +\"display: inherit;\"\n        //   +\"}\"\n      .openKeyNav-noCursor *{\n        cursor: none !important;\n      }\n      .openKeyNav-mouseover-tooltip{\n        position: absolute;\n        background-color: #333;\n        color: #fff;\n        padding: 5px;\n        border-radius: 5px;\n        display: none;\n        z-index: 1000;\n        font-size: 12px;\n      }\n      .openKeyNav-mouseover-tooltip::before{\n        content: \"Debug mode\"\n      }\n      //   [data-openkeynav-draggable=\"true\"] {\n      //   outline: 2px solid ").concat(openKeyNav$1.config.focus.outlineColor, "; \n      //   outline-offset: -1px !important;\n      // }\n      ;\n      ");
+    style.textContent += "\n      .okn-logo-text {\n          font-size: 36px;\n          font-weight: 600;\n          color: #ffffff;\n          background-color: #333;\n          padding: .1em .2em;\n          border-radius: 1em;\n          box-sizing: border-box;\n          line-height: 1;\n          text-align: center;\n          position: relative;\n          display: inline-block;\n          min-width: 1rem;\n          border: max(.1em, 2px) solid #ffffff;\n          white-space: nowrap;\n      }\n\n      .okn-logo-text.small {\n          font-size: 18px;\n      }\n      .okn-logo-text.tiny {\n          font-size: 10px;\n          /* border-width: 1px; */\n          border: none;\n      }\n      .okn-logo-text.tiny .key {\n          font-weight: 700;\n      }\n\n      .okn-logo-text.light {\n          color: #333; /* Dark text color */\n          background-color: #fff; /* Light background */\n          border-color: #333; /* Dark border */\n      }\n\n      .okn-logo-text .key {\n          display: inline;\n          padding: .1em .2em;\n          margin: 0 .1em;\n          background-color: #ffffff; /* Light background */\n          color: #333; /* Dark text */\n          line-height: 1;\n          /* font-size: 0.6em; */\n          position: relative;\n          top: -.3em;\n      }\n\n      .okn-logo-text.light .key {\n          background-color: #333; /* Dark background */\n          color: #ffffff; /* Light text */\n      }\n\n      .okn-logo-text .key::before,\n      .okn-logo-text .key::after {\n          content: \"\";\n          position: absolute;\n          left: 50%;\n          transform: translateX(-50%);\n      }\n\n      .okn-logo-text .key::before {\n          --border-size: 0.5em; /* Base border size */\n          --min-border-size: 5px; /* Minimum pixel size */\n\n          border-top: max(var(--border-size), var(--min-border-size)) solid #333;\n          bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n          border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n          border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n      }\n      .okn-logo-text.light .key::before {\n          border-top-color: #fff; /* Dark top triangle */\n      }\n\n      .okn-logo-text .key::after {\n          --border-size: .4em; /* Base border size */\n          --min-border-size: 4px; /* Minimum pixel size */\n\n          border-top: max( calc( var(--border-size) + 2px) , var(--min-border-size)) solid #fff;\n          bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n          border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n          border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n      }\n\n      .okn-logo-text.light .key::after {\n          border-top-color: #333; /* Light bottom triangle */\n      }\n      ";
+    style.textContent += keyButtonStyles;
+
+    // style.textContent+=`
+    // *:focus { // could be problematic to edit focus states throughout a website
+    //   outline: 2px ${openKeyNav.config.focus.outlineStyle} ${openKeyNav.config.focus.outlineColor} !important; 
+    //   outline-offset: -2px !important;
+    // }
+    // `;
+    document.head.appendChild(style);
+  };
+  var deleteStylesheets = styles.deleteStylesheets = function deleteStylesheets() {
+    document.querySelectorAll('.' + styleClassname).forEach(function (el) {
+      el.parentNode && el.parentNode.removeChild(el);
+    });
+  };
+  styles.injectToolbarStyleSheet = function injectToolbarStyleSheet(parent) {
+    openKeyNav$1 = parent;
+    if (!!document.querySelector(toolbarStyleClassname)) {
+      return false;
+    }
+    var style = document.createElement('style');
+    style.setAttribute("class", toolbarStyleClassname);
+    var toolBarHeight = openKeyNav$1.config.toolBar.height;
+    var toolBarVerticalPadding = 6;
+    var toolbarBackground = "\n      background-color: ".concat(openKeyNav$1.config.toolBar.backgroundColor.value, ";\n      color: ").concat(openKeyNav$1.config.toolBar.contentColor.value, ";\n      border: 1px solid hsl(210, 8%, 68%);\n      border-radius: 4px;\n      padding: 3px ").concat(toolBarVerticalPadding, "px;\n  ");
+    style.type = 'text/css';
+    style.textContent = "\n  .openKeyNav-toolBar {\n      // width: 200px;    // needs to have a set width (or a min-width) since the content changes inside... \n                          // min-widh is set inside the init depending on number of keys\n      // max-width: 200px;\n      // background-color: #333;\n      color: #333;\n      // z-index: 10000;\n      ".concat(toolbarBackground, "\n      font-size:12px;\n      display: flex;\n      align-items: center;\n      // align-items: end;\n      flex-direction: column;\n      // direction: rtl;\n      max-height: ").concat(toolBarHeight, "px;\n      position:relative;\n  }\n  .openKeyNav-toolBar > p{\n      overflow: hidden;\n  }\n  .openKeyNav-toolBar p{\n      font-size: 16px;\n      margin-bottom: 0;\n      line-height: ").concat(toolBarHeight - toolBarVerticalPadding, "px;\n      text-align: left;\n  }\n  .openKeyNav-toolBar-expanded {\n      position: absolute;\n      top: 0;\n      margin-top: 40px;\n      width: 100%;\n      ").concat(toolbarBackground, "\n      display: grid;\n      justify-content: left;\n  }\n  // .openKeyNav-toolBar span.stacked {\n  //     display: inline-grid;\n  //     grid-template-rows: auto auto;\n  // }\n  ");
+    style.textContent += keyButtonStyles;
+    document.head.appendChild(style);
+  };
+
   Object.defineProperty(toolbar, "__esModule", {
     value: true
   });
@@ -1512,6 +1566,7 @@
   var _signals$1 = signals;
   var _keyButton$1 = keyButton;
   var _keypress$1 = keypress;
+  var _styles$1 = styles;
   function _createForOfIteratorHelper$1(r, e) {
     var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
     if (!t) {
@@ -1572,25 +1627,25 @@
     for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
     return n;
   } // unified status bar and toolbar
-  var openKeyNav$1;
+  var openKeyNav;
   toolbar.handleToolBar = function handleToolBar(openKeyNav_obj) {
-    openKeyNav$1 = openKeyNav_obj;
+    openKeyNav = openKeyNav_obj;
     function initToolbarLogic(toolBarElement) {
       // Check if we've already initialized this toolbar
       if (toolBarElement.dataset.initialized === "true") return;
 
       // Mark as initialized
       toolBarElement.dataset.initialized = "true";
-      injectToolbarStyleSheet();
+      (0, _styles$1.injectToolbarStyleSheet)(openKeyNav);
       var lastMessage;
       (0, _signals$1.effect)(function () {
-        openKeyNav$1.config.modes;
-        openKeyNav$1.config.typedLabel.value;
+        openKeyNav.config.modes;
+        openKeyNav.config.typedLabel.value;
         updateToolbar(toolBarElement, lastMessage);
       });
       (0, _signals$1.effect)(function () {
-        var backgroundColor = openKeyNav$1.config.toolBar.backgroundColor.value;
-        var contentColor = openKeyNav$1.config.toolBar.contentColor.value;
+        var backgroundColor = openKeyNav.config.toolBar.backgroundColor.value;
+        var contentColor = openKeyNav.config.toolBar.contentColor.value;
         updateToolbarColors({
           backgroundColor: backgroundColor,
           contentColor: contentColor
@@ -1650,25 +1705,25 @@
       toolBarElement.style.minWidth = "150px";
       var clickButton = "";
       var dragButton = "";
-      var menuButton = (0, _keyButton$1.keyButton)([openKeyNav$1.config.keys.menu, (0, _keypress$1.modiferKeyString)(openKeyNav$1)], "openKeyNav");
-      if (openKeyNav$1.meta.enabled.value) {
-        menuButton = (0, _keyButton$1.keyButton)([openKeyNav$1.config.keys.menu], "Shortcuts");
+      var menuButton = (0, _keyButton$1.keyButton)([(0, _keypress$1.modiferKeyString)(openKeyNav), openKeyNav.config.keys.menu], "openKeyNav");
+      if (openKeyNav.meta.enabled.value) {
+        menuButton = (0, _keyButton$1.keyButton)([openKeyNav.config.keys.menu], "Shortcuts");
       }
       return "<p>\n                    ".concat(menuButton, "\n                    ").concat(dragButton, "\n                    ").concat(clickButton, " \n                </p>\n            ");
     },
-    clickMode: function clickMode(typedLabel) {
-      return "<p>".concat((0, _keyButton$1.keyButton)(["Esc"], "Click Mode", true), "</p>");
+    clickMode: function clickMode() {
+      return "<p>".concat((0, _keyButton$1.keyButton)(["Esc"], "Click Mode"), "</p>");
     },
-    dragMode: function dragMode(typedLabel) {
-      return "<p>".concat((0, _keyButton$1.keyButton)(["Esc"], "Drag Mode", true), "</p>");
+    dragMode: function dragMode() {
+      return "<p>".concat((0, _keyButton$1.keyButton)(["Esc"], "Drag Mode"), "</p>");
     },
-    menu: function menu(typedLabel) {
+    menu: function menu() {
       var dragButton = "";
-      if (openKeyNav$1.config.modesConfig.move.config.length) {
+      if (openKeyNav.config.modesConfig.move.config.length) {
         // if drag mode is configured
-        dragButton = (0, _keyButton$1.keyButton)([openKeyNav$1.config.keys.move], "Drag");
+        dragButton = (0, _keyButton$1.keyButton)([openKeyNav.config.keys.move], "Drag");
       }
-      return "\n            <p>".concat((0, _keyButton$1.keyButton)(["Esc"], "Shortcuts", true), "</p>\n            <div class=\"openKeyNav-toolBar-expanded\">\n                ").concat((0, _keyButton$1.keyButton)([openKeyNav$1.config.keys.click], "Click"), "\n                ").concat(dragButton, "\n            </div>\n        ");
+      return "\n            <p>".concat((0, _keyButton$1.keyButton)(["Esc"], "Shortcuts"), "</p>\n            <div class=\"openKeyNav-toolBar-expanded\">\n                ").concat((0, _keyButton$1.keyButton)([openKeyNav.config.keys.click], "Click"), "\n                ").concat(dragButton, "\n            </div>\n        ");
     }
   };
   var updateElement = function updateElement(element, html) {
@@ -1679,13 +1734,13 @@
       return;
     }
     var message;
-    var typedLabel = openKeyNav$1.config.typedLabel.value;
-    if (openKeyNav$1.config.modes.clicking.value) {
+    var typedLabel = openKeyNav.config.typedLabel.value;
+    if (openKeyNav.config.modes.clicking.value) {
       message = toolbarTemplates.clickMode(typedLabel);
-    } else if (openKeyNav$1.config.modes.moving.value) {
+    } else if (openKeyNav.config.modes.moving.value) {
       message = toolbarTemplates.dragMode(typedLabel);
       // message = toolbarTemplates.menu(typedLabel);
-    } else if (openKeyNav$1.config.modes.menu.value) {
+    } else if (openKeyNav.config.modes.menu.value) {
       message = toolbarTemplates.menu(typedLabel);
     } else {
       message = toolbarTemplates.default(); // Default message
@@ -1701,19 +1756,6 @@
     updateElement(toolBarElement, message);
     lastMessage = message;
   };
-  var injectToolbarStyleSheet = function injectToolbarStyleSheet() {
-    if (!!document.querySelector('.okn-toolbar-stylesheet')) {
-      return false;
-    }
-    var style = document.createElement('style');
-    style.setAttribute("class", "okn-toolbar-stylesheet");
-    var toolBarHeight = openKeyNav$1.config.toolBar.height;
-    var toolBarVerticalPadding = 6;
-    var toolbarBackground = "\n        background-color: ".concat(openKeyNav$1.config.toolBar.backgroundColor.value, ";\n        color: ").concat(openKeyNav$1.config.toolBar.contentColor.value, ";\n        border: 1px solid hsl(210, 8%, 68%);\n        border-radius: 4px;\n        padding: 3px ").concat(toolBarVerticalPadding, "px;\n    ");
-    style.type = 'text/css';
-    style.innerHTML += "\n    .openKeyNav-toolBar {\n        // width: 200px;    // needs to have a set width (or a min-width) since the content changes inside... \n                            // min-widh is set inside the init depending on number of keys\n        // max-width: 200px;\n        // background-color: #333;\n        color: #333;\n        // z-index: 10000;\n        ".concat(toolbarBackground, "\n        font-size:12px;\n        display: flex;\n        align-items: center;\n        // align-items: end;\n        flex-direction: column;\n        direction: rtl;\n        max-height: ").concat(toolBarHeight, "px;\n        position:relative;\n    }\n    .openKeyNav-toolBar > p{\n        overflow: hidden;\n    }\n    .openKeyNav-toolBar p{\n        font-size: 16px;\n        margin-bottom: 0;\n        line-height: ").concat(toolBarHeight - toolBarVerticalPadding, "px;\n        text-align: left;\n    }\n    .openKeyNav-toolBar-expanded {\n        position: absolute;\n        top: 0;\n        margin-top: 40px;\n        width: 100%;\n        ").concat(toolbarBackground, "\n        display: grid;\n        justify-content: left;\n    }\n    // .openKeyNav-toolBar span.stacked {\n    //     display: inline-grid;\n    //     grid-template-rows: auto auto;\n    // }\n    ");
-    document.head.appendChild(style);
-  };
   var updateToolbarColors = function updateToolbarColors(_ref) {
     var backgroundColor = _ref.backgroundColor,
       contentColor = _ref.contentColor;
@@ -1727,43 +1769,6 @@
     if (contentColor) {
       toolbar.style.color = contentColor;
     }
-  };
-
-  var styles = {};
-
-  Object.defineProperty(styles, "__esModule", {
-    value: true
-  });
-  styles.injectStylesheet = styles.deleteStylesheets = void 0;
-  var openKeyNav;
-  var styleClassname = "openKeyNav-style";
-  styles.injectStylesheet = function injectStylesheet(parent, replace) {
-    openKeyNav = parent;
-    if (document.querySelectorAll('.' + styleClassname).length > 0) {
-      if (!replace) {
-        return;
-      }
-      deleteStylesheets();
-    }
-    var style = document.createElement('style');
-    style.className = styleClassname;
-    style.type = 'text/css';
-    style.textContent = ".openKeyNav-label {\n        font: inherit;\n        vertical-align: baseline;\n        box-sizing: border-box;\n        white-space: nowrap;\n        border: 1px solid ".concat(openKeyNav.config.spot.fontColor, "; \n        // box-shadow: inset 0 -2.5px 0 ").concat(openKeyNav.config.spot.insetColor, ", inset 0 -3px 0 #999, 0 0 4px #fff; \n        // background: linear-gradient(to top, #999 5%, ").concat(openKeyNav.config.spot.backgroundColor, " 20%); \n        background-color: ").concat(openKeyNav.config.spot.backgroundColor, "; \n        // border-radius: calc( 4px );\n        color: ").concat(openKeyNav.config.spot.fontColor, "; \n        display: inline-block;\n        font-size: ").concat(openKeyNav.config.spot.fontSize, "; \n        // outline : 2px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n        outline-offset: -2px !important;\n        // +\"font-weight: bold;\"\n        font-weight: inherit;\n        // line-height: 1.5;\n        line-height: 1;\n        margin: 0 .1em 0 1px;\n        overflow-wrap: break-word;\n        // padding: .0 .15em .1em;\n        padding: 3px;\n        text-shadow: 0 1px 0 ").concat(openKeyNav.config.spot.insetColor, "; \n        min-width: 1rem;\n        text-align: center;\n        position: absolute;\n        z-index: 99999999;\n        font-family: monospace;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        content: \"\";\n        position: absolute;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        top: 50%;\n        transform: translateY(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        left: 50%;\n        transform: translateX(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before {\n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        right: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after {\n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        right: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before {\n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        left: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        left: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]{\n        padding-bottom: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before {\n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        bottom: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after {\n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        bottom: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]{\n        padding-top: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before {\n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        top: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        top: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label-selected{\n        // padding : 0;\n        // margin : 0;\n        display : grid;\n        align-content : center;\n        color : ").concat(openKeyNav.config.spot.fontColor, "; \n        background : ").concat(openKeyNav.config.spot.backgroundColor, "; \n        // outline : 4px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n        outline: none; \n        // border-radius: 100%; \n        // width: 1rem; \n        // height: 1rem; \n        // text-shadow : none;\n        // padding : 0 !important;\n        // margin: 0 !important;\n      }\n      [data-openkeynav-label]:not(.openKeyNav-label):not(button){\n        // outline: 2px double ").concat(openKeyNav.config.focus.outlineColor, " !important; \n        // outline-offset: 2px !important;\n        box-shadow:  inset 0 0 0 .5px #000,\n                      0 0 0 .75px #000,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        // border-radius: 3px;\n        border-color: #000;\n        border-radius: 3px;\n      }\n      button[data-openkeynav-label]{\n        outline:2px solid #000 !important;\n      }\n      .openKeyNav-inaccessible:not(.openKeyNav-label):not(button){\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        border-color: #f00;\n        border-radius: 3px;\n      }\n      button.openKeyNav-inaccessible{\n        outline:2px solid #f00 !important;\n      }\n      .openKeyNav-inaccessible.openKeyNav-label{\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        border-color: #f00;\n        border-radius: 3px;\n      }\n        //   +\"span[data-openkeynav-label]{\"\n        //       +\"display: inherit;\"\n        //   +\"}\"\n      .openKeyNav-noCursor *{\n        cursor: none !important;\n      }\n      .openKeyNav-mouseover-tooltip{\n        position: absolute;\n        background-color: #333;\n        color: #fff;\n        padding: 5px;\n        border-radius: 5px;\n        display: none;\n        z-index: 1000;\n        font-size: 12px;\n      }\n      .openKeyNav-mouseover-tooltip::before{\n        content: \"Debug mode\"\n      }\n      //   [data-openkeynav-draggable=\"true\"] {\n      //   outline: 2px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n      //   outline-offset: -1px !important;\n      // }\n      ;\n      ");
-    style.textContent += "\n      .okn-logo-text {\n          font-size: 36px;\n          font-weight: 600;\n          color: #ffffff;\n          background-color: #333;\n          padding: .1em .2em;\n          border-radius: 1em;\n          box-sizing: border-box;\n          line-height: 1;\n          text-align: center;\n          position: relative;\n          display: inline-block;\n          min-width: 1rem;\n          border: max(.1em, 2px) solid #ffffff;\n          white-space: nowrap;\n      }\n\n      .okn-logo-text.small {\n          font-size: 18px;\n      }\n      .okn-logo-text.tiny {\n          font-size: 10px;\n          /* border-width: 1px; */\n          border: none;\n      }\n      .okn-logo-text.tiny .key {\n          font-weight: 700;\n      }\n\n      .okn-logo-text.light {\n          color: #333; /* Dark text color */\n          background-color: #fff; /* Light background */\n          border-color: #333; /* Dark border */\n      }\n\n      .okn-logo-text .key {\n          display: inline;\n          padding: .1em .2em;\n          margin: 0 .1em;\n          background-color: #ffffff; /* Light background */\n          color: #333; /* Dark text */\n          line-height: 1;\n          /* font-size: 0.6em; */\n          position: relative;\n          top: -.3em;\n      }\n\n      .okn-logo-text.light .key {\n          background-color: #333; /* Dark background */\n          color: #ffffff; /* Light text */\n      }\n\n      .okn-logo-text .key::before,\n      .okn-logo-text .key::after {\n          content: \"\";\n          position: absolute;\n          left: 50%;\n          transform: translateX(-50%);\n      }\n\n      .okn-logo-text .key::before {\n          --border-size: 0.5em; /* Base border size */\n          --min-border-size: 5px; /* Minimum pixel size */\n\n          border-top: max(var(--border-size), var(--min-border-size)) solid #333;\n          bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n          border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n          border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n      }\n      .okn-logo-text.light .key::before {\n          border-top-color: #fff; /* Dark top triangle */\n      }\n\n      .okn-logo-text .key::after {\n          --border-size: .4em; /* Base border size */\n          --min-border-size: 4px; /* Minimum pixel size */\n\n          border-top: max( calc( var(--border-size) + 2px) , var(--min-border-size)) solid #fff;\n          bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n          border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n          border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n      }\n\n      .okn-logo-text.light .key::after {\n          border-top-color: #333; /* Light bottom triangle */\n      }\n      ";
-    style.textContent += "\n        .keyButtonContainer {\n            margin: 0 .1em;\n            display: inline-grid;\n            grid-template-columns: min-content auto;\n            align-items: baseline;\n            column-gap: 4px;\n        }\n        .keyButtonContainer .keyButtonLabel{\n          white-space:nowrap;\n        }\n        .keyButton {\n          display: inline-block;\n          padding: 1px 4px;\n          min-width: 1.3em;\n          text-align: center;\n          line-height: 1;\n          color: hsl(210, 8%, 5%);\n          text-shadow: 0 1px 0 hsl(0, 0%, 100%);\n          background-color: hsl(210, 8%, 90%);\n          border: 1px solid hsl(210, 8%, 68%);\n          border-radius: 3px;\n          box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);\n          white-space: nowrap;\n          margin: 0 1px;\n      }\n      ";
-
-    // style.textContent+=`
-    // *:focus { // could be problematic to edit focus states throughout a website
-    //   outline: 2px ${openKeyNav.config.focus.outlineStyle} ${openKeyNav.config.focus.outlineColor} !important; 
-    //   outline-offset: -2px !important;
-    // }
-    // `;
-    document.head.appendChild(style);
-  };
-  var deleteStylesheets = styles.deleteStylesheets = function deleteStylesheets() {
-    document.querySelectorAll('.' + styleClassname).forEach(function (el) {
-      el.parentNode && el.parentNode.removeChild(el);
-    });
   };
 
   Object.defineProperty(OpenKeyNav$1, "__esModule", {
@@ -2866,14 +2871,7 @@
             message = "In Click Mode. Press ".concat((0, _keyButton.keyButton)(["Esc"]), " to exit.");
           } else if (modes.moving.value) {
             message = "In Drag Mode. Press ".concat((0, _keyButton.keyButton)(["Esc"]), " to exit.");
-          }
-          // else if (this.meta.enabled.value){
-          //   message = `openKeyNav enabled. Press ${ keyButton(["shift", this.config.keys.menu])} to disable.`;
-          // }
-          // else if (!this.meta.enabled.value){
-          //   message = `openKeyNav disabled. Press ${ keyButton(["shift", this.config.keys.menu])} to enable.`;
-          // }
-          else {
+          } else {
             message = "No mode active.";
           }
 

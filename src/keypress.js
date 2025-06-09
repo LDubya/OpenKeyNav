@@ -45,14 +45,22 @@ export const handleKeyPress = (openKeyNav, e) => {
       
       if(!openKeyNav.meta.enabled.value){ // if openKeyNav disabled
         openKeyNav.enable();
-        let message = `openKeyNav enabled. Press ${ keyButton([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu])} to disable.`;
+        let message = `openKeyNav enabled. Press ${ keyButton(
+          [
+            modiferKeyString(openKeyNav), 
+            openKeyNav.config.keys.menu
+          ])} to disable.`;
         openKeyNav.emitNotification(message);
         return true;
       }
       else{
         handleEscape(openKeyNav, e);
         openKeyNav.disable();
-        let message = `openKeyNav disabled. Press ${ keyButton([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu])} to enable.`;
+        let message = `openKeyNav disabled. Press ${ keyButton(
+          [
+            modiferKeyString(openKeyNav), 
+            openKeyNav.config.keys.menu]
+        )} to enable.`;
         openKeyNav.emitNotification(message);
         return true;
       }
