@@ -40,15 +40,13 @@ export const focusOnHeadings = (openKeyNav, headings, e) => {
       nextHeading.setAttribute('tabindex', '-1'); // Make the heading focusable
       nextHeading.setAttribute('data-openkeynav-tabIndexed', true);
     }
-    nextHeading.focus(); // Set focus on the next heading
-    nextHeading.setAttribute('data-openkeynav-focused', true);
+    openKeyNav.focus(nextHeading) // Set focus on the next heading
     // Listen for the blur event to remove the tabindex attribute
     nextHeading.addEventListener('blur', function handler() {
       if (nextHeading.hasAttribute('data-openkeynav-tabIndexed')) {
         nextHeading.removeAttribute('tabindex') // Remove the tabindex attribute
         nextHeading.removeAttribute('data-openkeynav-tabIndexed');
       }
-      nextHeading.removeAttribute('data-openkeynav-focused');
       nextHeading.removeEventListener('blur', handler); // Clean up the event listener
     });
 };
@@ -85,8 +83,7 @@ export const focusOnScrollables = (openKeyNav, e) => {
       currentScrollable.setAttribute('tabindex', '-1'); // Make the element focusable
       currentScrollable.setAttribute('data-openkeynav-tabIndexed', true); 
     }
-    currentScrollable.focus(); // Set focus on the element
-    currentScrollable.setAttribute('data-openkeynav-focused', true);
+    openKeyNav.focus(currentScrollable); // Set focus on the element
 
     // Clean up: remove tabindex and blur listener when focus is lost
     currentScrollable.addEventListener('blur', function handler() {
@@ -94,7 +91,6 @@ export const focusOnScrollables = (openKeyNav, e) => {
         currentScrollable.removeAttribute('tabindex') // Remove the tabindex attribute
         currentScrollable.removeAttribute('data-openkeynav-tabIndexed'); 
       }
-      currentScrollable.removeAttribute('data-openkeynav-focused');
       currentScrollable.removeEventListener('blur', handler);
     });
 };

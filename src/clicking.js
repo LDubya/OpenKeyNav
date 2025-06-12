@@ -1,3 +1,5 @@
+import OpenKeyNav from "./OpenKeyNav";
+
 export const handleTargetClickInteraction = (openKeyNav, target, e) => {
     let doc = target.ownerDocument;
     let win = doc.defaultView || doc.parentWindow;
@@ -10,13 +12,12 @@ export const handleTargetClickInteraction = (openKeyNav, target, e) => {
       target.contentEditable === 'plaintext-only' ||
       (target.hasAttribute('tabindex') && target.tabIndex > -1)
     ) {
-      target.focus();
-      placeCursorAndScrollToCursor(target);
+      placeCursorAndScrollToCursor(openKeyNav, target);
     } else {
       if (e.shiftKey && target.tagName.toLowerCase() === 'a' && target.href) {
         win.open(target.href, '_blank');
       } else {
-        target.focus(); // Ensure the target element is focused before dispatching the click event
+        openKeyNav.focus(target); // Ensure the target element is focused before dispatching the click event
         if(!openKeyNav.config.modesConfig.click.modifier){
           const clickEvent = new MouseEvent('click', {
             bubbles: true,
@@ -31,11 +32,11 @@ export const handleTargetClickInteraction = (openKeyNav, target, e) => {
     openKeyNav.clearMoveAttributes();
 };
 
-export const placeCursorAndScrollToCursor = (target) => {
+export const placeCursorAndScrollToCursor = (openKeyNav, target) => {
     const targetTagName = target.tagName.toLowerCase();
 
     setTimeout(() => {
-      target.focus();
+      openKeyNav.focus(target);
 
       if ( 
         (targetTagName === 'input' && ['text', 'search', 'url', 'tel', 'email', 'password'].indexOf(target.type) > -1)

@@ -235,9 +235,19 @@ var OpenKeyNav = /*#__PURE__*/function () {
       return _this;
     };
   }
-
-  // utility functions
   return _createClass(OpenKeyNav, [{
+    key: "focus",
+    value: function focus(target) {
+      target.focus();
+      target.setAttribute('data-openkeynav-focused', true);
+      target.addEventListener('blur', function handler() {
+        target.removeAttribute('data-openkeynav-focused');
+        target.removeEventListener('blur', handler); // Clean up the event listener
+      });
+    }
+
+    // utility functions
+  }, {
     key: "setupTouchEvent",
     value: function setupTouchEvent() {
       window.TouchEvent = /*#__PURE__*/function (_Event) {

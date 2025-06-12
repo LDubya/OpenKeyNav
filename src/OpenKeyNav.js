@@ -194,6 +194,15 @@ class OpenKeyNav {
         return this;
       }
     }
+
+    focus(target){
+      target.focus();
+      target.setAttribute('data-openkeynav-focused', true);
+      target.addEventListener('blur', function handler() {
+        target.removeAttribute('data-openkeynav-focused');
+        target.removeEventListener('blur', handler); // Clean up the event listener
+      });
+    }
   
     // utility functions
   
