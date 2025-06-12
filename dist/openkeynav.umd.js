@@ -12,7 +12,7 @@
     value: true
   });
   version.version = void 0;
-  version.version = "0.1.217";
+  version.version = "0.1.227";
 
   var signals = {};
 
@@ -112,7 +112,7 @@
     var targetTagName = target.tagName.toLowerCase();
     setTimeout(function () {
       target.focus();
-      if (targetTagName === 'input' || targetTagName === 'textarea') {
+      if (targetTagName === 'input' && ['text', 'search', 'url', 'tel', 'email', 'password'].indexOf(target.type) > -1 || targetTagName === 'textarea') {
         // Move the cursor to the end for input and textarea elements
         var valueLength = target.value.length;
         target.selectionStart = valueLength;
@@ -563,13 +563,19 @@
       }
     }
     var nextHeading = openKeyNav.config.headings.list[openKeyNav.config.headings.currentHeadingIndex];
-    if (!nextHeading.getAttribute('tabindex')) {
+    if (!nextHeading.hasAttribute('tabindex')) {
       nextHeading.setAttribute('tabindex', '-1'); // Make the heading focusable
+      nextHeading.setAttribute('data-openkeynav-tabIndexed', true);
     }
     nextHeading.focus(); // Set focus on the next heading
+    nextHeading.setAttribute('data-openkeynav-focused', true);
     // Listen for the blur event to remove the tabindex attribute
     nextHeading.addEventListener('blur', function handler() {
-      nextHeading.removeAttribute('tabindex'); // Remove the tabindex attribute
+      if (nextHeading.hasAttribute('data-openkeynav-tabIndexed')) {
+        nextHeading.removeAttribute('tabindex'); // Remove the tabindex attribute
+        nextHeading.removeAttribute('data-openkeynav-tabIndexed');
+      }
+      nextHeading.removeAttribute('data-openkeynav-focused');
       nextHeading.removeEventListener('blur', handler); // Clean up the event listener
     });
   };
@@ -595,14 +601,20 @@
 
     // Focus the current scrollable element
     var currentScrollable = openKeyNav.config.scrollables.list[openKeyNav.config.currentScrollableIndex];
-    if (!currentScrollable.getAttribute('tabindex')) {
+    if (!currentScrollable.hasAttribute('tabindex')) {
       currentScrollable.setAttribute('tabindex', '-1'); // Make the element focusable
+      currentScrollable.setAttribute('data-openkeynav-tabIndexed', true);
     }
     currentScrollable.focus(); // Set focus on the element
+    currentScrollable.setAttribute('data-openkeynav-focused', true);
 
     // Clean up: remove tabindex and blur listener when focus is lost
     currentScrollable.addEventListener('blur', function handler() {
-      currentScrollable.removeAttribute('tabindex');
+      if (currentScrollable.hasAttribute('data-openkeynav-tabIndexed')) {
+        currentScrollable.removeAttribute('tabindex'); // Remove the tabindex attribute
+        currentScrollable.removeAttribute('data-openkeynav-tabIndexed');
+      }
+      currentScrollable.removeAttribute('data-openkeynav-focused');
       currentScrollable.removeEventListener('blur', handler);
     });
   };
@@ -1536,6 +1548,9 @@
     //   outline-offset: -2px !important;
     // }
     // `;
+    // ensuring hidden labeled elements are made visible
+    style.textContent += "\n        [data-openkeynav-label]:not(.openKeyNav-label){\n          opacity:1 !important;\n          visibility:visible !important;\n        }\n      ";
+    style.textContent += "\n        [data-openkeynav-focused]{\n          outline: 2px ".concat(openKeyNav$1.config.focus.outlineStyle, " ").concat(openKeyNav$1.config.focus.outlineColor, " !important; \n          outline-offset: -2px !important;\n        }\n      ");
     document.head.appendChild(style);
   };
   var deleteStylesheets = styles.deleteStylesheets = function deleteStylesheets() {
@@ -2881,7 +2896,7 @@
           }
 
           // Emit the notification with the current message
-          console.log(message);
+          // console.log(message);
           _this8.emitNotification(message);
           lastMessage = message;
         });

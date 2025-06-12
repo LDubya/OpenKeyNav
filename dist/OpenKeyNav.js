@@ -962,7 +962,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
         }
 
         // Emit the notification with the current message
-        console.log(message);
+        // console.log(message);
         _this8.emitNotification(message);
         lastMessage = message;
       });

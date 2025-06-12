@@ -37,7 +37,11 @@ export const placeCursorAndScrollToCursor = (target) => {
     setTimeout(() => {
       target.focus();
 
-      if (targetTagName === 'input' || targetTagName === 'textarea') {
+      if ( 
+        (targetTagName === 'input' && ['text', 'search', 'url', 'tel', 'email', 'password'].indexOf(target.type) > -1)
+        || 
+        targetTagName === 'textarea'
+      ) {
         // Move the cursor to the end for input and textarea elements
         const valueLength = target.value.length;
         target.selectionStart = valueLength;

@@ -326,6 +326,21 @@ export const injectStylesheet = (parent, replace) => {
       //   outline-offset: -2px !important;
       // }
       // `;
+      // ensuring hidden labeled elements are made visible
+      style.textContent += `
+        [data-openkeynav-label]:not(.openKeyNav-label){
+          opacity:1 !important;
+          visibility:visible !important;
+        }
+      `;
+
+      style.textContent += `
+        [data-openkeynav-focused]{
+          outline: 2px ${openKeyNav.config.focus.outlineStyle} ${openKeyNav.config.focus.outlineColor} !important; 
+          outline-offset: -2px !important;
+        }
+      `;
+
     document.head.appendChild(style);
   }
 

@@ -29,6 +29,9 @@ var injectStylesheet = exports.injectStylesheet = function injectStylesheet(pare
   //   outline-offset: -2px !important;
   // }
   // `;
+  // ensuring hidden labeled elements are made visible
+  style.textContent += "\n        [data-openkeynav-label]:not(.openKeyNav-label){\n          opacity:1 !important;\n          visibility:visible !important;\n        }\n      ";
+  style.textContent += "\n        [data-openkeynav-focused]{\n          outline: 2px ".concat(openKeyNav.config.focus.outlineStyle, " ").concat(openKeyNav.config.focus.outlineColor, " !important; \n          outline-offset: -2px !important;\n        }\n      ");
   document.head.appendChild(style);
 };
 var deleteStylesheets = exports.deleteStylesheets = function deleteStylesheets() {

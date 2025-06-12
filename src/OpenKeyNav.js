@@ -930,7 +930,7 @@ class OpenKeyNav {
         }
     
         // Emit the notification with the current message
-        console.log(message);
+        // console.log(message);
         this.emitNotification(message);
         lastMessage = message;
       });

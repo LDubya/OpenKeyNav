@@ -41,13 +41,19 @@ var focusOnHeadings = exports.focusOnHeadings = function focusOnHeadings(openKey
     }
   }
   var nextHeading = openKeyNav.config.headings.list[openKeyNav.config.headings.currentHeadingIndex];
-  if (!nextHeading.getAttribute('tabindex')) {
+  if (!nextHeading.hasAttribute('tabindex')) {
     nextHeading.setAttribute('tabindex', '-1'); // Make the heading focusable
+    nextHeading.setAttribute('data-openkeynav-tabIndexed', true);
   }
   nextHeading.focus(); // Set focus on the next heading
+  nextHeading.setAttribute('data-openkeynav-focused', true);
   // Listen for the blur event to remove the tabindex attribute
   nextHeading.addEventListener('blur', function handler() {
-    nextHeading.removeAttribute('tabindex'); // Remove the tabindex attribute
+    if (nextHeading.hasAttribute('data-openkeynav-tabIndexed')) {
+      nextHeading.removeAttribute('tabindex'); // Remove the tabindex attribute
+      nextHeading.removeAttribute('data-openkeynav-tabIndexed');
+    }
+    nextHeading.removeAttribute('data-openkeynav-focused');
     nextHeading.removeEventListener('blur', handler); // Clean up the event listener
   });
 };
@@ -73,14 +79,20 @@ var focusOnScrollables = exports.focusOnScrollables = function focusOnScrollable
 
   // Focus the current scrollable element
   var currentScrollable = openKeyNav.config.scrollables.list[openKeyNav.config.currentScrollableIndex];
-  if (!currentScrollable.getAttribute('tabindex')) {
+  if (!currentScrollable.hasAttribute('tabindex')) {
     currentScrollable.setAttribute('tabindex', '-1'); // Make the element focusable
+    currentScrollable.setAttribute('data-openkeynav-tabIndexed', true);
   }
   currentScrollable.focus(); // Set focus on the element
+  currentScrollable.setAttribute('data-openkeynav-focused', true);
 
   // Clean up: remove tabindex and blur listener when focus is lost
   currentScrollable.addEventListener('blur', function handler() {
-    currentScrollable.removeAttribute('tabindex');
+    if (currentScrollable.hasAttribute('data-openkeynav-tabIndexed')) {
+      currentScrollable.removeAttribute('tabindex'); // Remove the tabindex attribute
+      currentScrollable.removeAttribute('data-openkeynav-tabIndexed');
+    }
+    currentScrollable.removeAttribute('data-openkeynav-focused');
     currentScrollable.removeEventListener('blur', handler);
   });
 };

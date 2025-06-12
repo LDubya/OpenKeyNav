@@ -33,7 +33,7 @@ var placeCursorAndScrollToCursor = exports.placeCursorAndScrollToCursor = functi
   var targetTagName = target.tagName.toLowerCase();
   setTimeout(function () {
     target.focus();
-    if (targetTagName === 'input' || targetTagName === 'textarea') {
+    if (targetTagName === 'input' && ['text', 'search', 'url', 'tel', 'email', 'password'].indexOf(target.type) > -1 || targetTagName === 'textarea') {
       // Move the cursor to the end for input and textarea elements
       var valueLength = target.value.length;
       target.selectionStart = valueLength;
