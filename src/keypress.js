@@ -131,6 +131,7 @@ export const handleKeyPress = (openKeyNav, e) => {
             openKeyNav.config.modesConfig.click.modifier = true;
           }
           showClickableOverlays(openKeyNav);
+          openKeyNav.preventpropagation(e);
           return true;
           break;
   
@@ -144,6 +145,7 @@ export const handleKeyPress = (openKeyNav, e) => {
             openKeyNav.config.modesConfig.move.modifier = true;
           }
           showMoveableFromOverlays(openKeyNav); // This will be a new function similar to showClickableOverlays
+          openKeyNav.preventpropagation(e);
           return true;
   
         case openKeyNav.config.keys.menu:
@@ -152,6 +154,7 @@ export const handleKeyPress = (openKeyNav, e) => {
           if(e.key == openKeyNav.config.keys.menu.toUpperCase()){
             openKeyNav.config.modesConfig.menu.modifier = true;
           }
+          openKeyNav.preventpropagation(e);
           return true;
           break;
   
@@ -176,6 +179,7 @@ export const handleKeyPress = (openKeyNav, e) => {
           e.preventDefault(); // Prevent default action to allow our custom behavior
   
           focusOnHeadings(openKeyNav, 'h1, h2, h3, h4, h5, h6', e);
+          openKeyNav.preventpropagation(e);
           return true;
           break;
   
@@ -193,7 +197,7 @@ export const handleKeyPress = (openKeyNav, e) => {
           e.preventDefault();
   
           focusOnScrollables(openKeyNav, e);
-  
+          openKeyNav.preventpropagation(e);
           return true;
           break;
   

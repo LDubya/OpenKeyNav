@@ -1,6 +1,6 @@
 {
   "name": "openkeynav",
-  "version": "0.1.229",
+  "version": "0.1.232",
   "description": "OpenKeyNav: A JavaScript plugin for enhancing keyboard navigation and accessibility on web pages.",
   "main": "dist/OpenKeyNav.js",
   "module": "dist/OpenKeyNav.js",

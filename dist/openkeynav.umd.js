@@ -16,7 +16,7 @@
 	  value: true
 	});
 	version.version = void 0;
-	version.version = "0.1.229";
+	version.version = "0.1.232";
 
 	var signals = {};
 
@@ -1229,6 +1229,7 @@
 	          openKeyNav.config.modesConfig.click.modifier = true;
 	        }
 	        (0, _keylabels.showClickableOverlays)(openKeyNav);
+	        openKeyNav.preventpropagation(e);
 	        return true;
 
 	      // possibly attempting to initiate moving mode
@@ -1241,6 +1242,7 @@
 	          openKeyNav.config.modesConfig.move.modifier = true;
 	        }
 	        (0, _keylabels.showMoveableFromOverlays)(openKeyNav); // This will be a new function similar to showClickableOverlays
+	        openKeyNav.preventpropagation(e);
 	        return true;
 	      case openKeyNav.config.keys.menu:
 	      case openKeyNav.config.keys.menu.toUpperCase():
@@ -1248,6 +1250,7 @@
 	        if (e.key == openKeyNav.config.keys.menu.toUpperCase()) {
 	          openKeyNav.config.modesConfig.menu.modifier = true;
 	        }
+	        openKeyNav.preventpropagation(e);
 	        return true;
 	    }
 
@@ -1268,6 +1271,7 @@
 	        e.preventDefault(); // Prevent default action to allow our custom behavior
 
 	        (0, _focus.focusOnHeadings)(openKeyNav, 'h1, h2, h3, h4, h5, h6', e);
+	        openKeyNav.preventpropagation(e);
 	        return true;
 	      case openKeyNav.config.keys.scroll.toLowerCase():
 	        /*
@@ -1282,6 +1286,7 @@
 
 	        e.preventDefault();
 	        (0, _focus.focusOnScrollables)(openKeyNav, e);
+	        openKeyNav.preventpropagation(e);
 	        return true;
 	    }
 
@@ -2200,6 +2205,13 @@
 	          target.removeAttribute('data-openkeynav-focused');
 	          target.removeEventListener('blur', handler); // Clean up the event listener
 	        });
+	      }
+	    }, {
+	      key: "preventpropagation",
+	      value: function preventpropagation(e) {
+	        e.preventDefault();
+	        e.stopPropagation();
+	        return false;
 	      }
 
 	      // utility functions

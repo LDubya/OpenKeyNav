@@ -123,6 +123,7 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
         openKeyNav.config.modesConfig.click.modifier = true;
       }
       (0, _keylabels.showClickableOverlays)(openKeyNav);
+      openKeyNav.preventpropagation(e);
       return true;
       break;
 
@@ -136,6 +137,7 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
         openKeyNav.config.modesConfig.move.modifier = true;
       }
       (0, _keylabels.showMoveableFromOverlays)(openKeyNav); // This will be a new function similar to showClickableOverlays
+      openKeyNav.preventpropagation(e);
       return true;
     case openKeyNav.config.keys.menu:
     case openKeyNav.config.keys.menu.toUpperCase():
@@ -143,6 +145,7 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
       if (e.key == openKeyNav.config.keys.menu.toUpperCase()) {
         openKeyNav.config.modesConfig.menu.modifier = true;
       }
+      openKeyNav.preventpropagation(e);
       return true;
       break;
     default:
@@ -166,6 +169,7 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
       e.preventDefault(); // Prevent default action to allow our custom behavior
 
       (0, _focus.focusOnHeadings)(openKeyNav, 'h1, h2, h3, h4, h5, h6', e);
+      openKeyNav.preventpropagation(e);
       return true;
       break;
     case openKeyNav.config.keys.scroll.toLowerCase():
@@ -181,6 +185,7 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
 
       e.preventDefault();
       (0, _focus.focusOnScrollables)(openKeyNav, e);
+      openKeyNav.preventpropagation(e);
       return true;
       break;
     default:

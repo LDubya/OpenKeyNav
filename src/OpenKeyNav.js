@@ -203,6 +203,12 @@ class OpenKeyNav {
         target.removeEventListener('blur', handler); // Clean up the event listener
       });
     }
+
+    preventpropagation(e){
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
   
     // utility functions
   

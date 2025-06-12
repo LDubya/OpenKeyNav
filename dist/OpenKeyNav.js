@@ -245,6 +245,13 @@ var OpenKeyNav = /*#__PURE__*/function () {
         target.removeEventListener('blur', handler); // Clean up the event listener
       });
     }
+  }, {
+    key: "preventpropagation",
+    value: function preventpropagation(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
 
     // utility functions
   }, {
