@@ -1,2 +1,15 @@
 node_modules
 openkeynav*.tgz
+
+# Test artifacts
+artifacts/
+test-results/
+playwright-report/
+.nyc_output/
+coverage/
+
+# Build outputs
+dist/
+
+# Playwright cache
+/playwright/.auth/

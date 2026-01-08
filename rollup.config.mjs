@@ -1,4 +1,4 @@
-import babel from 'rollup-plugin-babel';
+import babel from '@rollup/plugin-babel';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 
@@ -16,6 +16,7 @@ export default {
     resolve(),    // Resolve modules from node_modules
     commonjs(),   // Convert CommonJS modules to ES6 so they can be included in a Rollup bundle
     babel({
+      babelHelpers: 'bundled',
       exclude: 'node_modules/**', // Only transpile our source code
     }),
   ],

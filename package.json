@@ -13,7 +13,11 @@
     "update-version-js": "node ./dev/updateVersion.js",
     "patch_build_commit": "npm run update-version-js && npm run build && git add --all; git commit -m \"patch build and commit\" ",
     "patch_build_pack": "npm run update-version-js && npm run build && npm pack",
-    "test": ""
+    "test": "vitest",
+    "test:ci": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed"
   },
   "files": [
     "dist/",
@@ -40,10 +44,13 @@
     "@babel/cli": "^7.24.8",
     "@babel/core": "^7.25.2",
     "@babel/preset-env": "^7.25.3",
+    "@playwright/test": "^1.40.0",
+    "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-commonjs": "^26.0.1",
     "@rollup/plugin-node-resolve": "^15.2.3",
+    "jsdom": "^24.0.0",
     "rollup": "^4.21.1",
-    "rollup-plugin-babel": "^4.4.0",
-    "terser": "^5.31.3"
+    "terser": "^5.31.3",
+    "vitest": "^1.5.0"
   }
 }

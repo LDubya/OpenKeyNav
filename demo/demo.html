@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenKeyNav E2E Demo</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .container {
+      display: flex;
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .column {
+      flex: 1;
+      padding: 20px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      margin: 10px 5px;
+      padding: 10px 20px;
+      font-size: 14px;
+    }
+    a {
+      display: inline-block;
+      margin: 10px 5px;
+      color: #0066cc;
+    }
+    .scrollable {
+      height: 150px;
+      overflow-y: scroll;
+      border: 1px solid #999;
+      padding: 10px;
+      margin: 10px 0;
+    }
+    h1, h2, h3 {
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="openKeyNav-toolBar"></div>
+  
+  <h1>OpenKeyNav E2E Test Page</h1>
+  
+  <p>This page demonstrates OpenKeyNav functionality. Press <kbd>Shift+o</kbd> to enable, then <kbd>k</kbd> for click mode or <kbd>m</kbd> for move mode.</p>
+
+  <div class="container">
+    <div class="column">
+      <h2>Interactive Elements</h2>
+      <button id="btn1">Button One</button>
+      <button id="btn2">Button Two</button>
+      <button id="btn3">Button Three</button>
+      <a href="#link1">Link One</a>
+      <a href="#link2">Link Two</a>
+      <input type="text" placeholder="Text input" id="input1">
+      
+      <!-- Inaccessible elements for debug mode testing -->
+      <a id="bad-link">Link without href (inaccessible)</a>
+      <div id="bad-div" onclick="console.log('clicked')" style="cursor: pointer; padding: 10px; background: #fcc; margin: 10px 0;">
+        Clickable div without role or tabindex
+      </div>
+      <button id="bad-button" tabindex="-1">Button with tabindex -1</button>
+    </div>
+
+    <div class="column">
+      <h2>Headings</h2>
+      <h3>Heading Level 3</h3>
+      <p>Some content under heading 3.</p>
+      <h4>Heading Level 4</h4>
+      <p>Some content under heading 4.</p>
+    </div>
+  </div>
+
+  <div class="scrollable">
+    <h3>Scrollable Region</h3>
+    <p>This is a scrollable area with enough content to require scrolling.</p>
+    <p>Line 1</p>
+    <p>Line 2</p>
+    <p>Line 3</p>
+    <p>Line 4</p>
+    <p>Line 5</p>
+    <p>Line 6</p>
+  </div>
+
+  <script src="../dist/openkeynav.umd.min.js"></script>
+  <script>
+    const okn = new OpenKeyNav();
+    okn.init();
+    console.log('OpenKeyNav initialized');
+  </script>
+</body>
+</html>
