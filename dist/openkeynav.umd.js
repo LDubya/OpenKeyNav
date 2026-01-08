@@ -179,9 +179,9 @@
 	        s: F,
 	        n: function n() {
 	          return _n >= r.length ? {
-	            done: !0
+	            done: true
 	          } : {
-	            done: !1,
+	            done: false,
 	            value: r[_n++]
 	          };
 	        },
@@ -194,8 +194,8 @@
 	    throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 	  }
 	  var o,
-	    a = !0,
-	    u = !1;
+	    a = true,
+	    u = false;
 	  return {
 	    s: function s() {
 	      t = t.call(r);
@@ -205,7 +205,7 @@
 	      return a = r.done, r;
 	    },
 	    e: function e(r) {
-	      u = !0, o = r;
+	      u = true, o = r;
 	    },
 	    f: function f() {
 	      try {
@@ -686,6 +686,20 @@
 	    return false;
 	  }
 
+	  // Check for inert attribute (on element or ancestors)
+	  if (el.inert) {
+	    return false;
+	  }
+
+	  // Check if any ancestor has inert attribute
+	  var parent = el.parentElement;
+	  while (parent) {
+	    if (parent.inert) {
+	      return false;
+	    }
+	    parent = parent.parentElement;
+	  }
+
 	  // Skip if the element is set to not display (not the same as having zero size)
 	  var style = getComputedStyle(el);
 	  if (style.display === 'none') {
@@ -772,7 +786,6 @@
 	  var role = el.getAttribute('role');
 	  switch (el.tagName.toLowerCase()) {
 	    case 'a':
-	      // console.log(el); //debug
 	      if (!el.hasAttribute('href') || el.getAttribute('href') === '') {
 	        if (!interactiveRoles.includes(role)) {
 	          // if (openKeyNav.config.modes.clicking.value) {
@@ -796,6 +809,11 @@
 	        }
 	        // return false;
 	        // }
+	      }
+
+	      // Also check for onclick attribute (inline event handler)
+	      if (!role && el.hasAttribute('onclick')) {
+	        openKeyNav.flagAsInaccessible(el, "\n            <h2>Possibly Inaccessible Clickable Element</h2>\n            <h3>Problem: </h3>\n            <p>This element has an onclick attribute but is not keyboard-focusable.</p>\n            <p>As a result, only mouse users can click on it.</p>\n            <p>This usability disparity can create an accessibility barrier.</p>\n            <h3>Solution Options: </h3>\n            <ol>\n              <li>\n                <p>If clicking this element takes the user to a different location, convert this element to an anchor link (&lt;a&gt;) with a non-empty <em>href</em> attribute.</p>\n              </li>\n              <li>\n                <p>Otherwise if clicking this element triggers an action on the page, convert this element to a &lt;button&gt; without a <em>disabled</em> attribute.</p>\n                <p>Alternatively, add an ARIA <em>role</em> attribute set to 'button' or 'link' AND a tabindex attribute set to a value &gt; -1, ideally 0.</p>\n              </li>\n              <li>\n                <p>Otherwise, if clicking this element does not do anything, then consider removing the onclick attribute.</p>\n              </li>\n            </ol>\n            ", "keyboard");
 	      }
 	      break;
 	  }
@@ -840,7 +858,7 @@
 	});
 	keylabels.showMoveableFromOverlays = keylabels.showClickableOverlays = keylabels.generateValidKeyChars = keylabels.generateLabels = keylabels.filterRemainingOverlays = void 0;
 	var _escape = _escape$1;
-	var _isTabbable = isTabbable;
+	var _isTabbable$1 = isTabbable;
 	var _scrolling = scrolling;
 	function _toConsumableArray(r) {
 	  return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread();
@@ -907,19 +925,52 @@
 	keylabels.showClickableOverlays = function showClickableOverlays(openKeyNav) {
 	  (0, _scrolling.disableScrolling)(openKeyNav);
 	  setTimeout(function () {
-	    var clickables = _getAllCandidateElements(openKeyNav, document).filter(function (el) {
-	      return (0, _isTabbable.isTabbable)(el, openKeyNav);
-	    });
+	    var allCandidates = _getAllCandidateElements(openKeyNav, document);
 
-	    // console.log(clickables);
+	    // In debug mode, show all elements (audit mode)
+	    if (openKeyNav.config.debug.keyboardAccessible) {
+	      var accessible = [];
+	      var inaccessible = [];
+	      allCandidates.forEach(function (el) {
+	        // Call isTabbable to run accessibility checks and flag elements
+	        (0, _isTabbable$1.isTabbable)(el, openKeyNav);
 
-	    var labels = generateLabels(openKeyNav, clickables.length);
-	    clickables.forEach(function (element, index) {
-	      element.setAttribute('data-openkeynav-label', labels[index]);
-	    });
-	    clickables.forEach(function (element, index) {
-	      openKeyNav.createOverlay(element, labels[index]);
-	    });
+	        // Check if element was flagged as inaccessible
+	        if (el.classList.contains('openKeyNav-inaccessible')) {
+	          inaccessible.push(el);
+	        } else {
+	          accessible.push(el);
+	        }
+	      });
+
+	      // Update debug inaccessible count
+	      openKeyNav.config.debug.inaccessibleCount.value = inaccessible.length;
+
+	      // Log inaccessible elements to console
+	      if (inaccessible.length > 0) {
+	        console.warn("OpenKeyNav Debug: Found ".concat(inaccessible.length, " keyboard-inaccessible interactive elements:"), inaccessible);
+	      }
+	      var allElements = [].concat(accessible, inaccessible);
+	      var labels = generateLabels(openKeyNav, allElements.length);
+	      allElements.forEach(function (element, index) {
+	        element.setAttribute('data-openkeynav-label', labels[index]);
+	        var isInaccessible = inaccessible.includes(element);
+	        var cssClass = isInaccessible ? 'debug-inaccessible' : null;
+	        openKeyNav.createOverlay(element, labels[index], cssClass);
+	      });
+	    } else {
+	      // Production mode: only show accessible elements
+	      var clickables = allCandidates.filter(function (el) {
+	        return (0, _isTabbable$1.isTabbable)(el, openKeyNav);
+	      });
+	      var _labels = generateLabels(openKeyNav, clickables.length);
+	      clickables.forEach(function (element, index) {
+	        element.setAttribute('data-openkeynav-label', _labels[index]);
+	      });
+	      clickables.forEach(function (element, index) {
+	        openKeyNav.createOverlay(element, _labels[index]);
+	      });
+	    }
 	  }, 0); // Use timeout to ensure the operation completes
 	};
 	keylabels.showMoveableFromOverlays = function showMoveableFromOverlays(openKeyNav) {
@@ -992,7 +1043,7 @@
 
 	  // filter out moveables that would not be clickable
 	  moveables = moveables.filter(function (el) {
-	    return (0, _isTabbable.isTabbable)(el, openKeyNav);
+	    return (0, _isTabbable$1.isTabbable)(el, openKeyNav);
 	  });
 	  var labels = generateLabels(openKeyNav, moveables.length);
 	  moveables.forEach(function (element, index) {
@@ -1560,7 +1611,7 @@
 	  var style = document.createElement('style');
 	  style.className = styleClassname;
 	  style.type = 'text/css';
-	  style.textContent = ".openKeyNav-label {\n        font: inherit;\n        vertical-align: baseline;\n        box-sizing: border-box;\n        white-space: nowrap;\n        border: 1px solid ".concat(openKeyNav.config.spot.fontColor, "; \n        // box-shadow: inset 0 -2.5px 0 ").concat(openKeyNav.config.spot.insetColor, ", inset 0 -3px 0 #999, 0 0 4px #fff; \n        // background: linear-gradient(to top, #999 5%, ").concat(openKeyNav.config.spot.backgroundColor, " 20%); \n        background-color: ").concat(openKeyNav.config.spot.backgroundColor, "; \n        // border-radius: calc( 4px );\n        color: ").concat(openKeyNav.config.spot.fontColor, "; \n        display: inline-block;\n        font-size: ").concat(openKeyNav.config.spot.fontSize, "; \n        // outline : 2px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n        outline-offset: -2px !important;\n        // +\"font-weight: bold;\"\n        font-weight: inherit;\n        // line-height: 1.5;\n        line-height: 1;\n        margin: 0 .1em 0 1px;\n        overflow-wrap: break-word;\n        // padding: .0 .15em .1em;\n        padding: 3px;\n        text-shadow: 0 1px 0 ").concat(openKeyNav.config.spot.insetColor, "; \n        min-width: 1rem;\n        text-align: center;\n        position: absolute;\n        z-index: 99999999;\n        font-family: monospace;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        content: \"\";\n        position: absolute;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        top: 50%;\n        transform: translateY(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        left: 50%;\n        transform: translateX(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before {\n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        right: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after {\n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        right: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before {\n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        left: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        left: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]{\n        padding-bottom: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before {\n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        bottom: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after {\n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        bottom: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]{\n        padding-top: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before {\n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        top: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        top: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label-selected{\n        // padding : 0;\n        // margin : 0;\n        display : grid;\n        align-content : center;\n        color : ").concat(openKeyNav.config.spot.fontColor, "; \n        background : ").concat(openKeyNav.config.spot.backgroundColor, "; \n        // outline : 4px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n        outline: none; \n        // border-radius: 100%; \n        // width: 1rem; \n        // height: 1rem; \n        // text-shadow : none;\n        // padding : 0 !important;\n        // margin: 0 !important;\n      }\n      [data-openkeynav-label]:not(.openKeyNav-label):not(button){\n        // outline: 2px double ").concat(openKeyNav.config.focus.outlineColor, " !important; \n        // outline-offset: 2px !important;\n        box-shadow:  inset 0 0 0 .5px #000,\n                      0 0 0 .75px #000,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        // border-radius: 3px;\n        border-color: #000;\n        border-radius: 3px;\n      }\n      button[data-openkeynav-label]{\n        outline:2px solid #000 !important;\n      }\n      .openKeyNav-inaccessible:not(.openKeyNav-label):not(button){\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        border-color: #f00;\n        border-radius: 3px;\n      }\n      button.openKeyNav-inaccessible{\n        outline:2px solid #f00 !important;\n      }\n      .openKeyNav-inaccessible.openKeyNav-label{\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        border-color: #f00;\n        border-radius: 3px;\n      }\n        //   +\"span[data-openkeynav-label]{\"\n        //       +\"display: inherit;\"\n        //   +\"}\"\n      .openKeyNav-noCursor *{\n        cursor: none !important;\n      }\n      .openKeyNav-mouseover-tooltip{\n        position: absolute;\n        background-color: #333;\n        color: #fff;\n        padding: 5px;\n        border-radius: 5px;\n        display: none;\n        z-index: 1000;\n        font-size: 12px;\n      }\n      .openKeyNav-mouseover-tooltip::before{\n        content: \"Debug mode\"\n      }\n      //   [data-openkeynav-draggable=\"true\"] {\n      //   outline: 2px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n      //   outline-offset: -1px !important;\n      // }\n      ;\n      ");
+	  style.textContent = ".openKeyNav-label {\n        font: inherit;\n        vertical-align: baseline;\n        box-sizing: border-box;\n        white-space: nowrap;\n        border: 1px solid ".concat(openKeyNav.config.spot.fontColor, "; \n        // box-shadow: inset 0 -2.5px 0 ").concat(openKeyNav.config.spot.insetColor, ", inset 0 -3px 0 #999, 0 0 4px #fff; \n        // background: linear-gradient(to top, #999 5%, ").concat(openKeyNav.config.spot.backgroundColor, " 20%); \n        background-color: ").concat(openKeyNav.config.spot.backgroundColor, "; \n        // border-radius: calc( 4px );\n        color: ").concat(openKeyNav.config.spot.fontColor, "; \n        display: inline-block;\n        font-size: ").concat(openKeyNav.config.spot.fontSize, "; \n        // outline : 2px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n        outline-offset: -2px !important;\n        // +\"font-weight: bold;\"\n        font-weight: inherit;\n        // line-height: 1.5;\n        line-height: 1;\n        margin: 0 .1em 0 1px;\n        overflow-wrap: break-word;\n        // padding: .0 .15em .1em;\n        padding: 3px;\n        text-shadow: 0 1px 0 ").concat(openKeyNav.config.spot.insetColor, "; \n        min-width: 1rem;\n        text-align: center;\n        position: absolute;\n        z-index: 99999999;\n        font-family: monospace;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        content: \"\";\n        position: absolute;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        top: 50%;\n        transform: translateY(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        left: 50%;\n        transform: translateX(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before {\n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        right: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after {\n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        right: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before {\n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        left: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        left: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]{\n        padding-bottom: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before {\n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        bottom: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after {\n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        bottom: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]{\n        padding-top: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before {\n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        top: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        top: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label-selected{\n        // padding : 0;\n        // margin : 0;\n        display : grid;\n        align-content : center;\n        color : ").concat(openKeyNav.config.spot.fontColor, "; \n        background : ").concat(openKeyNav.config.spot.backgroundColor, "; \n        // outline : 4px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n        outline: none; \n        // border-radius: 100%; \n        // width: 1rem; \n        // height: 1rem; \n        // text-shadow : none;\n        // padding : 0 !important;\n        // margin: 0 !important;\n      }\n      [data-openkeynav-label]:not(.openKeyNav-label):not(button){\n        // outline: 2px double ").concat(openKeyNav.config.focus.outlineColor, " !important; \n        // outline-offset: 2px !important;\n        box-shadow:  inset 0 0 0 .5px #000,\n                      0 0 0 .75px #000,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        // border-radius: 3px;\n        border-color: #000;\n        border-radius: 3px;\n      }\n      button[data-openkeynav-label]{\n        outline:2px solid #000 !important;\n      }\n      .openKeyNav-inaccessible:not(.openKeyNav-label):not(button){\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        border-color: #f00;\n        border-radius: 3px;\n      }\n      button.openKeyNav-inaccessible{\n        outline:2px solid #f00 !important;\n      }\n      .openKeyNav-inaccessible.openKeyNav-label{\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        border-color: #f00;\n        border-radius: 3px;\n      }\n      .openKeyNav-label.debug-inaccessible{\n        background-color: #ff4444 !important;\n        border-color: #cc0000 !important;\n        color: #ffffff !important;\n        text-shadow: 0 1px 0 rgba(0,0,0,0.5) !important;\n      }\n        //   +\"span[data-openkeynav-label]{\"\n        //       +\"display: inherit;\"\n        //   +\"}\"\n      .openKeyNav-noCursor *{\n        cursor: none !important;\n      }\n      .openKeyNav-mouseover-tooltip{\n        position: absolute;\n        background-color: #333;\n        color: #fff;\n        padding: 5px;\n        border-radius: 5px;\n        display: none;\n        z-index: 1000;\n        font-size: 12px;\n      }\n      .openKeyNav-mouseover-tooltip::before{\n        content: \"Debug mode\"\n      }\n      //   [data-openkeynav-draggable=\"true\"] {\n      //   outline: 2px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n      //   outline-offset: -1px !important;\n      // }\n      ;\n      ");
 	  style.textContent += "\n      .okn-logo-text {\n          font-size: 36px;\n          font-weight: 600;\n          color: #ffffff;\n          background-color: #333;\n          padding: .1em .2em;\n          border-radius: 1em;\n          box-sizing: border-box;\n          line-height: 1;\n          text-align: center;\n          position: relative;\n          display: inline-block;\n          min-width: 1rem;\n          border: max(.1em, 2px) solid #ffffff;\n          white-space: nowrap;\n      }\n\n      .okn-logo-text.small {\n          font-size: 18px;\n      }\n      .okn-logo-text.tiny {\n          font-size: 10px;\n          /* border-width: 1px; */\n          border: none;\n      }\n      .okn-logo-text.tiny .key {\n          font-weight: 700;\n      }\n\n      .okn-logo-text.light {\n          color: #333; /* Dark text color */\n          background-color: #fff; /* Light background */\n          border-color: #333; /* Dark border */\n      }\n\n      .okn-logo-text .key {\n          display: inline;\n          padding: .1em .2em;\n          margin: 0 .1em;\n          background-color: #ffffff; /* Light background */\n          color: #333; /* Dark text */\n          line-height: 1;\n          /* font-size: 0.6em; */\n          position: relative;\n          top: -.3em;\n      }\n\n      .okn-logo-text.light .key {\n          background-color: #333; /* Dark background */\n          color: #ffffff; /* Light text */\n      }\n\n      .okn-logo-text .key::before,\n      .okn-logo-text .key::after {\n          content: \"\";\n          position: absolute;\n          left: 50%;\n          transform: translateX(-50%);\n      }\n\n      .okn-logo-text .key::before {\n          --border-size: 0.5em; /* Base border size */\n          --min-border-size: 5px; /* Minimum pixel size */\n\n          border-top: max(var(--border-size), var(--min-border-size)) solid #333;\n          bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n          border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n          border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n      }\n      .okn-logo-text.light .key::before {\n          border-top-color: #fff; /* Dark top triangle */\n      }\n\n      .okn-logo-text .key::after {\n          --border-size: .4em; /* Base border size */\n          --min-border-size: 4px; /* Minimum pixel size */\n\n          border-top: max( calc( var(--border-size) + 2px) , var(--min-border-size)) solid #fff;\n          bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n          border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n          border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n      }\n\n      .okn-logo-text.light .key::after {\n          border-top-color: #333; /* Light bottom triangle */\n      }\n      ";
 	  style.textContent += keyButtonStyles;
 
@@ -1619,9 +1670,9 @@
 	          s: F,
 	          n: function n() {
 	            return _n >= r.length ? {
-	              done: !0
+	              done: true
 	            } : {
-	              done: !1,
+	              done: false,
 	              value: r[_n++]
 	            };
 	          },
@@ -1634,8 +1685,8 @@
 	      throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 	    }
 	    var o,
-	      a = !0,
-	      u = !1;
+	      a = true,
+	      u = false;
 	    return {
 	      s: function s() {
 	        t = t.call(r);
@@ -1645,7 +1696,7 @@
 	        return a = r.done, r;
 	      },
 	      e: function e(r) {
-	        u = !0, o = r;
+	        u = true, o = r;
 	      },
 	      f: function f() {
 	        try {
@@ -1682,6 +1733,7 @@
 	      (0, _signals.effect)(function () {
 	        openKeyNav.config.modes;
 	        openKeyNav.config.typedLabel.value;
+	        openKeyNav.config.debug.inaccessibleCount.value;
 	        updateToolbar(toolBarElement, lastMessage);
 	      });
 	      (0, _signals.effect)(function () {
@@ -1753,6 +1805,10 @@
 	      return "<p>\n                    ".concat(menuButton, "\n                    ").concat(dragButton, "\n                    ").concat(clickButton, " \n                </p>\n            ");
 	    },
 	    clickMode: function clickMode() {
+	      var count = openKeyNav.config.debug.inaccessibleCount.value;
+	      if (openKeyNav.config.debug.keyboardAccessible && count > 0) {
+	        return "<p>".concat((0, _keyButton.keyButton)(["Esc"], "Click Mode (Debug: ".concat(count, " inaccessible)")), "</p>");
+	      }
 	      return "<p>".concat((0, _keyButton.keyButton)(["Esc"], "Click Mode"), "</p>");
 	    },
 	    dragMode: function dragMode() {
@@ -1814,6 +1870,162 @@
 	  return toolbar;
 	}
 
+	var audit = {};
+
+	var auditPanel = {};
+
+	Object.defineProperty(auditPanel, "__esModule", {
+	  value: true
+	});
+	auditPanel.showAuditPanel = showAuditPanel;
+	/**
+	 * Creates and manages the accessibility audit panel UI
+	 */
+	function showAuditPanel(inaccessibleElements) {
+	  // Remove existing panel if present
+	  var existingPanel = document.getElementById('okn-audit-panel');
+	  if (existingPanel) {
+	    existingPanel.remove();
+	  }
+
+	  // Create audit panel
+	  var panel = document.createElement('div');
+	  panel.id = 'okn-audit-panel';
+	  panel.style.position = 'fixed';
+	  panel.style.top = '20px';
+	  panel.style.right = '20px';
+	  panel.style.width = '350px';
+	  panel.style.maxHeight = '80vh';
+	  panel.style.backgroundColor = '#fff';
+	  panel.style.border = '2px solid #f00';
+	  panel.style.borderRadius = '8px';
+	  panel.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+	  panel.style.zIndex = '10000';
+	  panel.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+	  panel.style.fontSize = '14px';
+	  panel.style.overflow = 'hidden';
+	  panel.style.display = 'flex';
+	  panel.style.flexDirection = 'column';
+
+	  // Header
+	  var header = document.createElement('div');
+	  header.style.padding = '12px 16px';
+	  header.style.backgroundColor = '#f00';
+	  header.style.color = '#fff';
+	  header.style.fontWeight = 'bold';
+	  header.style.display = 'flex';
+	  header.style.justifyContent = 'space-between';
+	  header.style.alignItems = 'center';
+	  header.innerHTML = "<span>\u26A0\uFE0F Accessibility Issues (".concat(inaccessibleElements.length, ")</span>");
+
+	  // Close button
+	  var closeBtn = document.createElement('button');
+	  closeBtn.innerHTML = '×';
+	  closeBtn.style.background = 'none';
+	  closeBtn.style.border = 'none';
+	  closeBtn.style.color = '#fff';
+	  closeBtn.style.fontSize = '24px';
+	  closeBtn.style.cursor = 'pointer';
+	  closeBtn.style.padding = '0';
+	  closeBtn.style.marginLeft = '10px';
+	  closeBtn.setAttribute('aria-label', 'Close audit panel');
+	  closeBtn.addEventListener('click', function () {
+	    return panel.remove();
+	  });
+	  header.appendChild(closeBtn);
+
+	  // Content area
+	  var content = document.createElement('div');
+	  content.style.padding = '16px';
+	  content.style.overflowY = 'auto';
+	  content.style.maxHeight = 'calc(80vh - 60px)';
+
+	  // List items
+	  inaccessibleElements.forEach(function (el, index) {
+	    var item = document.createElement('div');
+	    item.style.padding = '8px';
+	    item.style.marginBottom = '8px';
+	    item.style.backgroundColor = '#fff0f0';
+	    item.style.border = '1px solid #fcc';
+	    item.style.borderRadius = '4px';
+	    item.style.cursor = 'pointer';
+	    var tagInfo = "<strong>".concat(el.tagName.toLowerCase(), "</strong>").concat(el.id ? " #".concat(el.id) : '').concat(el.className ? " .".concat(el.className.split(' ')[0]) : '');
+	    item.innerHTML = "\n      <div style=\"margin-bottom: 4px;\">".concat(index + 1, ". ").concat(tagInfo, "</div>\n      <div style=\"font-size: 12px; color: #666;\">Click to scroll to element</div>\n    ");
+
+	    // Click to scroll to element
+	    item.addEventListener('click', function () {
+	      el.scrollIntoView({
+	        behavior: 'smooth',
+	        block: 'center'
+	      });
+	      // Highlight briefly
+	      var originalOutline = el.style.outline;
+	      el.style.outline = '4px solid #f00';
+	      el.style.outlineOffset = '4px';
+	      setTimeout(function () {
+	        el.style.outline = originalOutline;
+	        el.style.outlineOffset = '';
+	      }, 2000);
+	    });
+	    content.appendChild(item);
+	  });
+	  panel.appendChild(header);
+	  panel.appendChild(content);
+	  document.body.appendChild(panel);
+	}
+
+	Object.defineProperty(audit, "__esModule", {
+	  value: true
+	});
+	audit.runAccessibilityAudit = runAccessibilityAudit;
+	var _isTabbable = isTabbable;
+	var _auditPanel = auditPanel;
+	/**
+	 * Runs accessibility audit on the page
+	 * Checks all interactive elements for keyboard accessibility
+	 * @param {Object} openKeyNav - The OpenKeyNav instance
+	 */
+	function runAccessibilityAudit(openKeyNav) {
+	  // Only run in debug mode
+	  if (!openKeyNav.config.debug.keyboardAccessible) {
+	    return;
+	  }
+
+	  // Query all potentially interactive elements (same logic as click mode)
+	  var elements = document.querySelectorAll('a, button, input, select, textarea, [role="button"], [role="link"], [tabindex], [onclick]');
+	  var inaccessibleElements = [];
+
+	  // Check each element for keyboard accessibility
+	  try {
+	    elements.forEach(function (el) {
+	      // Call isTabbable which will flag inaccessible elements as a side effect
+	      (0, _isTabbable.isTabbable)(el, openKeyNav);
+
+	      // After calling isTabbable, check if it was flagged as inaccessible
+	      if (el.hasAttribute('data-openkeynav-inaccessible-reason')) {
+	        inaccessibleElements.push(el);
+	      }
+	    });
+	  } catch (error) {
+	    console.error('[OpenKeyNav Audit] Error during element check:', error);
+	  }
+
+	  // Update the count
+	  openKeyNav.config.debug.inaccessibleCount.value = inaccessibleElements.length;
+
+	  // Log to console
+	  if (inaccessibleElements.length > 0) {
+	    console.warn("[OpenKeyNav Audit] Found ".concat(inaccessibleElements.length, " inaccessible interactive elements:"), inaccessibleElements);
+	  } else {
+	    console.log('[OpenKeyNav Audit] All interactive elements are keyboard accessible!');
+	  }
+
+	  // Show audit panel if issues found
+	  if (inaccessibleElements.length > 0) {
+	    (0, _auditPanel.showAuditPanel)(inaccessibleElements);
+	  }
+	}
+
 	var hasRequiredOpenKeyNav;
 	function requireOpenKeyNav() {
 	  if (hasRequiredOpenKeyNav) return OpenKeyNav$1;
@@ -1829,6 +2041,7 @@
 	  var _styles = styles;
 	  var _keypress = requireKeypress();
 	  var _escape = _escape$1;
+	  var _audit = audit;
 	  function _createForOfIteratorHelper(r, e) {
 	    var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
 	    if (!t) {
@@ -1840,9 +2053,9 @@
 	          s: F,
 	          n: function n() {
 	            return _n >= r.length ? {
-	              done: !0
+	              done: true
 	            } : {
-	              done: !1,
+	              done: false,
 	              value: r[_n++]
 	            };
 	          },
@@ -1855,8 +2068,8 @@
 	      throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 	    }
 	    var o,
-	      a = !0,
-	      u = !1;
+	      a = true,
+	      u = false;
 	    return {
 	      s: function s() {
 	        t = t.call(r);
@@ -1866,7 +2079,7 @@
 	        return a = r.done, r;
 	      },
 	      e: function e(r) {
-	        u = !0, o = r;
+	        u = true, o = r;
 	      },
 	      f: function f() {
 	        try {
@@ -1915,11 +2128,11 @@
 	    t.prototype = Object.create(e && e.prototype, {
 	      constructor: {
 	        value: t,
-	        writable: !0,
-	        configurable: !0
+	        writable: true,
+	        configurable: true
 	      }
 	    }), Object.defineProperty(t, "prototype", {
-	      writable: !1
+	      writable: false
 	    }), e && _setPrototypeOf(t, e);
 	  }
 	  function _wrapNativeSuper(t) {
@@ -1937,9 +2150,9 @@
 	      return Wrapper.prototype = Object.create(t.prototype, {
 	        constructor: {
 	          value: Wrapper,
-	          enumerable: !1,
-	          writable: !0,
-	          configurable: !0
+	          enumerable: false,
+	          writable: true,
+	          configurable: true
 	        }
 	      }), _setPrototypeOf(Wrapper, t);
 	    }, _wrapNativeSuper(t);
@@ -1982,12 +2195,12 @@
 	  function _defineProperties(e, r) {
 	    for (var t = 0; t < r.length; t++) {
 	      var o = r[t];
-	      o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o);
+	      o.enumerable = o.enumerable || false, o.configurable = true, "value" in o && (o.writable = true), Object.defineProperty(e, _toPropertyKey(o.key), o);
 	    }
 	  }
 	  function _createClass(e, r, t) {
 	    return r && _defineProperties(e.prototype, r), Object.defineProperty(e, "prototype", {
-	      writable: !1
+	      writable: false
 	    }), e;
 	  }
 	  function _toPropertyKey(t) {
@@ -2123,6 +2336,8 @@
 	          heading_6: '6',
 	          // focus on the next heading of level 6 // as seen in JAWS, NVDA // do not modify
 	          menu: 'o',
+	          audit: 'a',
+	          // enter audit mode to check keyboard accessibility
 	          inputEscape: 'ctrlKey',
 	          // for escaping input to trigger a command
 	          modifierKey: 'shiftKey' // one of: [altKey, shiftKey, metaKey] // useful for on/off switch. Avoid ctrlKey, which is used to escape input.
@@ -2176,7 +2391,8 @@
 	        },
 	        debug: {
 	          screenReaderVisible: false,
-	          keyboardAccessible: true
+	          keyboardAccessible: true,
+	          inaccessibleCount: (0, _signals.signal)(0)
 	        },
 	        enabledCookie: 'openKeyNav_enabled'
 	      };
@@ -2187,6 +2403,14 @@
 	        _this.meta.enabled.value = true;
 	        _this.injectStyles();
 	        _this.getSetCookie(_this.config.enabledCookie, true);
+
+	        // Run accessibility audit after enabling (for debug mode)
+	        if (_this.config.debug.keyboardAccessible) {
+	          // Use setTimeout to ensure DOM is ready and styles are injected
+	          setTimeout(function () {
+	            (0, _audit.runAccessibilityAudit)(_this);
+	          }, 0);
+	        }
 	        return _this;
 	      };
 	      this.disable = function () {
@@ -2234,7 +2458,7 @@
 	          }
 	          _inherits(TouchEvent, _Event);
 	          return _createClass(TouchEvent);
-	        }( /*#__PURE__*/_wrapNativeSuper(Event));
+	        }(/*#__PURE__*/_wrapNativeSuper(Event));
 	        window.Touch = /*#__PURE__*/_createClass(function _class(_ref) {
 	          var identifier = _ref.identifier,
 	            target = _ref.target,
@@ -2446,6 +2670,7 @@
 	      key: "createOverlay",
 	      value: function createOverlay(element, label) {
 	        var _this4 = this;
+	        var cssClass = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 	        function getScrollParent(element) {
 	          var includeHidden = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	          var style = getComputedStyle(element);
@@ -2464,6 +2689,9 @@
 	        var overlay = document.createElement('div');
 	        overlay.textContent = label;
 	        overlay.classList.add('openKeyNav-label');
+	        if (cssClass) {
+	          overlay.classList.add(cssClass);
+	        }
 	        overlay.setAttribute('data-openkeynav-label', label);
 
 	        // Add event listener to open the element in developer tools
@@ -2831,6 +3059,10 @@
 	    }, {
 	      key: "emitNotification",
 	      value: function emitNotification(message) {
+	        var duration = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+	        // Use provided duration or fall back to config
+	        var notificationDuration = duration !== null ? duration : this.config.notifications.duration;
+
 	        // Function to create or select the notification container
 	        var getSetNotificationContainer = function getSetNotificationContainer() {
 	          // Create or select the notification container
@@ -2855,19 +3087,32 @@
 
 	        // Check if notifications are enabled
 	        if (!this.config.notifications.enabled) {
+	          console.log('[emitNotification] Notifications disabled, returning');
 	          return;
 	        }
-
+	        console.log('[emitNotification] Getting notification container...');
 	        // Get the notification container
 	        var notificationContainer = getSetNotificationContainer();
+	        console.log('[emitNotification] Got container:', !!notificationContainer, 'id:', notificationContainer === null || notificationContainer === void 0 ? void 0 : notificationContainer.id);
 
-	        // Remove any existing notification before creating a new one
-	        while (notificationContainer.firstChild) {
-	          notificationContainer.firstChild.remove();
+	        // Remove any existing NON-PERSISTENT notifications before creating a new one
+	        // Preserve persistent notifications (those with close button)
+	        console.log('[emitNotification] Removing non-persistent notifications...');
+	        try {
+	          Array.from(notificationContainer.children).forEach(function (child) {
+	            var isPersistent = child.querySelector('button[aria-label="Close notification"]');
+	            if (!isPersistent) {
+	              child.remove();
+	            }
+	          });
+	          console.log('[emitNotification] Removal complete');
+	        } catch (error) {
+	          console.error('[emitNotification] Error removing notifications:', error);
 	        }
-
+	        console.log('[emitNotification] Creating notification element...');
 	        // Create the notification element
 	        var notification = document.createElement('div');
+	        console.log('[emitNotification] Notification element created');
 	        notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
 	        notification.style.color = '#fff';
 	        notification.style.padding = '10px 20px';
@@ -2902,10 +3147,31 @@
 	        // Append the notification to the notification container
 	        notificationContainer.appendChild(notification);
 
-	        // Automatically remove the notification after the specified duration
-	        setTimeout(function () {
-	          notification.remove();
-	        }, this.config.notifications.duration);
+	        // Add close button for persistent notifications
+	        if (notificationDuration === 0) {
+	          var closeBtn = document.createElement('button');
+	          closeBtn.innerHTML = '×';
+	          closeBtn.style.position = 'absolute';
+	          closeBtn.style.top = '5px';
+	          closeBtn.style.right = '10px';
+	          closeBtn.style.background = 'none';
+	          closeBtn.style.border = 'none';
+	          closeBtn.style.color = '#fff';
+	          closeBtn.style.fontSize = '20px';
+	          closeBtn.style.cursor = 'pointer';
+	          closeBtn.style.padding = '0';
+	          closeBtn.style.lineHeight = '1';
+	          closeBtn.setAttribute('aria-label', 'Close notification');
+	          closeBtn.addEventListener('click', function () {
+	            notification.remove();
+	          });
+	          notification.appendChild(closeBtn);
+	        } else {
+	          // Automatically remove the notification after the specified duration
+	          setTimeout(function () {
+	            notification.remove();
+	          }, notificationDuration);
+	        }
 	      }
 	    }, {
 	      key: "initStatusBar",

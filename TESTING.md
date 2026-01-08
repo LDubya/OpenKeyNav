@@ -9,6 +9,10 @@ OpenKeyNav has two layers of testing:
 1. **Unit Tests** (jsdom) - Fast, logic-focused tests for pure functions, state management, and DOM utilities
 2. **E2E Tests** (Playwright) - Visual verification in a real browser for overlay positioning, keyboard modes, and interactions
 
+**Current Test Coverage: 68 tests total**
+- 59 unit tests (Vitest + jsdom)
+- 9 E2E tests (Playwright + Chromium)
+
 ## Prerequisites
 
 - Node.js 18+ (use `nvm use` to switch to the version in `.nvmrc`)
@@ -40,13 +44,27 @@ npm run test:coverage
 ```
 
 **What's tested:**
-- Signal reactivity (`src/signals.js`)
-- Keyboard shortcut button rendering (`src/keyButton.js`)
-- Label generation and filtering (`src/keylabels.js`)
-- Element tabbability heuristics (`src/isTabbable.js`)
-- Overlay cleanup and mode resets (`removeOverlays`)
-- Accessibility flagging (`flagAsInaccessible`)
-- Overlay positioning logic (`updateOverlayPosition`)
+- Signal reactivity (`src/signals.js`) - 1 test
+- Keyboard shortcut button rendering (`src/keyButton.js`) - 2 tests
+- Label generation and filtering (`src/keylabels.js`) - 2 tests
+- **Element tabbability heuristics (`src/isTabbable.js`) - 48 tests**
+  - Basic visibility checks (display, visibility, size)
+  - Tabindex handling (positive, zero, negative)
+  - Anchor validation (href requirement, ARIA roles)
+  - Native interactive elements (button, input, select, textarea, summary)
+  - ARIA roles and contenteditable
+  - Details/summary handling (open/closed states)
+  - Click event detection (onclick attribute, event listeners)
+  - Viewport and overflow scrolling
+  - Inert elements and containers
+  - Disabled elements, hidden attributes, aria-hidden
+  - SVG and shadow DOM compatibility
+  - Edge cases (opacity:0, pointer-events:none)
+- Overlay cleanup and mode resets (`removeOverlays`) - 2 tests
+- Accessibility flagging (`flagAsInaccessible`) - 1 test
+- Overlay positioning logic (`updateOverlayPosition`) - 3 tests
+
+**Total Unit Tests: 59**
 
 **Limitations of jsdom:**
 - No real layout engine (getBoundingClientRect returns 0s unless mocked)
@@ -67,19 +85,46 @@ npm run test:e2e:headed
 ```
 
 **What's tested:**
+
+**Debug Mode Tests (6 tests)** - Uses `demo/demo.html` with `debug.keyboardAccessible: true` (default):
 - Real overlay positioning in Chromium
 - Click mode activation and label visibility
-- Toolbar rendering and state updates
+- Debug mode showing ALL interactive elements with red overlays for inaccessible ones
+- Toolbar rendering and state updates with debug count
 - Heading navigation focus behavior
+- Accessibility audit panel on enable showing flagged elements
 - Keyboard event handling (Shift+o, k, h, Esc)
+
+**Production Mode Tests (3 tests)** - Uses `demo/productiondemo.html` with `debug.keyboardAccessible: false`:
+- No audit panel on enable
+- No red outlines on inaccessible elements
+- Click mode shows only accessible elements (no red overlays)
+- Toolbar does not show debug count
+- Inaccessible elements are not flagged with data attributes or classes
+
+**Total E2E Tests: 9**
 
 **Artifacts:**
 Screenshots are saved to `artifacts/` after each run:
+
+**Debug Mode Artifacts (`demo/demo.html`):**
 - `01-initial.png` - Page before enabling OpenKeyNav
 - `02-enabled.png` - After Shift+o (toolbar visible)
 - `03-click-mode.png` - Overlays shown in click mode
 - `04-after-escape.png` - Clean state after pressing Esc
+- `05-toolbar.png` - Toolbar appearance
 - `06-heading-focus.png` - Heading focused via h key
+- `07-debug-mode.png` - Click mode in debug mode with red overlays for inaccessible elements
+- `08-debug-toolbar.png` - Toolbar showing debug info with inaccessible count
+- `09-audit-initial.png` - Page after enabling with audit panel
+- `10-audit-panel.png` - Audit panel showing accessibility issues
+- `11-audit-red-outlines.png` - Red outlines on inaccessible elements
+- `12-audit-click-mode.png` - Click mode working alongside audit
+
+**Production Mode Artifacts (`demo/productiondemo.html`):**
+- `13-production-no-audit.png` - No audit panel on enable
+- `14-production-click-mode.png` - Click mode with only accessible elements
+- `15-production-no-flagging.png` - Inaccessible elements not flagged
 
 ### Run All Tests
 
@@ -87,6 +132,70 @@ Screenshots are saved to `artifacts/` after each run:
 # Unit tests + E2E tests
 npm run test:ci && npm run test:e2e
 ```
+
+## Debug Mode vs Production Mode
+
+OpenKeyNav has two operational modes controlled by `config.debug.keyboardAccessible`:
+
+### Debug Mode (Default for Development)
+**Configuration:** `debug.keyboardAccessible: true`
+**Demo:** `demo/demo.html`
+
+**Features:**
+- Automatic accessibility audit on enable
+- Audit panel shows all inaccessible elements with click-to-scroll
+- Red outlines (`box-shadow`) on inaccessible elements (always visible)
+- Click mode shows ALL interactive elements (accessible + inaccessible)
+- Red labels for inaccessible elements with tooltips
+- Toolbar shows debug count: "Debug: X inaccessible"
+- Console warnings with element details
+- `flagAsInaccessible()` adds classes and data attributes
+
+**Use Cases:**
+- Development and debugging
+- Accessibility auditing
+- Finding keyboard navigation issues
+- QA testing
+
+### Production Mode (Recommended for End Users)
+**Configuration:** `debug.keyboardAccessible: false`
+**Demo:** `demo/productiondemo.html`
+
+**Features:**
+- NO audit panel
+- NO red outlines or flagging
+- Click mode shows ONLY accessible elements
+- Clean toolbar without debug info
+- NO console warnings about accessibility
+- `flagAsInaccessible()` is not called
+
+**Use Cases:**
+- Production websites
+- End-user deployment
+- Clean, distraction-free UX
+- Performance optimization (fewer checks)
+
+### Switching Modes
+
+```javascript
+// Enable debug mode
+const okn = new OpenKeyNav();
+okn.init({
+  debug: {
+    keyboardAccessible: true  // Debug mode
+  }
+});
+
+// Enable production mode
+const okn = new OpenKeyNav();
+okn.init({
+  debug: {
+    keyboardAccessible: false  // Production mode
+  }
+});
+```
+
+**Important:** The default is `true` (debug mode) for development convenience. Set to `false` for production deployments.
 
 ## Using Vision-Capable AI (Claude Sonnet 4.5)
 
@@ -139,10 +248,25 @@ tests/
 └── flagAsInaccessible.test.js # Unit: a11y warnings
 
 demo/
-└── demo.html               # E2E test fixture (uses dist/ build)
+├── demo.html              # Debug mode demo (debug.keyboardAccessible: true)
+└── productiondemo.html    # Production mode demo (debug.keyboardAccessible: false)
 
-artifacts/                  # Screenshots from E2E runs (gitignored)
+artifacts/                 # Screenshots from E2E runs (gitignored)
 ```
+
+## Modular Architecture
+
+OpenKeyNav's audit functionality is modular:
+
+- **`src/audit.js`** - Core audit logic (queries elements, runs checks, manages console output)
+- **`src/auditPanel.js`** - UI presentation layer (creates panel, renders issues, handles interactions)
+- **`src/isTabbable.js`** - Accessibility detection (visibility, tabindex, ARIA, inert, etc.)
+- **`src/OpenKeyNav.js`** - Orchestrator (imports `runAccessibilityAudit`, calls it on enable)
+
+This separation allows:
+- Easy testing of each component
+- Independent enhancement (e.g., add panel themes, export reports)
+- Clear separation of concerns (logic vs UI vs detection)
 
 ## Build Process Isolation
 
@@ -196,6 +320,42 @@ export default defineConfig({
 ```
 
 ## Adding New Tests
+
+### TDD Approach (Test-Driven Development)
+
+When adding new functionality to `isTabbable` or other critical modules:
+
+1. **Write failing tests first** that describe the expected behavior
+2. **Run tests** to confirm they fail for the right reason
+3. **Implement the feature** to make tests pass
+4. **Verify** all tests pass
+
+**Example TDD workflow:**
+
+```javascript
+// Step 1: Write failing test in tests/isTabbable.test.js
+describe('TDD - new feature', () => {
+  it('should handle inert elements', () => {
+    const el = document.createElement('button');
+    el.inert = true;
+    document.body.appendChild(el);
+    
+    // This will fail initially
+    expect(isTabbable(el, openKeyNav)).toBe(false);
+  });
+});
+
+// Step 2: Run tests - verify it fails
+// npm run test:ci
+
+// Step 3: Implement in src/isTabbable.js
+if (el.inert) {
+  return false;
+}
+
+// Step 4: Run tests - verify it passes
+// npm run test:ci
+```
 
 ### Unit Test (jsdom)
 
@@ -290,6 +450,21 @@ Add to your CI pipeline:
 4. **Keep tests focused** - One behavior per test
 5. **Mock layout in jsdom** - Stub `isAnyCornerVisible`, `getBoundingClientRect`
 6. **Screenshot key states** - Capture before/after for debugging
+7. **Use TDD for critical modules** - Write failing tests first, then implement
+8. **Test both debug and production modes** - Ensure features don't leak between modes
+9. **Document test count changes** - Update TESTING.md when adding new test suites
+
+## Test Coverage Summary
+
+| Module | Unit Tests | E2E Tests | Notes |
+|--------|-----------|-----------|-------|
+| `isTabbable.js` | 48 | 3 | Comprehensive coverage of visibility, tabindex, ARIA, inert |
+| Audit system | 0 | 3 | Tested via E2E (audit.js, auditPanel.js) |
+| Click mode | 2 | 3 | Label generation + E2E positioning |
+| Toolbar | 2 | 2 | KeyButton rendering + E2E visibility |
+| Signals | 1 | 0 | Reactivity logic |
+| Overlays | 5 | 2 | Positioning + cleanup |
+| **Total** | **59** | **9** | **68 tests** |
 
 ## Related Documentation
 

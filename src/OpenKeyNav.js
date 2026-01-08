@@ -6,6 +6,7 @@ import { keyButton } from './keyButton.js';
 import { injectStylesheet, deleteStylesheets } from './styles.js';
 import { handleKeyPress } from "./keypress.js";
 import { handleEscape } from "./escape";
+import { runAccessibilityAudit } from './audit.js';
 
 /*
 OpenKeyNav.js
@@ -124,6 +125,7 @@ class OpenKeyNav {
           heading_5: '5', // focus on the next heading of level 5 // as seen in JAWS, NVDA // do not modify
           heading_6: '6', // focus on the next heading of level 6 // as seen in JAWS, NVDA // do not modify
           menu: 'o',
+          audit: 'a', // enter audit mode to check keyboard accessibility
           inputEscape: 'ctrlKey', // for escaping input to trigger a command
           modifierKey: 'shiftKey' // one of: [altKey, shiftKey, metaKey] // useful for on/off switch. Avoid ctrlKey, which is used to escape input.
         },
@@ -174,7 +176,8 @@ class OpenKeyNav {
         },
         debug: {
           screenReaderVisible: false,
-          keyboardAccessible: true
+          keyboardAccessible: true,
+          inaccessibleCount: signal(0)
         },
         enabledCookie: 'openKeyNav_enabled'
       };
@@ -185,6 +188,15 @@ class OpenKeyNav {
         this.meta.enabled.value = true;
         this.injectStyles();
         this.getSetCookie(this.config.enabledCookie, true);
+        
+        // Run accessibility audit after enabling (for debug mode)
+        if (this.config.debug.keyboardAccessible) {
+          // Use setTimeout to ensure DOM is ready and styles are injected
+          setTimeout(() => {
+            runAccessibilityAudit(this);
+          }, 0);
+        }
+        
         return this;
       };
       this.disable = () => {
@@ -433,7 +445,7 @@ class OpenKeyNav {
       overlay.style.top = `${adjustedTop + window.scrollY}px`;
     }
   
-    createOverlay(element, label) {
+    createOverlay(element, label, cssClass = null) {
       function getScrollParent(element, includeHidden = false) {
         let style = getComputedStyle(element);
         let excludeStaticParent = style.position === 'absolute';
@@ -454,6 +466,9 @@ class OpenKeyNav {
       const overlay = document.createElement('div');
       overlay.textContent = label;
       overlay.classList.add('openKeyNav-label');
+      if (cssClass) {
+        overlay.classList.add(cssClass);
+      }
       overlay.setAttribute('data-openkeynav-label', label);
   
       // Add event listener to open the element in developer tools
@@ -794,10 +809,10 @@ class OpenKeyNav {
   
       return true;
     }
-  
-    addKeydownEventListener() {
-  
-      
+
+
+
+    addKeydownEventListener() {      
   
       
   
@@ -840,7 +855,10 @@ class OpenKeyNav {
     }
 
     // Function to emit a temporary notification
-    emitNotification (message) {
+    emitNotification (message, duration = null) {
+
+      // Use provided duration or fall back to config
+      const notificationDuration = duration !== null ? duration : this.config.notifications.duration;
 
       // Function to create or select the notification container
       const getSetNotificationContainer = () => {
@@ -866,19 +884,34 @@ class OpenKeyNav {
 
       // Check if notifications are enabled
       if (!this.config.notifications.enabled) {
+          console.log('[emitNotification] Notifications disabled, returning');
           return;
       }
 
+      console.log('[emitNotification] Getting notification container...');
       // Get the notification container
       const notificationContainer = getSetNotificationContainer();
+      console.log('[emitNotification] Got container:', !!notificationContainer, 'id:', notificationContainer?.id);
 
-      // Remove any existing notification before creating a new one
-      while (notificationContainer.firstChild) {
-          notificationContainer.firstChild.remove();
+      // Remove any existing NON-PERSISTENT notifications before creating a new one
+      // Preserve persistent notifications (those with close button)
+      console.log('[emitNotification] Removing non-persistent notifications...');
+      try {
+        Array.from(notificationContainer.children).forEach(child => {
+          const isPersistent = child.querySelector('button[aria-label="Close notification"]');
+          if (!isPersistent) {
+            child.remove();
+          }
+        });
+        console.log('[emitNotification] Removal complete');
+      } catch (error) {
+        console.error('[emitNotification] Error removing notifications:', error);
       }
 
+      console.log('[emitNotification] Creating notification element...');
       // Create the notification element
       const notification = document.createElement('div');
+      console.log('[emitNotification] Notification element created');
       notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
       notification.style.color = '#fff';
       notification.style.padding = '10px 20px';
@@ -913,10 +946,31 @@ class OpenKeyNav {
       // Append the notification to the notification container
       notificationContainer.appendChild(notification);
 
-      // Automatically remove the notification after the specified duration
-      setTimeout(() => {
+      // Add close button for persistent notifications
+      if (notificationDuration === 0) {
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '×';
+        closeBtn.style.position = 'absolute';
+        closeBtn.style.top = '5px';
+        closeBtn.style.right = '10px';
+        closeBtn.style.background = 'none';
+        closeBtn.style.border = 'none';
+        closeBtn.style.color = '#fff';
+        closeBtn.style.fontSize = '20px';
+        closeBtn.style.cursor = 'pointer';
+        closeBtn.style.padding = '0';
+        closeBtn.style.lineHeight = '1';
+        closeBtn.setAttribute('aria-label', 'Close notification');
+        closeBtn.addEventListener('click', () => {
           notification.remove();
-      }, this.config.notifications.duration);
+        });
+        notification.appendChild(closeBtn);
+      } else {
+        // Automatically remove the notification after the specified duration
+        setTimeout(() => {
+          notification.remove();
+        }, notificationDuration);
+      }
     }
 
     initStatusBar() {
@@ -1112,6 +1166,7 @@ class OpenKeyNav {
       this.initToolBar();
       this.applicationSupport();
       this.checkEnabled();
+      
       console.log('Library initialized with config:', this.config);
       return this;
     }

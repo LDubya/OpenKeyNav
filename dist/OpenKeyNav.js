@@ -11,6 +11,7 @@ var _keyButton = require("./keyButton.js");
 var _styles = require("./styles.js");
 var _keypress = require("./keypress.js");
 var _escape = require("./escape");
+var _audit = require("./audit.js");
 function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
 function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
 function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
@@ -162,6 +163,8 @@ var OpenKeyNav = /*#__PURE__*/function () {
         heading_6: '6',
         // focus on the next heading of level 6 // as seen in JAWS, NVDA // do not modify
         menu: 'o',
+        audit: 'a',
+        // enter audit mode to check keyboard accessibility
         inputEscape: 'ctrlKey',
         // for escaping input to trigger a command
         modifierKey: 'shiftKey' // one of: [altKey, shiftKey, metaKey] // useful for on/off switch. Avoid ctrlKey, which is used to escape input.
@@ -215,7 +218,8 @@ var OpenKeyNav = /*#__PURE__*/function () {
       },
       debug: {
         screenReaderVisible: false,
-        keyboardAccessible: true
+        keyboardAccessible: true,
+        inaccessibleCount: (0, _signals.signal)(0)
       },
       enabledCookie: 'openKeyNav_enabled'
     };
@@ -226,6 +230,14 @@ var OpenKeyNav = /*#__PURE__*/function () {
       _this.meta.enabled.value = true;
       _this.injectStyles();
       _this.getSetCookie(_this.config.enabledCookie, true);
+
+      // Run accessibility audit after enabling (for debug mode)
+      if (_this.config.debug.keyboardAccessible) {
+        // Use setTimeout to ensure DOM is ready and styles are injected
+        setTimeout(function () {
+          (0, _audit.runAccessibilityAudit)(_this);
+        }, 0);
+      }
       return _this;
     };
     this.disable = function () {
@@ -273,7 +285,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
         }
         _inherits(TouchEvent, _Event);
         return _createClass(TouchEvent);
-      }( /*#__PURE__*/_wrapNativeSuper(Event));
+      }(/*#__PURE__*/_wrapNativeSuper(Event));
       window.Touch = /*#__PURE__*/_createClass(function _class(_ref) {
         var identifier = _ref.identifier,
           target = _ref.target,
@@ -485,6 +497,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
     key: "createOverlay",
     value: function createOverlay(element, label) {
       var _this4 = this;
+      var cssClass = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
       function getScrollParent(element) {
         var includeHidden = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var style = getComputedStyle(element);
@@ -503,6 +516,9 @@ var OpenKeyNav = /*#__PURE__*/function () {
       var overlay = document.createElement('div');
       overlay.textContent = label;
       overlay.classList.add('openKeyNav-label');
+      if (cssClass) {
+        overlay.classList.add(cssClass);
+      }
       overlay.setAttribute('data-openkeynav-label', label);
 
       // Add event listener to open the element in developer tools
@@ -878,6 +894,10 @@ var OpenKeyNav = /*#__PURE__*/function () {
   }, {
     key: "emitNotification",
     value: function emitNotification(message) {
+      var duration = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+      // Use provided duration or fall back to config
+      var notificationDuration = duration !== null ? duration : this.config.notifications.duration;
+
       // Function to create or select the notification container
       var getSetNotificationContainer = function getSetNotificationContainer() {
         // Create or select the notification container
@@ -902,19 +922,32 @@ var OpenKeyNav = /*#__PURE__*/function () {
 
       // Check if notifications are enabled
       if (!this.config.notifications.enabled) {
+        console.log('[emitNotification] Notifications disabled, returning');
         return;
       }
-
+      console.log('[emitNotification] Getting notification container...');
       // Get the notification container
       var notificationContainer = getSetNotificationContainer();
+      console.log('[emitNotification] Got container:', !!notificationContainer, 'id:', notificationContainer === null || notificationContainer === void 0 ? void 0 : notificationContainer.id);
 
-      // Remove any existing notification before creating a new one
-      while (notificationContainer.firstChild) {
-        notificationContainer.firstChild.remove();
+      // Remove any existing NON-PERSISTENT notifications before creating a new one
+      // Preserve persistent notifications (those with close button)
+      console.log('[emitNotification] Removing non-persistent notifications...');
+      try {
+        Array.from(notificationContainer.children).forEach(function (child) {
+          var isPersistent = child.querySelector('button[aria-label="Close notification"]');
+          if (!isPersistent) {
+            child.remove();
+          }
+        });
+        console.log('[emitNotification] Removal complete');
+      } catch (error) {
+        console.error('[emitNotification] Error removing notifications:', error);
       }
-
+      console.log('[emitNotification] Creating notification element...');
       // Create the notification element
       var notification = document.createElement('div');
+      console.log('[emitNotification] Notification element created');
       notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
       notification.style.color = '#fff';
       notification.style.padding = '10px 20px';
@@ -949,10 +982,31 @@ var OpenKeyNav = /*#__PURE__*/function () {
       // Append the notification to the notification container
       notificationContainer.appendChild(notification);
 
-      // Automatically remove the notification after the specified duration
-      setTimeout(function () {
-        notification.remove();
-      }, this.config.notifications.duration);
+      // Add close button for persistent notifications
+      if (notificationDuration === 0) {
+        var closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '×';
+        closeBtn.style.position = 'absolute';
+        closeBtn.style.top = '5px';
+        closeBtn.style.right = '10px';
+        closeBtn.style.background = 'none';
+        closeBtn.style.border = 'none';
+        closeBtn.style.color = '#fff';
+        closeBtn.style.fontSize = '20px';
+        closeBtn.style.cursor = 'pointer';
+        closeBtn.style.padding = '0';
+        closeBtn.style.lineHeight = '1';
+        closeBtn.setAttribute('aria-label', 'Close notification');
+        closeBtn.addEventListener('click', function () {
+          notification.remove();
+        });
+        notification.appendChild(closeBtn);
+      } else {
+        // Automatically remove the notification after the specified duration
+        setTimeout(function () {
+          notification.remove();
+        }, notificationDuration);
+      }
     }
   }, {
     key: "initStatusBar",

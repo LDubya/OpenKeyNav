@@ -57,20 +57,57 @@ export const showClickableOverlays = (openKeyNav) => {
   
     disableScrolling(openKeyNav);
     setTimeout(() => {
-      let clickables = getAllCandidateElements(openKeyNav, document).filter(el => {
-        return isTabbable(el, openKeyNav);
-      });
+      const allCandidates = getAllCandidateElements(openKeyNav, document);
+      
+      // In debug mode, show all elements (audit mode)
+      if (openKeyNav.config.debug.keyboardAccessible) {
+        const accessible = [];
+        const inaccessible = [];
+        
+        allCandidates.forEach(el => {
+          // Call isTabbable to run accessibility checks and flag elements
+          isTabbable(el, openKeyNav);
+          
+          // Check if element was flagged as inaccessible
+          if (el.classList.contains('openKeyNav-inaccessible')) {
+            inaccessible.push(el);
+          } else {
+            accessible.push(el);
+          }
+        });
+        
+        // Update debug inaccessible count
+        openKeyNav.config.debug.inaccessibleCount.value = inaccessible.length;
+        
+        // Log inaccessible elements to console
+        if (inaccessible.length > 0) {
+          console.warn(`OpenKeyNav Debug: Found ${inaccessible.length} keyboard-inaccessible interactive elements:`, inaccessible);
+        }
+        
+        const allElements = [...accessible, ...inaccessible];
+        const labels = generateLabels(openKeyNav, allElements.length);
+        
+        allElements.forEach((element, index) => {
+          element.setAttribute('data-openkeynav-label', labels[index]);
+          const isInaccessible = inaccessible.includes(element);
+          const cssClass = isInaccessible ? 'debug-inaccessible' : null;
+          openKeyNav.createOverlay(element, labels[index], cssClass);
+        });
+      } else {
+        // Production mode: only show accessible elements
+        let clickables = allCandidates.filter(el => {
+          return isTabbable(el, openKeyNav);
+        });
 
-      // console.log(clickables);
+        const labels = generateLabels(openKeyNav, clickables.length);
 
-      const labels = generateLabels(openKeyNav, clickables.length);
-
-      clickables.forEach((element, index) => {
-        element.setAttribute('data-openkeynav-label', labels[index]);
-      });
-      clickables.forEach((element, index) => {
-        openKeyNav.createOverlay(element, labels[index]);
-      });
+        clickables.forEach((element, index) => {
+          element.setAttribute('data-openkeynav-label', labels[index]);
+        });
+        clickables.forEach((element, index) => {
+          openKeyNav.createOverlay(element, labels[index]);
+        });
+      }
     }, 0); // Use timeout to ensure the operation completes
 };
 

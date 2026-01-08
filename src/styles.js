@@ -203,6 +203,12 @@ export const injectStylesheet = (parent, replace) => {
         border-color: #f00;
         border-radius: 3px;
       }
+      .openKeyNav-label.debug-inaccessible{
+        background-color: #ff4444 !important;
+        border-color: #cc0000 !important;
+        color: #ffffff !important;
+        text-shadow: 0 1px 0 rgba(0,0,0,0.5) !important;
+      }
         //   +"span[data-openkeynav-label]{"
         //       +"display: inherit;"
         //   +"}"

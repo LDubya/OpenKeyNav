@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OpenKeyNav E2E Demo</title>
+  <title>OpenKeyNav Production Demo</title>
   <style>
     body {
       font-family: sans-serif;
@@ -42,14 +42,31 @@
     h1, h2, h3 {
       margin: 10px 0;
     }
+    .mode-badge {
+      display: inline-block;
+      background: #28a745;
+      color: white;
+      padding: 5px 15px;
+      border-radius: 4px;
+      font-weight: bold;
+      margin-left: 10px;
+    }
   </style>
 </head>
 <body>
   <div class="openKeyNav-toolBar"></div>
   
-  <h1>OpenKeyNav E2E Test Page</h1>
+  <h1>OpenKeyNav Production Demo <span class="mode-badge">PRODUCTION MODE</span></h1>
   
-  <p>This page demonstrates OpenKeyNav functionality. Press <kbd>Shift+o</kbd> to enable, then <kbd>k</kbd> for click mode or <kbd>m</kbd> for move mode.</p>
+  <p>This page demonstrates OpenKeyNav in <strong>production mode</strong> (debug.keyboardAccessible = false). Press <kbd>Shift+o</kbd> to enable, then <kbd>k</kbd> for click mode or <kbd>m</kbd> for move mode.</p>
+  
+  <p><strong>Production mode differences:</strong></p>
+  <ul>
+    <li>No audit panel on enable</li>
+    <li>No red outlines on inaccessible elements</li>
+    <li>Click mode shows only accessible elements</li>
+    <li>No debug count in toolbar</li>
+  </ul>
 
   <div class="container">
     <div class="column">
@@ -61,12 +78,12 @@
       <a href="#link2">Link Two</a>
       <input type="text" placeholder="Text input" id="input1">
       
-      <!-- Inaccessible elements for debug mode testing -->
-      <a id="bad-link">Link without href (inaccessible)</a>
-      <div id="bad-div" onclick="console.log('clicked')" style="cursor: pointer; padding: 10px; background: #fcc; margin: 10px 0;">
-        Clickable div without role or tabindex
+      <!-- Inaccessible elements - should NOT be flagged in production -->
+      <a id="bad-link" style="background: #eee; padding: 5px; margin: 10px 0;">Link without href (inaccessible - not flagged)</a>
+      <div id="bad-div" onclick="console.log('clicked')" style="cursor: pointer; padding: 10px; background: #eee; margin: 10px 0;">
+        Clickable div without role or tabindex (inaccessible - not flagged)
       </div>
-      <button id="bad-button" tabindex="-1">Button with tabindex -1</button>
+      <button id="bad-button" tabindex="-1">Button with tabindex -1 (inaccessible - not flagged)</button>
     </div>
 
     <div class="column">
@@ -92,8 +109,12 @@
   <script src="../dist/openkeynav.umd.js"></script>
   <script>
     const okn = new OpenKeyNav();
-    okn.init();
-    console.log('OpenKeyNav initialized');
+    okn.init({
+      debug: {
+        keyboardAccessible: false  // PRODUCTION MODE
+      }
+    });
+    console.log('OpenKeyNav initialized in PRODUCTION MODE');
   </script>
 </body>
 </html>

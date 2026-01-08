@@ -63,19 +63,52 @@ var generateLabels = exports.generateLabels = function generateLabels(openKeyNav
 var showClickableOverlays = exports.showClickableOverlays = function showClickableOverlays(openKeyNav) {
   (0, _scrolling.disableScrolling)(openKeyNav);
   setTimeout(function () {
-    var clickables = _getAllCandidateElements(openKeyNav, document).filter(function (el) {
-      return (0, _isTabbable.isTabbable)(el, openKeyNav);
-    });
+    var allCandidates = _getAllCandidateElements(openKeyNav, document);
 
-    // console.log(clickables);
+    // In debug mode, show all elements (audit mode)
+    if (openKeyNav.config.debug.keyboardAccessible) {
+      var accessible = [];
+      var inaccessible = [];
+      allCandidates.forEach(function (el) {
+        // Call isTabbable to run accessibility checks and flag elements
+        (0, _isTabbable.isTabbable)(el, openKeyNav);
 
-    var labels = generateLabels(openKeyNav, clickables.length);
-    clickables.forEach(function (element, index) {
-      element.setAttribute('data-openkeynav-label', labels[index]);
-    });
-    clickables.forEach(function (element, index) {
-      openKeyNav.createOverlay(element, labels[index]);
-    });
+        // Check if element was flagged as inaccessible
+        if (el.classList.contains('openKeyNav-inaccessible')) {
+          inaccessible.push(el);
+        } else {
+          accessible.push(el);
+        }
+      });
+
+      // Update debug inaccessible count
+      openKeyNav.config.debug.inaccessibleCount.value = inaccessible.length;
+
+      // Log inaccessible elements to console
+      if (inaccessible.length > 0) {
+        console.warn("OpenKeyNav Debug: Found ".concat(inaccessible.length, " keyboard-inaccessible interactive elements:"), inaccessible);
+      }
+      var allElements = [].concat(accessible, inaccessible);
+      var labels = generateLabels(openKeyNav, allElements.length);
+      allElements.forEach(function (element, index) {
+        element.setAttribute('data-openkeynav-label', labels[index]);
+        var isInaccessible = inaccessible.includes(element);
+        var cssClass = isInaccessible ? 'debug-inaccessible' : null;
+        openKeyNav.createOverlay(element, labels[index], cssClass);
+      });
+    } else {
+      // Production mode: only show accessible elements
+      var clickables = allCandidates.filter(function (el) {
+        return (0, _isTabbable.isTabbable)(el, openKeyNav);
+      });
+      var _labels = generateLabels(openKeyNav, clickables.length);
+      clickables.forEach(function (element, index) {
+        element.setAttribute('data-openkeynav-label', _labels[index]);
+      });
+      clickables.forEach(function (element, index) {
+        openKeyNav.createOverlay(element, _labels[index]);
+      });
+    }
   }, 0); // Use timeout to ensure the operation completes
 };
 var showMoveableFromOverlays = exports.showMoveableFromOverlays = function showMoveableFromOverlays(openKeyNav) {

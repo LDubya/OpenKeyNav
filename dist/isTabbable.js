@@ -54,6 +54,20 @@ var isTabbable = exports.isTabbable = function isTabbable(el, openKeyNav) {
     return false;
   }
 
+  // Check for inert attribute (on element or ancestors)
+  if (el.inert) {
+    return false;
+  }
+
+  // Check if any ancestor has inert attribute
+  var parent = el.parentElement;
+  while (parent) {
+    if (parent.inert) {
+      return false;
+    }
+    parent = parent.parentElement;
+  }
+
   // Skip if the element is set to not display (not the same as having zero size)
   var style = getComputedStyle(el);
   if (style.display === 'none') {
@@ -140,7 +154,6 @@ var isTabbable = exports.isTabbable = function isTabbable(el, openKeyNav) {
   var role = el.getAttribute('role');
   switch (el.tagName.toLowerCase()) {
     case 'a':
-      // console.log(el); //debug
       if (!el.hasAttribute('href') || el.getAttribute('href') === '') {
         if (!interactiveRoles.includes(role)) {
           // if (openKeyNav.config.modes.clicking.value) {
@@ -169,6 +182,11 @@ var isTabbable = exports.isTabbable = function isTabbable(el, openKeyNav) {
         }
         // return false;
         // }
+      }
+
+      // Also check for onclick attribute (inline event handler)
+      if (!role && el.hasAttribute('onclick')) {
+        openKeyNav.flagAsInaccessible(el, "\n            <h2>Possibly Inaccessible Clickable Element</h2>\n            <h3>Problem: </h3>\n            <p>This element has an onclick attribute but is not keyboard-focusable.</p>\n            <p>As a result, only mouse users can click on it.</p>\n            <p>This usability disparity can create an accessibility barrier.</p>\n            <h3>Solution Options: </h3>\n            <ol>\n              <li>\n                <p>If clicking this element takes the user to a different location, convert this element to an anchor link (&lt;a&gt;) with a non-empty <em>href</em> attribute.</p>\n              </li>\n              <li>\n                <p>Otherwise if clicking this element triggers an action on the page, convert this element to a &lt;button&gt; without a <em>disabled</em> attribute.</p>\n                <p>Alternatively, add an ARIA <em>role</em> attribute set to 'button' or 'link' AND a tabindex attribute set to a value &gt; -1, ideally 0.</p>\n              </li>\n              <li>\n                <p>Otherwise, if clicking this element does not do anything, then consider removing the onclick attribute.</p>\n              </li>\n            </ol>\n            ", "keyboard");
       }
       break;
   }
