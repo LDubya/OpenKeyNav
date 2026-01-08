@@ -16,7 +16,7 @@
 	  value: true
 	});
 	version.version = void 0;
-	version.version = "0.1.232";
+	version.version = "0.1.233";
 
 	var signals = {};
 
@@ -69,7 +69,7 @@
 	  // let styledKeyCode = `<span class="keyButton">${keyCode}</span>`;
 	  var styledKeyCodes = keyCodes.map(function (keyCode) {
 	    return "<span class=\"keyButton\">".concat(keyCode, "</span>");
-	  }).join("");
+	  }).join(" ");
 	  if (!text) {
 	    return "".concat(styledKeyCodes);
 	  }

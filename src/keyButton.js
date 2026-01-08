@@ -2,7 +2,7 @@ export const keyButton = (keyCodes, text, reverseOrder) => {
     // let styledKeyCode = `<span class="keyButton">${keyCode}</span>`;
     let styledKeyCodes = keyCodes.map((keyCode)=>{
             return `<span class="keyButton">${keyCode}</span>`
-        }).join("")
+        }).join(" ")
     if(!text){
         return `${styledKeyCodes}`;
     }

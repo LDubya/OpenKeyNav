@@ -8,7 +8,7 @@ var keyButton = exports.keyButton = function keyButton(keyCodes, text, reverseOr
   // let styledKeyCode = `<span class="keyButton">${keyCode}</span>`;
   var styledKeyCodes = keyCodes.map(function (keyCode) {
     return "<span class=\"keyButton\">".concat(keyCode, "</span>");
-  }).join("");
+  }).join(" ");
   if (!text) {
     return "".concat(styledKeyCodes);
   }
