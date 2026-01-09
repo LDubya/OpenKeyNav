@@ -208,9 +208,29 @@ export function showAuditPanel(inaccessibleElements) {
     description.style.color = '#6b7280';
     description.style.marginLeft = '28px';
     description.textContent = 'Not keyboard accessible';
-    
+
+    // Details panel (hidden by default) to show why it matters and how to fix
+    const details = document.createElement('div');
+    details.className = 'okn-issue-details';
+    details.style.display = 'none';
+    details.style.marginTop = '8px';
+    details.style.padding = '10px';
+    details.style.background = '#f9fafb';
+    details.style.borderRadius = '4px';
+    details.style.fontSize = '12px';
+    details.style.color = '#374151';
+
+    const reason = el.getAttribute('data-openkeynav-inaccessible-reason') || 'No details available.';
+    details.innerHTML = `
+      <div style="font-weight:600; color:#ef4444; margin-bottom:6px;">Why it matters</div>
+      <div style="margin-bottom:10px;">${reason}</div>
+      <div style="font-weight:600; color:#3b82f6; margin-bottom:6px;">How to fix</div>
+      <div>${getFixSuggestion(el)}</div>
+    `;
+
     item.appendChild(header);
     item.appendChild(description);
+    item.appendChild(details);
     
     // Hover effect
     item.onmouseenter = () => {
@@ -226,33 +246,80 @@ export function showAuditPanel(inaccessibleElements) {
       }
     };
     
-    // Click to highlight element
+    // Click to highlight element and toggle details
     item.addEventListener('click', () => {
-      // Update selection state
-      if (selectedItem) {
+      // Toggle details visibility
+      const wasOpen = details.style.display === 'block';
+
+      // Close previously selected item
+      if (selectedItem && selectedItem !== item) {
+        const prevDetails = selectedItem.querySelector('.okn-issue-details');
+        if (prevDetails) prevDetails.style.display = 'none';
         selectedItem.style.backgroundColor = '#ffffff';
         selectedItem.style.borderColor = 'transparent';
       }
-      selectedItem = item;
-      item.style.backgroundColor = '#eff6ff';
-      item.style.borderColor = '#3b82f6';
-      
-      // Scroll to element
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      
-      // Highlight element
-      const originalOutline = el.style.outline;
-      const originalOutlineOffset = el.style.outlineOffset;
-      el.style.outline = '3px solid #3b82f6';
-      el.style.outlineOffset = '4px';
-      setTimeout(() => {
-        el.style.outline = originalOutline;
-        el.style.outlineOffset = originalOutlineOffset;
-      }, 2500);
+
+      if (wasOpen) {
+        details.style.display = 'none';
+        item.style.backgroundColor = '#ffffff';
+        item.style.borderColor = 'transparent';
+        selectedItem = null;
+      } else {
+        details.style.display = 'block';
+        selectedItem = item;
+        item.style.backgroundColor = '#eff6ff';
+        item.style.borderColor = '#3b82f6';
+
+        // Scroll to element
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Highlight element
+        const originalOutline = el.style.outline;
+        const originalOutlineOffset = el.style.outlineOffset;
+        el.style.outline = '3px solid #3b82f6';
+        el.style.outlineOffset = '4px';
+        setTimeout(() => {
+          el.style.outline = originalOutline;
+          el.style.outlineOffset = originalOutlineOffset;
+        }, 2500);
+      }
+    });
+
+    // Keyboard accessibility: toggle with Enter or Space
+    item.tabIndex = 0;
+    item.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        item.click();
+      }
     });
     
     sidebarContent.appendChild(item);
   });
+
+// Helper to suggest fixes based on element properties
+function getFixSuggestion(el) {
+  const tag = el.tagName.toLowerCase();
+  const role = el.getAttribute('role') || '';
+  const reason = (el.getAttribute('data-openkeynav-inaccessible-reason') || '').toLowerCase();
+
+  if (tag === 'a' && (!el.hasAttribute('href') || el.getAttribute('href') === '')) {
+    return 'Add a valid href attribute to the <a> element, or give it an ARIA role and tabindex="0" if it is an interactive control.';
+  }
+  if (tag === 'button' && el.getAttribute('tabindex') === '-1') {
+    return 'Remove tabindex="-1" so the button is focusable, or set tabindex="0" if needed.';
+  }
+  if (tag === 'div' && role === 'button' && !el.hasAttribute('tabindex')) {
+    return 'Add tabindex="0" so the element can be focused by keyboard, and ensure ARIA role is appropriate.';
+  }
+  if (el.hasAttribute('onclick') && !el.hasAttribute('tabindex')) {
+    return 'Add tabindex="0" and role="button" (or convert to a &lt;button&gt;) so keyboard users can activate this control.';
+  }
+  if (reason.includes('hidden') || reason.includes('visibility') ) {
+    return 'Make the element visible or remove CSS that hides it; keyboard controls must be visible to be usable.';
+  }
+  return 'Review ARIA roles, tabindex, and event handlers; convert non-semantic interactive elements to &lt;button&gt; or &lt;a&gt; where appropriate.';
+}
 
   // Assemble the UI
   leftSidebar.appendChild(sidebarHeader);
