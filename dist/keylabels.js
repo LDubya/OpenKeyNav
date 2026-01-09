@@ -89,6 +89,23 @@ var showClickableOverlays = exports.showClickableOverlays = function showClickab
         console.warn("OpenKeyNav Debug: Found ".concat(inaccessible.length, " keyboard-inaccessible interactive elements:"), inaccessible);
       }
       var allElements = [].concat(accessible, inaccessible);
+
+      // Filter out parent elements when child interactive elements exist
+      // Only filter if parent and child occupy the same space (same bounding rect)
+      allElements = allElements.filter(function (element) {
+        var hasDescendant = allElements.some(function (other) {
+          if (other === element || !element.contains(other)) return false;
+
+          // Check if they occupy the same physical space
+          var parentRect = element.getBoundingClientRect();
+          var childRect = other.getBoundingClientRect();
+
+          // Only filter out parent if child completely fills it
+          var sameDimensions = Math.abs(parentRect.top - childRect.top) < 2 && Math.abs(parentRect.left - childRect.left) < 2 && Math.abs(parentRect.right - childRect.right) < 2 && Math.abs(parentRect.bottom - childRect.bottom) < 2;
+          return sameDimensions;
+        });
+        return !hasDescendant;
+      });
       var labels = generateLabels(openKeyNav, allElements.length);
       allElements.forEach(function (element, index) {
         element.setAttribute('data-openkeynav-label', labels[index]);
@@ -100,6 +117,26 @@ var showClickableOverlays = exports.showClickableOverlays = function showClickab
       // Production mode: only show accessible elements
       var clickables = allCandidates.filter(function (el) {
         return (0, _isTabbable.isTabbable)(el, openKeyNav);
+      });
+
+      // Filter out parent elements when child interactive elements exist
+      // This ensures only the innermost interactive element gets a label
+      // Only filter if parent and child occupy the same space (same bounding rect)
+      clickables = clickables.filter(function (element) {
+        // Check if any other clickable is a descendant of this element
+        var hasClickableDescendant = clickables.some(function (other) {
+          if (other === element || !element.contains(other)) return false;
+
+          // Check if they occupy the same physical space
+          var parentRect = element.getBoundingClientRect();
+          var childRect = other.getBoundingClientRect();
+
+          // Only filter out parent if child completely fills it
+          var sameDimensions = Math.abs(parentRect.top - childRect.top) < 2 && Math.abs(parentRect.left - childRect.left) < 2 && Math.abs(parentRect.right - childRect.right) < 2 && Math.abs(parentRect.bottom - childRect.bottom) < 2;
+          return sameDimensions;
+        });
+        // Only keep this element if it has no clickable descendants in same space
+        return !hasClickableDescendant;
       });
       var _labels = generateLabels(openKeyNav, clickables.length);
       clickables.forEach(function (element, index) {

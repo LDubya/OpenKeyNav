@@ -4,6 +4,8 @@ OpenKeyNav is an open-source JavaScript library designed to enhance keyboard acc
 
 OpenKeyNav helps you enhance the accessibility of your website or web app by allowing users to interact with website elements using the keyboard. It features various modes, including click mode to simulate mouse clicks on clickable elements and move mode for keyboard-based drag and drop. OpenKeyNav creates visual labels for elements that can be interacted with using keyboard shortcuts. The library also includes features to focus on headings, scrollable regions, and form fields, ensuring users have a consistent and intuitive keyboard navigation experience.
 
+**AI Engine Optimization (AEO)**: Beyond human accessibility, OpenKeyNav enables **AI-powered chatbots and autonomous agents** to discover and navigate your website. As users increasingly rely on AI assistants (ChatGPT, Claude, Perplexity) to browse the web, OpenKeyNav ensures your site is AI-navigable—increasing visibility in AI-generated results and enabling seamless AI-mediated interactions.
+
 OpenKeyNav is available for developers to fork, modify, and use via its [GitHub repository](https://github.com/LDubya/OpenKeyNav) and [NPM](https://www.npmjs.com/package/openkeynav).
 
 Featured by [Harvard Innovation Labs](https://www.youtube.com/watch?v=xIShByl7baE) and [Harvard Medical School](https://www.instagram.com/p/C_1Fl9GJSUq/). *[Watch the Harvard Innovation Labs video](https://img.youtube.com/vi/xIShByl7baE/0.jpg)*
@@ -15,6 +17,7 @@ Featured by [Harvard Innovation Labs](https://www.youtube.com/watch?v=xIShByl7ba
 - **Customizable Activation Keys**: Configure different keys to trigger various behaviors.
 - **Accessibility Compliance**: Identify and highlight elements that are not keyboard accessible, helping you fix the elements that are not keyboard accessible.
 - **Empowerment**: Enable users to navigate and interact with web content using their keyboards.
+- **AI Engine Optimization (AEO)**: Make your website discoverable and operable by AI agents through structured data and programmatic APIs. [Learn more →](./AI_AGENT_USAGE.md)
 
 ## Read the preprint
 

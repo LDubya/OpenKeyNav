@@ -325,8 +325,6 @@ export const injectStylesheet = (parent, replace) => {
       `;
 
       style.textContent+= keyButtonStyles;
-
-      // style.textContent+=`
       // *:focus { // could be problematic to edit focus states throughout a website
       //   outline: 2px ${openKeyNav.config.focus.outlineStyle} ${openKeyNav.config.focus.outlineColor} !important; 
       //   outline-offset: -2px !important;

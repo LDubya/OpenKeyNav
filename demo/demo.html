@@ -4,6 +4,35 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OpenKeyNav E2E Demo</title>
+  
+  <!-- AI Engine Optimization: Declare OpenKeyNav availability for AI agents -->
+  <meta name="ai-navigation" content="openkeynav">
+  <meta name="openkeynav-version" content="0.1.232">
+  <meta name="openkeynav-mode" content="debug">
+  
+  <!-- Structured data for AI agent discovery -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "OpenKeyNav Demo",
+    "description": "Demonstration of OpenKeyNav keyboard navigation and AI agent interface",
+    "potentialAction": {
+      "@type": "ControlAction",
+      "name": "AI Navigation Interface",
+      "target": {
+        "@type": "EntryPoint",
+        "actionPlatform": "http://openkeynav.github.io"
+      },
+      "instrument": {
+        "@type": "SoftwareApplication",
+        "name": "OpenKeyNav",
+        "version": "0.1.232",
+        "applicationCategory": "Accessibility"
+      }
+    }
+  }
+  </script>
   <style>
     body {
       font-family: sans-serif;
@@ -62,11 +91,94 @@
       <input type="text" placeholder="Text input" id="input1">
       
       <!-- Inaccessible elements for debug mode testing -->
+      <h3>Keyboard Accessibility Errors</h3>
+      
+      <!-- Missing href -->
       <a id="bad-link">Link without href (inaccessible)</a>
+      
+      <!-- Clickable div without proper ARIA -->
       <div id="bad-div" onclick="console.log('clicked')" style="cursor: pointer; padding: 10px; background: #fcc; margin: 10px 0;">
         Clickable div without role or tabindex
       </div>
+      
+      <!-- Negative tabindex on button -->
       <button id="bad-button" tabindex="-1">Button with tabindex -1</button>
+      
+      <!-- Span with onclick but no keyboard handler -->
+      <span id="bad-span" onclick="console.log('span clicked')" style="cursor: pointer; color: blue; text-decoration: underline;">
+        Clickable span (no role/tabindex)
+      </span>
+      
+      <!-- Image with onclick but missing alt and keyboard support -->
+      <img id="bad-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50'%3E%3Crect fill='%23f99' width='50' height='50'/%3E%3C/svg%3E" 
+           onclick="console.log('img clicked')" style="cursor: pointer; display: block; margin: 10px 0;">
+      
+      <!-- Div with role=button but no tabindex -->
+      <div id="bad-role-button" role="button" onclick="console.log('role button')" style="padding: 8px; background: #fcc; margin: 10px 0;">
+        Role=button without tabindex
+      </div>
+      
+      <!-- Hidden interactive element -->
+      <button id="hidden-button" style="display: none;">Hidden Button</button>
+      
+      <!-- Disabled button (should be accessible but not interactive) -->
+      <button id="disabled-button" disabled>Disabled Button</button>
+      
+      <!-- Link with href="#" only -->
+      <a id="hash-link" href="#">Link with only hash href</a>
+      
+      <!-- Custom element with onclick -->
+      <custom-element id="bad-custom" onclick="console.log('custom')" style="display: block; padding: 10px; background: #fcc; margin: 10px 0; cursor: pointer;">
+        Custom element with onclick
+      </custom-element>
+      
+      <!-- Area element without proper attributes -->
+      <map name="bad-map">
+        <area id="bad-area" onclick="console.log('area')" coords="0,0,50,50">
+      </map>
+      
+      <!-- Input with tabindex -1 -->
+      <input id="bad-input" type="text" tabindex="-1" placeholder="Input with tabindex -1">
+      
+      <!-- Select with tabindex -1 -->
+      <select id="bad-select" tabindex="-1">
+        <option>Option 1</option>
+      </select>
+      
+      <h3>Nested Interactive Elements</h3>
+      
+      <!-- Same-dimension nesting - div with role=button wrapping real button -->
+      <div id="nested-button-outer" role="button" tabindex="0" style="padding: 0; outline: 2px solid #999; margin: 10px 0; display: inline-block;">
+        <button id="nested-button-inner" style="margin: 0;">Nested Button (same size)</button>
+      </div>
+      
+      <!-- Div wrapping button (same dimensions) -->
+      <div id="nested-div-same" onclick="console.log('div clicked')" 
+           style="display: inline-block; padding: 0; cursor: pointer; outline: 2px solid #999; margin: 10px 0;">
+        <button id="nested-div-button-same" style="margin: 0;">Button in Div (same size)</button>
+      </div>
+      
+      <!-- Anchor wrapping button (same dimensions) -->
+      <a id="nested-anchor-same" href="#" 
+         style="display: inline-block; text-decoration: none; padding: 0; outline: 2px solid #999; margin: 10px 0;">
+        <button id="nested-anchor-button-same" style="margin: 0;">Button in Link (same size)</button>
+      </a>
+      
+      <!-- Large clickable div with small button - both should get labels -->
+      <div id="nested-div-large" onclick="console.log('large div clicked')" 
+           style="display: inline-block; padding: 30px; cursor: pointer; background: #e0f0ff; border: 2px solid #0066cc; margin: 10px 0;">
+        Large Clickable Area
+        <button id="nested-button-small" style="display: block; margin: 10px auto;">Small Button</button>
+        Click anywhere in blue area
+      </div>
+      
+      <!-- Large anchor with small button - both should get labels -->
+      <a id="nested-anchor-large" href="#large" 
+         style="display: inline-block; padding: 30px; background: #f0e0ff; border: 2px solid #9933cc; text-decoration: none; color: inherit; margin: 10px 0;">
+        Large Clickable Link
+        <button id="nested-anchor-button-small" style="display: block; margin: 10px auto;">Small Button</button>
+        Click anywhere in purple area
+      </a>
     </div>
 
     <div class="column">

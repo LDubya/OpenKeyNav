@@ -114,7 +114,9 @@ var isTabbable = exports.isTabbable = function isTabbable(el, openKeyNav) {
   }
 
   // Skip if the element's top left corner is not within the window's viewport
-  if (!inViewport(el)) {
+  // During a full-page audit we may want to include offscreen elements. The audit
+  // runner can set `openKeyNav._auditIncludeOffscreen = true` to bypass this check.
+  if (!openKeyNav._auditIncludeOffscreen && !inViewport(el)) {
     // console.log(`!inViewport(el)`, el); //debug
     return false;
   }

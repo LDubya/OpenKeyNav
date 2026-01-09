@@ -12,6 +12,7 @@ var _styles = require("./styles.js");
 var _keypress = require("./keypress.js");
 var _escape = require("./escape");
 var _audit = require("./audit.js");
+var _auditPanel = require("./auditPanel.js");
 function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
 function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
 function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
@@ -243,6 +244,19 @@ var OpenKeyNav = /*#__PURE__*/function () {
     this.disable = function () {
       _this.meta.enabled.value = false;
       _this.getSetCookie(_this.config.enabledCookie, false);
+      // Remove audit panel if present when disabling
+      try {
+        (0, _auditPanel.hideAuditPanel)();
+      } catch (e) {
+        // ignore
+      }
+
+      // Clear any audit flags, tooltips, and listeners applied during audit
+      try {
+        _this.clearAuditFlags();
+      } catch (e) {
+        // ignore
+      }
       _this.removeStyles(); // maybe this should go in the destroy();, main concern is the toolbar.
       return _this;
     };
@@ -851,6 +865,43 @@ var OpenKeyNav = /*#__PURE__*/function () {
       el.classList.add('openKeyNav-inaccessible');
       el.setAttribute('data-openkeynav-inaccessible-reason', reason);
       return true;
+    }
+
+    // Remove audit flags, tooltips, and event listeners added during audit
+  }, {
+    key: "clearAuditFlags",
+    value: function clearAuditFlags() {
+      try {
+        // Remove classes and attributes
+        document.querySelectorAll('.openKeyNav-inaccessible').forEach(function (el) {
+          el.classList.remove('openKeyNav-inaccessible');
+          el.removeAttribute('data-openkeynav-inaccessible-reason');
+        });
+
+        // Remove tooltip elements
+        document.querySelectorAll('.openKeyNav-mouseover-tooltip').forEach(function (t) {
+          t.remove();
+        });
+
+        // Remove event listeners stored in the map
+        try {
+          if (this.config && this.config.modesConfig && this.config.modesConfig.click && this.config.modesConfig.click.eventListenersMap) {
+            this.config.modesConfig.click.eventListenersMap.forEach(function (listeners, el) {
+              try {
+                if (listeners && listeners.showTooltip) el.removeEventListener('mouseover', listeners.showTooltip);
+                if (listeners && listeners.hideTooltip) el.removeEventListener('mouseleave', listeners.hideTooltip);
+              } catch (e) {
+                // ignore
+              }
+            });
+            this.config.modesConfig.click.eventListenersMap.clear();
+          }
+        } catch (e) {
+          // ignore
+        }
+      } catch (e) {
+        // ignore
+      }
     }
   }, {
     key: "addKeydownEventListener",

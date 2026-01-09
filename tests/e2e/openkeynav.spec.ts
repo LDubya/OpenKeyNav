@@ -138,11 +138,11 @@ test.describe('OpenKeyNav E2E', () => {
     await expect(panel).toBeVisible();
     
     const headerText = await panel.locator('div').first().textContent();
-    expect(headerText).toContain('Accessibility Issues');
-    expect(headerText).toMatch(/\(\d+\)/); // Should show count in parentheses
+    expect(headerText).toContain('Accessibility Audit');
+    expect(headerText).toMatch(/\d+\s+(Issue|Issues)/); // Should show count like "5 Issues Found"
     
-    // Check for close button in panel
-    const closeButton = await panel.locator('button[aria-label="Close audit panel"]');
+    // Check for close button (now in separate toolbar)
+    const closeButton = await page.locator('button[aria-label="Close audit panel"]');
     await expect(closeButton).toBeVisible();
     
     await page.screenshot({ path: path.join(artifactsDir, '10-audit-panel.png'), fullPage: true });
@@ -217,6 +217,101 @@ test.describe('OpenKeyNav E2E', () => {
     await page.screenshot({ path: path.join(artifactsDir, '14-production-click-mode.png'), fullPage: true });
     
     await page.keyboard.press('Escape');
+  });
+
+  test('nested interactive elements - same dimensions show only innermost', async ({ page }) => {
+    await page.goto(`file://${path.join(__dirname, '../../demo/demo.html')}`);
+    await page.waitForFunction(() => window.OpenKeyNav !== undefined);
+    
+    // Enable OpenKeyNav
+    await page.keyboard.press('Shift+KeyO');
+    await page.waitForTimeout(300);
+    
+    // Enter click mode
+    await page.keyboard.press('KeyK');
+    await page.waitForTimeout(1000);
+    
+    // Check same-dimension nested button - only inner should have label
+    const outerButton = page.locator('#nested-button-outer');
+    const innerButton = page.locator('#nested-button-inner');
+    
+    // Log bounding rects for debugging
+    const outerRect = await outerButton.evaluate(el => {
+      const rect = el.getBoundingClientRect();
+      return { top: rect.top, left: rect.left, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height };
+    });
+    const innerRect = await innerButton.evaluate(el => {
+      const rect = el.getBoundingClientRect();
+      return { top: rect.top, left: rect.left, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height };
+    });
+    console.log('Outer rect:', outerRect);
+    console.log('Inner rect:', innerRect);
+    
+    const outerHasLabel = await outerButton.evaluate(el => el.hasAttribute('data-openkeynav-label'));
+    const innerHasLabel = await innerButton.evaluate(el => el.hasAttribute('data-openkeynav-label'));
+    
+    console.log('Outer has label:', outerHasLabel);
+    console.log('Inner has label:', innerHasLabel);
+    
+    expect(outerHasLabel).toBe(false); // Parent filtered out
+    expect(innerHasLabel).toBe(true); // Child has label
+    
+    // Check div wrapping button (same size) - only button should have label
+    const div = page.locator('#nested-div-same');
+    const divButton = page.locator('#nested-div-button-same');
+    
+    const divHasLabel = await div.evaluate(el => el.hasAttribute('data-openkeynav-label'));
+    const divButtonHasLabel = await divButton.evaluate(el => el.hasAttribute('data-openkeynav-label'));
+    
+    expect(divHasLabel).toBe(false); // Parent filtered out
+    expect(divButtonHasLabel).toBe(true); // Child has label
+    
+    // Check anchor wrapping button (same size) - only button should have label
+    const anchor = page.locator('#nested-anchor-same');
+    const anchorButton = page.locator('#nested-anchor-button-same');
+    
+    const anchorHasLabel = await anchor.evaluate(el => el.hasAttribute('data-openkeynav-label'));
+    const anchorButtonHasLabel = await anchorButton.evaluate(el => el.hasAttribute('data-openkeynav-label'));
+    
+    expect(anchorHasLabel).toBe(false); // Parent filtered out
+    expect(anchorButtonHasLabel).toBe(true); // Child has label
+    
+    await page.screenshot({ path: path.join(artifactsDir, '16-nested-same-size.png'), fullPage: true });
+  });
+
+  test('nested interactive elements - different dimensions show both', async ({ page }) => {
+    await page.goto(`file://${path.join(__dirname, '../../demo/demo.html')}`);
+    await page.waitForFunction(() => window.OpenKeyNav !== undefined);
+    
+    // Enable OpenKeyNav
+    await page.keyboard.press('Shift+KeyO');
+    await page.waitForTimeout(300);
+    
+    // Enter click mode
+    await page.keyboard.press('KeyK');
+    await page.waitForTimeout(1000);
+    
+    // Check large div with small button - both should have labels
+    const largeDiv = page.locator('#nested-div-large');
+    const smallButton = page.locator('#nested-button-small');
+    
+    const largeDivHasLabel = await largeDiv.evaluate(el => el.hasAttribute('data-openkeynav-label'));
+    const smallButtonHasLabel = await smallButton.evaluate(el => el.hasAttribute('data-openkeynav-label'));
+    
+    expect(largeDivHasLabel).toBe(true); // Parent has label
+    expect(smallButtonHasLabel).toBe(true); // Child has label
+    
+    // Check large anchor with small button - both should have labels
+    const largeAnchor = page.locator('#nested-anchor-large');
+    const smallAnchorButton = page.locator('#nested-anchor-button-small');
+    
+    const largeAnchorHasLabel = await largeAnchor.evaluate(el => el.hasAttribute('data-openkeynav-label'));
+    const smallAnchorButtonHasLabel = await smallAnchorButton.evaluate(el => el.hasAttribute('data-openkeynav-label'));
+    
+    expect(largeAnchorHasLabel).toBe(true); // Parent has label
+    expect(smallAnchorButtonHasLabel).toBe(true); // Child has label
+    
+    await page.screenshot({ path: path.join(artifactsDir, '17-nested-different-size.png'), fullPage: true });
   });
 
   test('production mode - inaccessible elements are not flagged', async ({ page }) => {

@@ -7,6 +7,7 @@ import { injectStylesheet, deleteStylesheets } from './styles.js';
 import { handleKeyPress } from "./keypress.js";
 import { handleEscape } from "./escape";
 import { runAccessibilityAudit } from './audit.js';
+import { hideAuditPanel } from './auditPanel.js';
 
 /*
 OpenKeyNav.js
@@ -202,6 +203,20 @@ class OpenKeyNav {
       this.disable = () => {
         this.meta.enabled.value = false;
         this.getSetCookie(this.config.enabledCookie, false)
+        // Remove audit panel if present when disabling
+        try {
+          hideAuditPanel();
+        } catch (e) {
+          // ignore
+        }
+
+        // Clear any audit flags, tooltips, and listeners applied during audit
+        try {
+          this.clearAuditFlags();
+        } catch (e) {
+          // ignore
+        }
+
         this.removeStyles(); // maybe this should go in the destroy();, main concern is the toolbar.
         return this;
       }
@@ -808,6 +823,41 @@ class OpenKeyNav {
       el.setAttribute('data-openkeynav-inaccessible-reason', reason);
   
       return true;
+    }
+
+    // Remove audit flags, tooltips, and event listeners added during audit
+    clearAuditFlags() {
+      try {
+        // Remove classes and attributes
+        document.querySelectorAll('.openKeyNav-inaccessible').forEach(el => {
+          el.classList.remove('openKeyNav-inaccessible');
+          el.removeAttribute('data-openkeynav-inaccessible-reason');
+        });
+
+        // Remove tooltip elements
+        document.querySelectorAll('.openKeyNav-mouseover-tooltip').forEach(t => {
+          t.remove();
+        });
+
+        // Remove event listeners stored in the map
+        try {
+          if (this.config && this.config.modesConfig && this.config.modesConfig.click && this.config.modesConfig.click.eventListenersMap) {
+            this.config.modesConfig.click.eventListenersMap.forEach((listeners, el) => {
+              try {
+                if (listeners && listeners.showTooltip) el.removeEventListener('mouseover', listeners.showTooltip);
+                if (listeners && listeners.hideTooltip) el.removeEventListener('mouseleave', listeners.hideTooltip);
+              } catch (e) {
+                // ignore
+              }
+            });
+            this.config.modesConfig.click.eventListenersMap.clear();
+          }
+        } catch (e) {
+          // ignore
+        }
+      } catch (e) {
+        // ignore
+      }
     }
 
 
