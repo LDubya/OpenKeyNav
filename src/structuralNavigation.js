@@ -1,9 +1,22 @@
 import { buildStructuralModel } from './structuralModel.js';
+import { getExplicitAccessibleName, normalizeText } from './accessibilityName.js';
 import {
-  discoverTabbableTargets,
+  getComposedParent,
   getDeepActiveElement,
+  hasAriaHiddenAncestor,
+  isComposedWithin,
+  isDocument,
+  isElement,
   isOpenKeyNavGeneratedUI,
-} from './tabbableTargets.js';
+  isShadowRoot,
+} from './domUtilities.js';
+import {
+  matchesShortcut,
+  MODIFIER_KEYS,
+  normalizeShortcut,
+  preventAcceptedCommand,
+} from './keyboardEvents.js';
+import { discoverTabbableTargets } from './tabbableTargets.js';
 
 export const STRUCTURAL_NAVIGATION_COMMANDS = Object.freeze({
   previousTarget: 'previousTarget',
@@ -16,7 +29,8 @@ export const STRUCTURAL_NAVIGATION_COMMANDS = Object.freeze({
   nextPeerContext: 'nextPeerContext',
 });
 
-const MODIFIER_KEYS = ['altKey', 'ctrlKey', 'metaKey', 'shiftKey'];
+const STRUCTURAL_STATUS_CHANNEL = 'structural-navigation';
+const STRUCTURAL_EXIT_STATUS_CHANNEL = 'structural-navigation-exit';
 const ARROW_OWNING_ROLES = new Set([
   'combobox',
   'grid',
@@ -52,61 +66,31 @@ const TEXT_INPUT_TYPES = new Set([
   'week',
 ]);
 
-const isElement = node => Boolean(node && node.nodeType === 1);
-const isDocument = node => Boolean(node && node.nodeType === 9);
-const isShadowRoot = node => Boolean(
-  node && node.nodeType === 11 && node.host && isElement(node.host)
-);
+const SHORTCUT_MODIFIER_LABELS = Object.freeze({
+  ctrlKey: 'Ctrl',
+  altKey: 'Alt',
+  shiftKey: 'Shift',
+  metaKey: 'Meta',
+});
 
-const composedParent = node => {
-  if (!node) return null;
-  if (node.assignedSlot) return node.assignedSlot;
-  if (isShadowRoot(node)) return node.host;
-  return node.parentNode || null;
-};
+const shortcutLabel = shortcut => {
+  const normalized = normalizeShortcut(shortcut);
+  if (!normalized) return '';
 
-const isWithinRoot = (root, node) => {
-  let current = node;
-  while (current) {
-    if (current === root) return true;
-    current = composedParent(current);
-  }
-  return false;
-};
-
-const normalizeShortcut = shortcut => {
-  if (!shortcut) return null;
-  if (typeof shortcut === 'string') return { key: shortcut };
-  if (typeof shortcut === 'object' && typeof shortcut.key === 'string') {
-    return shortcut;
-  }
-  return null;
-};
-
-const keysEqual = (left, right) => {
-  if (left.length === 1 && right.length === 1) {
-    return left.toLowerCase() === right.toLowerCase();
-  }
-  return left === right;
+  const modifiers = MODIFIER_KEYS
+    .filter(modifier => normalized[modifier])
+    .map(modifier => SHORTCUT_MODIFIER_LABELS[modifier]);
+  const key = normalized.key === 'Escape'
+    ? 'Esc'
+    : (normalized.key === ' ' ? 'Space' : normalized.key);
+  return [...modifiers, key].join('+');
 };
 
 /**
  * Matches one exact configured shortcut. Unspecified modifiers are false.
- * `ignoredModifier` is used only for the deliberate widget override modifier.
+ * Callers may explicitly permit an extra ownership-override modifier.
  */
-export const matchesStructuralShortcut = (
-  event,
-  shortcut,
-  ignoredModifier = null
-) => {
-  const normalized = normalizeShortcut(shortcut);
-  if (!normalized || !keysEqual(event.key, normalized.key)) return false;
-
-  return MODIFIER_KEYS.every(modifier => {
-    if (modifier === ignoredModifier) return true;
-    return Boolean(event[modifier]) === Boolean(normalized[modifier]);
-  });
-};
+export const matchesStructuralShortcut = matchesShortcut;
 
 const getEventPath = event => {
   if (typeof event.composedPath === 'function') {
@@ -118,7 +102,7 @@ const getEventPath = event => {
   let current = event.target;
   while (current) {
     path.push(current);
-    current = composedParent(current);
+    current = getComposedParent(current);
   }
   return path;
 };
@@ -301,6 +285,20 @@ const parentContext = (model, context) => {
     : modelContextById(model, context.parent);
 };
 
+const contextHierarchyLevel = (model, context) => {
+  let level = 0;
+  let current = context;
+  const seen = new Set();
+
+  while (current && !seen.has(current)) {
+    seen.add(current);
+    level += 1;
+    current = parentContext(model, current);
+  }
+
+  return Math.max(1, level);
+};
+
 const normalizeContextChildren = (model, context) => (
   contextChildren(context)
     .map(child => typeof child === 'object' ? child : modelContextById(model, child))
@@ -325,20 +323,28 @@ const contextOrder = context => {
 };
 
 /**
- * Heading-backed contexts move horizontally by authored heading rank, even
- * when those contexts have different structural parents. Contexts without a
- * heading rank retain ordinary same-parent sibling behavior.
+ * True structural siblings are always horizontal peers. A heading-backed
+ * context may also bridge to any other heading-backed context at the same
+ * canonical hierarchy depth, regardless of authored H1-H6 rank. Authored rank
+ * must not split one structural level into separate horizontal lanes.
  */
 const horizontalContextPeers = (model, context) => {
   const headingLevel = contextHeadingLevel(context);
+  const hierarchyLevel = contextHierarchyLevel(model, context);
+  const structuralParent = parentContext(model, context);
   const contexts = headingLevel === null
-    ? normalizeContextChildren(model, parentContext(model, context))
+    ? normalizeContextChildren(model, structuralParent)
     : modelStructuralContexts(model).filter(candidate => (
-      contextHeadingLevel(candidate) === headingLevel
+      parentContext(model, candidate) === structuralParent ||
+      (
+        contextHeadingLevel(candidate) !== null &&
+        contextHierarchyLevel(model, candidate) === hierarchyLevel
+      )
     ));
 
   return {
     headingLevel,
+    hierarchyLevel,
     contexts: contexts
       .filter(candidate => contextTargets(candidate).length > 0)
       .sort((left, right) => (
@@ -348,33 +354,49 @@ const horizontalContextPeers = (model, context) => {
   };
 };
 
+/**
+ * Finds the next page-forward context one canonical level deeper. Heading
+ * contexts also advance exactly one authored rank so an H2 fallback reaches
+ * the next nonempty H3 rather than an unrelated unheaded level-three context.
+ */
+const nextNarrowFallbackContext = (model, context) => {
+  const headingLevel = contextHeadingLevel(context);
+  if (headingLevel !== null && headingLevel >= 6) return null;
+
+  const hierarchyLevel = contextHierarchyLevel(model, context);
+  const nextHeadingLevel = headingLevel === null ? null : headingLevel + 1;
+  const orderedContexts = modelStructuralContexts(model)
+    .filter(candidate => contextTargets(candidate).length > 0)
+    .sort((left, right) => (
+      contextOrder(left) - contextOrder(right) ||
+      String(contextId(left)).localeCompare(String(contextId(right)))
+    ));
+  const currentIndex = orderedContexts.indexOf(context);
+  const followingContexts = currentIndex >= 0
+    ? orderedContexts.slice(currentIndex + 1)
+    : orderedContexts;
+
+  return followingContexts.find(candidate => (
+    contextHierarchyLevel(model, candidate) === hierarchyLevel + 1 &&
+    (
+      nextHeadingLevel === null ||
+      contextHeadingLevel(candidate) === nextHeadingLevel
+    )
+  )) || null;
+};
+
 const targetName = target => {
   if (!target) return '';
 
-  let current = target;
-  while (current) {
-    if (isElement(current) && current.getAttribute('aria-hidden') === 'true') {
-      return target.tagName ? target.tagName.toLowerCase() : 'target';
-    }
-    current = composedParent(current);
+  if (hasAriaHiddenAncestor(target)) {
+    return target.tagName ? target.tagName.toLowerCase() : 'target';
   }
 
-  const ariaLabel = target.getAttribute?.('aria-label')?.trim();
-  if (ariaLabel) return ariaLabel;
-
-  const labelledBy = target.getAttribute?.('aria-labelledby');
-  if (labelledBy) {
-    const root = target.getRootNode();
-    const labels = labelledBy.split(/\s+/)
-      .map(id => root.getElementById?.(id) || target.ownerDocument.getElementById(id))
-      .filter(Boolean)
-      .map(element => element.textContent.trim())
-      .filter(Boolean);
-    if (labels.length) return labels.join(' ');
-  }
+  const explicitName = getExplicitAccessibleName(target);
+  if (explicitName) return explicitName;
 
   const labelText = Array.from(target.labels || [])
-    .map(label => label.textContent.trim())
+    .map(label => normalizeText(label.textContent))
     .filter(Boolean)
     .join(' ');
   if (labelText) return labelText;
@@ -382,7 +404,7 @@ const targetName = target => {
   const value = target.getAttribute?.('title') ||
     target.getAttribute?.('name') ||
     target.textContent;
-  const normalized = String(value || '').replace(/\s+/g, ' ').trim();
+  const normalized = normalizeText(value);
   return normalized.slice(0, 80) ||
     target.tagName?.toLowerCase() ||
     'target';
@@ -393,7 +415,7 @@ const topmostNativeModal = documentObject => {
   try {
     const modals = Array.from(documentObject.querySelectorAll('dialog:modal'));
     const focused = getDeepActiveElement(documentObject);
-    const focusedModals = modals.filter(modal => isWithinRoot(modal, focused));
+    const focusedModals = modals.filter(modal => isComposedWithin(modal, focused));
     if (focusedModals.length) {
       return focusedModals[focusedModals.length - 1];
     }
@@ -437,11 +459,6 @@ const mutationBelongsOnlyToGeneratedUI = mutation => {
   });
 };
 
-const preventAcceptedCommand = event => {
-  event.preventDefault();
-  event.stopPropagation();
-};
-
 const elementClientRects = element => {
   if (!element?.getBoundingClientRect) return [];
   let rects = [];
@@ -482,11 +499,10 @@ export class StructuralNavigationController {
     this.currentTarget = null;
     this.activeStructuralContext = null;
     this.activeTypedContext = null;
+    this.statusDismissed = false;
     this.dirty = true;
     this.observer = null;
     this.observedShadowRoots = new Set();
-    this.statusElement = null;
-    this.lastStatus = '';
     this.focusSyncToken = 0;
     this.contextIndicatorElement = null;
     this.contextIndicatorFrame = null;
@@ -530,7 +546,7 @@ export class StructuralNavigationController {
     if (
       customRoot &&
       customRoot !== this.document &&
-      isWithinRoot(modal, customRoot)
+      isComposedWithin(modal, customRoot)
     ) {
       return customRoot;
     }
@@ -556,6 +572,7 @@ export class StructuralNavigationController {
       return false;
     }
     if (this.active) {
+      this.openKeyNav.clearStatus(STRUCTURAL_EXIT_STATUS_CHANNEL);
       this.document.addEventListener('focusin', this.handleFocusIn, true);
       this.document.addEventListener('change', this.invalidate, true);
       this.document.addEventListener('toggle', this.invalidate, true);
@@ -563,7 +580,6 @@ export class StructuralNavigationController {
       this.document.defaultView?.addEventListener('popstate', this.invalidate);
       this.connectContextIndicatorListeners();
       this.refresh();
-      this.ensureStatus();
       this.updateStatus('Structural navigation active.');
       return true;
     }
@@ -577,6 +593,8 @@ export class StructuralNavigationController {
     }
 
     this.openKeyNav.config.modes.structuralNavigation.value = true;
+    this.statusDismissed = false;
+    this.openKeyNav.clearStatus(STRUCTURAL_EXIT_STATUS_CHANNEL);
     this.dirty = true;
     this.document.addEventListener('focusin', this.handleFocusIn, true);
     this.document.addEventListener('change', this.invalidate, true);
@@ -586,7 +604,6 @@ export class StructuralNavigationController {
     this.connectContextIndicatorListeners();
     this.refresh();
     this.synchronizeFocus({ preserveRoute: false, announce: false, refresh: false });
-    this.ensureStatus();
     this.updateStatus('Structural navigation active.');
     return true;
   }
@@ -596,22 +613,27 @@ export class StructuralNavigationController {
       !this.active &&
       !this.model &&
       !this.observer &&
-      !this.statusElement &&
+      !this.openKeyNav.getStatusElement(STRUCTURAL_STATUS_CHANNEL) &&
       !this.contextIndicatorElement
     ) {
       return false;
     }
 
-    if (announce) {
-      this.updateStatus('Structural navigation off.', { force: true });
-      if (
-        this.config.status?.enabled &&
-        this.config.status?.announcements !== false &&
-        typeof this.openKeyNav.emitNotification === 'function'
-      ) {
-        this.openKeyNav.emitNotification('Structural navigation off.');
-      }
-    }
+    const statusConfig = this.config.status || {};
+    const statusWasDismissed = this.statusDismissed;
+    const configuredExitDuration = Number(
+      this.openKeyNav.config.notifications.duration
+    );
+    const exitDuration = (
+      Number.isFinite(configuredExitDuration) &&
+      configuredExitDuration > 0
+    ) ? configuredExitDuration : 3000;
+    const announceExit = Boolean(
+      announce &&
+      statusConfig.enabled &&
+      statusConfig.announcements !== false
+    );
+    const exitHost = this.root;
 
     this.openKeyNav.config.modes.structuralNavigation.value = false;
     this.document?.removeEventListener('focusin', this.handleFocusIn, true);
@@ -621,10 +643,9 @@ export class StructuralNavigationController {
     this.document?.defaultView?.removeEventListener('popstate', this.invalidate);
     this.disconnectContextIndicatorListeners();
     this.disconnectObservers();
-    this.statusElement?.remove();
-    this.statusElement = null;
+    this.openKeyNav.clearStatus(STRUCTURAL_STATUS_CHANNEL);
+    this.openKeyNav.clearStatus(STRUCTURAL_EXIT_STATUS_CHANNEL);
     this.removeContextIndicator();
-    this.lastStatus = '';
     this.root = null;
     this.model = null;
     this.targets = [];
@@ -632,8 +653,26 @@ export class StructuralNavigationController {
     this.currentTarget = null;
     this.activeStructuralContext = null;
     this.activeTypedContext = null;
+    this.statusDismissed = false;
     this.dirty = true;
     this.focusSyncToken += 1;
+
+    if (announceExit) {
+      this.openKeyNav.setStatus(
+        STRUCTURAL_EXIT_STATUS_CHANNEL,
+        'Structural navigation off.',
+        {
+          className: 'openKeyNav-structural-exit-status',
+          ui: 'structural-status',
+          politeness: 'polite',
+          visible:
+            statusConfig.visible !== false && !statusWasDismissed,
+          duration: exitDuration,
+          toolName: this.openKeyNav.config.notifications.displayToolName,
+          host: exitHost,
+        }
+      );
+    }
     return true;
   }
 
@@ -699,6 +738,32 @@ export class StructuralNavigationController {
       return true;
     }
 
+    const statusConfig = this.config.status || {};
+    const dismissShortcut = normalizeShortcut(statusConfig.dismissCommand);
+    const dismissIsArrowKey = event.key.startsWith('Arrow');
+    const dismissIsCharacterKey = event.key.length === 1;
+    const pageOwnsDismissShortcut = Boolean(
+      ownership.all ||
+      (event.key === 'Escape' && ownership.escape) ||
+      (dismissIsArrowKey && ownership.arrows) ||
+      (dismissIsCharacterKey && ownership.character)
+    );
+    const dismissStatus = Boolean(
+      dismissShortcut &&
+      statusConfig.enabled !== false &&
+      statusConfig.visible !== false &&
+      !this.statusDismissed &&
+      this.openKeyNav.getStatusElement(STRUCTURAL_STATUS_CHANNEL) &&
+      !pageOwnsDismissShortcut &&
+      matchesStructuralShortcut(event, dismissShortcut)
+    );
+    if (dismissStatus) {
+      preventAcceptedCommand(event);
+      this.statusDismissed = true;
+      this.updateStatus('Status closed.');
+      return true;
+    }
+
     if (
       event.key === 'Tab' ||
       event.key === 'Enter' ||
@@ -712,26 +777,41 @@ export class StructuralNavigationController {
     const isArrowKey = event.key.startsWith('Arrow');
     const isCharacterKey = event.key.length === 1;
     const ownsArrow = isArrowKey && ownership.arrows;
-    const overrideModifier = this.config.overrideModifier;
-    const override = ownsArrow &&
-      MODIFIER_KEYS.includes(overrideModifier) &&
-      Boolean(event[overrideModifier]);
+    const configuredOverrideModifier = this.config.overrideModifier;
+    const overrideModifier = MODIFIER_KEYS.includes(configuredOverrideModifier)
+      ? configuredOverrideModifier
+      : null;
+    const overridePressed = Boolean(
+      overrideModifier && event[overrideModifier]
+    );
+    const overridesArrowOwnership = ownsArrow && overridePressed;
     if (
       ownership.all ||
-      (ownsArrow && !override) ||
+      (ownsArrow && !overridesArrowOwnership) ||
       (isCharacterKey && ownership.character)
     ) {
       return false;
     }
 
     const commandEntries = Object.entries(this.config.commands || {});
-    const matched = commandEntries.find(([, shortcut]) => (
+    const exactMatch = commandEntries.find(([, shortcut]) => (
       matchesStructuralShortcut(
         event,
-        shortcut,
-        override ? overrideModifier : null
+        shortcut
       )
     ));
+    // Option/Alt is an ownership override, not part of the structural arrow
+    // chord. Once held, it may stay held as focus leaves a widget. Exact
+    // bindings still win, and explicit modifier requirements remain exact.
+    const matched = exactMatch || (
+      isArrowKey && overridePressed
+        ? commandEntries.find(([, shortcut]) => (
+          matchesStructuralShortcut(event, shortcut, {
+            allowedExtraModifiers: [overrideModifier],
+          })
+        ))
+        : null
+    );
     if (!matched) return false;
 
     preventAcceptedCommand(event);
@@ -841,7 +921,6 @@ export class StructuralNavigationController {
       contextTargets(preservedTyped).includes(this.currentTarget)
     ) ? preservedTyped : null;
 
-    this.ensureStatus();
     this.scheduleContextIndicatorUpdate();
     return true;
   }
@@ -1035,7 +1114,7 @@ export class StructuralNavigationController {
     }
 
     this.currentTarget = target;
-    target.focus();
+    this.openKeyNav.focus(target);
     this.updateStatus();
 
     const token = ++this.focusSyncToken;
@@ -1049,7 +1128,11 @@ export class StructuralNavigationController {
   moveSiblingContext(direction) {
     this.useStructuralRoute();
 
-    const { contexts: peers, headingLevel } = horizontalContextPeers(
+    const {
+      contexts: peers,
+      headingLevel,
+      hierarchyLevel,
+    } = horizontalContextPeers(
       this.model,
       this.activeStructuralContext
     );
@@ -1058,7 +1141,7 @@ export class StructuralNavigationController {
     if (currentIndex < 0 || nextIndex < 0 || nextIndex >= peers.length) {
       const relation = headingLevel === null
         ? 'sibling context'
-        : `context at heading level ${headingLevel}`;
+        : `peer context at hierarchy level ${hierarchyLevel}`;
       this.updateStatus(
         direction > 0
           ? `No next ${relation}.`
@@ -1084,25 +1167,43 @@ export class StructuralNavigationController {
       return;
     }
     this.activeStructuralContext = parent;
-    this.updateStatus('Broadened context.');
+    this.updateStatus();
   }
 
   narrowContext() {
     this.useStructuralRoute();
-    if (!this.currentTarget) {
-      this.updateStatus('No current target identifies a child context.');
+    const activeContext = this.activeStructuralContext || this.model.rootContext;
+    const child = this.currentTarget
+      ? normalizeContextChildren(this.model, activeContext)
+        .find(context => contextTargets(context).includes(this.currentTarget))
+      : null;
+    if (child) {
+      this.activeStructuralContext = child;
+      this.updateStatus();
       return;
     }
 
-    const child = normalizeContextChildren(this.model, this.activeStructuralContext)
-      .find(context => contextTargets(context).includes(this.currentTarget));
-    if (!child) {
-      this.updateStatus('No narrower context contains the current target.');
+    const headingLevel = contextHeadingLevel(activeContext);
+    if (headingLevel !== null && headingLevel >= 6) {
+      this.updateStatus('Already at heading level 6.');
       return;
     }
 
-    this.activeStructuralContext = child;
-    this.updateStatus('Narrowed context.');
+    const fallback = nextNarrowFallbackContext(this.model, activeContext);
+    if (!fallback) {
+      const nextHierarchyLevel = contextHierarchyLevel(
+        this.model,
+        activeContext
+      ) + 1;
+      this.updateStatus(headingLevel === null
+        ? `No next context at hierarchy level ${nextHierarchyLevel}.`
+        : `No next H${headingLevel + 1} context at hierarchy level ${nextHierarchyLevel}.`);
+      return;
+    }
+
+    this.activeStructuralContext = fallback;
+    this.activeTypedContext = null;
+    this.focusTarget(contextTargets(fallback)[0]);
   }
 
   cyclePeerContext(direction) {
@@ -1130,9 +1231,7 @@ export class StructuralNavigationController {
         directContextForTarget(this.model, this.currentTarget) ||
         this.model.rootContext;
     }
-    this.updateStatus(this.activeTypedContext
-      ? `Using ${this.activeTypedContext.name}.`
-      : 'Using structural context.');
+    this.updateStatus();
   }
 
   useStructuralRoute() {
@@ -1193,13 +1292,6 @@ export class StructuralNavigationController {
       element.className = 'openKeyNav-structural-context-outline';
       element.setAttribute('data-openkeynav-ui', 'structural-context-outline');
       element.setAttribute('aria-hidden', 'true');
-      element.style.boxSizing = 'border-box';
-      element.style.position = 'fixed';
-      element.style.zIndex = '2147483646';
-      element.style.pointerEvents = 'none';
-      element.style.background = 'transparent';
-      element.style.borderRadius = '4px';
-      element.style.display = 'none';
       this.contextIndicatorElement = element;
     }
 
@@ -1313,7 +1405,9 @@ export class StructuralNavigationController {
     const width = Number.isFinite(configuredWidth)
       ? Math.max(1, configuredWidth)
       : 3;
-    const color = this.config.contextIndicator?.color || '#0088cc';
+    const color = this.config.contextIndicator?.color ||
+      this.openKeyNav.config.focus.outlineColor ||
+      '#0088cc';
     indicator.style.display = 'block';
     indicator.style.left = `${left}px`;
     indicator.style.top = `${top}px`;
@@ -1327,65 +1421,13 @@ export class StructuralNavigationController {
       : 'structural';
   }
 
-  statusHost() {
-    if (isShadowRoot(this.root)) return this.root;
-    if (
-      isElement(this.root) &&
-      !['INPUT', 'SELECT', 'TEXTAREA'].includes(this.root.tagName)
-    ) {
-      return this.root;
-    }
-    return this.document.body || this.document.documentElement;
-  }
-
-  ensureStatus() {
-    if (!this.active || !this.config.status?.enabled) return;
-    if (!this.statusElement) {
-      const element = this.document.createElement('div');
-      element.className = 'openKeyNav-structural-status';
-      element.setAttribute('data-openkeynav-ui', 'structural-status');
-      element.setAttribute('role', 'status');
-      element.setAttribute(
-        'aria-live',
-        this.config.status.announcements === false ? 'off' : 'polite'
-      );
-      element.setAttribute('aria-atomic', 'true');
-      element.style.boxSizing = 'border-box';
-      element.style.position = 'fixed';
-      element.style.left = '12px';
-      element.style.bottom = '12px';
-      element.style.zIndex = '2147483647';
-      element.style.maxWidth = 'min(34rem, calc(100vw - 24px))';
-      element.style.padding = '8px 12px';
-      element.style.border = '1px solid #666';
-      element.style.borderRadius = '4px';
-      element.style.color = '#fff';
-      element.style.background = 'rgba(20, 24, 28, .94)';
-      element.style.font = '14px/1.35 sans-serif';
-      element.style.pointerEvents = 'none';
-      if (this.config.status.visible === false) {
-        element.style.width = '1px';
-        element.style.height = '1px';
-        element.style.padding = '0';
-        element.style.margin = '-1px';
-        element.style.overflow = 'hidden';
-        element.style.clip = 'rect(0 0 0 0)';
-        element.style.whiteSpace = 'nowrap';
-      }
-      this.statusElement = element;
-    }
-
-    const host = this.statusHost();
-    if (host && this.statusElement.parentNode !== host) {
-      host.appendChild(this.statusElement);
-    }
-  }
-
   updateStatus(prefix = '', { force = false } = {}) {
     if (!this.active && !force) return;
     if (this.active) this.scheduleContextIndicatorUpdate();
-    this.ensureStatus();
-    if (!this.statusElement) return;
+    if (!this.config.status?.enabled) {
+      this.openKeyNav.clearStatus(STRUCTURAL_STATUS_CHANNEL);
+      return;
+    }
 
     const route = this.activeTypedContext || this.activeStructuralContext;
     const sequence = this.activeSequence();
@@ -1394,37 +1436,60 @@ export class StructuralNavigationController {
     const targetDescription = this.currentTarget
       ? `${targetName(this.currentTarget)}, ${index >= 0 ? index + 1 : '?'} of ${sequence.length}`
       : `${sequence.length} available ${sequence.length === 1 ? 'target' : 'targets'}`;
-    const horizontalPeers = horizontalContextPeers(
+    const hierarchyContext = this.activeTypedContext
+      ? (
+        directContextForTarget(this.model, this.currentTarget) ||
+        this.activeStructuralContext ||
+        this.model.rootContext
+      )
+      : (this.activeStructuralContext || this.model.rootContext);
+    const hierarchyLevel = contextHierarchyLevel(
       this.model,
-      this.activeStructuralContext
+      hierarchyContext
     );
-    const otherHorizontalContexts = horizontalPeers.contexts.filter(context => (
-      context !== this.activeStructuralContext
-    ));
+    const hierarchyDescription = this.activeTypedContext
+      ? `Underlying hierarchy level: ${hierarchyLevel}.`
+      : `Hierarchy level: ${hierarchyLevel}.`;
     const typedContexts = typedContextsForTarget(this.model, this.currentTarget);
-    const siblingDescription = otherHorizontalContexts.length
-      ? ` ${horizontalPeers.headingLevel === null
-        ? 'Sibling contexts'
-        : `Same-level contexts (heading level ${horizontalPeers.headingLevel})`}: ${otherHorizontalContexts.map(context => context.name).join(', ')}.`
-      : '';
     const typedDescription = typedContexts.length
-      ? ` Typed contexts: ${typedContexts.map(context => context.name).join(', ')}.`
+      ? `${typedContexts.length} alternate ${typedContexts.length === 1
+        ? 'route'
+        : 'routes'} available.`
       : '';
+    const dismissLabel = shortcutLabel(this.config.status?.dismissCommand);
+    const dismissDescription = (
+      dismissLabel &&
+      this.config.status?.visible !== false &&
+      !this.statusDismissed
+    ) ? `${dismissLabel} to close.` : '';
+    const contextDescription = this.activeTypedContext
+      ? `Typed context: ${contextName}.`
+      : `Context: ${contextName}.`;
     const message = [
       prefix,
-      `Context: ${contextName}.`,
+      contextDescription,
+      hierarchyDescription,
       targetDescription ? `${targetDescription}.` : '',
-      siblingDescription,
       typedDescription,
     ].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
 
-    if (message === this.lastStatus) return;
-    this.lastStatus = message;
-    this.statusElement.textContent = message;
-    this.statusElement.dataset.contextId = String(contextId(route) || '');
-    this.statusElement.dataset.contextType = this.activeTypedContext
-      ? (this.activeTypedContext.type || 'typed')
-      : 'structural';
+    this.openKeyNav.setStatus(STRUCTURAL_STATUS_CHANNEL, message, {
+      className: 'openKeyNav-structural-status',
+      ui: 'structural-status',
+      politeness:
+        this.config.status.announcements === false ? 'off' : 'polite',
+      visible:
+        this.config.status.visible !== false && !this.statusDismissed,
+      hint: dismissDescription,
+      toolName: this.openKeyNav.config.notifications.displayToolName,
+      host: this.root,
+      data: {
+        contextId: String(contextId(route) || ''),
+        contextType: this.activeTypedContext
+          ? (this.activeTypedContext.type || 'typed')
+          : 'structural',
+      },
+    });
   }
 
   getState() {
@@ -1437,6 +1502,7 @@ export class StructuralNavigationController {
       activeContext: this.activeTypedContext || this.activeStructuralContext,
       activeStructuralContext: this.activeStructuralContext,
       activeTypedContext: this.activeTypedContext,
+      statusDismissed: this.statusDismissed,
       dirty: this.dirty,
     };
   }

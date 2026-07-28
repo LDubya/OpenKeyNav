@@ -219,28 +219,50 @@ Enable OpenKeyNav with `Shift+o`, then press `r` to enter structural navigation:
 | --- | --- |
 | Native sequential focus | `Shift+Tab` / `Tab` |
 | Previous / next target in the active context | Configurable or programmatic |
-| Previous / next context at the same heading level (structural siblings when unheaded) | `Shift+Left` / `Shift+Right` |
-| Broaden to parent / narrow on the current target's path | `Shift+Up` / `Shift+Down` |
+| Previous / next horizontal peer at the same hierarchy depth | `Shift+Left` / `Shift+Right` |
+| Broaden to parent / narrow on the current path or advance one heading level | `Shift+Up` / `Shift+Down` |
 | Cycle application-supplied typed routes | Configurable or programmatic |
 | Reliable exit, including from an editing widget | `Alt+r` |
 
-Parent/child context changes retain the current page focus. Horizontal movement
-selects the previous or next context at the active heading level across the
-navigation root, even when the destination has a different parent heading, and
-focuses that context's first existing focus stop. A context without a heading
-level uses ordinary structural siblings. Native Tab and Shift+Tab handle
-sequential focus. Horizontal and explicit target commands do not wrap; only an
+Broadening and narrowing into a child on the current target's path retain page
+focus. If no such child exists, narrowing from H1–H5 advances, without wrapping,
+to the first nonempty H(n+1) context at the next canonical hierarchy level and
+focuses its first stop; H6 is the fallback boundary. Horizontal movement always
+includes true structural siblings. Heading-backed contexts may also bridge
+different parents whenever their canonical hierarchy depth matches, regardless
+of authored H1–H6 rank; horizontal entry focuses the destination's first
+existing focus stop. A context without a heading level uses ordinary structural
+siblings. Native Tab and Shift+Tab handle sequential focus. Horizontal and
+explicit target commands do not wrap; only an
 explicitly invoked typed-context ring wraps. A visible polite status reports
-the active context, target name, position, same-level or sibling contexts, and
-applicable typed contexts. A non-focusable blue box outlines the active context
-without changing the page's Tab order.
+whether the active route is structural or typed, the active context, its
+one-based level in the canonical structural hierarchy, the target name and
+position, and a bounded alternate-route count. Typed routes report the
+underlying structural level that Shift+Up/Down returns to; they are overlapping
+routes, not additional structural parents. The persistent status does not name
+previous or next horizontal contexts. A non-focusable blue box outlines the
+active context without changing the page's Tab order.
+Structural status and ordinary
+notifications use OpenKeyNav's shared status renderer. Context updates are
+polite and update in place; exit produces one time-limited polite message scoped
+to the active document, modal, element, or open ShadowRoot. Visible structural
+status retains the notification system's optional OpenKeyNav branding. Press
+`Shift+Escape` to close the visual status for the rest of the mode without
+moving focus; its polite live content remains available to assistive technology.
+Messages are treated as text unless OpenKeyNav explicitly marks its own
+generated markup as trusted.
 
 Tab, Shift+Tab, Enter, Space, bare Escape, and bare arrow keys keep their page
 meanings. Shift+Arrow context commands also pass through in text editors,
 selects, range/number inputs, radio groups, and ARIA composite widgets. Hold
 `Alt` with a structural arrow command to deliberately override widget
-ownership. Page code can declare additional ownership with `ownsKey` or
-`data-openkeynav-key-owner="arrows escape"`.
+ownership. `Alt` may remain held after focus leaves the widget; it will not
+invalidate an otherwise configured structural arrow command. Page code can
+declare additional ownership with `ownsKey` or
+`data-openkeynav-key-owner="arrows escape"`. While this mode is active, the
+legacy `h`, configured `1`–`6`, and `s` focus commands are suppressed so they
+cannot add temporary focus stops. Application-owned character commands and
+system shortcuts using Alt/Ctrl/Meta continue to pass through.
 
 ```javascript
 const openKeyNav = new OpenKeyNav();
@@ -281,19 +303,18 @@ openKeyNav.init({
         }
       ],
 
-      // Typed-route cycling is deliberately not bound by default, leaving the
-      // four Shift+Arrow keys exclusively for structural relationships.
-      commands: {
-        previousPeerContext: { key: 'F7' },
-        nextPeerContext: { key: 'F8' }
-      },
-
       // The generated indicator never receives focus or pointer events.
       contextIndicator: {
         enabled: true,
         color: '#0088cc',
         width: 3,
         offset: 4
+      },
+
+      // The exact shortcut closes only the visual status. Inputs and widgets
+      // that own Escape keep the command, and mode re-entry restores status.
+      status: {
+        dismissCommand: { key: 'Escape', shiftKey: true }
       },
 
       // Optional custom widget ownership.
@@ -307,7 +328,10 @@ openKeyNav.init({
 });
 ```
 
-The mode can also be controlled programmatically:
+Typed-route cycling is deliberately unbound by default. Applications may
+configure `previousPeerContext` and `nextPeerContext` when they have suitable
+shortcuts, or invoke the same commands programmatically. The mode can also be
+controlled programmatically:
 
 ```javascript
 openKeyNav.enable();
@@ -325,6 +349,8 @@ An iframe is treated as one atomic outer-page target; its document is not
 inspected. The topmost native modal dialog constrains navigation, and an
 application may supply a custom active root. Native Tab remains authoritative,
 including browser/platform differences such as macOS link-focus preferences.
+Composed-DOM traversal, generated-interface exclusion, deep-focus lookup, and
+author-provided accessible-name extraction use shared OpenKeyNav utilities.
 
 `tabindex="-1"` destinations are excluded by default. Setting
 `includeProgrammatic: true` deliberately includes them and therefore no longer

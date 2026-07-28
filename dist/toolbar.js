@@ -109,6 +109,9 @@ var toolbarTemplates = {
   dragMode: function dragMode() {
     return "<p>".concat((0, _keyButton.keyButton)(["Esc"], "Drag Mode"), "</p>");
   },
+  structuralNavigation: function structuralNavigation() {
+    return "<p>".concat((0, _keyButton.keyButton)(['Alt', openKeyNav.config.keys.structuralNavigation], 'Structural Navigation'), "</p>");
+  },
   menu: function menu() {
     var dragButton = "";
     if (openKeyNav.config.modesConfig.move.config.length) {
@@ -134,6 +137,8 @@ var updateToolbar = function updateToolbar(toolBarElement, lastMessage) {
     // message = toolbarTemplates.menu(typedLabel);
   } else if (openKeyNav.config.modes.menu.value) {
     message = toolbarTemplates.menu(typedLabel);
+  } else if (openKeyNav.config.modes.structuralNavigation.value) {
+    message = toolbarTemplates.structuralNavigation();
   } else {
     message = toolbarTemplates.default(); // Default message
   }

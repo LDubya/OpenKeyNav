@@ -36,14 +36,35 @@ describe('structural navigation key policy', () => {
     document.body.innerHTML = '';
   });
 
-  it('matches exact shortcuts and rejects unconfigured modifiers', () => {
+  it('matches exactly before allowing only the configured override modifier', () => {
+    const shortcut = { key: 'ArrowRight', shiftKey: true };
+    const exactEvent = {
+      key: 'ArrowRight',
+      altKey: false,
+      ctrlKey: false,
+      metaKey: false,
+      shiftKey: true,
+    };
+    const altEvent = { ...exactEvent, altKey: true };
+    const allowAlt = { allowedExtraModifiers: ['altKey'] };
+
+    expect(matchesStructuralShortcut(exactEvent, shortcut)).toBe(true);
+    expect(matchesStructuralShortcut(altEvent, shortcut)).toBe(false);
+    expect(matchesStructuralShortcut(altEvent, shortcut, allowAlt)).toBe(true);
     expect(matchesStructuralShortcut(
-      { key: 'ArrowRight', altKey: false, ctrlKey: false, metaKey: false, shiftKey: true },
-      { key: 'ArrowRight', shiftKey: true }
-    )).toBe(true);
+      altEvent,
+      { ...shortcut, altKey: false },
+      allowAlt
+    )).toBe(false);
     expect(matchesStructuralShortcut(
-      { key: 'ArrowRight', altKey: true, ctrlKey: false, metaKey: false, shiftKey: true },
-      { key: 'ArrowRight', shiftKey: true }
+      { ...altEvent, ctrlKey: true },
+      shortcut,
+      allowAlt
+    )).toBe(false);
+    expect(matchesStructuralShortcut(
+      { ...altEvent, metaKey: true },
+      shortcut,
+      allowAlt
     )).toBe(false);
   });
 
@@ -84,6 +105,15 @@ describe('structural navigation key policy', () => {
     expect(classifyStructuralKeyOwnership(event, {
       ownsKey: () => true,
     })).toMatchObject({ all: true });
+  });
+
+  it('uses an exact Shift+Escape status dismissal command by default', () => {
+    const openKeyNav = new OpenKeyNav();
+
+    expect(openKeyNav.config.modesConfig.structuralNavigation.status.dismissCommand)
+      .toEqual({ key: 'Escape', shiftKey: true });
+
+    openKeyNav.destroy();
   });
 });
 
@@ -154,14 +184,16 @@ describe('StructuralNavigationController', () => {
     expect(document.querySelector('.openKeyNav-structural-status')).toBeNull();
   });
 
-  it('passes widget arrows through and accepts the configured Alt override', () => {
+  it('keeps the configured Alt override active after leaving an arrow-owning input', () => {
     document.body.innerHTML = `
       <section aria-label="Widgets">
         <input id="editor" value="abc">
       </section>
-      <section aria-label="Next widgets">
-        <textarea id="next">next</textarea>
-        <button id="after">After</button>
+      <section aria-label="Next context">
+        <button id="next">Next</button>
+      </section>
+      <section aria-label="Final context">
+        <button id="final">Final</button>
       </section>
     `;
     openKeyNav = createOpenKeyNav();
@@ -192,14 +224,82 @@ describe('StructuralNavigationController', () => {
     expect(overrideArrow.defaultPrevented).toBe(true);
     expect(document.activeElement.id).toBe('next');
 
-    const exit = dispatchKey(
+    // These events model Option remaining physically held after focus leaves
+    // the input. The override modifier must stay transparent to the same
+    // structural command on an ordinary target.
+    const continuedOverride = dispatchKey(
       document.getElementById('next'),
+      'ArrowRight',
+      { altKey: true, shiftKey: true }
+    );
+    expect(continuedOverride.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('final');
+
+    const ctrlChord = dispatchKey(
+      document.getElementById('final'),
+      'ArrowLeft',
+      { ctrlKey: true, shiftKey: true }
+    );
+    expect(ctrlChord.defaultPrevented).toBe(false);
+    expect(document.activeElement.id).toBe('final');
+
+    const metaChord = dispatchKey(
+      document.getElementById('final'),
+      'ArrowLeft',
+      { metaKey: true, shiftKey: true }
+    );
+    expect(metaChord.defaultPrevented).toBe(false);
+    expect(document.activeElement.id).toBe('final');
+
+    const exit = dispatchKey(
+      document.getElementById('final'),
       'r',
       { altKey: true, code: 'KeyR' }
     );
     expect(exit.defaultPrevented).toBe(true);
     expect(openKeyNav.config.modes.structuralNavigation.value).toBe(false);
-    expect(document.activeElement.id).toBe('next');
+    expect(document.activeElement.id).toBe('final');
+  });
+
+  it('prefers an exact Alt command before treating Alt as a transparent override', () => {
+    document.body.innerHTML = `
+      <main aria-label="Workspace">
+        <section aria-label="Current context">
+          <input id="editor" value="abc">
+        </section>
+        <section aria-label="Next context">
+          <button id="next">Next</button>
+        </section>
+      </main>
+      <button id="outside">Outside workspace</button>
+    `;
+    openKeyNav = createOpenKeyNav({
+      modesConfig: {
+        structuralNavigation: {
+          commands: {
+            broadenContext: {
+              key: 'ArrowRight',
+              altKey: true,
+              shiftKey: true,
+            },
+          },
+        },
+      },
+    });
+    openKeyNav.addKeydownEventListener();
+    document.getElementById('editor').focus();
+    openKeyNav.enterStructuralNavigation();
+
+    const exactAltCommand = dispatchKey(
+      document.getElementById('editor'),
+      'ArrowRight',
+      { altKey: true, shiftKey: true }
+    );
+
+    expect(exactAltCommand.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('editor');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Workspace');
   });
 
   it('cycles explicit typed contexts while preserving one target identity', () => {
@@ -222,7 +322,7 @@ describe('StructuralNavigationController', () => {
       modesConfig: {
         structuralNavigation: {
           commands: {
-            nextPeerContext: { key: 'F8' },
+            nextPeerContext: { key: 'PageDown', altKey: true },
           },
           typedContexts: [
             {
@@ -258,9 +358,9 @@ describe('StructuralNavigationController', () => {
     typedInput.focus();
     openKeyNav.enterStructuralNavigation();
 
-    // A text field owns editing arrows and character input, not a configured
-    // function-key command.
-    const typedShortcut = dispatchKey(typedInput, 'F8');
+    // A text field owns editing arrows and character input, not an explicitly
+    // configured non-editing command.
+    const typedShortcut = dispatchKey(typedInput, 'PageDown', { altKey: true });
     expect(typedShortcut.defaultPrevented).toBe(true);
     expect(openKeyNav.getStructuralNavigationState().activeContext.name).toBe('Row');
     openKeyNav.structuralNavigate('nextPeerContext');
@@ -270,6 +370,14 @@ describe('StructuralNavigationController', () => {
     openKeyNav.structuralNavigate('nextPeerContext');
     expect(document.activeElement).toBe(current);
     expect(openKeyNav.getStructuralNavigationState().activeContext.name).toBe('Row');
+    const typedStatus = document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    ).textContent;
+    expect(typedStatus).toContain('Typed context: Row.');
+    expect(typedStatus).toContain('Underlying hierarchy level: 2.');
+    expect(typedStatus).toContain('2 alternate routes available.');
+    expect(typedStatus).not.toContain('Typed contexts:');
+    expect(typedStatus).not.toContain('Column');
 
     openKeyNav.structuralNavigate('nextTarget');
     expect(document.activeElement.id).toBe('row-after');
@@ -278,9 +386,20 @@ describe('StructuralNavigationController', () => {
 
     openKeyNav.structuralNavigate('nextPeerContext');
     expect(openKeyNav.getStructuralNavigationState().activeContext.name).toBe('Column');
+    const columnStatus = document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    ).textContent;
+    expect(columnStatus).toContain('Typed context: Column.');
+    expect(columnStatus).toContain('Underlying hierarchy level: 2.');
     openKeyNav.structuralNavigate('nextPeerContext');
     expect(document.activeElement).toBe(current);
     expect(openKeyNav.getStructuralNavigationState().activeTypedContext).toBeNull();
+    const structuralStatus = document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    ).textContent;
+    expect(structuralStatus).toContain('Context: Workspace.');
+    expect(structuralStatus).toContain('Hierarchy level: 2.');
+    expect(structuralStatus).not.toContain('Underlying hierarchy level:');
 
     // Typed routes remain explicitly available, but never intercept the
     // default structural horizontal shortcut.
@@ -313,8 +432,14 @@ describe('StructuralNavigationController', () => {
       .toMatchObject({ previousTarget: null, nextTarget: null });
     expect(openKeyNav.getStructuralNavigationState().activeContext.name)
       .toBe('Results');
-    expect(document.querySelector('.openKeyNav-structural-status').textContent)
-      .toContain('Sibling contexts: Filters');
+    const resultsStatus = document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    ).textContent;
+    expect(resultsStatus).toContain('Context: Results.');
+    expect(resultsStatus).toContain('Hierarchy level: 2.');
+    expect(resultsStatus).not.toContain('Previous context:');
+    expect(resultsStatus).not.toContain('Next context:');
+    expect(resultsStatus).not.toContain('Sibling contexts:');
 
     const previousSibling = dispatchKey(
       document.getElementById('result-b'),
@@ -353,6 +478,9 @@ describe('StructuralNavigationController', () => {
       <h3>Next level-three context</h3>
       <button id="next-first">Next first</button>
       <button id="next-last">Next last</button>
+      <h2>Third family</h2>
+      <h3>Final level-three context</h3>
+      <button id="final-first">Final first</button>
     `;
     openKeyNav = createOpenKeyNav();
     openKeyNav.addKeydownEventListener();
@@ -363,6 +491,18 @@ describe('StructuralNavigationController', () => {
       .toBe('Current level-three context');
     expect(openKeyNav.getStructuralNavigationState().activeContext.headingLevel)
       .toBe(3);
+    expect(document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    ).textContent).toBe(
+      'Structural navigation active. Context: Current level-three context. ' +
+      'Hierarchy level: 3. Current last, 2 of 2.'
+    );
+    expect(document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__hint'
+    )?.textContent).toBe('Shift+Esc to close.');
+    expect(document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__hint'
+    )?.getAttribute('aria-hidden')).toBe('true');
 
     const nextLevel = dispatchKey(
       document.getElementById('current-last'),
@@ -373,6 +513,12 @@ describe('StructuralNavigationController', () => {
     expect(document.activeElement.id).toBe('next-first');
     expect(openKeyNav.getStructuralNavigationState().activeContext.name)
       .toBe('Next level-three context');
+    expect(document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    ).textContent).toBe(
+      'Context: Next level-three context. Hierarchy level: 3. ' +
+      'Next first, 1 of 2.'
+    );
 
     const previousLevel = dispatchKey(
       document.getElementById('next-first'),
@@ -392,19 +538,193 @@ describe('StructuralNavigationController', () => {
     expect(boundary.defaultPrevented).toBe(true);
     expect(document.activeElement.id).toBe('current-first');
     expect(document.querySelector('.openKeyNav-structural-status').textContent)
-      .toContain('No previous context at heading level 3');
+      .toContain('No previous peer context at hierarchy level 3');
+
+    openKeyNav.structuralNavigate('broadenContext');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('First family');
+    expect(document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    ).textContent).toContain('Hierarchy level: 2.');
+    openKeyNav.structuralNavigate('broadenContext');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Document');
+    expect(document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    ).textContent).toContain('Hierarchy level: 1.');
   });
 
-  it('draws a non-focusable indicator around the active structural context', () => {
+  it('treats differently ranked contexts as peers when they share a parent', () => {
     document.body.innerHTML = `
-      <main aria-label="Catalog">
-        <section id="filters" aria-label="Filters">
-          <button id="clear">Clear filters</button>
-        </section>
-        <section id="results" aria-label="Results">
-          <a id="result" href="#result">Result</a>
+      <h1>Parent context</h1>
+      <button id="parent-target">Parent target</button>
+      <h3>Malformed level-three sibling</h3>
+      <button id="level-three-target">Level three target</button>
+      <h2>Level-two sibling</h2>
+      <button id="level-two-target">Level two target</button>
+    `;
+    openKeyNav = createOpenKeyNav();
+    openKeyNav.addKeydownEventListener();
+    document.getElementById('level-three-target').focus();
+    openKeyNav.enterStructuralNavigation();
+
+    const levelThree = openKeyNav.getStructuralNavigationState().activeContext;
+    expect(levelThree.name).toBe('Malformed level-three sibling');
+    expect(levelThree.headingLevel).toBe(3);
+    expect(levelThree.parent.name).toBe('Parent context');
+
+    const nextSibling = dispatchKey(
+      document.getElementById('level-three-target'),
+      'ArrowRight',
+      { shiftKey: true }
+    );
+    const levelTwo = openKeyNav.getStructuralNavigationState().activeContext;
+
+    expect(nextSibling.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('level-two-target');
+    expect(levelTwo.name).toBe('Level-two sibling');
+    expect(levelTwo.headingLevel).toBe(2);
+    expect(levelTwo.parent).toBe(levelThree.parent);
+  });
+
+  it('bridges different authored heading ranks at the same hierarchy level', () => {
+    document.body.innerHTML = `
+      <main aria-labelledby="catalog-title">
+        <h1 id="catalog-title">Catalog</h1>
+        <section aria-labelledby="recommendations-title">
+          <h2 id="recommendations-title">Recommendations</h2>
+          <button id="recommendation-a">Recommendation A</button>
         </section>
       </main>
+      <section aria-labelledby="intervening-title">
+        <h2 id="intervening-title">Intervening family</h2>
+        <fieldset>
+          <legend>Unheaded level-three context</legend>
+          <button id="unheaded-target">Unheaded target</button>
+        </fieldset>
+      </section>
+      <section aria-labelledby="first-family-title">
+        <h2 id="first-family-title">First heading family</h2>
+        <h3>Current level-three context</h3>
+        <button id="current-first">Current first</button>
+        <button id="current-last">Current last</button>
+      </section>
+    `;
+    openKeyNav = createOpenKeyNav();
+    openKeyNav.addKeydownEventListener();
+    document.getElementById('recommendation-a').focus();
+    openKeyNav.enterStructuralNavigation();
+
+    const recommendations = openKeyNav.getStructuralNavigationState()
+      .activeContext;
+    expect(recommendations.name).toBe('Recommendations');
+    expect(recommendations.headingLevel).toBe(2);
+    expect(document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    ).textContent).toContain('Hierarchy level: 3.');
+
+    const nextPeer = dispatchKey(
+      document.getElementById('recommendation-a'),
+      'ArrowRight',
+      { shiftKey: true }
+    );
+    const currentLevelThree = openKeyNav.getStructuralNavigationState()
+      .activeContext;
+
+    expect(nextPeer.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('current-first');
+    expect(currentLevelThree.name).toBe('Current level-three context');
+    expect(currentLevelThree.headingLevel).toBe(3);
+    expect(document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    ).textContent).toContain('Hierarchy level: 3.');
+
+    const previousPeer = dispatchKey(
+      document.getElementById('current-first'),
+      'ArrowLeft',
+      { shiftKey: true }
+    );
+    expect(previousPeer.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('recommendation-a');
+    expect(openKeyNav.getStructuralNavigationState().activeContext)
+      .toBe(recommendations);
+  });
+
+  it('narrows from an H2 to the next nonempty H3 at the next hierarchy level', () => {
+    document.body.innerHTML = `
+      <section aria-labelledby="source-title">
+        <h2 id="source-title">Source level two</h2>
+        <button id="source-target">Source target</button>
+      </section>
+      <section aria-label="Intervening branch">
+        <h4>Wrong-rank context</h4>
+        <button id="wrong-rank-target">Wrong-rank target</button>
+      </section>
+      <h2>Later level two</h2>
+      <button id="later-level-two-target">Later level-two target</button>
+      <h3>Destination level three</h3>
+      <button id="destination-first">Destination first</button>
+      <button id="destination-last">Destination last</button>
+    `;
+    openKeyNav = createOpenKeyNav();
+    openKeyNav.addKeydownEventListener();
+    document.getElementById('source-target').focus();
+    openKeyNav.enterStructuralNavigation();
+
+    const source = openKeyNav.getStructuralNavigationState().activeContext;
+    expect(source.name).toBe('Source level two');
+    expect(source.headingLevel).toBe(2);
+
+    const narrow = dispatchKey(
+      document.getElementById('source-target'),
+      'ArrowDown',
+      { shiftKey: true }
+    );
+    const destination = openKeyNav.getStructuralNavigationState().activeContext;
+
+    expect(narrow.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('destination-first');
+    expect(destination.name).toBe('Destination level three');
+    expect(destination.headingLevel).toBe(3);
+    expect(document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    ).textContent).toContain('Hierarchy level: 3.');
+  });
+
+  it('treats H6 as the boundary for page-forward narrow fallback', () => {
+    document.body.innerHTML = `
+      <h6>Terminal level six</h6>
+      <button id="terminal-target">Terminal target</button>
+    `;
+    openKeyNav = createOpenKeyNav();
+    openKeyNav.addKeydownEventListener();
+    document.getElementById('terminal-target').focus();
+    openKeyNav.enterStructuralNavigation();
+
+    const terminalContext = openKeyNav.getStructuralNavigationState()
+      .activeContext;
+    const narrow = dispatchKey(
+      document.getElementById('terminal-target'),
+      'ArrowDown',
+      { shiftKey: true }
+    );
+
+    expect(narrow.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('terminal-target');
+    expect(openKeyNav.getStructuralNavigationState().activeContext)
+      .toBe(terminalContext);
+    expect(document.querySelector('.openKeyNav-structural-status').textContent)
+      .toContain('Already at heading level 6.');
+  });
+
+  it('visually dismisses status until a true mode re-entry without changing navigation', () => {
+    document.body.innerHTML = `
+      <section id="filters" aria-label="Filters">
+        <button id="clear">Clear filters</button>
+      </section>
+      <section id="results" aria-label="Results">
+        <a id="result" href="#result">Result</a>
+      </section>
     `;
     const filters = document.getElementById('filters');
     const results = document.getElementById('results');
@@ -413,6 +733,167 @@ describe('StructuralNavigationController', () => {
     });
     results.getBoundingClientRect = () => ({
       left: 20, top: 150, right: 320, bottom: 270, width: 300, height: 120,
+    });
+
+    openKeyNav = createOpenKeyNav();
+    openKeyNav.addKeydownEventListener();
+    const clear = document.getElementById('clear');
+    clear.focus();
+    openKeyNav.enterStructuralNavigation();
+    openKeyNav.structuralNavigation.updateContextIndicator();
+
+    const status = document.querySelector('.openKeyNav-structural-status');
+    const content = status.querySelector('.openKeyNav-status__content');
+    const hint = status.querySelector('.openKeyNav-status__hint');
+    const indicator = document.querySelector(
+      '.openKeyNav-structural-context-outline'
+    );
+    const context = openKeyNav.getStructuralNavigationState().activeContext;
+
+    expect(status.classList.contains(
+      'openKeyNav-status--visually-hidden'
+    )).toBe(false);
+    expect(content.textContent).not.toContain('Shift+Esc to close.');
+    expect(hint?.textContent).toBe('Shift+Esc to close.');
+    expect(hint?.getAttribute('aria-hidden')).toBe('true');
+
+    const dismiss = dispatchKey(clear, 'Escape', { shiftKey: true });
+
+    expect(dismiss.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(clear);
+    expect(openKeyNav.config.modes.structuralNavigation.value).toBe(true);
+    expect(openKeyNav.getStructuralNavigationState().activeContext).toBe(context);
+    expect(openKeyNav.getStructuralNavigationState().statusDismissed).toBe(true);
+    expect(document.querySelector('.openKeyNav-structural-status')).toBe(status);
+    expect(status.classList.contains(
+      'openKeyNav-status--visually-hidden'
+    )).toBe(true);
+    expect(status.getAttribute('aria-live')).toBe('polite');
+    expect(content.textContent).toMatch(/^Status closed\./);
+    expect(status.querySelector('.openKeyNav-status__hint')).toBeNull();
+    expect(document.querySelector(
+      '.openKeyNav-structural-context-outline'
+    )).toBe(indicator);
+    expect(indicator.dataset.contextName).toBe('Filters');
+
+    const dismissedAgain = dispatchKey(clear, 'Escape', { shiftKey: true });
+    expect(dismissedAgain.defaultPrevented).toBe(false);
+    expect(openKeyNav.getStructuralNavigationState().statusDismissed).toBe(true);
+
+    const navigate = dispatchKey(clear, 'ArrowRight', { shiftKey: true });
+    expect(navigate.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('result');
+    expect(document.querySelector('.openKeyNav-structural-status')).toBe(status);
+    expect(status.classList.contains(
+      'openKeyNav-status--visually-hidden'
+    )).toBe(true);
+    expect(content.textContent).toContain('Context: Results.');
+    expect(status.querySelector('.openKeyNav-status__hint')).toBeNull();
+    expect(openKeyNav.getStructuralNavigationState().statusDismissed).toBe(true);
+
+    expect(openKeyNav.enterStructuralNavigation()).toBe(true);
+    expect(status.classList.contains(
+      'openKeyNav-status--visually-hidden'
+    )).toBe(true);
+    expect(openKeyNav.getStructuralNavigationState().statusDismissed).toBe(true);
+
+    expect(openKeyNav.exitStructuralNavigation({ announce: false })).toBe(true);
+    expect(status.isConnected).toBe(false);
+    expect(openKeyNav.enterStructuralNavigation()).toBe(true);
+
+    const reenteredStatus = document.querySelector(
+      '.openKeyNav-structural-status'
+    );
+    expect(reenteredStatus).not.toBe(status);
+    expect(reenteredStatus.classList.contains(
+      'openKeyNav-status--visually-hidden'
+    )).toBe(false);
+    expect(reenteredStatus.querySelector(
+      '.openKeyNav-status__hint'
+    ).textContent).toContain('Shift+Esc to close.');
+    expect(reenteredStatus.querySelector(
+      '.openKeyNav-status__hint'
+    ).getAttribute('aria-hidden')).toBe('true');
+    expect(openKeyNav.getStructuralNavigationState().statusDismissed).toBe(false);
+
+    const dismissAfterReentry = dispatchKey(
+      document.getElementById('result'),
+      'Escape',
+      { shiftKey: true }
+    );
+    expect(dismissAfterReentry.defaultPrevented).toBe(true);
+    expect(reenteredStatus.classList.contains(
+      'openKeyNav-status--visually-hidden'
+    )).toBe(true);
+  });
+
+  it('passes the dismissal chord through Escape-owning inputs and composites', () => {
+    document.body.innerHTML = `
+      <section aria-label="Widgets">
+        <input id="editor" value="abc">
+        <div id="combobox" role="combobox" tabindex="0">Combobox</div>
+      </section>
+    `;
+    openKeyNav = createOpenKeyNav();
+    openKeyNav.addKeydownEventListener();
+    const editor = document.getElementById('editor');
+    const combobox = document.getElementById('combobox');
+    let comboboxEscapes = 0;
+    combobox.addEventListener('keydown', event => {
+      if (event.key === 'Escape') comboboxEscapes += 1;
+    });
+
+    editor.focus();
+    openKeyNav.enterStructuralNavigation();
+    const status = document.querySelector('.openKeyNav-structural-status');
+
+    const editorEscape = dispatchKey(editor, 'Escape', { shiftKey: true });
+    expect(editorEscape.defaultPrevented).toBe(false);
+    expect(document.activeElement).toBe(editor);
+    expect(openKeyNav.getStructuralNavigationState().statusDismissed).toBe(false);
+    expect(status.classList.contains(
+      'openKeyNav-status--visually-hidden'
+    )).toBe(false);
+
+    combobox.focus();
+    const comboboxEscape = dispatchKey(
+      combobox,
+      'Escape',
+      { shiftKey: true }
+    );
+    expect(comboboxEscape.defaultPrevented).toBe(false);
+    expect(comboboxEscapes).toBe(1);
+    expect(document.activeElement).toBe(combobox);
+    expect(openKeyNav.config.modes.structuralNavigation.value).toBe(true);
+    expect(openKeyNav.getStructuralNavigationState().statusDismissed).toBe(false);
+    expect(status.classList.contains(
+      'openKeyNav-status--visually-hidden'
+    )).toBe(false);
+  });
+
+  it('draws the indicator around the true active context as focus crosses descendants', async () => {
+    document.body.innerHTML = `
+      <main id="catalog" aria-labelledby="catalog-title">
+        <h1 id="catalog-title">Catalog</h1>
+        <section id="filters" aria-label="Filters">
+          <button id="clear">Clear filters</button>
+        </section>
+        <section id="results" aria-label="Results">
+          <a id="result" href="#result">Result</a>
+        </section>
+      </main>
+    `;
+    const catalog = document.getElementById('catalog');
+    const filters = document.getElementById('filters');
+    const results = document.getElementById('results');
+    catalog.getBoundingClientRect = () => ({
+      left: 10, top: 10, right: 500, bottom: 400, width: 490, height: 390,
+    });
+    filters.getBoundingClientRect = () => ({
+      left: 20, top: 30, right: 220, bottom: 130, width: 200, height: 100,
+    });
+    results.getBoundingClientRect = () => ({
+      left: 250, top: 30, right: 480, bottom: 150, width: 230, height: 120,
     });
 
     openKeyNav = createOpenKeyNav();
@@ -430,10 +911,43 @@ describe('StructuralNavigationController', () => {
     expect(indicator.style.left).toBe('16px');
     expect(indicator.style.top).toBe('26px');
 
-    openKeyNav.structuralNavigate('nextSiblingContext');
+    openKeyNav.structuralNavigate('broadenContext');
     openKeyNav.structuralNavigation.updateContextIndicator();
+    expect(document.activeElement.id).toBe('clear');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Catalog');
+    expect(indicator.dataset.contextName).toBe('Catalog');
+    expect(indicator.style.left).toBe('6px');
+    expect(indicator.style.top).toBe('6px');
+    expect(indicator.style.width).toBe('498px');
+    expect(indicator.style.height).toBe('398px');
+    expect(document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    ).textContent).toContain('Hierarchy level: 2.');
+
+    document.getElementById('result').focus();
+    await nextTask();
+    openKeyNav.structuralNavigation.updateContextIndicator();
+    expect(document.activeElement.id).toBe('result');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Catalog');
+    expect(indicator.dataset.contextName).toBe('Catalog');
+    expect(indicator.style.left).toBe('6px');
+    expect(indicator.style.top).toBe('6px');
+
+    openKeyNav.structuralNavigate('narrowContext');
+    openKeyNav.structuralNavigation.updateContextIndicator();
+    expect(document.activeElement.id).toBe('result');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Results');
     expect(indicator.dataset.contextName).toBe('Results');
-    expect(indicator.style.top).toBe('146px');
+    expect(indicator.style.left).toBe('246px');
+    expect(indicator.style.top).toBe('26px');
+    expect(indicator.style.width).toBe('238px');
+    expect(indicator.style.height).toBe('128px');
+    expect(document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    ).textContent).toContain('Hierarchy level: 3.');
 
     openKeyNav.exitStructuralNavigation();
     expect(document.querySelector('.openKeyNav-structural-context-outline'))

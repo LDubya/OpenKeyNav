@@ -118,6 +118,13 @@ const toolbarTemplates = {
         return `<p>${ keyButton(["Esc"], "Drag Mode")}</p>`
     },
 
+    structuralNavigation : () => {
+        return `<p>${keyButton(
+            ['Alt', openKeyNav.config.keys.structuralNavigation],
+            'Structural Navigation'
+        )}</p>`;
+    },
+
     menu : () => {
         let dragButton = "";
         if(openKeyNav.config.modesConfig.move.config.length){ // if drag mode is configured
@@ -154,6 +161,9 @@ const updateToolbar = (toolBarElement, lastMessage) => {
     } 
     else if (openKeyNav.config.modes.menu.value) {
         message = toolbarTemplates.menu(typedLabel);
+    }
+    else if (openKeyNav.config.modes.structuralNavigation.value) {
+        message = toolbarTemplates.structuralNavigation();
     }
     else{
       message = toolbarTemplates.default(); // Default message

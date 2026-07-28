@@ -14,6 +14,9 @@ var _escape = require("./escape");
 var _audit = require("./audit.js");
 var _auditPanel = require("./auditPanel.js");
 var _structuralNavigation = require("./structuralNavigation.js");
+var _status = require("./status.js");
+var _domUtilities = require("./domUtilities.js");
+var _keyboardEvents = require("./keyboardEvents.js");
 function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
 function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
 function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
@@ -217,11 +220,15 @@ var OpenKeyNav = /*#__PURE__*/function () {
           status: {
             enabled: true,
             visible: true,
-            announcements: true
+            announcements: true,
+            dismissCommand: {
+              key: 'Escape',
+              shiftKey: true
+            }
           },
           contextIndicator: {
             enabled: true,
-            color: '#0088cc',
+            color: null,
             width: 3,
             offset: 4
           },
@@ -277,6 +284,10 @@ var OpenKeyNav = /*#__PURE__*/function () {
     this.meta = {
       enabled: (0, _signals.signal)(false)
     };
+    this.statusService = new _status.StatusService({
+      document: typeof document === 'undefined' ? null : document
+    });
+    this._notificationSequence = 0;
     this.structuralNavigation = new _structuralNavigation.StructuralNavigationController(this);
     this.enable = function () {
       _this.meta.enabled.value = true;
@@ -296,6 +307,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
       _this.exitStructuralNavigation({
         announce: false
       });
+      _this.statusService.clearAll();
       _this.meta.enabled.value = false;
       _this.getSetCookie(_this.config.enabledCookie, false);
       // Remove audit panel if present when disabling
@@ -318,12 +330,55 @@ var OpenKeyNav = /*#__PURE__*/function () {
   return _createClass(OpenKeyNav, [{
     key: "focus",
     value: function focus(target) {
-      target.focus();
-      target.setAttribute('data-openkeynav-focused', true);
-      target.addEventListener('blur', function handler() {
-        target.removeAttribute('data-openkeynav-focused');
-        target.removeEventListener('blur', handler); // Clean up the event listener
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      if (!target || typeof target.focus !== 'function') return null;
+      var decorate = options.decorate !== false;
+      var receivedFocus = false;
+      var handleFocus = function handleFocus() {
+        receivedFocus = true;
+      };
+      target.addEventListener('focus', handleFocus, {
+        once: true
       });
+      try {
+        target.focus(options.focusOptions);
+      } finally {
+        target.removeEventListener('focus', handleFocus);
+      }
+      var ownerDocument = target.ownerDocument || (typeof document === 'undefined' ? null : document);
+      var settledTarget = (0, _domUtilities.getDeepActiveElement)(ownerDocument);
+      if (!decorate || !settledTarget || !receivedFocus && settledTarget !== target) {
+        return settledTarget;
+      }
+      settledTarget.setAttribute('data-openkeynav-focused', 'true');
+      settledTarget.addEventListener('blur', function () {
+        settledTarget.removeAttribute('data-openkeynav-focused');
+      }, {
+        once: true
+      });
+      return settledTarget;
+    }
+  }, {
+    key: "setStatus",
+    value: function setStatus(channel, message) {
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      return this.statusService.set(channel, message, options);
+    }
+  }, {
+    key: "getStatusElement",
+    value: function getStatusElement(channel) {
+      return this.statusService.get(channel);
+    }
+  }, {
+    key: "clearStatus",
+    value: function clearStatus(channel) {
+      return this.statusService.clear(channel);
+    }
+  }, {
+    key: "clearAllStatuses",
+    value: function clearAllStatuses() {
+      this.statusService.clearAll();
+      return this;
     }
   }, {
     key: "enterStructuralNavigation",
@@ -361,8 +416,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
   }, {
     key: "preventpropagation",
     value: function preventpropagation(e) {
-      e.preventDefault();
-      e.stopPropagation();
+      (0, _keyboardEvents.preventAcceptedCommand)(e);
       return false;
     }
 
@@ -449,10 +503,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
   }, {
     key: "isTextInputActive",
     value: function isTextInputActive() {
-      var activeElement = document.activeElement;
-      while (activeElement && activeElement.shadowRoot && activeElement.shadowRoot.activeElement) {
-        activeElement = activeElement.shadowRoot.activeElement;
-      }
+      var activeElement = (0, _domUtilities.getDeepActiveElement)(document);
       if (!activeElement || !activeElement.tagName) {
         return false;
       }
@@ -1066,123 +1117,39 @@ var OpenKeyNav = /*#__PURE__*/function () {
       }
     }
 
-    // Function to emit a temporary notification
+    // Emit an assertive notification through the shared status renderer.
+    // Messages are text by default; trusted OpenKeyNav markup must opt in.
   }, {
     key: "emitNotification",
     value: function emitNotification(message) {
       var duration = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-      // Use provided duration or fall back to config
-      var notificationDuration = duration !== null ? duration : this.config.notifications.duration;
-
-      // Function to create or select the notification container
-      var getSetNotificationContainer = function getSetNotificationContainer() {
-        // Create or select the notification container
-        var notificationContainer = document.getElementById('okn-notification-container');
-        if (!notificationContainer) {
-          notificationContainer = document.createElement('div');
-          notificationContainer.id = 'okn-notification-container';
-          notificationContainer.className = 'openKeyNav-ignore-overlap';
-          notificationContainer.style.position = 'fixed';
-          notificationContainer.style.bottom = '10px';
-          notificationContainer.style.left = '50%';
-          notificationContainer.style.transform = 'translateX(-50%)';
-          notificationContainer.style.display = 'flex';
-          notificationContainer.style.flexDirection = 'column';
-          notificationContainer.style.alignItems = 'center';
-          notificationContainer.style.gap = '10px';
-          notificationContainer.style.zIndex = '1000';
-          document.body.appendChild(notificationContainer);
-        }
-        return notificationContainer;
-      };
-
-      // Check if notifications are enabled
-      if (!this.config.notifications.enabled) {
-        console.log('[emitNotification] Notifications disabled, returning');
-        return;
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      if (duration && _typeof(duration) === 'object') {
+        options = duration;
+        duration = null;
       }
-      console.log('[emitNotification] Getting notification container...');
-      // Get the notification container
-      var notificationContainer = getSetNotificationContainer();
-      console.log('[emitNotification] Got container:', !!notificationContainer, 'id:', notificationContainer === null || notificationContainer === void 0 ? void 0 : notificationContainer.id);
-
-      // Remove any existing NON-PERSISTENT notifications before creating a new one
-      // Preserve persistent notifications (those with close button)
-      console.log('[emitNotification] Removing non-persistent notifications...');
-      try {
-        Array.from(notificationContainer.children).forEach(function (child) {
-          var isPersistent = child.querySelector('button[aria-label="Close notification"]');
-          if (!isPersistent) {
-            child.remove();
-          }
-        });
-        console.log('[emitNotification] Removal complete');
-      } catch (error) {
-        console.error('[emitNotification] Error removing notifications:', error);
-      }
-      console.log('[emitNotification] Creating notification element...');
-      // Create the notification element
-      var notification = document.createElement('div');
-      console.log('[emitNotification] Notification element created');
-      notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-      notification.style.color = '#fff';
-      notification.style.padding = '10px 20px';
-      notification.style.borderRadius = '5px';
-      notification.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-      notification.style.maxWidth = '400px';
-      notification.style.textAlign = 'center';
-      notification.style.position = 'relative';
-      notification.style.display = 'inline-block';
-
-      // Add ARIA role for accessibility
-      notification.setAttribute('role', 'alert');
-      notification.setAttribute('aria-live', 'assertive');
-      notification.setAttribute('aria-atomic', 'true');
-
-      // Optionally display the tool name in the notification
-      if (this.config.notifications.displayToolName) {
-        var logo = document.createElement('div');
-        logo.className = 'okn-logo-text tiny';
-        logo.setAttribute('role', 'img'); // Assigning an image role
-        logo.setAttribute('aria-label', 'OpenKeyNav');
-        logo.innerHTML = 'Open<span class="key">Key</span>Nav';
-        notification.appendChild(logo);
-      }
-
-      // Create the message element
-      var messageDiv = document.createElement('div');
-      messageDiv.innerHTML = message;
-      // Append the message to the notification
-      notification.appendChild(messageDiv);
-
-      // Append the notification to the notification container
-      notificationContainer.appendChild(notification);
-
-      // Add close button for persistent notifications
-      if (notificationDuration === 0) {
-        var closeBtn = document.createElement('button');
-        closeBtn.innerHTML = '×';
-        closeBtn.style.position = 'absolute';
-        closeBtn.style.top = '5px';
-        closeBtn.style.right = '10px';
-        closeBtn.style.background = 'none';
-        closeBtn.style.border = 'none';
-        closeBtn.style.color = '#fff';
-        closeBtn.style.fontSize = '20px';
-        closeBtn.style.cursor = 'pointer';
-        closeBtn.style.padding = '0';
-        closeBtn.style.lineHeight = '1';
-        closeBtn.setAttribute('aria-label', 'Close notification');
-        closeBtn.addEventListener('click', function () {
-          notification.remove();
-        });
-        notification.appendChild(closeBtn);
-      } else {
-        // Automatically remove the notification after the specified duration
-        setTimeout(function () {
-          notification.remove();
-        }, notificationDuration);
-      }
+      if (!this.config.notifications.enabled) return null;
+      var requestedDuration = duration !== null ? duration : this.config.notifications.duration;
+      var parsedDuration = Number(requestedDuration);
+      var notificationDuration = Number.isFinite(parsedDuration) ? parsedDuration : 3000;
+      var persistent = notificationDuration === 0;
+      var channel = persistent ? "notification-".concat(++this._notificationSequence) : 'notification';
+      if (persistent) this.clearStatus('notification');
+      return this.setStatus(channel, message, {
+        className: 'openKeyNav-notification',
+        containerClass: 'openKeyNav-notification-container openKeyNav-ignore-overlap',
+        containerKey: 'notifications',
+        containerId: 'okn-notification-container',
+        ui: 'notification',
+        role: 'alert',
+        politeness: 'assertive',
+        visible: true,
+        duration: notificationDuration,
+        dismissible: persistent,
+        toolName: this.config.notifications.displayToolName,
+        trustedHtml: options.trustedHtml === true,
+        host: options.host || 'modal'
+      });
     }
   }, {
     key: "initStatusBar",
@@ -1210,7 +1177,9 @@ var OpenKeyNav = /*#__PURE__*/function () {
 
         // Emit the notification with the current message
         // console.log(message);
-        _this8.emitNotification(message);
+        _this8.emitNotification(message, null, {
+          trustedHtml: true
+        });
         lastMessage = message;
       });
 
@@ -1231,6 +1200,8 @@ var OpenKeyNav = /*#__PURE__*/function () {
           statusBar.textContent = "In click mode. Press Esc to exit.";
         } else if (modes.moving.value) {
           statusBar.textContent = "In drag mode. Press Esc to exit.";
+        } else if (modes.structuralNavigation.value) {
+          statusBar.textContent = "Structural navigation active. Press Alt+R to exit.";
         } else {
           statusBar.textContent = "No mode active.";
         }
@@ -1396,6 +1367,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
       this.exitStructuralNavigation({
         announce: false
       });
+      this.statusService.clearAll();
       this.removeKeydownEventListener();
       this.removeOverlays(true);
       this.clearAuditFlags();

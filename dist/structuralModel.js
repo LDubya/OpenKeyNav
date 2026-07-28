@@ -4,6 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.buildStructuralModel = void 0;
+var _accessibilityName = require("./accessibilityName.js");
+var _domUtilities = require("./domUtilities.js");
 function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
@@ -11,61 +13,18 @@ function _arrayWithoutHoles(r) { if (Array.isArray(r)) return _arrayLikeToArray(
 function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
 function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
 function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-var ELEMENT_NODE = 1;
-var DOCUMENT_NODE = 9;
-var DOCUMENT_FRAGMENT_NODE = 11;
 var LANDMARK_ROLES = new Set(['banner', 'complementary', 'contentinfo', 'form', 'main', 'navigation', 'region', 'search']);
 var COMPOSITE_ROLES = new Set(['combobox', 'grid', 'listbox', 'menu', 'menubar', 'radiogroup', 'tablist', 'toolbar', 'tree', 'treegrid']);
 var SUPPRESSED_ROLES = new Set(['none', 'presentation']);
-var GENERATED_SELECTOR = ['[data-openkeynav-ui]', '.openKeyNav-label', '.openKeyNav-toolBar', '.openKeyNav-mouseover-tooltip', '.openKeyNav-structural-status', '#okn-notification-container', '#okn-audit-panel'].join(',');
 var boundaryIdentity = new WeakMap();
 var nextBoundaryIdentity = 1;
-var isElement = function isElement(node) {
-  return Boolean(node && node.nodeType === ELEMENT_NODE);
-};
-var isDocument = function isDocument(node) {
-  return Boolean(node && node.nodeType === DOCUMENT_NODE);
-};
-var isShadowRoot = function isShadowRoot(node) {
-  return Boolean(node && node.nodeType === DOCUMENT_FRAGMENT_NODE && node.host && isElement(node.host));
-};
-var composedParent = function composedParent(node) {
-  if (!node) return null;
-  if (node.assignedSlot) return node.assignedSlot;
-  if (isShadowRoot(node)) return node.host;
-  return node.parentNode || null;
-};
-var isComposedWithin = function isComposedWithin(boundary, node) {
-  var current = node;
-  while (current) {
-    if (current === boundary) return true;
-    current = composedParent(current);
-  }
-  return false;
-};
-var isGeneratedUI = function isGeneratedUI(element) {
-  var current = element;
-  while (current) {
-    if (isElement(current) && current.matches(GENERATED_SELECTOR)) return true;
-    current = composedParent(current);
-  }
-  return false;
-};
 var isSemanticallyHidden = function isSemanticallyHidden(element, root) {
-  var current = element;
-  while (current) {
-    if (isElement(current) && current.getAttribute('aria-hidden') === 'true') {
-      return true;
-    }
-    if (current === root) break;
-    current = composedParent(current);
-  }
-  return false;
+  return (0, _domUtilities.hasAriaHiddenAncestor)(element, root);
 };
 var isOperativeSemanticElement = function isOperativeSemanticElement(element, root) {
   var current = element;
   while (current) {
-    if (isElement(current)) {
+    if ((0, _domUtilities.isElement)(current)) {
       var _current$ownerDocumen, _view$getComputedStyl;
       if (current.hidden || current.hasAttribute('inert') || current.tagName.toLowerCase() === 'dialog' && !current.hasAttribute('open')) {
         return false;
@@ -74,7 +33,7 @@ var isOperativeSemanticElement = function isOperativeSemanticElement(element, ro
         var summary = Array.from(current.children).find(function (child) {
           return child.tagName.toLowerCase() === 'summary';
         });
-        if (!summary || !isComposedWithin(summary, element)) return false;
+        if (!summary || !(0, _domUtilities.isComposedWithin)(summary, element)) return false;
       }
       if (current.hasAttribute('popover')) {
         try {
@@ -91,7 +50,7 @@ var isOperativeSemanticElement = function isOperativeSemanticElement(element, ro
       }
     }
     if (current === root) break;
-    current = composedParent(current);
+    current = (0, _domUtilities.getComposedParent)(current);
   }
   return true;
 };
@@ -102,56 +61,8 @@ var stableBoundaryId = function stableBoundaryId(boundary) {
   }
   return "".concat(prefix, "-").concat(boundaryIdentity.get(boundary));
 };
-var composedChildren = function composedChildren(node) {
-  if (isDocument(node)) {
-    return node.documentElement ? [node.documentElement] : [];
-  }
-  if (isElement(node) && node.shadowRoot) {
-    return Array.from(node.shadowRoot.childNodes);
-  }
-  if (isElement(node) && node.tagName.toLowerCase() === 'slot' && typeof node.assignedNodes === 'function') {
-    var assigned = node.assignedNodes({
-      flatten: true
-    });
-    if (assigned.length) return assigned;
-  }
-  return Array.from((node === null || node === void 0 ? void 0 : node.childNodes) || []);
-};
-var composedElements = function composedElements(root) {
-  var elements = [];
-  var seen = new Set();
-  var _visit = function visit(node) {
-    if (!node || seen.has(node)) return;
-    seen.add(node);
-    if (isElement(node)) {
-      if (isGeneratedUI(node)) return;
-      elements.push(node);
-    }
-    composedChildren(node).forEach(_visit);
-  };
-  _visit(root);
-  return elements;
-};
-var queryRootById = function queryRootById(element, id) {
-  var _element$getRootNode, _root$getElementById, _element$ownerDocumen;
-  var root = (_element$getRootNode = element.getRootNode) === null || _element$getRootNode === void 0 ? void 0 : _element$getRootNode.call(element);
-  return (root === null || root === void 0 || (_root$getElementById = root.getElementById) === null || _root$getElementById === void 0 ? void 0 : _root$getElementById.call(root, id)) || ((_element$ownerDocumen = element.ownerDocument) === null || _element$ownerDocumen === void 0 ? void 0 : _element$ownerDocumen.getElementById(id));
-};
-var labelledByText = function labelledByText(element) {
-  var ids = (element.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean);
-  return ids.map(function (id) {
-    return queryRootById(element, id);
-  }).filter(function (label) {
-    return label && !isSemanticallyHidden(label, element.getRootNode());
-  }).map(function (label) {
-    return label.textContent.replace(/\s+/g, ' ').trim();
-  }).filter(Boolean).join(' ');
-};
-var explicitAccessibleName = function explicitAccessibleName(element) {
-  return labelledByText(element) || (element.getAttribute('aria-label') || '').trim();
-};
 var headingRank = function headingRank(element) {
-  if (!isElement(element)) return null;
+  if (!(0, _domUtilities.isElement)(element)) return null;
   var role = (element.getAttribute('role') || '').trim().toLowerCase();
   if (SUPPRESSED_ROLES.has(role)) return null;
   var match = /^h([1-6])$/i.exec(element.tagName);
@@ -167,7 +78,7 @@ var contextTypeForElement = function contextTypeForElement(element) {
   if (SUPPRESSED_ROLES.has(role)) return null;
   if (role) {
     if (LANDMARK_ROLES.has(role)) {
-      if (role === 'region' && !explicitAccessibleName(element)) return null;
+      if (role === 'region' && !(0, _accessibilityName.getExplicitAccessibleName)(element)) return null;
       return role;
     }
     if (role === 'list') return 'list';
@@ -183,23 +94,23 @@ var contextTypeForElement = function contextTypeForElement(element) {
       return 'complementary';
     case 'header':
       {
-        var ancestor = composedParent(element);
-        while (ancestor && isElement(ancestor)) {
+        var ancestor = (0, _domUtilities.getComposedParent)(element);
+        while (ancestor && (0, _domUtilities.isElement)(ancestor)) {
           if (['article', 'aside', 'main', 'nav', 'section'].includes(ancestor.tagName.toLowerCase())) {
             return null;
           }
-          ancestor = composedParent(ancestor);
+          ancestor = (0, _domUtilities.getComposedParent)(ancestor);
         }
         return 'banner';
       }
     case 'footer':
       {
-        var _ancestor = composedParent(element);
-        while (_ancestor && isElement(_ancestor)) {
+        var _ancestor = (0, _domUtilities.getComposedParent)(element);
+        while (_ancestor && (0, _domUtilities.isElement)(_ancestor)) {
           if (['article', 'aside', 'main', 'nav', 'section'].includes(_ancestor.tagName.toLowerCase())) {
             return null;
           }
-          _ancestor = composedParent(_ancestor);
+          _ancestor = (0, _domUtilities.getComposedParent)(_ancestor);
         }
         return 'contentinfo';
       }
@@ -230,7 +141,7 @@ var firstLegendText = function firstLegendText(element) {
   var legend = Array.from(element.children).find(function (child) {
     return child.tagName.toLowerCase() === 'legend';
   });
-  return (legend === null || legend === void 0 ? void 0 : legend.textContent.replace(/\s+/g, ' ').trim()) || '';
+  return (0, _accessibilityName.normalizeText)(legend === null || legend === void 0 ? void 0 : legend.textContent);
 };
 var contextFallbackName = function contextFallbackName(type) {
   var names = {
@@ -252,7 +163,7 @@ var contextFallbackName = function contextFallbackName(type) {
 };
 var contextNameForElement = function contextNameForElement(element, type) {
   var associatedHeading = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-  return firstLegendText(element) || explicitAccessibleName(element) || (associatedHeading === null || associatedHeading === void 0 ? void 0 : associatedHeading.textContent.replace(/\s+/g, ' ').trim()) || contextFallbackName(type);
+  return firstLegendText(element) || (0, _accessibilityName.getExplicitAccessibleName)(element) || (0, _accessibilityName.normalizeText)(associatedHeading === null || associatedHeading === void 0 ? void 0 : associatedHeading.textContent) || contextFallbackName(type);
 };
 var makeContext = function makeContext(_ref) {
   var id = _ref.id,
@@ -273,6 +184,8 @@ var makeContext = function makeContext(_ref) {
     rangeStart = _ref$rangeStart === void 0 ? null : _ref$rangeStart,
     _ref$rangeEnd = _ref.rangeEnd,
     rangeEnd = _ref$rangeEnd === void 0 ? null : _ref$rangeEnd,
+    _ref$rangeBoundary = _ref.rangeBoundary,
+    rangeBoundary = _ref$rangeBoundary === void 0 ? null : _ref$rangeBoundary,
     _ref$containerContext = _ref.containerContext,
     containerContext = _ref$containerContext === void 0 ? null : _ref$containerContext,
     _ref$visualElements = _ref.visualElements,
@@ -297,6 +210,7 @@ var makeContext = function makeContext(_ref) {
     required: required,
     rangeStart: rangeStart,
     rangeEnd: rangeEnd,
+    rangeBoundary: rangeBoundary,
     containerContext: containerContext,
     visualElements: Array.from(visualElements),
     explicitParentId: explicitParentId,
@@ -308,15 +222,15 @@ var nearestContextBoundary = function nearestContextBoundary(element, boundaryCo
   while (current) {
     if (boundaryContexts.has(current)) return boundaryContexts.get(current);
     if (current === stopRoot) break;
-    current = composedParent(current);
+    current = (0, _domUtilities.getComposedParent)(current);
   }
   return null;
 };
 var nearestAncestorContext = function nearestAncestorContext(boundary, boundaryContexts, rootContext) {
-  var current = composedParent(boundary);
+  var current = (0, _domUtilities.getComposedParent)(boundary);
   while (current) {
     if (boundaryContexts.has(current)) return boundaryContexts.get(current);
-    current = composedParent(current);
+    current = (0, _domUtilities.getComposedParent)(current);
   }
   return rootContext;
 };
@@ -327,7 +241,7 @@ var resolveBoundary = function resolveBoundary(descriptor, root, details) {
   var _descriptor$boundary, _root$querySelector;
   var candidate = resolveContributionValue((_descriptor$boundary = descriptor.boundary) !== null && _descriptor$boundary !== void 0 ? _descriptor$boundary : descriptor.element, details);
   if (typeof candidate === 'string') return ((_root$querySelector = root.querySelector) === null || _root$querySelector === void 0 ? void 0 : _root$querySelector.call(root, candidate)) || null;
-  return isElement(candidate) || isShadowRoot(candidate) || isDocument(candidate) ? candidate : null;
+  return (0, _domUtilities.isElement)(candidate) || (0, _domUtilities.isShadowRoot)(candidate) || (0, _domUtilities.isDocument)(candidate) ? candidate : null;
 };
 var resolveMembers = function resolveMembers(descriptor, boundary, root, targets, details) {
   var _descriptor$targets;
@@ -346,7 +260,7 @@ var resolveMembers = function resolveMembers(descriptor, boundary, root, targets
   }
   if (boundary) {
     return targets.filter(function (target) {
-      return isComposedWithin(boundary, target);
+      return (0, _domUtilities.isComposedWithin)(boundary, target);
     });
   }
   return [];
@@ -459,22 +373,24 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
     typedContexts = _ref2$typedContexts === void 0 ? [] : _ref2$typedContexts,
     _ref2$previousModel = _ref2.previousModel,
     previousModel = _ref2$previousModel === void 0 ? null : _ref2$previousModel;
-  if (!root || !isDocument(root) && !isElement(root) && !isShadowRoot(root)) {
+  if (!root || !(0, _domUtilities.isDocument)(root) && !(0, _domUtilities.isElement)(root) && !(0, _domUtilities.isShadowRoot)(root)) {
     throw new TypeError('buildStructuralModel requires an Element, Document, or ShadowRoot root.');
   }
   var liveTargets = Array.from(targets).filter(function (target) {
-    return (target === null || target === void 0 ? void 0 : target.isConnected) && isComposedWithin(root, target);
+    return (target === null || target === void 0 ? void 0 : target.isConnected) && (0, _domUtilities.isComposedWithin)(root, target);
   }).filter(function (target, index, values) {
     return values.indexOf(target) === index;
   });
-  var elements = composedElements(root);
+  var elements = (0, _domUtilities.collectComposedElements)(root, {
+    exclude: _domUtilities.isOpenKeyNavGeneratedUI
+  });
   var orderByElement = new Map(elements.map(function (element, index) {
     return [element, index];
   }));
   var targetOrder = function targetOrder(target) {
     return orderByElement.has(target) ? orderByElement.get(target) : Number.MAX_SAFE_INTEGER;
   };
-  var rootName = isDocument(root) ? 'Document' : isElement(root) ? contextNameForElement(root, contextTypeForElement(root) || 'region') : 'Shadow root';
+  var rootName = (0, _domUtilities.isDocument)(root) ? 'Document' : (0, _domUtilities.isElement)(root) ? contextNameForElement(root, contextTypeForElement(root) || 'region') : 'Shadow root';
   var rootContext = makeContext({
     id: stableBoundaryId(root, 'root'),
     name: rootName,
@@ -498,7 +414,7 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
     var type = contextTypeForElement(element);
     if (!type) return;
     var memberTargets = liveTargets.filter(function (target) {
-      return isComposedWithin(element, target);
+      return (0, _domUtilities.isComposedWithin)(element, target);
     });
     if (!memberTargets.length) return;
     var context = makeContext({
@@ -518,7 +434,7 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
   });
   automaticContexts.forEach(function (context) {
     var directHeadings = headings.filter(function (heading) {
-      return isComposedWithin(context.boundary, heading) && nearestContextBoundary(composedParent(heading), boundaryContexts, root) === context;
+      return (0, _domUtilities.isComposedWithin)(context.boundary, heading) && nearestContextBoundary((0, _domUtilities.getComposedParent)(heading), boundaryContexts, root) === context;
     });
     var labelledHeadingIds = new Set((context.boundary.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean));
     var explicitlyAssociated = directHeadings.find(function (heading) {
@@ -626,32 +542,67 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
     var boundary = container.boundary;
     var containerHeadings = headings.filter(function (heading) {
       if (heading === container.associatedHeading) return false;
-      if (!isComposedWithin(boundary, heading)) return false;
-      var nearest = nearestContextBoundary(composedParent(heading), boundaryContexts, root);
+      if (!(0, _domUtilities.isComposedWithin)(boundary, heading)) return false;
+      var nearest = nearestContextBoundary((0, _domUtilities.getComposedParent)(heading), boundaryContexts, root);
       return (nearest || rootContext) === container;
     });
     if (!containerHeadings.length) return;
     var scopeOrders = elements.filter(function (element) {
-      return isComposedWithin(boundary, element);
+      return (0, _domUtilities.isComposedWithin)(boundary, element);
     }).map(function (element) {
       return orderByElement.get(element);
     });
     var scopeEnd = scopeOrders.length ? Math.max.apply(Math, _toConsumableArray(scopeOrders)) + 1 : elements.length + 1;
     var stack = [];
+
+    // A generic authored wrapper does not become a structural context, but it
+    // can still provide a credible end for the headings and targets grouped
+    // inside it. Use the nearest ancestor below the semantic container that
+    // contains a following target outside the heading itself. This prevents a
+    // final heading range from absorbing later sibling content merely because
+    // no same-or-higher heading follows it.
+    var rangeBoundaryForHeading = function rangeBoundaryForHeading(heading) {
+      var headingOrder = orderByElement.get(heading);
+      var candidate = (0, _domUtilities.getComposedParent)(heading);
+      while (candidate && candidate !== boundary) {
+        if ((0, _domUtilities.isElement)(candidate) && liveTargets.some(function (target) {
+          return container.memberSet.has(target) && !isSemanticallyHidden(target, root) && !(0, _domUtilities.isComposedWithin)(heading, target) && (0, _domUtilities.isComposedWithin)(candidate, target) && targetOrder(target) > headingOrder;
+        })) {
+          return candidate;
+        }
+        candidate = (0, _domUtilities.getComposedParent)(candidate);
+      }
+      return boundary;
+    };
+    var rangeEndForBoundary = function rangeEndForBoundary(rangeBoundary) {
+      var rangeOrders = elements.filter(function (element) {
+        return (0, _domUtilities.isComposedWithin)(rangeBoundary, element);
+      }).map(function (element) {
+        return orderByElement.get(element);
+      });
+      return rangeOrders.length ? Math.max.apply(Math, _toConsumableArray(rangeOrders)) + 1 : scopeEnd;
+    };
+    var closeHeadingContext = function closeHeadingContext(closing, requestedEnd) {
+      var context = closing.context;
+      context.rangeEnd = Math.min(closing.scopeEnd, requestedEnd);
+      context.memberTargets = liveTargets.filter(function (target) {
+        return targetOrder(target) >= context.rangeStart && targetOrder(target) < context.rangeEnd && container.memberSet.has(target) && !isSemanticallyHidden(target, root) && (0, _domUtilities.isComposedWithin)(context.rangeBoundary, target);
+      });
+      context.memberSet = new Set(context.memberTargets);
+    };
     containerHeadings.forEach(function (heading) {
       var level = headingRank(heading);
       var start = orderByElement.get(heading);
-      var _loop = function _loop() {
+      while (stack.length && stack[stack.length - 1].scopeEnd <= start) {
         var closing = stack.pop();
-        closing.context.rangeEnd = start;
-        closing.context.memberTargets = liveTargets.filter(function (target) {
-          return targetOrder(target) >= closing.context.rangeStart && targetOrder(target) < closing.context.rangeEnd && container.memberSet.has(target);
-        });
-        closing.context.memberSet = new Set(closing.context.memberTargets);
-      };
-      while (stack.length && stack[stack.length - 1].level >= level) {
-        _loop();
+        closeHeadingContext(closing, closing.scopeEnd);
       }
+      while (stack.length && stack[stack.length - 1].level >= level) {
+        var _closing = stack.pop();
+        closeHeadingContext(_closing, start);
+      }
+      var rangeBoundary = rangeBoundaryForHeading(heading);
+      var headingScopeEnd = rangeEndForBoundary(rangeBoundary);
       var context = makeContext({
         id: stableBoundaryId(heading, 'heading'),
         name: heading.textContent.replace(/\s+/g, ' ').trim() || "Heading level ".concat(level),
@@ -662,26 +613,21 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
         memberTargets: [],
         parentHint: stack.length ? stack[stack.length - 1].context : container,
         rangeStart: start,
-        rangeEnd: scopeEnd,
+        rangeEnd: headingScopeEnd,
+        rangeBoundary: rangeBoundary,
         containerContext: container,
         headingLevel: level
       });
       headingContexts.push(context);
       stack.push({
         level: level,
-        context: context
+        context: context,
+        scopeEnd: headingScopeEnd
       });
     });
-    var _loop2 = function _loop2() {
-      var closing = stack.pop();
-      closing.context.rangeEnd = scopeEnd;
-      closing.context.memberTargets = liveTargets.filter(function (target) {
-        return targetOrder(target) >= closing.context.rangeStart && targetOrder(target) < closing.context.rangeEnd && container.memberSet.has(target);
-      });
-      closing.context.memberSet = new Set(closing.context.memberTargets);
-    };
     while (stack.length) {
-      _loop2();
+      var closing = stack.pop();
+      closeHeadingContext(closing, closing.scopeEnd);
     }
   });
 
@@ -691,7 +637,7 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
   headingContexts.forEach(function (context) {
     context.visualElements = elements.filter(function (element) {
       var order = orderByElement.get(element);
-      return order >= context.rangeStart && order < context.rangeEnd && isComposedWithin(context.containerContext.boundary, element);
+      return order >= context.rangeStart && order < context.rangeEnd && !isSemanticallyHidden(element, root) && (0, _domUtilities.isComposedWithin)(context.rangeBoundary, element);
     });
   });
   headingContexts.filter(function (context) {
@@ -713,11 +659,11 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
       if (role !== 'listitem' && (tagName !== 'li' || Boolean(role))) {
         return false;
       }
-      var current = composedParent(element);
+      var current = (0, _domUtilities.getComposedParent)(element);
       while (current) {
         var currentContext = boundaryContexts.get(current);
         if ((currentContext === null || currentContext === void 0 ? void 0 : currentContext.type) === 'list') return currentContext === listContext;
-        current = composedParent(current);
+        current = (0, _domUtilities.getComposedParent)(current);
       }
       return false;
     });
@@ -726,7 +672,7 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
         element: element,
         index: index,
         targets: liveTargets.filter(function (target) {
-          return isComposedWithin(element, target);
+          return (0, _domUtilities.isComposedWithin)(element, target);
         })
       };
     }).filter(function (item) {
@@ -735,7 +681,7 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
     var hasRichItem = items.some(function (item) {
       if (item.targets.length > 1) return true;
       return allContexts.some(function (context) {
-        return context !== listContext && context.boundary && isComposedWithin(item.element, context.boundary) && context.memberTargets.length;
+        return context !== listContext && context.boundary && (0, _domUtilities.isComposedWithin)(item.element, context.boundary) && context.memberTargets.length;
       });
     });
     if (items.length < 2 || !hasRichItem) return;
@@ -771,7 +717,7 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
         var boundaryOrder = context.boundary ? orderByElement.get(context.boundary) : context.order;
         return boundaryOrder >= parent.rangeStart && boundaryOrder < parent.rangeEnd && isSubset(context.memberSet, parent.memberSet);
       }
-      return context.boundary && isComposedWithin(parent.boundary, context.boundary) && isSubset(context.memberSet, parent.memberSet);
+      return context.boundary && (0, _domUtilities.isComposedWithin)(parent.boundary, context.boundary) && isSubset(context.memberSet, parent.memberSet);
     }).sort(function (left, right) {
       return left.memberSet.size - right.memberSet.size || left.rangeEnd - left.rangeStart - (right.rangeEnd - right.rangeStart);
     });
@@ -831,7 +777,7 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
     var _iterator3 = _createForOfIteratorHelper(bottomUp),
       _step3;
     try {
-      var _loop3 = function _loop3() {
+      var _loop = function _loop() {
           var _parent$children;
           var context = _step3.value;
           var parent = context.parent;
@@ -852,7 +798,7 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
         },
         _ret;
       for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-        _ret = _loop3();
+        _ret = _loop();
         if (_ret === 0) continue;
         if (_ret === 1) break;
       }

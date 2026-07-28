@@ -1,6 +1,17 @@
-const ELEMENT_NODE = 1;
-const DOCUMENT_NODE = 9;
-const DOCUMENT_FRAGMENT_NODE = 11;
+import {
+  getExplicitAccessibleName,
+  normalizeText,
+} from './accessibilityName.js';
+import {
+  collectComposedElements,
+  getComposedParent,
+  hasAriaHiddenAncestor,
+  isComposedWithin,
+  isDocument,
+  isElement,
+  isOpenKeyNavGeneratedUI,
+  isShadowRoot,
+} from './domUtilities.js';
 
 const LANDMARK_ROLES = new Set([
   'banner',
@@ -25,64 +36,12 @@ const COMPOSITE_ROLES = new Set([
   'treegrid',
 ]);
 const SUPPRESSED_ROLES = new Set(['none', 'presentation']);
-const GENERATED_SELECTOR = [
-  '[data-openkeynav-ui]',
-  '.openKeyNav-label',
-  '.openKeyNav-toolBar',
-  '.openKeyNav-mouseover-tooltip',
-  '.openKeyNav-structural-status',
-  '#okn-notification-container',
-  '#okn-audit-panel',
-].join(',');
-
 const boundaryIdentity = new WeakMap();
 let nextBoundaryIdentity = 1;
 
-const isElement = node => Boolean(node && node.nodeType === ELEMENT_NODE);
-const isDocument = node => Boolean(node && node.nodeType === DOCUMENT_NODE);
-const isShadowRoot = node => Boolean(
-  node &&
-  node.nodeType === DOCUMENT_FRAGMENT_NODE &&
-  node.host &&
-  isElement(node.host)
+const isSemanticallyHidden = (element, root) => (
+  hasAriaHiddenAncestor(element, root)
 );
-
-const composedParent = node => {
-  if (!node) return null;
-  if (node.assignedSlot) return node.assignedSlot;
-  if (isShadowRoot(node)) return node.host;
-  return node.parentNode || null;
-};
-
-const isComposedWithin = (boundary, node) => {
-  let current = node;
-  while (current) {
-    if (current === boundary) return true;
-    current = composedParent(current);
-  }
-  return false;
-};
-
-const isGeneratedUI = element => {
-  let current = element;
-  while (current) {
-    if (isElement(current) && current.matches(GENERATED_SELECTOR)) return true;
-    current = composedParent(current);
-  }
-  return false;
-};
-
-const isSemanticallyHidden = (element, root) => {
-  let current = element;
-  while (current) {
-    if (isElement(current) && current.getAttribute('aria-hidden') === 'true') {
-      return true;
-    }
-    if (current === root) break;
-    current = composedParent(current);
-  }
-  return false;
-};
 
 const isOperativeSemanticElement = (element, root) => {
   let current = element;
@@ -128,7 +87,7 @@ const isOperativeSemanticElement = (element, root) => {
       }
     }
     if (current === root) break;
-    current = composedParent(current);
+    current = getComposedParent(current);
   }
   return true;
 };
@@ -139,64 +98,6 @@ const stableBoundaryId = (boundary, prefix = 'context') => {
   }
   return `${prefix}-${boundaryIdentity.get(boundary)}`;
 };
-
-const composedChildren = node => {
-  if (isDocument(node)) {
-    return node.documentElement ? [node.documentElement] : [];
-  }
-  if (isElement(node) && node.shadowRoot) {
-    return Array.from(node.shadowRoot.childNodes);
-  }
-  if (
-    isElement(node) &&
-    node.tagName.toLowerCase() === 'slot' &&
-    typeof node.assignedNodes === 'function'
-  ) {
-    const assigned = node.assignedNodes({ flatten: true });
-    if (assigned.length) return assigned;
-  }
-  return Array.from(node?.childNodes || []);
-};
-
-const composedElements = root => {
-  const elements = [];
-  const seen = new Set();
-
-  const visit = node => {
-    if (!node || seen.has(node)) return;
-    seen.add(node);
-    if (isElement(node)) {
-      if (isGeneratedUI(node)) return;
-      elements.push(node);
-    }
-    composedChildren(node).forEach(visit);
-  };
-
-  visit(root);
-  return elements;
-};
-
-const queryRootById = (element, id) => {
-  const root = element.getRootNode?.();
-  return root?.getElementById?.(id) || element.ownerDocument?.getElementById(id);
-};
-
-const labelledByText = element => {
-  const ids = (element.getAttribute('aria-labelledby') || '')
-    .split(/\s+/)
-    .filter(Boolean);
-  return ids
-    .map(id => queryRootById(element, id))
-    .filter(label => label && !isSemanticallyHidden(label, element.getRootNode()))
-    .map(label => label.textContent.replace(/\s+/g, ' ').trim())
-    .filter(Boolean)
-    .join(' ');
-};
-
-const explicitAccessibleName = element => (
-  labelledByText(element) ||
-  (element.getAttribute('aria-label') || '').trim()
-);
 
 const headingRank = element => {
   if (!isElement(element)) return null;
@@ -217,7 +118,7 @@ const contextTypeForElement = element => {
 
   if (role) {
     if (LANDMARK_ROLES.has(role)) {
-      if (role === 'region' && !explicitAccessibleName(element)) return null;
+      if (role === 'region' && !getExplicitAccessibleName(element)) return null;
       return role;
     }
     if (role === 'list') return 'list';
@@ -233,26 +134,26 @@ const contextTypeForElement = element => {
     case 'aside':
       return 'complementary';
     case 'header': {
-      let ancestor = composedParent(element);
+      let ancestor = getComposedParent(element);
       while (ancestor && isElement(ancestor)) {
         if (['article', 'aside', 'main', 'nav', 'section'].includes(
           ancestor.tagName.toLowerCase()
         )) {
           return null;
         }
-        ancestor = composedParent(ancestor);
+        ancestor = getComposedParent(ancestor);
       }
       return 'banner';
     }
     case 'footer': {
-      let ancestor = composedParent(element);
+      let ancestor = getComposedParent(element);
       while (ancestor && isElement(ancestor)) {
         if (['article', 'aside', 'main', 'nav', 'section'].includes(
           ancestor.tagName.toLowerCase()
         )) {
           return null;
         }
-        ancestor = composedParent(ancestor);
+        ancestor = getComposedParent(ancestor);
       }
       return 'contentinfo';
     }
@@ -282,7 +183,7 @@ const firstLegendText = element => {
   if (element.tagName.toLowerCase() !== 'fieldset') return '';
   const legend = Array.from(element.children)
     .find(child => child.tagName.toLowerCase() === 'legend');
-  return legend?.textContent.replace(/\s+/g, ' ').trim() || '';
+  return normalizeText(legend?.textContent);
 };
 
 const contextFallbackName = type => {
@@ -306,8 +207,8 @@ const contextFallbackName = type => {
 
 const contextNameForElement = (element, type, associatedHeading = null) => (
   firstLegendText(element) ||
-  explicitAccessibleName(element) ||
-  associatedHeading?.textContent.replace(/\s+/g, ' ').trim() ||
+  getExplicitAccessibleName(element) ||
+  normalizeText(associatedHeading?.textContent) ||
   contextFallbackName(type)
 );
 
@@ -323,6 +224,7 @@ const makeContext = ({
   required = false,
   rangeStart = null,
   rangeEnd = null,
+  rangeBoundary = null,
   containerContext = null,
   visualElements = [],
   explicitParentId = null,
@@ -343,6 +245,7 @@ const makeContext = ({
   required,
   rangeStart,
   rangeEnd,
+  rangeBoundary,
   containerContext,
   visualElements: Array.from(visualElements),
   explicitParentId,
@@ -354,16 +257,16 @@ const nearestContextBoundary = (element, boundaryContexts, stopRoot) => {
   while (current) {
     if (boundaryContexts.has(current)) return boundaryContexts.get(current);
     if (current === stopRoot) break;
-    current = composedParent(current);
+    current = getComposedParent(current);
   }
   return null;
 };
 
 const nearestAncestorContext = (boundary, boundaryContexts, rootContext) => {
-  let current = composedParent(boundary);
+  let current = getComposedParent(boundary);
   while (current) {
     if (boundaryContexts.has(current)) return boundaryContexts.get(current);
-    current = composedParent(current);
+    current = getComposedParent(current);
   }
   return rootContext;
 };
@@ -518,7 +421,9 @@ export const buildStructuralModel = ({
   const liveTargets = Array.from(targets)
     .filter(target => target?.isConnected && isComposedWithin(root, target))
     .filter((target, index, values) => values.indexOf(target) === index);
-  const elements = composedElements(root);
+  const elements = collectComposedElements(root, {
+    exclude: isOpenKeyNavGeneratedUI,
+  });
   const orderByElement = new Map(
     elements.map((element, index) => [element, index])
   );
@@ -590,7 +495,7 @@ export const buildStructuralModel = ({
     const directHeadings = headings.filter(heading => (
       isComposedWithin(context.boundary, heading) &&
       nearestContextBoundary(
-        composedParent(heading),
+        getComposedParent(heading),
         boundaryContexts,
         root
       ) === context
@@ -748,7 +653,7 @@ export const buildStructuralModel = ({
       if (heading === container.associatedHeading) return false;
       if (!isComposedWithin(boundary, heading)) return false;
       const nearest = nearestContextBoundary(
-        composedParent(heading),
+        getComposedParent(heading),
         boundaryContexts,
         root
       );
@@ -764,19 +669,70 @@ export const buildStructuralModel = ({
       : elements.length + 1;
     const stack = [];
 
+    // A generic authored wrapper does not become a structural context, but it
+    // can still provide a credible end for the headings and targets grouped
+    // inside it. Use the nearest ancestor below the semantic container that
+    // contains a following target outside the heading itself. This prevents a
+    // final heading range from absorbing later sibling content merely because
+    // no same-or-higher heading follows it.
+    const rangeBoundaryForHeading = heading => {
+      const headingOrder = orderByElement.get(heading);
+      let candidate = getComposedParent(heading);
+
+      while (candidate && candidate !== boundary) {
+        if (
+          isElement(candidate) &&
+          liveTargets.some(target => (
+            container.memberSet.has(target) &&
+            !isSemanticallyHidden(target, root) &&
+            !isComposedWithin(heading, target) &&
+            isComposedWithin(candidate, target) &&
+            targetOrder(target) > headingOrder
+          ))
+        ) {
+          return candidate;
+        }
+        candidate = getComposedParent(candidate);
+      }
+
+      return boundary;
+    };
+    const rangeEndForBoundary = rangeBoundary => {
+      const rangeOrders = elements
+        .filter(element => isComposedWithin(rangeBoundary, element))
+        .map(element => orderByElement.get(element));
+      return rangeOrders.length
+        ? Math.max(...rangeOrders) + 1
+        : scopeEnd;
+    };
+    const closeHeadingContext = (closing, requestedEnd) => {
+      const context = closing.context;
+      context.rangeEnd = Math.min(closing.scopeEnd, requestedEnd);
+      context.memberTargets = liveTargets.filter(target => (
+        targetOrder(target) >= context.rangeStart &&
+        targetOrder(target) < context.rangeEnd &&
+        container.memberSet.has(target) &&
+        !isSemanticallyHidden(target, root) &&
+        isComposedWithin(context.rangeBoundary, target)
+      ));
+      context.memberSet = new Set(context.memberTargets);
+    };
+
     containerHeadings.forEach(heading => {
       const level = headingRank(heading);
       const start = orderByElement.get(heading);
+
+      while (stack.length && stack[stack.length - 1].scopeEnd <= start) {
+        const closing = stack.pop();
+        closeHeadingContext(closing, closing.scopeEnd);
+      }
       while (stack.length && stack[stack.length - 1].level >= level) {
         const closing = stack.pop();
-        closing.context.rangeEnd = start;
-        closing.context.memberTargets = liveTargets.filter(target => (
-          targetOrder(target) >= closing.context.rangeStart &&
-          targetOrder(target) < closing.context.rangeEnd &&
-          container.memberSet.has(target)
-        ));
-        closing.context.memberSet = new Set(closing.context.memberTargets);
+        closeHeadingContext(closing, start);
       }
+
+      const rangeBoundary = rangeBoundaryForHeading(heading);
+      const headingScopeEnd = rangeEndForBoundary(rangeBoundary);
 
       const context = makeContext({
         id: stableBoundaryId(heading, 'heading'),
@@ -791,23 +747,18 @@ export const buildStructuralModel = ({
           ? stack[stack.length - 1].context
           : container,
         rangeStart: start,
-        rangeEnd: scopeEnd,
+        rangeEnd: headingScopeEnd,
+        rangeBoundary,
         containerContext: container,
         headingLevel: level,
       });
       headingContexts.push(context);
-      stack.push({ level, context });
+      stack.push({ level, context, scopeEnd: headingScopeEnd });
     });
 
     while (stack.length) {
       const closing = stack.pop();
-      closing.context.rangeEnd = scopeEnd;
-      closing.context.memberTargets = liveTargets.filter(target => (
-        targetOrder(target) >= closing.context.rangeStart &&
-        targetOrder(target) < closing.context.rangeEnd &&
-        container.memberSet.has(target)
-      ));
-      closing.context.memberSet = new Set(closing.context.memberTargets);
+      closeHeadingContext(closing, closing.scopeEnd);
     }
   });
 
@@ -820,7 +771,8 @@ export const buildStructuralModel = ({
       return (
         order >= context.rangeStart &&
         order < context.rangeEnd &&
-        isComposedWithin(context.containerContext.boundary, element)
+        !isSemanticallyHidden(element, root) &&
+        isComposedWithin(context.rangeBoundary, element)
       );
     });
   });
@@ -846,11 +798,11 @@ export const buildStructuralModel = ({
           return false;
         }
 
-        let current = composedParent(element);
+        let current = getComposedParent(element);
         while (current) {
           const currentContext = boundaryContexts.get(current);
           if (currentContext?.type === 'list') return currentContext === listContext;
-          current = composedParent(current);
+          current = getComposedParent(current);
         }
         return false;
       });

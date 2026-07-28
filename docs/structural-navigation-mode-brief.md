@@ -42,9 +42,9 @@ The first complete release must provide:
 - Target discovery without pressing Tab.
 - A deterministic structural context tree.
 - Previous and next target movement within an active context.
-- Previous and next same-heading-level context movement, with structural
-  sibling fallback for contexts without a heading level.
-- Broaden-to-parent and narrow-to-child context changes.
+- Previous and next horizontal-peer movement using true siblings plus
+  heading-backed, equal-depth peers across parents regardless of authored rank.
+- Broaden-to-parent, narrow-on-path, and page-forward next-level context changes.
 - Native Tab, Shift+Tab, Enter, Space, and widget behavior.
 - Real-focus synchronization after keyboard, pointer, script, and OpenKeyNav focus changes.
 - Correct behavior on dynamic pages.
@@ -136,9 +136,10 @@ The deep active target is the actual focused element after following accessible 
 
 The required model is not “the page is a hypergraph.” It is:
 
-1. A canonical structural tree used for parent/child navigation and unheaded
-   sibling fallback, plus authored heading-rank metadata for lateral navigation
-   across structural parents.
+1. A canonical structural tree used for parent/child and true-sibling
+   navigation, plus heading metadata for lateral peers across structural
+   parents at the same canonical hierarchy depth. Authored rank does not split
+   one canonical level into separate lateral lanes.
 2. Zero or more typed ordered groups that may overlap that tree.
 3. One identity for each real focus target.
 
@@ -362,7 +363,12 @@ Within each enclosing structural container:
 2. Lower-level subsequent headings become descendants.
 3. A heading at the same or higher rank closes the preceding heading context as necessary.
 4. Skipped levels attach to the nearest preceding lower-rank heading rather than creating phantom levels.
-5. Heading scope ends at the boundary of its enclosing structural context.
+5. Heading scope never crosses the boundary of its enclosing structural
+   context. Within that context, the nearest authored composed-DOM wrapper
+   that groups the heading with a following exposed target may cap the range
+   earlier. The wrapper bounds membership and the visual indicator without
+   becoming an additional structural context merely because it is a generic
+   `div` or `span`.
 6. When an explicit sectioning element and its own heading describe the same range, collapse them into one context instead of producing duplicate nested contexts.
 
 Use `h1` through `h6` rank for native headings and a valid `aria-level` for an element with `role="heading"`. Ignore malformed or missing rank information rather than inventing a level.
@@ -451,8 +457,12 @@ When the current target belongs to one or more typed contexts:
 - Previous and next use the active typed context's explicit order.
 - Structural parent, child, and horizontal commands leave the typed route.
   Parent/child commands operate on the canonical tree; horizontal commands use
-  heading rank or the unheaded sibling fallback described below.
+  the true-sibling and heading-backed/equal-depth peer union described below.
 - Returning to structural navigation selects the innermost structural context containing the current target.
+
+Typed contexts have no hierarchy level of their own. Status for a typed route
+reports the one-based level of the underlying direct structural context that a
+Shift+Up/Down command returns to before traversing the canonical tree.
 
 Typed-route cycling is an explicit extension command and has no default key binding. If no typed context applies, it reports the boundary and does nothing.
 
@@ -462,12 +472,11 @@ Define relationship commands independently of their key bindings:
 
 1. Previous target in the active context.
 2. Next target in the active context.
-3. Previous context at the active heading level, or previous structural sibling
-   when the context is unheaded.
-4. Next context at the active heading level, or next structural sibling when
-   the context is unheaded.
+3. Previous horizontal peer at the active canonical hierarchy depth.
+4. Next horizontal peer at the active canonical hierarchy depth.
 5. Broaden to the structural parent.
-6. Narrow to the structural child on the current target's path.
+6. Narrow to the structural child on the current target's path, or advance to
+   the next qualifying deeper context when that path has no child.
 7. Previous applicable peer context.
 8. Next applicable peer context.
 9. Exit the mode without OpenKeyNav moving focus.
@@ -480,9 +489,9 @@ Integrate with OpenKeyNav's configurable shortcut system. A reasonable initial m
 | --- | --- |
 | `Shift+Tab` / `Tab` | Native browser sequential focus; not intercepted |
 | `Shift+ArrowUp` | Broaden to structural parent |
-| `Shift+ArrowDown` | Narrow along current target's structural path |
-| `Shift+ArrowLeft` | Previous context at the same heading level; structural sibling fallback when unheaded |
-| `Shift+ArrowRight` | Next context at the same heading level; structural sibling fallback when unheaded |
+| `Shift+ArrowDown` | Narrow along the current target's path, or advance one qualifying level |
+| `Shift+ArrowLeft` | Previous horizontal peer at the same canonical hierarchy depth |
+| `Shift+ArrowRight` | Next horizontal peer at the same canonical hierarchy depth |
 | Application-configured command | Previous or next target in active context |
 | Application-configured command | Previous or next applicable typed context |
 | Configured mode-exit command | Exit and preserve current focus |
@@ -518,16 +527,20 @@ Use the active context's ordered target sequence.
 
 ### Previous and next horizontal context
 
-When the active context has an authored heading level, its horizontal contexts
-are every nonempty structural context with that same heading level in the
-active navigation root. Order them by composed document order or an explicit
-application-supplied order. They may have different structural parents: for
-example, an H3 under one H2 and the next H3 under a later H2 are adjacent in the
-H3 horizontal lane. A semantic region associated with a heading inherits that
-heading's level.
+True structural siblings are always horizontal peers, even when malformed
+heading markup gives those siblings different authored ranks. When the active
+context has an authored heading level, add nonempty contexts under other
+parents when they are heading-backed and occupy the same canonical hierarchy
+depth. Their authored H1–H6 ranks do not have to match. For example,
+Recommendations may be associated with an authored H2 while `Current
+level-three context` is an H3; they are horizontal peers when both are at
+canonical hierarchy level 3. Conversely, two authored H2 regions at different
+canonical depths are not horizontal peers merely because their tags match. A
+semantic region associated with a heading is heading-backed and retains that
+heading's rank as metadata, but rank does not define the horizontal lane.
 
-When the active context has no heading level, horizontal movement falls back to
-the nonempty children of its structural parent.
+When the active context has no heading level, horizontal movement uses only the
+nonempty children of its structural parent.
 
 Horizontal movement does not wrap. At the first or last context in the active
 lane, keep focus and context unchanged and announce the boundary.
@@ -550,9 +563,26 @@ At the root, do nothing and announce the boundary.
 
 If the current target's direct-context path passes through an immediate child of the active context, activate that child and keep focus unchanged.
 
-If the target is a direct member of the active context and no child on its path exists, do nothing and announce the boundary. Narrowing does not arbitrarily choose another child or move focus.
+If no immediate child contains the current target, narrowing uses a page-forward
+fallback rather than selecting an arbitrary child of the active context:
 
-This makes broaden followed by narrow reversible while the same target remains focused.
+- Scan contexts after the active context in document order. Do not wrap.
+- Skip contexts with no focus targets.
+- Require the destination to be exactly one canonical hierarchy level deeper.
+- When the active context is heading-backed H1–H5, also require the next authored
+  heading rank, H(n+1). Semantic regions associated with headings use their
+  inherited rank. This prevents an H2 command from entering an unrelated
+  unheaded level-three context or an H4 merely because either appears first.
+- Activate the first qualifying context and focus the first target in its
+  flattened sequence.
+- H6 is the boundary for this page-forward heading fallback. It does not block a
+  real immediate semantic child containing the current target.
+- If no qualifying context exists, retain focus and context and announce the
+  boundary.
+
+This keeps broaden followed by in-path narrow reversible while the same target
+remains focused, while still letting Shift+Down progress through authored
+heading levels when the active focus path has no deeper context.
 
 ### Alternate peer context
 
@@ -605,7 +635,7 @@ Do not consume structural-navigation arrows when the current composed event path
 
 For outer structural navigation, treat a composite widget as the page-level target represented by its actual Tab stop. Do not enumerate roving-`tabindex="-1"` items or `aria-activedescendant` options as ordinary page targets.
 
-Provide a deliberate configurable override command for users who want to invoke structural navigation while focus is inside an arrow-owning control. Do not assume that the current text-input modifier already solves arbitrary widget ownership.
+Provide a deliberate configurable override command for users who want to invoke structural navigation while focus is inside an arrow-owning control. Treat the override as a permissive ownership signal: while it remains held, it must not invalidate an otherwise configured structural arrow command after focus leaves the control. Do not assume that the current text-input modifier already solves arbitrary widget ownership.
 
 ### Escape and close behavior
 
@@ -626,7 +656,7 @@ Therefore:
 
 ### Event-processing constraints
 
-- Ignore composition events and unconfigured modifier combinations.
+- Ignore composition events and unconfigured modifier combinations, except for the explicitly configured ownership override when accompanying a structural arrow command.
 - Make key-ownership decisions before calling `preventDefault()` or `stopPropagation()`.
 - Do not rely solely on `defaultPrevented` when OpenKeyNav listens during capture.
 - One accepted command should be handled once even under key repeat or rapid input.
@@ -730,17 +760,24 @@ Use OpenKeyNav's existing status, notification, toolbar, and focus-marker facili
 
 - Mode activation and exit.
 - Current target name.
-- Active structural or typed context name.
+- Active document/root, structural, or typed context name.
 - Position within the active target sequence.
+- The active context's one-based level in the canonical structural hierarchy,
+  with the document or scoped root at level 1. A typed route reports its
+  underlying direct structural level rather than inventing another parent.
 - Context changes.
-- Available same-heading-level contexts or unheaded structural siblings, plus
-  applicable typed contexts.
+- A bounded count of applicable typed contexts.
 - Boundaries and unavailable relationships.
 
 Requirements:
 
 - Status never takes focus during traversal.
 - Context-only changes are visible and exposed through a concise polite live announcement.
+- Persistent status does not name previous or next horizontal contexts or
+  enumerate a peer lane. An attempted command still announces a horizontal,
+  parent/child, target, or typed-route boundary when the relationship is
+  unavailable.
+- A configurable, non-focus-stealing status-dismissal command may close the visual surface while retaining visually hidden polite updates, and must defer to controls or applications that own the key.
 - Repeated navigation does not queue long or redundant announcements.
 - OpenKeyNav may augment a weak page focus indicator but must not suppress the page's native or authored focus styles.
 - A generated visual context indicator may outline the active context, but it is `aria-hidden`, ignores pointer events, never receives focus, and is removed on mode exit.
@@ -844,23 +881,30 @@ Demonstrate:
 2. Explicit configured or programmatic next/previous target commands move real
    focus within a narrow context, while native Tab remains unmodified.
 3. Broaden retains focus and enlarges the available flattened sequence.
-4. Narrow follows the current target's path and retains focus.
+4. Narrow follows the current target's path and retains focus. When an H1–H5
+   context has no child on that path, it advances without wrapping to the first
+   nonempty H(n+1) at the next canonical hierarchy level and focuses that
+   destination's first target; H6 is the fallback boundary.
 5. Horizontal movement lands on a real target and activates the destination
    context.
 6. From an H3 under the first H2, next-horizontal movement enters the first
    target of the H3 under the second H2; previous-horizontal movement reverses
    it. Both active contexts remain H3 contexts.
-7. A broadened explicit previous/next target command may cross descendant
+7. From Recommendations, an authored H2 at canonical hierarchy level 3,
+   next-horizontal movement skips unrelated unheaded contexts and enters the
+   first target of `Current level-three context`, an authored H3 at canonical
+   hierarchy level 3. Previous-horizontal movement reverses it.
+8. A broadened explicit previous/next target command may cross descendant
    groups without silently narrowing.
-8. Boundaries do not wrap by default.
-9. The offscreen target is discoverable and browser focus reveals it without a scroll loop.
-10. `document.activeElement` or the defined deep-active-target resolver identifies the reached target.
-11. Native focus and blur events fire.
-12. Native Tab and Shift+Tab remain unmodified.
-13. Tab continues naturally from a mode-reached target.
-14. Enter activates a focused link or button normally.
-15. Space operates a focused checkbox normally.
-16. Exit leaves current focus in place.
+9. Boundaries do not wrap by default.
+10. The offscreen target is discoverable and browser focus reveals it without a scroll loop.
+11. `document.activeElement` or the defined deep-active-target resolver identifies the reached target.
+12. Native focus and blur events fire.
+13. Native Tab and Shift+Tab remain unmodified.
+14. Tab continues naturally from a mode-reached target.
+15. Enter activates a focused link or button normally.
+16. Space operates a focused checkbox normally.
+17. Exit leaves current focus in place.
 
 ### Native-widget scenario
 
@@ -959,9 +1003,11 @@ Cover pure logic for:
 - Heading-stack behavior and duplicate-context collapse.
 - Direct-context assignment.
 - Flattened target sequences.
-- Same-heading-level order across parents and structural sibling fallback for
-  unheaded contexts.
-- Broaden and narrow transitions.
+- True structural siblings, differently ranked heading-backed peers across
+  parents at equal canonical depth, rejection at different depths, and
+  exclusion of unrelated unheaded contexts across parents.
+- Broaden, in-path narrow, page-forward next-depth/next-rank fallback, and H6
+  boundary transitions.
 - No-current-target behavior.
 - Typed-context membership and cycling.
 - Dynamic invalidation and stale-reference removal.
@@ -986,6 +1032,8 @@ Use Playwright or the repository's current browser runner for:
 - Rapid input and key repeat.
 - Page focus handlers that redirect focus.
 - Repeated mode entry, exit, disable, and teardown.
+- In-path narrow focus retention, page-forward next-depth/next-rank entry at the
+  destination's first target, and the H6 fallback boundary.
 
 Run the full relevant browser suite, not one or two manual interactions.
 

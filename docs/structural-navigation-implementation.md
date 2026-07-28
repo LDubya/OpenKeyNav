@@ -9,12 +9,32 @@ navigation mode described in `structural-navigation-mode-brief.md`.
   and mode signals.
 - The capture-phase key dispatcher remains the single keyboard entry point.
 - Existing global enable/disable commands remain unchanged.
-- Page focus is moved with one direct `focus()` call on the selected page target.
-  Heading and scrolling helpers are not reused because they temporarily create
-  `tabindex="-1"` targets.
-- Structural status uses a dedicated visible `role="status"`/`aria-live="polite"`
-  surface. Exit uses the existing transient notification after removing that
-  mode-specific surface.
+- Page focus moves through OpenKeyNav's shared, redirect-aware focus helper,
+  which decorates only the settled page target. Heading and scrolling helpers
+  are not reused because they temporarily create `tabindex="-1"` targets.
+- One core `StatusService` owns both `emitNotification()` and structural status.
+  Notifications remain assertive and transient; structural context changes
+  update one persistent, scoped `role="status"`/`aria-live="polite"` channel.
+  Exit clears that channel and emits one time-limited polite status in the same
+  document, modal, element, or open ShadowRoot. Visible structural status uses
+  the same optional OpenKeyNav branding as notifications, controlled by
+  `notifications.displayToolName`.
+- Structural status identifies the active structural, document/root, or typed
+  context, reports the target's position, and gives the active canonical
+  hierarchy level as a one-based number. The document or scoped root is level
+  1. Typed contexts are overlapping routes rather than tree nodes, so their
+  status reports the underlying structural level that Shift+Up/Down returns
+  to. The persistent status does not name previous or next horizontal contexts;
+  attempted boundary commands still report unavailable relationships. It
+  reports applicable typed routes as a bounded count. `Shift+Escape` closes the
+  visual surface without moving focus or disabling its visually hidden polite
+  live updates. Escape-owning widgets keep that chord, and true mode re-entry
+  restores the visible surface.
+- Status messages are inserted as text by default. Only OpenKeyNav-owned markup
+  explicitly passed with `trustedHtml: true` is interpreted as HTML.
+- Composed-tree traversal, deep active-element lookup, generated-interface
+  exclusion, and author-provided accessible-name extraction live in shared DOM
+  and naming utilities rather than separate structural implementations.
 
 ## Target discovery
 
@@ -77,18 +97,32 @@ static-table row/column inference is intentionally deferred.
 - Explicit previous/next target commands use the active structural flattened
   sequence or active typed sequence. They do not wrap. With no current target,
   next enters at the first item and previous enters at the last.
-- Horizontal movement does not wrap. A heading-backed context traverses all
-  nonempty contexts at the same authored heading level across the active root,
-  even across different structural parents. An unheaded context falls back to
-  its structural siblings. Movement always enters the destination's first
+- Horizontal movement does not wrap. True structural siblings are always
+  peers, including siblings with mismatched authored heading ranks. A
+  heading-backed context may additionally traverse any heading-backed context
+  under a different parent when both contexts have the same canonical
+  hierarchy depth, regardless of authored H1–H6 rank. An unheaded context uses
+  only its structural siblings. Movement always enters the destination's first
   target.
-- Broaden selects the immediate structural parent. Narrow selects only the child
-  on the current target's direct-context path. Both retain focus.
+- Broaden selects the immediate structural parent. Narrow first selects the child
+  on the current target's direct-context path; both transitions retain focus.
+  When no such child exists, narrow scans forward without wrapping for the first
+  nonempty context exactly one canonical level deeper. From a heading-backed
+  H1–H5 it additionally requires authored rank H(n+1), activates that context,
+  and focuses its first target. H6 blocks only this forward fallback, not a real
+  child containing the current target.
 - Explicit peer-context commands cycle through structural routing and the
   applicable typed contexts. That typed ring wraps and changing typed peers
-  retains focus. Typed cycling has no default keyboard binding.
+  retains focus. Typed cycling has no default keyboard binding; applications
+  may configure commands or invoke `structuralNavigate('previousPeerContext')`
+  and `structuralNavigate('nextPeerContext')` programmatically.
 - A generated, `aria-hidden`, pointer-transparent box follows the active context
   boundary or heading range. It never enters target discovery or page focus.
+- A heading range is capped by the nearest authored composed-DOM wrapper that
+  groups that heading with a following exposed target, when that wrapper ends
+  before the enclosing semantic context. This keeps final heading families
+  from absorbing later sibling content without promoting generic wrappers into
+  structural contexts.
 - Exit removes mode state, observers, listeners, status, and the context box
   without blurring or moving the current page focus.
 
@@ -101,24 +135,33 @@ does not pull focus back.
 
 Native Tab/Shift+Tab provide sequential focus. Previous/next target commands
 remain configurable and programmatic but are unbound by default. The defaults
-are Shift+Left/Right for same-heading-level contexts (structural siblings for
-unheaded contexts) and Shift+Up/Down for broaden/narrow; all bare arrows and
-typed-context cycling are unbound. `r`
+are Shift+Left/Right for true siblings plus heading-backed peers at equal
+hierarchy depth regardless of authored rank, and Shift+Up/Down for
+broaden/narrow; all bare arrows and typed-context cycling are unbound. `r`
 enters or toggles the mode outside an editing/widget context.
 `Alt+r` is the reliable default exit from any supported target. Bare Escape is
-not an exit alias by default.
+not an exit alias by default. `Shift+Escape` closes the visible status without
+exiting structural navigation; it passes through when the focused widget or
+application owns Escape.
 
 Tab, Shift+Tab, Enter, Space, bare arrows, and unconfigured modifier
 combinations always pass through. Shift+Arrow context commands also pass
 through for text editing, native selects, range/number inputs, radio groups,
 and ARIA composite widgets. Holding the separately configured `Alt` override
-invokes the structural arrow command deliberately.
+invokes the structural arrow command deliberately. Once held, that override is
+permitted as an extra modifier on configured structural arrow commands even
+after focus leaves the widget, so continuous navigation does not require
+releasing and pressing `Alt` again. Other extra modifiers remain exact.
 Applications may declare ownership with `ownsKey` or the
 `data-openkeynav-key-owner` hook.
 
 An accepted structural command has precedence in OpenKeyNav's capture listener.
-Native-owned keys pass through untouched; otherwise an unaccepted key continues
-through OpenKeyNav's existing shortcut dispatcher and then to the page when no
+Native-owned keys pass through untouched. While structural navigation is
+active, legacy `h`, configured `1`–`6`, and `s` commands are consumed without
+calling the heading or scrolling helpers, so they cannot create temporary focus
+stops. Application-owned character commands and system shortcuts using
+Alt/Ctrl/Meta pass through unchanged. Any other unaccepted key continues through
+OpenKeyNav's existing shortcut dispatcher and then to the page when no
 OpenKeyNav shortcut matches. Entering click, move, or menu mode exits structural
 navigation first.
 

@@ -5,6 +5,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.matchesStructuralShortcut = exports.classifyStructuralKeyOwnership = exports.StructuralNavigationController = exports.STRUCTURAL_NAVIGATION_COMMANDS = void 0;
 var _structuralModel = require("./structuralModel.js");
+var _accessibilityName = require("./accessibilityName.js");
+var _domUtilities = require("./domUtilities.js");
+var _keyboardEvents = require("./keyboardEvents.js");
 var _tabbableTargets = require("./tabbableTargets.js");
 function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest(); }
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -32,63 +35,34 @@ var STRUCTURAL_NAVIGATION_COMMANDS = exports.STRUCTURAL_NAVIGATION_COMMANDS = Ob
   previousPeerContext: 'previousPeerContext',
   nextPeerContext: 'nextPeerContext'
 });
-var MODIFIER_KEYS = ['altKey', 'ctrlKey', 'metaKey', 'shiftKey'];
+var STRUCTURAL_STATUS_CHANNEL = 'structural-navigation';
+var STRUCTURAL_EXIT_STATUS_CHANNEL = 'structural-navigation-exit';
 var ARROW_OWNING_ROLES = new Set(['combobox', 'grid', 'listbox', 'menu', 'menubar', 'radiogroup', 'scrollbar', 'slider', 'spinbutton', 'tablist', 'toolbar', 'tree', 'treegrid']);
 var ESCAPE_OWNING_ROLES = new Set([].concat(_toConsumableArray(ARROW_OWNING_ROLES), ['dialog']));
 var TEXT_INPUT_TYPES = new Set(['date', 'datetime-local', 'email', 'month', 'number', 'password', 'range', 'search', 'tel', 'text', 'time', 'url', 'week']);
-var isElement = function isElement(node) {
-  return Boolean(node && node.nodeType === 1);
-};
-var isDocument = function isDocument(node) {
-  return Boolean(node && node.nodeType === 9);
-};
-var isShadowRoot = function isShadowRoot(node) {
-  return Boolean(node && node.nodeType === 11 && node.host && isElement(node.host));
-};
-var composedParent = function composedParent(node) {
-  if (!node) return null;
-  if (node.assignedSlot) return node.assignedSlot;
-  if (isShadowRoot(node)) return node.host;
-  return node.parentNode || null;
-};
-var isWithinRoot = function isWithinRoot(root, node) {
-  var current = node;
-  while (current) {
-    if (current === root) return true;
-    current = composedParent(current);
-  }
-  return false;
-};
-var normalizeShortcut = function normalizeShortcut(shortcut) {
-  if (!shortcut) return null;
-  if (typeof shortcut === 'string') return {
-    key: shortcut
-  };
-  if (_typeof(shortcut) === 'object' && typeof shortcut.key === 'string') {
-    return shortcut;
-  }
-  return null;
-};
-var keysEqual = function keysEqual(left, right) {
-  if (left.length === 1 && right.length === 1) {
-    return left.toLowerCase() === right.toLowerCase();
-  }
-  return left === right;
+var SHORTCUT_MODIFIER_LABELS = Object.freeze({
+  ctrlKey: 'Ctrl',
+  altKey: 'Alt',
+  shiftKey: 'Shift',
+  metaKey: 'Meta'
+});
+var shortcutLabel = function shortcutLabel(shortcut) {
+  var normalized = (0, _keyboardEvents.normalizeShortcut)(shortcut);
+  if (!normalized) return '';
+  var modifiers = _keyboardEvents.MODIFIER_KEYS.filter(function (modifier) {
+    return normalized[modifier];
+  }).map(function (modifier) {
+    return SHORTCUT_MODIFIER_LABELS[modifier];
+  });
+  var key = normalized.key === 'Escape' ? 'Esc' : normalized.key === ' ' ? 'Space' : normalized.key;
+  return [].concat(_toConsumableArray(modifiers), [key]).join('+');
 };
 
 /**
  * Matches one exact configured shortcut. Unspecified modifiers are false.
- * `ignoredModifier` is used only for the deliberate widget override modifier.
+ * Callers may explicitly permit an extra ownership-override modifier.
  */
-var matchesStructuralShortcut = exports.matchesStructuralShortcut = function matchesStructuralShortcut(event, shortcut) {
-  var ignoredModifier = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-  var normalized = normalizeShortcut(shortcut);
-  if (!normalized || !keysEqual(event.key, normalized.key)) return false;
-  return MODIFIER_KEYS.every(function (modifier) {
-    if (modifier === ignoredModifier) return true;
-    return Boolean(event[modifier]) === Boolean(normalized[modifier]);
-  });
-};
+var matchesStructuralShortcut = exports.matchesStructuralShortcut = _keyboardEvents.matchesShortcut;
 var getEventPath = function getEventPath(event) {
   if (typeof event.composedPath === 'function') {
     var _path = event.composedPath();
@@ -98,12 +72,12 @@ var getEventPath = function getEventPath(event) {
   var current = event.target;
   while (current) {
     path.push(current);
-    current = composedParent(current);
+    current = (0, _domUtilities.getComposedParent)(current);
   }
   return path;
 };
 var hasEditableContent = function hasEditableContent(element) {
-  if (!isElement(element)) return false;
+  if (!(0, _domUtilities.isElement)(element)) return false;
   var value = element.getAttribute('contenteditable');
   return element.isContentEditable || value === '' || value === 'true' || value === 'plaintext-only';
 };
@@ -114,7 +88,7 @@ var elementKeyOwnership = function elementKeyOwnership(element) {
     escape: false,
     character: false
   };
-  if (!isElement(element)) return ownership;
+  if (!(0, _domUtilities.isElement)(element)) return ownership;
   var declared = [element.getAttribute('data-openkeynav-key-owner'), element.getAttribute('data-openkeynav-owns-keys')].filter(Boolean).join(' ').toLowerCase();
   if (declared.includes('all')) {
     return {
@@ -264,6 +238,17 @@ var parentContext = function parentContext(model, context) {
   if (!context || !context.parent) return null;
   return _typeof(context.parent) === 'object' ? context.parent : modelContextById(model, context.parent);
 };
+var contextHierarchyLevel = function contextHierarchyLevel(model, context) {
+  var level = 0;
+  var current = context;
+  var seen = new Set();
+  while (current && !seen.has(current)) {
+    seen.add(current);
+    level += 1;
+    current = parentContext(model, current);
+  }
+  return Math.max(1, level);
+};
 var normalizeContextChildren = function normalizeContextChildren(model, context) {
   return contextChildren(context).map(function (child) {
     return _typeof(child) === 'object' ? child : modelContextById(model, child);
@@ -285,17 +270,21 @@ var contextOrder = function contextOrder(context) {
 };
 
 /**
- * Heading-backed contexts move horizontally by authored heading rank, even
- * when those contexts have different structural parents. Contexts without a
- * heading rank retain ordinary same-parent sibling behavior.
+ * True structural siblings are always horizontal peers. A heading-backed
+ * context may also bridge to any other heading-backed context at the same
+ * canonical hierarchy depth, regardless of authored H1-H6 rank. Authored rank
+ * must not split one structural level into separate horizontal lanes.
  */
 var horizontalContextPeers = function horizontalContextPeers(model, context) {
   var headingLevel = contextHeadingLevel(context);
-  var contexts = headingLevel === null ? normalizeContextChildren(model, parentContext(model, context)) : modelStructuralContexts(model).filter(function (candidate) {
-    return contextHeadingLevel(candidate) === headingLevel;
+  var hierarchyLevel = contextHierarchyLevel(model, context);
+  var structuralParent = parentContext(model, context);
+  var contexts = headingLevel === null ? normalizeContextChildren(model, structuralParent) : modelStructuralContexts(model).filter(function (candidate) {
+    return parentContext(model, candidate) === structuralParent || contextHeadingLevel(candidate) !== null && contextHierarchyLevel(model, candidate) === hierarchyLevel;
   });
   return {
     headingLevel: headingLevel,
+    hierarchyLevel: hierarchyLevel,
     contexts: contexts.filter(function (candidate) {
       return contextTargets(candidate).length > 0;
     }).sort(function (left, right) {
@@ -303,44 +292,51 @@ var horizontalContextPeers = function horizontalContextPeers(model, context) {
     })
   };
 };
+
+/**
+ * Finds the next page-forward context one canonical level deeper. Heading
+ * contexts also advance exactly one authored rank so an H2 fallback reaches
+ * the next nonempty H3 rather than an unrelated unheaded level-three context.
+ */
+var nextNarrowFallbackContext = function nextNarrowFallbackContext(model, context) {
+  var headingLevel = contextHeadingLevel(context);
+  if (headingLevel !== null && headingLevel >= 6) return null;
+  var hierarchyLevel = contextHierarchyLevel(model, context);
+  var nextHeadingLevel = headingLevel === null ? null : headingLevel + 1;
+  var orderedContexts = modelStructuralContexts(model).filter(function (candidate) {
+    return contextTargets(candidate).length > 0;
+  }).sort(function (left, right) {
+    return contextOrder(left) - contextOrder(right) || String(contextId(left)).localeCompare(String(contextId(right)));
+  });
+  var currentIndex = orderedContexts.indexOf(context);
+  var followingContexts = currentIndex >= 0 ? orderedContexts.slice(currentIndex + 1) : orderedContexts;
+  return followingContexts.find(function (candidate) {
+    return contextHierarchyLevel(model, candidate) === hierarchyLevel + 1 && (nextHeadingLevel === null || contextHeadingLevel(candidate) === nextHeadingLevel);
+  }) || null;
+};
 var targetName = function targetName(target) {
-  var _target$getAttribute, _target$getAttribute2, _target$getAttribute3, _target$getAttribute4, _target$tagName;
+  var _target$getAttribute, _target$getAttribute2, _target$tagName;
   if (!target) return '';
-  var current = target;
-  while (current) {
-    if (isElement(current) && current.getAttribute('aria-hidden') === 'true') {
-      return target.tagName ? target.tagName.toLowerCase() : 'target';
-    }
-    current = composedParent(current);
+  if ((0, _domUtilities.hasAriaHiddenAncestor)(target)) {
+    return target.tagName ? target.tagName.toLowerCase() : 'target';
   }
-  var ariaLabel = (_target$getAttribute = target.getAttribute) === null || _target$getAttribute === void 0 || (_target$getAttribute = _target$getAttribute.call(target, 'aria-label')) === null || _target$getAttribute === void 0 ? void 0 : _target$getAttribute.trim();
-  if (ariaLabel) return ariaLabel;
-  var labelledBy = (_target$getAttribute2 = target.getAttribute) === null || _target$getAttribute2 === void 0 ? void 0 : _target$getAttribute2.call(target, 'aria-labelledby');
-  if (labelledBy) {
-    var root = target.getRootNode();
-    var labels = labelledBy.split(/\s+/).map(function (id) {
-      var _root$getElementById;
-      return ((_root$getElementById = root.getElementById) === null || _root$getElementById === void 0 ? void 0 : _root$getElementById.call(root, id)) || target.ownerDocument.getElementById(id);
-    }).filter(Boolean).map(function (element) {
-      return element.textContent.trim();
-    }).filter(Boolean);
-    if (labels.length) return labels.join(' ');
-  }
+  var explicitName = (0, _accessibilityName.getExplicitAccessibleName)(target);
+  if (explicitName) return explicitName;
   var labelText = Array.from(target.labels || []).map(function (label) {
-    return label.textContent.trim();
+    return (0, _accessibilityName.normalizeText)(label.textContent);
   }).filter(Boolean).join(' ');
   if (labelText) return labelText;
-  var value = ((_target$getAttribute3 = target.getAttribute) === null || _target$getAttribute3 === void 0 ? void 0 : _target$getAttribute3.call(target, 'title')) || ((_target$getAttribute4 = target.getAttribute) === null || _target$getAttribute4 === void 0 ? void 0 : _target$getAttribute4.call(target, 'name')) || target.textContent;
-  var normalized = String(value || '').replace(/\s+/g, ' ').trim();
+  var value = ((_target$getAttribute = target.getAttribute) === null || _target$getAttribute === void 0 ? void 0 : _target$getAttribute.call(target, 'title')) || ((_target$getAttribute2 = target.getAttribute) === null || _target$getAttribute2 === void 0 ? void 0 : _target$getAttribute2.call(target, 'name')) || target.textContent;
+  var normalized = (0, _accessibilityName.normalizeText)(value);
   return normalized.slice(0, 80) || ((_target$tagName = target.tagName) === null || _target$tagName === void 0 ? void 0 : _target$tagName.toLowerCase()) || 'target';
 };
 var topmostNativeModal = function topmostNativeModal(documentObject) {
   if (!(documentObject !== null && documentObject !== void 0 && documentObject.querySelectorAll)) return null;
   try {
     var modals = Array.from(documentObject.querySelectorAll('dialog:modal'));
-    var focused = (0, _tabbableTargets.getDeepActiveElement)(documentObject);
+    var focused = (0, _domUtilities.getDeepActiveElement)(documentObject);
     var focusedModals = modals.filter(function (modal) {
-      return isWithinRoot(modal, focused);
+      return (0, _domUtilities.isComposedWithin)(modal, focused);
     });
     if (focusedModals.length) {
       return focusedModals[focusedModals.length - 1];
@@ -357,7 +353,7 @@ var resolveSelectorRoot = function resolveSelectorRoot(value, documentObject) {
 var openShadowRootsWithin = function openShadowRootsWithin(root) {
   var roots = new Set();
   var _visit = function visit(scope) {
-    if (isShadowRoot(scope)) roots.add(scope);
+    if ((0, _domUtilities.isShadowRoot)(scope)) roots.add(scope);
     if (!(scope !== null && scope !== void 0 && scope.querySelectorAll)) return;
     scope.querySelectorAll('*').forEach(function (element) {
       if (element.shadowRoot) _visit(element.shadowRoot);
@@ -370,13 +366,9 @@ var mutationBelongsOnlyToGeneratedUI = function mutationBelongsOnlyToGeneratedUI
   var changedNodes = [].concat(_toConsumableArray(Array.from(mutation.addedNodes || [])), _toConsumableArray(Array.from(mutation.removedNodes || [])));
   var candidates = changedNodes.length ? changedNodes : [mutation.target];
   return candidates.length > 0 && candidates.every(function (node) {
-    var element = isElement(node) ? node : node.parentElement || mutation.target;
-    return element && (0, _tabbableTargets.isOpenKeyNavGeneratedUI)(element);
+    var element = (0, _domUtilities.isElement)(node) ? node : node.parentElement || mutation.target;
+    return element && (0, _domUtilities.isOpenKeyNavGeneratedUI)(element);
   });
-};
-var preventAcceptedCommand = function preventAcceptedCommand(event) {
-  event.preventDefault();
-  event.stopPropagation();
 };
 var elementClientRects = function elementClientRects(element) {
   if (!(element !== null && element !== void 0 && element.getBoundingClientRect)) return [];
@@ -417,11 +409,10 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
     this.currentTarget = null;
     this.activeStructuralContext = null;
     this.activeTypedContext = null;
+    this.statusDismissed = false;
     this.dirty = true;
     this.observer = null;
     this.observedShadowRoots = new Set();
-    this.statusElement = null;
-    this.lastStatus = '';
     this.focusSyncToken = 0;
     this.contextIndicatorElement = null;
     this.contextIndicatorFrame = null;
@@ -449,13 +440,13 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
       var details = {
         document: this.document,
         openKeyNav: this.openKeyNav,
-        activeElement: (0, _tabbableTargets.getDeepActiveElement)(this.document)
+        activeElement: (0, _domUtilities.getDeepActiveElement)(this.document)
       };
       var configured = resolveSelectorRoot(resolveValue(this.config.activeRoot, details), this.document);
-      var customRoot = isDocument(configured) || isShadowRoot(configured) && configured.host.isConnected || isElement(configured) && configured.isConnected ? configured : null;
+      var customRoot = (0, _domUtilities.isDocument)(configured) || (0, _domUtilities.isShadowRoot)(configured) && configured.host.isConnected || (0, _domUtilities.isElement)(configured) && configured.isConnected ? configured : null;
       var modal = topmostNativeModal(this.document);
       if (!modal) return customRoot || this.document;
-      if (customRoot && customRoot !== this.document && isWithinRoot(modal, customRoot)) {
+      if (customRoot && customRoot !== this.document && (0, _domUtilities.isComposedWithin)(modal, customRoot)) {
         return customRoot;
       }
       return modal;
@@ -480,6 +471,7 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
       }
       if (this.active) {
         var _this$document$defaul;
+        this.openKeyNav.clearStatus(STRUCTURAL_EXIT_STATUS_CHANNEL);
         this.document.addEventListener('focusin', this.handleFocusIn, true);
         this.document.addEventListener('change', this.invalidate, true);
         this.document.addEventListener('toggle', this.invalidate, true);
@@ -487,7 +479,6 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
         (_this$document$defaul = this.document.defaultView) === null || _this$document$defaul === void 0 || _this$document$defaul.addEventListener('popstate', this.invalidate);
         this.connectContextIndicatorListeners();
         this.refresh();
-        this.ensureStatus();
         this.updateStatus('Structural navigation active.');
         return true;
       }
@@ -495,6 +486,8 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
         this.openKeyNav.removeOverlays(true);
       }
       this.openKeyNav.config.modes.structuralNavigation.value = true;
+      this.statusDismissed = false;
+      this.openKeyNav.clearStatus(STRUCTURAL_EXIT_STATUS_CHANNEL);
       this.dirty = true;
       this.document.addEventListener('focusin', this.handleFocusIn, true);
       this.document.addEventListener('change', this.invalidate, true);
@@ -508,29 +501,25 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
         announce: false,
         refresh: false
       });
-      this.ensureStatus();
       this.updateStatus('Structural navigation active.');
       return true;
     }
   }, {
     key: "deactivate",
     value: function deactivate() {
-      var _this$document, _this$document2, _this$document3, _this$document4, _this$document5, _this$statusElement;
+      var _this$document, _this$document2, _this$document3, _this$document4, _this$document5;
       var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
         _ref$announce = _ref.announce,
         announce = _ref$announce === void 0 ? true : _ref$announce;
-      if (!this.active && !this.model && !this.observer && !this.statusElement && !this.contextIndicatorElement) {
+      if (!this.active && !this.model && !this.observer && !this.openKeyNav.getStatusElement(STRUCTURAL_STATUS_CHANNEL) && !this.contextIndicatorElement) {
         return false;
       }
-      if (announce) {
-        var _this$config$status, _this$config$status2;
-        this.updateStatus('Structural navigation off.', {
-          force: true
-        });
-        if ((_this$config$status = this.config.status) !== null && _this$config$status !== void 0 && _this$config$status.enabled && ((_this$config$status2 = this.config.status) === null || _this$config$status2 === void 0 ? void 0 : _this$config$status2.announcements) !== false && typeof this.openKeyNav.emitNotification === 'function') {
-          this.openKeyNav.emitNotification('Structural navigation off.');
-        }
-      }
+      var statusConfig = this.config.status || {};
+      var statusWasDismissed = this.statusDismissed;
+      var configuredExitDuration = Number(this.openKeyNav.config.notifications.duration);
+      var exitDuration = Number.isFinite(configuredExitDuration) && configuredExitDuration > 0 ? configuredExitDuration : 3000;
+      var announceExit = Boolean(announce && statusConfig.enabled && statusConfig.announcements !== false);
+      var exitHost = this.root;
       this.openKeyNav.config.modes.structuralNavigation.value = false;
       (_this$document = this.document) === null || _this$document === void 0 || _this$document.removeEventListener('focusin', this.handleFocusIn, true);
       (_this$document2 = this.document) === null || _this$document2 === void 0 || _this$document2.removeEventListener('change', this.invalidate, true);
@@ -539,10 +528,9 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
       (_this$document5 = this.document) === null || _this$document5 === void 0 || (_this$document5 = _this$document5.defaultView) === null || _this$document5 === void 0 || _this$document5.removeEventListener('popstate', this.invalidate);
       this.disconnectContextIndicatorListeners();
       this.disconnectObservers();
-      (_this$statusElement = this.statusElement) === null || _this$statusElement === void 0 || _this$statusElement.remove();
-      this.statusElement = null;
+      this.openKeyNav.clearStatus(STRUCTURAL_STATUS_CHANNEL);
+      this.openKeyNav.clearStatus(STRUCTURAL_EXIT_STATUS_CHANNEL);
       this.removeContextIndicator();
-      this.lastStatus = '';
       this.root = null;
       this.model = null;
       this.targets = [];
@@ -550,8 +538,20 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
       this.currentTarget = null;
       this.activeStructuralContext = null;
       this.activeTypedContext = null;
+      this.statusDismissed = false;
       this.dirty = true;
       this.focusSyncToken += 1;
+      if (announceExit) {
+        this.openKeyNav.setStatus(STRUCTURAL_EXIT_STATUS_CHANNEL, 'Structural navigation off.', {
+          className: 'openKeyNav-structural-exit-status',
+          ui: 'structural-status',
+          politeness: 'polite',
+          visible: statusConfig.visible !== false && !statusWasDismissed,
+          duration: exitDuration,
+          toolName: this.openKeyNav.config.notifications.displayToolName,
+          host: exitHost
+        });
+      }
       return true;
     }
   }, {
@@ -568,7 +568,7 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
         if (this.openKeyNav.config.modes.clicking.value || this.openKeyNav.config.modes.moving.value || this.openKeyNav.config.modes.menu.value || ownership.character || !matchesStructuralShortcut(event, activationShortcut)) {
           return false;
         }
-        preventAcceptedCommand(event);
+        (0, _keyboardEvents.preventAcceptedCommand)(event);
         this.activate();
         return true;
       }
@@ -577,7 +577,7 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
         key: this.openKeyNav.config.keys.structuralNavigation,
         altKey: true
       };
-      var exitShortcut = normalizeShortcut(this.config.exitCommand) || defaultExit;
+      var exitShortcut = (0, _keyboardEvents.normalizeShortcut)(this.config.exitCommand) || defaultExit;
       var plainToggle = matchesStructuralShortcut(event, activationShortcut);
       var configuredExit = matchesStructuralShortcut(event, exitShortcut);
       var openKeyNavExit = matchesStructuralShortcut(event, {
@@ -585,8 +585,20 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
       });
       var safeEscape = this.config.escapeExits && event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey && !ownership.escape;
       if (configuredExit || safeEscape || (plainToggle || openKeyNavExit) && !ownership.character) {
-        preventAcceptedCommand(event);
+        (0, _keyboardEvents.preventAcceptedCommand)(event);
         this.deactivate();
+        return true;
+      }
+      var statusConfig = this.config.status || {};
+      var dismissShortcut = (0, _keyboardEvents.normalizeShortcut)(statusConfig.dismissCommand);
+      var dismissIsArrowKey = event.key.startsWith('Arrow');
+      var dismissIsCharacterKey = event.key.length === 1;
+      var pageOwnsDismissShortcut = Boolean(ownership.all || event.key === 'Escape' && ownership.escape || dismissIsArrowKey && ownership.arrows || dismissIsCharacterKey && ownership.character);
+      var dismissStatus = Boolean(dismissShortcut && statusConfig.enabled !== false && statusConfig.visible !== false && !this.statusDismissed && this.openKeyNav.getStatusElement(STRUCTURAL_STATUS_CHANNEL) && !pageOwnsDismissShortcut && matchesStructuralShortcut(event, dismissShortcut));
+      if (dismissStatus) {
+        (0, _keyboardEvents.preventAcceptedCommand)(event);
+        this.statusDismissed = true;
+        this.updateStatus('Status closed.');
         return true;
       }
       if (event.key === 'Tab' || event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar' || event.key === 'Escape') {
@@ -595,19 +607,31 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
       var isArrowKey = event.key.startsWith('Arrow');
       var isCharacterKey = event.key.length === 1;
       var ownsArrow = isArrowKey && ownership.arrows;
-      var overrideModifier = this.config.overrideModifier;
-      var override = ownsArrow && MODIFIER_KEYS.includes(overrideModifier) && Boolean(event[overrideModifier]);
-      if (ownership.all || ownsArrow && !override || isCharacterKey && ownership.character) {
+      var configuredOverrideModifier = this.config.overrideModifier;
+      var overrideModifier = _keyboardEvents.MODIFIER_KEYS.includes(configuredOverrideModifier) ? configuredOverrideModifier : null;
+      var overridePressed = Boolean(overrideModifier && event[overrideModifier]);
+      var overridesArrowOwnership = ownsArrow && overridePressed;
+      if (ownership.all || ownsArrow && !overridesArrowOwnership || isCharacterKey && ownership.character) {
         return false;
       }
       var commandEntries = Object.entries(this.config.commands || {});
-      var matched = commandEntries.find(function (_ref2) {
+      var exactMatch = commandEntries.find(function (_ref2) {
         var _ref3 = _slicedToArray(_ref2, 2),
           shortcut = _ref3[1];
-        return matchesStructuralShortcut(event, shortcut, override ? overrideModifier : null);
+        return matchesStructuralShortcut(event, shortcut);
       });
+      // Option/Alt is an ownership override, not part of the structural arrow
+      // chord. Once held, it may stay held as focus leaves a widget. Exact
+      // bindings still win, and explicit modifier requirements remain exact.
+      var matched = exactMatch || (isArrowKey && overridePressed ? commandEntries.find(function (_ref4) {
+        var _ref5 = _slicedToArray(_ref4, 2),
+          shortcut = _ref5[1];
+        return matchesStructuralShortcut(event, shortcut, {
+          allowedExtraModifiers: [overrideModifier]
+        });
+      }) : null);
       if (!matched) return false;
-      preventAcceptedCommand(event);
+      (0, _keyboardEvents.preventAcceptedCommand)(event);
       this.execute(matched[0]);
       return true;
     }
@@ -694,30 +718,29 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
       });
       this.dirty = false;
       this.reconnectObservers();
-      var focused = (0, _tabbableTargets.getDeepActiveElement)(this.root);
+      var focused = (0, _domUtilities.getDeepActiveElement)(this.root);
       this.currentTarget = this.targetSet.has(focused) ? focused : this.targetSet.has(previousTarget) ? previousTarget : null;
       var preservedStructural = modelContextById(this.model, previousStructuralId);
       var direct = directContextForTarget(this.model, this.currentTarget);
       this.activeStructuralContext = preservedStructural && (!this.currentTarget || contextTargets(preservedStructural).includes(this.currentTarget)) ? preservedStructural : direct || this.model.rootContext;
       var preservedTyped = modelTypedContextById(this.model, previousTypedId);
       this.activeTypedContext = preservedTyped && this.currentTarget && contextTargets(preservedTyped).includes(this.currentTarget) ? preservedTyped : null;
-      this.ensureStatus();
       this.scheduleContextIndicatorUpdate();
       return true;
     }
   }, {
     key: "synchronizeFocus",
     value: function synchronizeFocus() {
-      var _ref4 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-        _ref4$preserveRoute = _ref4.preserveRoute,
-        preserveRoute = _ref4$preserveRoute === void 0 ? true : _ref4$preserveRoute,
-        _ref4$announce = _ref4.announce,
-        announce = _ref4$announce === void 0 ? true : _ref4$announce,
-        _ref4$refresh = _ref4.refresh,
-        refresh = _ref4$refresh === void 0 ? true : _ref4$refresh;
+      var _ref6 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+        _ref6$preserveRoute = _ref6.preserveRoute,
+        preserveRoute = _ref6$preserveRoute === void 0 ? true : _ref6$preserveRoute,
+        _ref6$announce = _ref6.announce,
+        announce = _ref6$announce === void 0 ? true : _ref6$announce,
+        _ref6$refresh = _ref6.refresh,
+        refresh = _ref6$refresh === void 0 ? true : _ref6$refresh;
       if (!this.active) return;
       if (refresh) this.refresh();
-      var focused = (0, _tabbableTargets.getDeepActiveElement)(this.root);
+      var focused = (0, _domUtilities.getDeepActiveElement)(this.root);
       if (!this.targetSet.has(focused)) {
         this.currentTarget = null;
         this.activeTypedContext = null;
@@ -773,7 +796,7 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
   }, {
     key: "handleSlotChange",
     value: function handleSlotChange(event) {
-      if ((0, _tabbableTargets.isOpenKeyNavGeneratedUI)(event.target)) return;
+      if ((0, _domUtilities.isOpenKeyNavGeneratedUI)(event.target)) return;
       this.dirty = true;
       this.scheduleContextIndicatorUpdate();
     }
@@ -852,7 +875,7 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
         return;
       }
       this.currentTarget = target;
-      target.focus();
+      this.openKeyNav.focus(target);
       this.updateStatus();
       var token = ++this.focusSyncToken;
       setTimeout(function () {
@@ -869,11 +892,12 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
       this.useStructuralRoute();
       var _horizontalContextPee = horizontalContextPeers(this.model, this.activeStructuralContext),
         peers = _horizontalContextPee.contexts,
-        headingLevel = _horizontalContextPee.headingLevel;
+        headingLevel = _horizontalContextPee.headingLevel,
+        hierarchyLevel = _horizontalContextPee.hierarchyLevel;
       var currentIndex = peers.indexOf(this.activeStructuralContext);
       var nextIndex = currentIndex + direction;
       if (currentIndex < 0 || nextIndex < 0 || nextIndex >= peers.length) {
-        var relation = headingLevel === null ? 'sibling context' : "context at heading level ".concat(headingLevel);
+        var relation = headingLevel === null ? 'sibling context' : "peer context at hierarchy level ".concat(hierarchyLevel);
         this.updateStatus(direction > 0 ? "No next ".concat(relation, ".") : "No previous ".concat(relation, "."));
         return;
       }
@@ -893,26 +917,36 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
         return;
       }
       this.activeStructuralContext = parent;
-      this.updateStatus('Broadened context.');
+      this.updateStatus();
     }
   }, {
     key: "narrowContext",
     value: function narrowContext() {
       var _this7 = this;
       this.useStructuralRoute();
-      if (!this.currentTarget) {
-        this.updateStatus('No current target identifies a child context.');
-        return;
-      }
-      var child = normalizeContextChildren(this.model, this.activeStructuralContext).find(function (context) {
+      var activeContext = this.activeStructuralContext || this.model.rootContext;
+      var child = this.currentTarget ? normalizeContextChildren(this.model, activeContext).find(function (context) {
         return contextTargets(context).includes(_this7.currentTarget);
-      });
-      if (!child) {
-        this.updateStatus('No narrower context contains the current target.');
+      }) : null;
+      if (child) {
+        this.activeStructuralContext = child;
+        this.updateStatus();
         return;
       }
-      this.activeStructuralContext = child;
-      this.updateStatus('Narrowed context.');
+      var headingLevel = contextHeadingLevel(activeContext);
+      if (headingLevel !== null && headingLevel >= 6) {
+        this.updateStatus('Already at heading level 6.');
+        return;
+      }
+      var fallback = nextNarrowFallbackContext(this.model, activeContext);
+      if (!fallback) {
+        var nextHierarchyLevel = contextHierarchyLevel(this.model, activeContext) + 1;
+        this.updateStatus(headingLevel === null ? "No next context at hierarchy level ".concat(nextHierarchyLevel, ".") : "No next H".concat(headingLevel + 1, " context at hierarchy level ").concat(nextHierarchyLevel, "."));
+        return;
+      }
+      this.activeStructuralContext = fallback;
+      this.activeTypedContext = null;
+      this.focusTarget(contextTargets(fallback)[0]);
     }
   }, {
     key: "cyclePeerContext",
@@ -937,7 +971,7 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
       if (!this.activeTypedContext) {
         this.activeStructuralContext = directContextForTarget(this.model, this.currentTarget) || this.model.rootContext;
       }
-      this.updateStatus(this.activeTypedContext ? "Using ".concat(this.activeTypedContext.name, ".") : 'Using structural context.');
+      this.updateStatus();
     }
   }, {
     key: "useStructuralRoute",
@@ -1004,13 +1038,6 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
         element.className = 'openKeyNav-structural-context-outline';
         element.setAttribute('data-openkeynav-ui', 'structural-context-outline');
         element.setAttribute('aria-hidden', 'true');
-        element.style.boxSizing = 'border-box';
-        element.style.position = 'fixed';
-        element.style.zIndex = '2147483646';
-        element.style.pointerEvents = 'none';
-        element.style.background = 'transparent';
-        element.style.borderRadius = '4px';
-        element.style.display = 'none';
         this.contextIndicatorElement = element;
       }
       var host = this.contextIndicatorHost();
@@ -1037,8 +1064,8 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
       if (context.source === 'heading' && (_context$visualElemen = context.visualElements) !== null && _context$visualElemen !== void 0 && _context$visualElemen.length) {
         return context.visualElements;
       }
-      if (isShadowRoot(context.boundary)) return [context.boundary.host];
-      if (isElement(context.boundary)) return [context.boundary];
+      if ((0, _domUtilities.isShadowRoot)(context.boundary)) return [context.boundary.host];
+      if ((0, _domUtilities.isElement)(context.boundary)) return [context.boundary];
       return contextTargets(context);
     }
   }, {
@@ -1048,7 +1075,7 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
         _this0 = this;
       var ResizeObserverClass = (_this$document1 = this.document) === null || _this$document1 === void 0 || (_this$document1 = _this$document1.defaultView) === null || _this$document1 === void 0 ? void 0 : _this$document1.ResizeObserver;
       if (typeof ResizeObserverClass !== 'function') return;
-      var nextElements = new Set(elements.filter(isElement));
+      var nextElements = new Set(elements.filter(_domUtilities.isElement));
       if (nextElements.size === this.contextIndicatorObservedElements.size && Array.from(nextElements).every(function (element) {
         return _this0.contextIndicatorObservedElements.has(element);
       })) {
@@ -1085,7 +1112,7 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
       var viewportHeight = (view === null || view === void 0 ? void 0 : view.innerHeight) || ((_this$document$docume2 = this.document.documentElement) === null || _this$document$docume2 === void 0 ? void 0 : _this$document$docume2.clientHeight) || 0;
       var elements = this.contextIndicatorElements(context);
       var rect;
-      if (isDocument(context.boundary)) {
+      if ((0, _domUtilities.isDocument)(context.boundary)) {
         elements = [this.document.documentElement].filter(Boolean);
         rect = {
           left: 0,
@@ -1095,7 +1122,7 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
         };
       } else {
         var rects = elements.flatMap(elementClientRects);
-        if (!rects.length && isElement(context.boundary)) {
+        if (!rects.length && (0, _domUtilities.isElement)(context.boundary)) {
           elements = contextTargets(context);
           rects = elements.flatMap(elementClientRects);
         }
@@ -1118,7 +1145,7 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
       }
       var configuredWidth = Number((_this$config$contextI4 = this.config.contextIndicator) === null || _this$config$contextI4 === void 0 ? void 0 : _this$config$contextI4.width);
       var width = Number.isFinite(configuredWidth) ? Math.max(1, configuredWidth) : 3;
-      var color = ((_this$config$contextI5 = this.config.contextIndicator) === null || _this$config$contextI5 === void 0 ? void 0 : _this$config$contextI5.color) || '#0088cc';
+      var color = ((_this$config$contextI5 = this.config.contextIndicator) === null || _this$config$contextI5 === void 0 ? void 0 : _this$config$contextI5.color) || this.openKeyNav.config.focus.outlineColor || '#0088cc';
       indicator.style.display = 'block';
       indicator.style.left = "".concat(left, "px");
       indicator.style.top = "".concat(top, "px");
@@ -1130,89 +1157,46 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
       indicator.dataset.contextType = this.activeTypedContext ? this.activeTypedContext.type || 'typed' : 'structural';
     }
   }, {
-    key: "statusHost",
-    value: function statusHost() {
-      if (isShadowRoot(this.root)) return this.root;
-      if (isElement(this.root) && !['INPUT', 'SELECT', 'TEXTAREA'].includes(this.root.tagName)) {
-        return this.root;
-      }
-      return this.document.body || this.document.documentElement;
-    }
-  }, {
-    key: "ensureStatus",
-    value: function ensureStatus() {
-      var _this$config$status3;
-      if (!this.active || !((_this$config$status3 = this.config.status) !== null && _this$config$status3 !== void 0 && _this$config$status3.enabled)) return;
-      if (!this.statusElement) {
-        var element = this.document.createElement('div');
-        element.className = 'openKeyNav-structural-status';
-        element.setAttribute('data-openkeynav-ui', 'structural-status');
-        element.setAttribute('role', 'status');
-        element.setAttribute('aria-live', this.config.status.announcements === false ? 'off' : 'polite');
-        element.setAttribute('aria-atomic', 'true');
-        element.style.boxSizing = 'border-box';
-        element.style.position = 'fixed';
-        element.style.left = '12px';
-        element.style.bottom = '12px';
-        element.style.zIndex = '2147483647';
-        element.style.maxWidth = 'min(34rem, calc(100vw - 24px))';
-        element.style.padding = '8px 12px';
-        element.style.border = '1px solid #666';
-        element.style.borderRadius = '4px';
-        element.style.color = '#fff';
-        element.style.background = 'rgba(20, 24, 28, .94)';
-        element.style.font = '14px/1.35 sans-serif';
-        element.style.pointerEvents = 'none';
-        if (this.config.status.visible === false) {
-          element.style.width = '1px';
-          element.style.height = '1px';
-          element.style.padding = '0';
-          element.style.margin = '-1px';
-          element.style.overflow = 'hidden';
-          element.style.clip = 'rect(0 0 0 0)';
-          element.style.whiteSpace = 'nowrap';
-        }
-        this.statusElement = element;
-      }
-      var host = this.statusHost();
-      if (host && this.statusElement.parentNode !== host) {
-        host.appendChild(this.statusElement);
-      }
-    }
-  }, {
     key: "updateStatus",
     value: function updateStatus() {
-      var _this1 = this;
+      var _this$config$status, _this$config$status2, _this$config$status3;
       var prefix = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-      var _ref5 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
-        _ref5$force = _ref5.force,
-        force = _ref5$force === void 0 ? false : _ref5$force;
+      var _ref7 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+        _ref7$force = _ref7.force,
+        force = _ref7$force === void 0 ? false : _ref7$force;
       if (!this.active && !force) return;
       if (this.active) this.scheduleContextIndicatorUpdate();
-      this.ensureStatus();
-      if (!this.statusElement) return;
+      if (!((_this$config$status = this.config.status) !== null && _this$config$status !== void 0 && _this$config$status.enabled)) {
+        this.openKeyNav.clearStatus(STRUCTURAL_STATUS_CHANNEL);
+        return;
+      }
       var route = this.activeTypedContext || this.activeStructuralContext;
       var sequence = this.activeSequence();
       var index = sequence.indexOf(this.currentTarget);
       var contextName = (route === null || route === void 0 ? void 0 : route.name) || 'Document';
       var targetDescription = this.currentTarget ? "".concat(targetName(this.currentTarget), ", ").concat(index >= 0 ? index + 1 : '?', " of ").concat(sequence.length) : "".concat(sequence.length, " available ").concat(sequence.length === 1 ? 'target' : 'targets');
-      var horizontalPeers = horizontalContextPeers(this.model, this.activeStructuralContext);
-      var otherHorizontalContexts = horizontalPeers.contexts.filter(function (context) {
-        return context !== _this1.activeStructuralContext;
-      });
+      var hierarchyContext = this.activeTypedContext ? directContextForTarget(this.model, this.currentTarget) || this.activeStructuralContext || this.model.rootContext : this.activeStructuralContext || this.model.rootContext;
+      var hierarchyLevel = contextHierarchyLevel(this.model, hierarchyContext);
+      var hierarchyDescription = this.activeTypedContext ? "Underlying hierarchy level: ".concat(hierarchyLevel, ".") : "Hierarchy level: ".concat(hierarchyLevel, ".");
       var typedContexts = typedContextsForTarget(this.model, this.currentTarget);
-      var siblingDescription = otherHorizontalContexts.length ? " ".concat(horizontalPeers.headingLevel === null ? 'Sibling contexts' : "Same-level contexts (heading level ".concat(horizontalPeers.headingLevel, ")"), ": ").concat(otherHorizontalContexts.map(function (context) {
-        return context.name;
-      }).join(', '), ".") : '';
-      var typedDescription = typedContexts.length ? " Typed contexts: ".concat(typedContexts.map(function (context) {
-        return context.name;
-      }).join(', '), ".") : '';
-      var message = [prefix, "Context: ".concat(contextName, "."), targetDescription ? "".concat(targetDescription, ".") : '', siblingDescription, typedDescription].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
-      if (message === this.lastStatus) return;
-      this.lastStatus = message;
-      this.statusElement.textContent = message;
-      this.statusElement.dataset.contextId = String(contextId(route) || '');
-      this.statusElement.dataset.contextType = this.activeTypedContext ? this.activeTypedContext.type || 'typed' : 'structural';
+      var typedDescription = typedContexts.length ? "".concat(typedContexts.length, " alternate ").concat(typedContexts.length === 1 ? 'route' : 'routes', " available.") : '';
+      var dismissLabel = shortcutLabel((_this$config$status2 = this.config.status) === null || _this$config$status2 === void 0 ? void 0 : _this$config$status2.dismissCommand);
+      var dismissDescription = dismissLabel && ((_this$config$status3 = this.config.status) === null || _this$config$status3 === void 0 ? void 0 : _this$config$status3.visible) !== false && !this.statusDismissed ? "".concat(dismissLabel, " to close.") : '';
+      var contextDescription = this.activeTypedContext ? "Typed context: ".concat(contextName, ".") : "Context: ".concat(contextName, ".");
+      var message = [prefix, contextDescription, hierarchyDescription, targetDescription ? "".concat(targetDescription, ".") : '', typedDescription].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+      this.openKeyNav.setStatus(STRUCTURAL_STATUS_CHANNEL, message, {
+        className: 'openKeyNav-structural-status',
+        ui: 'structural-status',
+        politeness: this.config.status.announcements === false ? 'off' : 'polite',
+        visible: this.config.status.visible !== false && !this.statusDismissed,
+        hint: dismissDescription,
+        toolName: this.openKeyNav.config.notifications.displayToolName,
+        host: this.root,
+        data: {
+          contextId: String(contextId(route) || ''),
+          contextType: this.activeTypedContext ? this.activeTypedContext.type || 'typed' : 'structural'
+        }
+      });
     }
   }, {
     key: "getState",
@@ -1226,6 +1210,7 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
         activeContext: this.activeTypedContext || this.activeStructuralContext,
         activeStructuralContext: this.activeStructuralContext,
         activeTypedContext: this.activeTypedContext,
+        statusDismissed: this.statusDismissed,
         dirty: this.dirty
       };
     }

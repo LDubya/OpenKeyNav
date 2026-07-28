@@ -12,6 +12,42 @@ var _isTabbable = require("./isTabbable");
 var _keylabels = require("./keylabels");
 var _lifecycle = require("./lifecycle");
 var _keyButton = require("./keyButton.js");
+var _structuralNavigation = require("./structuralNavigation.js");
+var _keyboardEvents = require("./keyboardEvents.js");
+var NUMBER_KEY_BY_CODE = Object.freeze({
+  Digit1: '1',
+  Digit2: '2',
+  Digit3: '3',
+  Digit4: '4',
+  Digit5: '5',
+  Digit6: '6',
+  Digit7: '7',
+  Digit8: '8',
+  Digit9: '9',
+  Digit0: '0'
+});
+var legacyHeadingLevel = function legacyHeadingLevel(openKeyNav, event) {
+  var numberPressed = NUMBER_KEY_BY_CODE[event.code];
+  if (!numberPressed) return null;
+  for (var level = 1; level <= 6; level += 1) {
+    if (numberPressed === openKeyNav.config.keys["heading_".concat(level)]) {
+      return level;
+    }
+  }
+  return null;
+};
+var isLegacyFocusNavigationCommand = function isLegacyFocusNavigationCommand(openKeyNav, event) {
+  var key = typeof event.key === 'string' ? event.key.toLowerCase() : '';
+  return key === openKeyNav.config.keys.heading.toLowerCase() || key === openKeyNav.config.keys.scroll.toLowerCase() || legacyHeadingLevel(openKeyNav, event) !== null;
+};
+var pageOwnsLegacyFocusNavigationCommand = function pageOwnsLegacyFocusNavigationCommand(openKeyNav, event) {
+  var config = openKeyNav.config.modesConfig.structuralNavigation;
+  var ownership = (0, _structuralNavigation.classifyStructuralKeyOwnership)(event, config);
+  return ownership.all || ownership.character;
+};
+var hasSystemShortcutModifier = function hasSystemShortcutModifier(event) {
+  return Boolean(event.altKey) || Boolean(event.ctrlKey) || Boolean(event.metaKey);
+};
 function getMetaKeyName() {
   var userAgent = window.navigator.userAgent.toLowerCase();
   if (userAgent.indexOf('mac') >= 0) return 'Cmd';
@@ -52,7 +88,9 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
       // if openKeyNav disabled
       openKeyNav.enable();
       var message = "openKeyNav enabled. Press ".concat((0, _keyButton.keyButton)([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu]), " to disable.");
-      openKeyNav.emitNotification(message);
+      openKeyNav.emitNotification(message, null, {
+        trustedHtml: true
+      });
       return true;
     } else {
       if (openKeyNav.config.modes.clicking.value || openKeyNav.config.modes.moving.value || openKeyNav.config.modes.menu.value) {
@@ -60,7 +98,9 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
       }
       openKeyNav.disable();
       var _message = "openKeyNav disabled. Press ".concat((0, _keyButton.keyButton)([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu]), " to enable.");
-      openKeyNav.emitNotification(_message);
+      openKeyNav.emitNotification(_message, null, {
+        trustedHtml: true
+      });
       return true;
     }
   }
@@ -69,6 +109,17 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
   // It makes widget ownership decisions before preventing any page key.
   if (openKeyNav.structuralNavigation && openKeyNav.structuralNavigation.handleKeyDown(e)) {
     return true;
+  }
+
+  // Structural mode keeps real focus on its existing interactive target.
+  // Do not let the legacy h/1-6/s shortcuts create temporary focus stops on
+  // headings or scroll containers. Editing widgets and application-declared
+  // key owners still receive their character keys unchanged.
+  if (openKeyNav.config.modes.structuralNavigation.value && isLegacyFocusNavigationCommand(openKeyNav, e)) {
+    if (pageOwnsLegacyFocusNavigationCommand(openKeyNav, e) || hasSystemShortcutModifier(e)) {
+      return true;
+    }
+    return (0, _keyboardEvents.preventAcceptedCommand)(e);
   }
 
   // first check for modifier keys and escape
@@ -190,10 +241,8 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
       };
       */
 
-      e.preventDefault(); // Prevent default action to allow our custom behavior
-
+      (0, _keyboardEvents.preventAcceptedCommand)(e);
       (0, _focus.focusOnHeadings)(openKeyNav, 'h1, h2, h3, h4, h5, h6', e);
-      openKeyNav.preventpropagation(e);
       return true;
       break;
     case openKeyNav.config.keys.scroll.toLowerCase():
@@ -207,9 +256,8 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
       };
       */
 
-      e.preventDefault();
+      (0, _keyboardEvents.preventAcceptedCommand)(e);
       (0, _focus.focusOnScrollables)(openKeyNav, e);
-      openKeyNav.preventpropagation(e);
       return true;
       break;
     default:
@@ -217,49 +265,11 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
   }
 
   // handle keycodes, aka for specific headings
-  var numberMap = {
-    Digit1: '1',
-    Digit2: '2',
-    Digit3: '3',
-    Digit4: '4',
-    Digit5: '5',
-    Digit6: '6',
-    Digit7: '7',
-    Digit8: '8',
-    Digit9: '9',
-    Digit0: '0'
-  };
-  if (e.code) {
-    // a number was pressed
-    var numberPressed = numberMap[e.code];
-    switch (numberPressed) {
-      case openKeyNav.config.keys.heading_1:
-        e.preventDefault(); // Prevent default action to allow our custom behavior
-        (0, _focus.focusOnHeadings)(openKeyNav, 'h1', e);
-        break;
-      case openKeyNav.config.keys.heading_2:
-        e.preventDefault(); // Prevent default action to allow our custom behavior
-        (0, _focus.focusOnHeadings)(openKeyNav, 'h2', e);
-        break;
-      case openKeyNav.config.keys.heading_3:
-        e.preventDefault(); // Prevent default action to allow our custom behavior
-        (0, _focus.focusOnHeadings)(openKeyNav, 'h3', e);
-        break;
-      case openKeyNav.config.keys.heading_4:
-        e.preventDefault(); // Prevent default action to allow our custom behavior
-        (0, _focus.focusOnHeadings)(openKeyNav, 'h4', e);
-        break;
-      case openKeyNav.config.keys.heading_5:
-        e.preventDefault(); // Prevent default action to allow our custom behavior
-        (0, _focus.focusOnHeadings)(openKeyNav, 'h5', e);
-        break;
-      case openKeyNav.config.keys.heading_6:
-        e.preventDefault(); // Prevent default action to allow our custom behavior
-        (0, _focus.focusOnHeadings)(openKeyNav, 'h6', e);
-        break;
-      default:
-        break;
-    }
+  var headingLevel = legacyHeadingLevel(openKeyNav, e);
+  if (headingLevel !== null) {
+    (0, _keyboardEvents.preventAcceptedCommand)(e);
+    (0, _focus.focusOnHeadings)(openKeyNav, "h".concat(headingLevel), e);
+    return true;
   }
 };
 var handleClickMode = function handleClickMode(openKeyNav, e) {

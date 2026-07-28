@@ -291,6 +291,63 @@ describe('buildStructuralModel', () => {
     expect(model.rootContext.targets).toEqual(targetList);
   });
 
+  it('keeps semantically hidden targets out of heading membership and geometry', () => {
+    document.body.innerHTML = `
+      <div id="heading-wrapper">
+        <h2 id="first-heading">First heading</h2>
+        <button id="first-target">First target</button>
+        <h2 id="second-heading">Second heading</h2>
+        <button id="second-target">Second target</button>
+      </div>
+      <section id="hidden-section" aria-hidden="true">
+        <h2 id="hidden-heading">Hidden heading</h2>
+        <button id="hidden-target">Still in the target inventory</button>
+      </section>
+      <section id="trailing-section" aria-label="Trailing region">
+        <button id="trailing-target">Visible trailing target</button>
+      </section>
+    `;
+    const hiddenTarget = document.getElementById('hidden-target');
+    const model = buildStructuralModel({
+      root: document,
+      targets: buttons(
+        'first-target',
+        'second-target',
+        'hidden-target',
+        'trailing-target'
+      ),
+    });
+    const second = contextNamed(model, 'Second heading');
+
+    expect(model.targets).toContain(hiddenTarget);
+    expect(model.directContextByTarget.get(hiddenTarget)).toBe(model.rootContext);
+    expect(second.targets).toEqual(buttons('second-target'));
+    expect(second.memberTargets).toEqual(buttons('second-target'));
+    expect(second.visualElements).toContain(
+      document.getElementById('second-heading')
+    );
+    expect(second.visualElements).toContain(
+      document.getElementById('second-target')
+    );
+    expect(second.visualElements).not.toContain(
+      document.getElementById('hidden-section')
+    );
+    expect(second.visualElements).not.toContain(
+      document.getElementById('hidden-heading')
+    );
+    expect(second.visualElements).not.toContain(hiddenTarget);
+    expect(second.targets).not.toContain(
+      document.getElementById('trailing-target')
+    );
+    expect(second.visualElements).not.toContain(
+      document.getElementById('trailing-section')
+    );
+    expect(second.visualElements).not.toContain(
+      document.getElementById('trailing-target')
+    );
+    expect(contextNamed(model, 'Hidden heading')).toBeUndefined();
+  });
+
   it('preserves the supplied global target order in every flattened sequence', () => {
     document.body.innerHTML = `
       <section aria-label="Ordered">

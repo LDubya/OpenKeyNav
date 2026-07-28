@@ -193,7 +193,7 @@
 	  value: true
 	});
 	dragAndDrop.simulateDragAndDrop = dragAndDrop.endDrag = dragAndDrop.beginDrag = void 0;
-	function _createForOfIteratorHelper$1(r, e) {
+	function _createForOfIteratorHelper$2(r, e) {
 	  var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
 	  if (!t) {
 	    if (Array.isArray(r) || (t = _unsupportedIterableToArray$4(r)) || e) {
@@ -265,7 +265,7 @@
 
 	      // Get all elements in the document
 	      var allElements = document.querySelectorAll('*');
-	      var _iterator = _createForOfIteratorHelper$1(allElements),
+	      var _iterator = _createForOfIteratorHelper$2(allElements),
 	        _step;
 	      try {
 	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
@@ -887,10 +887,10 @@
 	var _escape = _escape$1;
 	var _isTabbable$1 = isTabbable$1;
 	var _scrolling = scrolling;
-	function _toConsumableArray$3(r) {
-	  return _arrayWithoutHoles$3(r) || _iterableToArray$3(r) || _unsupportedIterableToArray$3(r) || _nonIterableSpread$3();
+	function _toConsumableArray$2(r) {
+	  return _arrayWithoutHoles$2(r) || _iterableToArray$2(r) || _unsupportedIterableToArray$3(r) || _nonIterableSpread$2();
 	}
-	function _nonIterableSpread$3() {
+	function _nonIterableSpread$2() {
 	  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 	}
 	function _unsupportedIterableToArray$3(r, a) {
@@ -900,10 +900,10 @@
 	    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$3(r, a) : void 0;
 	  }
 	}
-	function _iterableToArray$3(r) {
+	function _iterableToArray$2(r) {
 	  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
 	}
-	function _arrayWithoutHoles$3(r) {
+	function _arrayWithoutHoles$2(r) {
 	  if (Array.isArray(r)) return _arrayLikeToArray$3(r);
 	}
 	function _arrayLikeToArray$3(r, a) {
@@ -1045,7 +1045,7 @@
 	  var moveables = [];
 
 	  // direct selectors of from elements
-	  var fromElementSelectors = _toConsumableArray$3(new Set(openKeyNav.config.modesConfig.move.config.filter(function (config) {
+	  var fromElementSelectors = _toConsumableArray$2(new Set(openKeyNav.config.modesConfig.move.config.filter(function (config) {
 	    return config.fromElements;
 	  }).map(function (config) {
 	    return config.fromElements;
@@ -1066,7 +1066,7 @@
 	  }
 
 	  // containers of from elements
-	  var fromContainerSelectors = _toConsumableArray$3(new Set(openKeyNav.config.modesConfig.move.config.filter(function (config) {
+	  var fromContainerSelectors = _toConsumableArray$2(new Set(openKeyNav.config.modesConfig.move.config.filter(function (config) {
 	    return config.fromContainer;
 	  }).map(function (config) {
 	    return config.fromContainer;
@@ -1205,7 +1205,7 @@
 	  });
 
 	  // Merge with clickEventElements
-	  var mergedSet = new Set([].concat(_toConsumableArray$3(allElements), _toConsumableArray$3(openKeyNav.config.modesConfig.click.clickEventElements)));
+	  var mergedSet = new Set([].concat(_toConsumableArray$2(allElements), _toConsumableArray$2(openKeyNav.config.modesConfig.click.clickEventElements)));
 	  return Array.from(mergedSet);
 
 	  // return allElements;
@@ -1220,1178 +1220,187 @@
 	lifecycle.enable = function enable() {};
 	lifecycle.disable = function disable() {};
 
-	var hasRequiredKeypress;
-	function requireKeypress() {
-	  if (hasRequiredKeypress) return keypress;
-	  hasRequiredKeypress = 1;
-	  Object.defineProperty(keypress, "__esModule", {
-	    value: true
-	  });
-	  keypress.modiferKeyString = keypress.handleKeyPress = void 0;
-	  var _clicking = requireClicking();
-	  var _dragAndDrop = dragAndDrop;
-	  var _escape = _escape$1;
-	  var _focus = focus;
-	  var _isTabbable = isTabbable$1;
-	  var _keylabels = keylabels;
-	  var _keyButton = keyButton;
-	  function getMetaKeyName() {
-	    var userAgent = window.navigator.userAgent.toLowerCase();
-	    if (userAgent.indexOf('mac') >= 0) return 'Cmd';
-	    if (userAgent.indexOf('win') >= 0) return 'Win';
-	    if (userAgent.indexOf('linux') >= 0) return 'Super';
-	    // fallback
-	    return 'Meta';
-	  }
-	  var modiferKeyString = keypress.modiferKeyString = function modiferKeyString(openKeyNav) {
-	    switch (openKeyNav.config.keys.modifierKey) {
-	      case 'shiftKey':
-	        return 'Shift';
-	      case 'altKey':
-	        return 'Alt';
-	      case 'metaKey':
-	        return getMetaKeyName();
-	      default:
-	        return openKeyNav.config.keys.modifierKey;
-	    }
-	  };
-	  keypress.handleKeyPress = function handleKeyPress(openKeyNav, e) {
-	    if (e.isComposing || e.keyCode === 229) {
-	      return true;
-	    }
-	    if (e.openKeyNavIframeBridge && !openKeyNav.config.modes.clicking.value) {
-	      return true;
-	    }
-	    var isTextInputActive = openKeyNav.isTextInputActive();
-
-	    // enable / disable openKeyNav
-	    if (e[openKeyNav.config.keys.modifierKey] && openKeyNav.config.keys.menu.toLowerCase() == e.key.toLowerCase()) {
-	      if (isTextInputActive) {
-	        if (!e[openKeyNav.config.keys.inputEscape]) {
-	          return true;
-	        }
-	      }
-	      if (!openKeyNav.meta.enabled.value) {
-	        // if openKeyNav disabled
-	        openKeyNav.enable();
-	        var message = "openKeyNav enabled. Press ".concat((0, _keyButton.keyButton)([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu]), " to disable.");
-	        openKeyNav.emitNotification(message);
-	        return true;
-	      } else {
-	        if (openKeyNav.config.modes.clicking.value || openKeyNav.config.modes.moving.value || openKeyNav.config.modes.menu.value) {
-	          (0, _escape.handleEscape)(openKeyNav, e);
-	        }
-	        openKeyNav.disable();
-	        var _message = "openKeyNav disabled. Press ".concat((0, _keyButton.keyButton)([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu]), " to enable.");
-	        openKeyNav.emitNotification(_message);
-	        return true;
-	      }
-	    }
-
-	    // Structural navigation owns only its configured commands while active.
-	    // It makes widget ownership decisions before preventing any page key.
-	    if (openKeyNav.structuralNavigation && openKeyNav.structuralNavigation.handleKeyDown(e)) {
-	      return true;
-	    }
-
-	    // first check for modifier keys and escape
-	    switch (e.key) {
-	      case 'Shift': // exit this event listener if it's the shift key press
-	      case 'Control': // exit this event listener if it's the control key press
-	      case 'Alt': // exit this event listener if it's the alt key press
-	      case 'Meta': // exit this event listener if it's the meta key (Command/Windows) press
-	      case ' ':
-	        // exit this event listener if it's the space bar key press
-	        // Prevent default action and stop the function
-	        // e.preventDefault();
-	        return true;
-
-	      // handle escape first
-	      case 'Escape':
-	        // escaping
-	        if (openKeyNav.config.modes.clicking.value || openKeyNav.config.modes.moving.value || openKeyNav.config.modes.menu.value) {
-	          (0, _escape.handleEscape)(openKeyNav, e);
-	        }
-	        return true;
-	    }
-
-	    // check if currently in any openkeynav modes
-	    if (openKeyNav.config.modes.clicking.value) {
-	      return handleClickMode(openKeyNav, e);
-	    }
-	    if (openKeyNav.config.modes.moving.value) {
-	      return handleMoveMode(openKeyNav, e);
-	    }
-	    if (openKeyNav.config.modes.menu.value) {
-	      handleMenuMode();
-	    }
-	    if (isTextInputActive) {
-	      if (!e[openKeyNav.config.keys.inputEscape]) {
-	        return true;
-	      }
-	    }
-	    if (!openKeyNav.meta.enabled.value) {
-	      return true;
-	    }
-	    // escape and toggles
-	    switch (e.key) {
-	      case openKeyNav.config.keys.escape:
-	        // escaping
-	        // alert("Escape");
-
-	        (0, _escape.handleEscape)(openKeyNav, e);
-	        return true;
-
-	      // case openKeyNav.config.keys.toggleCursor: // toggle Cursor
-	      //     // toggle class openKeyNav-noCursor for body
-	      //     document.body.classList.toggle('openKeyNav-noCursor');
-	      //     return true;
-	      //     break;
-	    }
-
-	    // modes
-	    switch (e.key) {
-	      case openKeyNav.config.keys.click: // possibly attempting to initiate click mode
-	      case openKeyNav.config.keys.click.toUpperCase():
-	        openKeyNav.exitStructuralNavigation({
-	          announce: false
-	        });
-	        e.preventDefault();
-	        openKeyNav.config.modes.clicking.value = true;
-	        if (e.key == openKeyNav.config.keys.click.toUpperCase()) {
-	          openKeyNav.config.modesConfig.click.modifier = true;
-	        }
-	        (0, _keylabels.showClickableOverlays)(openKeyNav);
-	        openKeyNav.preventpropagation(e);
-	        return true;
-
-	      // possibly attempting to initiate moving mode
-	      case openKeyNav.config.keys.move:
-	      case openKeyNav.config.keys.move.toUpperCase():
-	        openKeyNav.exitStructuralNavigation({
-	          announce: false
-	        });
-	        // Toggle move mode
-	        e.preventDefault();
-	        openKeyNav.config.modes.moving.value = true; // Assuming you add a 'move' flag to your modes object
-	        if (e.key == openKeyNav.config.keys.move.toUpperCase()) {
-	          openKeyNav.config.modesConfig.move.modifier = true;
-	        }
-	        (0, _keylabels.showMoveableFromOverlays)(openKeyNav); // This will be a new function similar to showClickableOverlays
-	        openKeyNav.preventpropagation(e);
-	        return true;
-	      case openKeyNav.config.keys.menu:
-	      case openKeyNav.config.keys.menu.toUpperCase():
-	        openKeyNav.exitStructuralNavigation({
-	          announce: false
-	        });
-	        openKeyNav.config.modes.menu.value = true;
-	        if (e.key == openKeyNav.config.keys.menu.toUpperCase()) {
-	          openKeyNav.config.modesConfig.menu.modifier = true;
-	        }
-	        openKeyNav.preventpropagation(e);
-	        return true;
-	    }
-
-	    // focus / navigation (can be modified by shift, so always check for lowercase)
-	    switch (e.key.toLowerCase()) {
-	      // Check if the pressed key is for headings
-	      case openKeyNav.config.keys.heading.toLowerCase():
-	        /*
-	        const OpenKeyNav = {
-	          currentHeadingIndex: 0,
-	          keys: {
-	              heading: 'h',
-	          },
-	          headings: [],
-	        };
-	        */
-
-	        e.preventDefault(); // Prevent default action to allow our custom behavior
-
-	        (0, _focus.focusOnHeadings)(openKeyNav, 'h1, h2, h3, h4, h5, h6', e);
-	        openKeyNav.preventpropagation(e);
-	        return true;
-	      case openKeyNav.config.keys.scroll.toLowerCase():
-	        /*
-	        const OpenKeyNav = {
-	          currentScrollableIndex: 0,
-	          keys: {
-	              scroll: 's',
-	          },
-	          scrollables: [],
-	        };
-	        */
-
-	        e.preventDefault();
-	        (0, _focus.focusOnScrollables)(openKeyNav, e);
-	        openKeyNav.preventpropagation(e);
-	        return true;
-	    }
-
-	    // handle keycodes, aka for specific headings
-	    var numberMap = {
-	      Digit1: '1',
-	      Digit2: '2',
-	      Digit3: '3',
-	      Digit4: '4',
-	      Digit5: '5',
-	      Digit6: '6',
-	      Digit7: '7',
-	      Digit8: '8',
-	      Digit9: '9',
-	      Digit0: '0'
-	    };
-	    if (e.code) {
-	      // a number was pressed
-	      var numberPressed = numberMap[e.code];
-	      switch (numberPressed) {
-	        case openKeyNav.config.keys.heading_1:
-	          e.preventDefault(); // Prevent default action to allow our custom behavior
-	          (0, _focus.focusOnHeadings)(openKeyNav, 'h1', e);
-	          break;
-	        case openKeyNav.config.keys.heading_2:
-	          e.preventDefault(); // Prevent default action to allow our custom behavior
-	          (0, _focus.focusOnHeadings)(openKeyNav, 'h2', e);
-	          break;
-	        case openKeyNav.config.keys.heading_3:
-	          e.preventDefault(); // Prevent default action to allow our custom behavior
-	          (0, _focus.focusOnHeadings)(openKeyNav, 'h3', e);
-	          break;
-	        case openKeyNav.config.keys.heading_4:
-	          e.preventDefault(); // Prevent default action to allow our custom behavior
-	          (0, _focus.focusOnHeadings)(openKeyNav, 'h4', e);
-	          break;
-	        case openKeyNav.config.keys.heading_5:
-	          e.preventDefault(); // Prevent default action to allow our custom behavior
-	          (0, _focus.focusOnHeadings)(openKeyNav, 'h5', e);
-	          break;
-	        case openKeyNav.config.keys.heading_6:
-	          e.preventDefault(); // Prevent default action to allow our custom behavior
-	          (0, _focus.focusOnHeadings)(openKeyNav, 'h6', e);
-	          break;
-	      }
-	    }
-	  };
-	  var handleClickMode = function handleClickMode(openKeyNav, e) {
-	    e.preventDefault();
-	    openKeyNav.config.typedLabel.value += e.key.toLowerCase();
-	    var target = document.querySelector("[data-openkeynav-label=\"".concat(openKeyNav.config.typedLabel.value, "\"]"));
-	    if (!target) {
-	      document.querySelectorAll('iframe').forEach(function (iframe) {
-	        addKeydownEventListenerToIframe(openKeyNav, iframe);
-	      });
-	    }
-	    if (target) {
-	      setTimeout(function () {
-	        (0, _clicking.handleTargetClickInteraction)(openKeyNav, target, e);
-	      }, 0);
-	    } else {
-	      (0, _keylabels.filterRemainingOverlays)(openKeyNav, e);
-	      return false;
-	    }
-	    return true;
-	  };
-	  var handleMoveMode = function handleMoveMode(openKeyNav, e) {
-	    var showMoveableToOverlays = function showMoveableToOverlays(selectedMoveable) {
-	      // temporarily persist modifier
-	      var modifer = openKeyNav.config.modesConfig.move.modifier;
-
-	      // Remove existing overlays or switch to target overlays
-	      openKeyNav.removeOverlays();
-
-	      // Set moving mode and selected moveable element
-	      openKeyNav.config.modes.moving.value = true;
-	      openKeyNav.config.modesConfig.move.selectedMoveable = selectedMoveable;
-	      openKeyNav.config.modesConfig.move.selectedMoveableHTML = selectedMoveable.innerHTML;
-	      openKeyNav.config.modesConfig.move.modifier = modifer;
-
-	      // Get the configuration index from the selected moveable
-	      var configIndex = selectedMoveable.getAttribute('data-openkeynav-moveconfig');
-	      if (configIndex === null) return;
-
-	      // Convert the index to a number
-	      var configKeyForSelectedMoveable = parseInt(configIndex, 10);
-
-	      // Store the selected configuration index
-	      openKeyNav.config.modesConfig.move.selectedConfig = configKeyForSelectedMoveable;
-
-	      // Find the corresponding move configuration
-	      var moveConfig = openKeyNav.config.modesConfig.move.config[configKeyForSelectedMoveable];
-	      if (!moveConfig) return;
-
-	      // Get all target elements for the selectedMoveable
-	      // let targetElements = document.querySelectorAll(moveConfig.toElements);
-
-	      // targetElements = targetElements.filter(el => {
-	      //   return isTabbable(el, openKeyNav);
-	      // });
-
-	      function tabbableFilter(openKeyNav) {
-	        return function (el) {
-	          return (0, _isTabbable.isTabbable)(el, openKeyNav);
-	        };
-	      }
-	      var targetElements = [].filter.call(document.querySelectorAll(moveConfig.toElements), tabbableFilter(openKeyNav));
-
-	      // Generate labels for the target elements
-	      var labels = (0, _keylabels.generateLabels)(openKeyNav, targetElements.length);
-	      targetElements.forEach(function (element, index) {
-	        element.setAttribute('data-openkeynav-label', labels[index]);
-	      });
-	      targetElements.forEach(function (element, index) {
-	        if (!openKeyNav.isNonzeroSize(element)) return;
-	        openKeyNav.createOverlay(element, labels[index]);
-	        element.setAttribute('data-openkeynav-dropzone', 'true');
-	      });
-	    };
-	    function findElementWithQuery(startElement, queryString) {
-	      var direction = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'next';
-	      var currentElement = startElement;
-	      while (currentElement) {
-	        if (direction === 'previous') {
-	          // Traverse previous siblings and their descendants
-	          currentElement = currentElement.previousElementSibling;
-	          while (!currentElement && startElement.parentElement) {
-	            currentElement = startElement.parentElement.previousElementSibling;
-	            startElement = startElement.parentElement;
-	          }
-	          if (currentElement) {
-	            // Look for the last matching descendant
-	            var descendants = currentElement.querySelectorAll(queryString);
-	            if (descendants.length > 0) {
-	              return descendants[descendants.length - 1];
-	            }
-	            if (currentElement.matches(queryString)) {
-	              return currentElement;
-	            }
-	          }
-	        } else if (direction === 'next') {
-	          // Traverse next siblings and their descendants
-	          currentElement = currentElement.nextElementSibling;
-	          while (!currentElement && startElement.parentElement) {
-	            currentElement = startElement.parentElement.nextElementSibling;
-	            startElement = startElement.parentElement;
-	          }
-	          if (currentElement) {
-	            if (currentElement.matches(queryString)) {
-	              return currentElement;
-	            }
-	            var foundElement = currentElement.querySelector(queryString);
-	            if (foundElement) {
-	              return foundElement;
-	            }
-	          }
-	        } else {
-	          throw new Error("Invalid direction. Use 'previous' or 'next'.");
-	        }
-	      }
-	      return null;
-	    }
-	    function cycleThroughMoveTargets(event) {
-	      event.preventDefault();
-	      var direction = 'next';
-	      if (event.shiftKey) {
-	        direction = 'previous';
-	      }
-	      // the moveable element should be stored as openKeyNav.config.modesConfig.move.selectedMoveable
-	      return findElementWithQuery(openKeyNav.config.modesConfig.move.selectedMoveable, '[data-openkeynav-label]:not(.openKeyNav-label)', direction);
-	    }
-
-	    // in moving mode
-	    // Handle typing in move mode, similar to how you handle clicking mode
-	    // Accumulate typed characters as in labeling mode
-
-	    // ensure the typed key is valid label candidate (aka not something like )
-	    // e.key/.
-
-	    var validLabelChars = (0, _keylabels.generateValidKeyChars)(openKeyNav);
-	    var isValidLabelChar = Array.from(validLabelChars).some(function (validChar) {
-	      return validChar.toLowerCase() == e.key.toLowerCase();
-	    });
-	    var selectedTarget;
-	    if (isValidLabelChar) {
-	      openKeyNav.config.typedLabel.value += e.key.toLowerCase();
-	      selectedTarget = document.querySelector("[data-openkeynav-label=\"".concat(openKeyNav.config.typedLabel.value, "\"]:not(.openKeyNav-label)"));
-	    } else {
-	      // tab-based moving
-	      if (e.key === "Tab") {
-	        selectedTarget = cycleThroughMoveTargets(e);
-	      }
-	    }
-	    if (!selectedTarget) {
-	      // no selected target. filter remaining overlays and exit.
-	      (0, _keylabels.filterRemainingOverlays)(openKeyNav, e);
-	      return false;
-	    }
-	    if (!openKeyNav.config.modesConfig.move.selectedMoveable) {
-	      // new selected target.
-	      // setting selectedTarget as selectedMoveable
-	      console.log("Selected element to move:", selectedTarget);
-	      showMoveableToOverlays(selectedTarget);
-	      (0, _dragAndDrop.beginDrag)(openKeyNav);
-	      return true;
-	    }
-
-	    // moving selectedMoveable to target
-	    moveSelectedMoveableToTarget(openKeyNav, selectedTarget);
-	    return true;
-	  };
-	  var handleMenuMode = function handleMenuMode(e) {
-	    return true;
-	  };
-	  var moveSelectedMoveableToTarget = function moveSelectedMoveableToTarget(openKeyNav, selectedTarget) {
-	    // const modifier = true; // for whether move is sticky or not (sticky mode?)
-	    console.log("Selected move target:", selectedTarget);
-	    openKeyNav.config.modesConfig.move.selectedDropZone = selectedTarget;
-	    var callback = openKeyNav.config.modesConfig.move.config[openKeyNav.config.modesConfig.move.selectedConfig].callback;
-	    if (!callback) {
-	      //   console.error("No callback function has been set to execute this move operation");
-	      (0, _dragAndDrop.simulateDragAndDrop)(openKeyNav, openKeyNav.config.modesConfig.move.selectedMoveable, openKeyNav.config.modesConfig.move.selectedDropZone);
-	    } else {
-	      openKeyNav.config.modesConfig.move.config[openKeyNav.config.modesConfig.move.selectedConfig].callback(openKeyNav.config.modesConfig.move.selectedMoveable, openKeyNav.config.modesConfig.move.selectedDropZone);
-	    }
-	    if (!openKeyNav.config.modesConfig.move.modifier) {
-	      openKeyNav.removeOverlays(true);
-	      openKeyNav.clearMoveAttributes();
-	    }
-	    return true;
-	  };
-	  var addKeydownEventListenerToIframe = function addKeydownEventListenerToIframe(openKeyNav, iframe) {
-	    try {
-	      var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-	      var potentialTarget = iframeDoc.querySelector("[data-openkeynav-label=\"".concat(openKeyNav.config.typedLabel.value, "\"]"));
-	      if (potentialTarget) {
-	        // target = potentialTarget; TODO: check if this was important. Target is undefined so commenting out.
-
-	        // Check if the keypress listener has already been added
-	        if (!iframeDoc.keypressListenerAdded) {
-	          var script = iframeDoc.createElement('script');
-	          script.textContent = '' + "document.addEventListener('keydown', function(event) {" + 'window.parent.postMessage({' + "type: 'keydown'," + 'key: event.key,' + 'keyCode: event.keyCode,' + 'altKey: event.altKey,' + 'ctrlKey: event.ctrlKey,' + 'shiftKey: event.shiftKey,' + 'metaKey: event.metaKey' + "}, '*');" + '});' + 'document.keypressListenerAdded = true;'; // Set flag to true
-	          iframeDoc.body.appendChild(script);
-	        }
-	      }
-	    } catch (error) {
-	      console.log('Error accessing iframe content', error);
-	    }
-	  };
-	  return keypress;
-	}
-
-	var styles = {};
-
-	Object.defineProperty(styles, "__esModule", {
-	  value: true
-	});
-	styles.injectToolbarStyleSheet = styles.injectStylesheet = styles.deleteStylesheets = void 0;
-	var openKeyNav;
-	var styleClassname = "openKeyNav-style";
-	var toolbarStyleClassname = "okn-toolbar-stylesheet";
-	var keyButtonStyles = "\n  .keyButtonContainer {\n      margin: 0 .1em;\n      display: inline-grid;\n      grid-template-columns: min-content auto;\n      align-items: baseline;\n      column-gap: 4px;\n  }\n  .keyButtonContainer .keyButtonLabel{\n    white-space:nowrap;\n  }\n  .keyButton {\n    display: inline-block;\n    padding: 1px 4px;\n    min-width: 1.3em;\n    text-align: center;\n    line-height: 1;\n    color: hsl(210, 8%, 5%);\n    text-shadow: 0 1px 0 hsl(0, 0%, 100%);\n    background-color: hsl(210, 8%, 90%);\n    border: 1px solid hsl(210, 8%, 68%);\n    border-radius: 3px;\n    box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);\n    white-space: nowrap;\n    margin: 0 1px;\n  }\n";
-	styles.injectStylesheet = function injectStylesheet(parent, replace) {
-	  openKeyNav = parent;
-	  if (document.querySelectorAll('.' + styleClassname).length > 0) {
-	    if (!replace) {
-	      return;
-	    }
-	    deleteStylesheets();
-	  }
-	  var style = document.createElement('style');
-	  style.className = styleClassname;
-	  style.type = 'text/css';
-	  style.textContent = ".openKeyNav-label {\n        font: inherit;\n        vertical-align: baseline;\n        box-sizing: border-box;\n        white-space: nowrap;\n        border: 1px solid ".concat(openKeyNav.config.spot.fontColor, "; \n        // box-shadow: inset 0 -2.5px 0 ").concat(openKeyNav.config.spot.insetColor, ", inset 0 -3px 0 #999, 0 0 4px #fff; \n        // background: linear-gradient(to top, #999 5%, ").concat(openKeyNav.config.spot.backgroundColor, " 20%); \n        background-color: ").concat(openKeyNav.config.spot.backgroundColor, "; \n        // border-radius: calc( 4px );\n        color: ").concat(openKeyNav.config.spot.fontColor, "; \n        display: inline-block;\n        font-size: ").concat(openKeyNav.config.spot.fontSize, "; \n        // outline : 2px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n        outline-offset: -2px !important;\n        // +\"font-weight: bold;\"\n        font-weight: inherit;\n        // line-height: 1.5;\n        line-height: 1;\n        margin: 0 .1em 0 1px;\n        overflow-wrap: break-word;\n        // padding: .0 .15em .1em;\n        padding: 3px;\n        text-shadow: 0 1px 0 ").concat(openKeyNav.config.spot.insetColor, "; \n        min-width: 1rem;\n        text-align: center;\n        position: absolute;\n        z-index: 99999999;\n        font-family: monospace;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        content: \"\";\n        position: absolute;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        top: 50%;\n        transform: translateY(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        left: 50%;\n        transform: translateX(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before {\n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        right: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after {\n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        right: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before {\n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        left: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        left: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]{\n        padding-bottom: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before {\n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        bottom: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after {\n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        bottom: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]{\n        padding-top: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before {\n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        top: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        top: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label-selected{\n        // padding : 0;\n        // margin : 0;\n        display : grid;\n        align-content : center;\n        color : ").concat(openKeyNav.config.spot.fontColor, "; \n        background : ").concat(openKeyNav.config.spot.backgroundColor, "; \n        // outline : 4px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n        outline: none; \n        // border-radius: 100%; \n        // width: 1rem; \n        // height: 1rem; \n        // text-shadow : none;\n        // padding : 0 !important;\n        // margin: 0 !important;\n      }\n      [data-openkeynav-label]:not(.openKeyNav-label):not(button){\n        // outline: 2px double ").concat(openKeyNav.config.focus.outlineColor, " !important; \n        // outline-offset: 2px !important;\n        box-shadow:  inset 0 0 0 .5px #000,\n                      0 0 0 .75px #000,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        // border-radius: 3px;\n        border-color: #000;\n        border-radius: 3px;\n      }\n      button[data-openkeynav-label]{\n        outline:2px solid #000 !important;\n      }\n      .openKeyNav-inaccessible:not(.openKeyNav-label):not(button){\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        border-color: #f00;\n        border-radius: 3px;\n      }\n      button.openKeyNav-inaccessible{\n        outline:2px solid #f00 !important;\n      }\n      .openKeyNav-inaccessible.openKeyNav-label{\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        border-color: #f00;\n        border-radius: 3px;\n      }\n      .openKeyNav-label.debug-inaccessible{\n        background-color: #ff4444 !important;\n        border-color: #cc0000 !important;\n        color: #ffffff !important;\n        text-shadow: 0 1px 0 rgba(0,0,0,0.5) !important;\n      }\n        //   +\"span[data-openkeynav-label]{\"\n        //       +\"display: inherit;\"\n        //   +\"}\"\n      .openKeyNav-noCursor *{\n        cursor: none !important;\n      }\n      .openKeyNav-mouseover-tooltip{\n        position: absolute;\n        background-color: #333;\n        color: #fff;\n        padding: 5px;\n        border-radius: 5px;\n        display: none;\n        z-index: 1000;\n        font-size: 12px;\n      }\n      .openKeyNav-mouseover-tooltip::before{\n        content: \"Debug mode\"\n      }\n      //   [data-openkeynav-draggable=\"true\"] {\n      //   outline: 2px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n      //   outline-offset: -1px !important;\n      // }\n      ;\n      ");
-	  style.textContent += "\n      .okn-logo-text {\n          font-size: 36px;\n          font-weight: 600;\n          color: #ffffff;\n          background-color: #333;\n          padding: .1em .2em;\n          border-radius: 1em;\n          box-sizing: border-box;\n          line-height: 1;\n          text-align: center;\n          position: relative;\n          display: inline-block;\n          min-width: 1rem;\n          border: max(.1em, 2px) solid #ffffff;\n          white-space: nowrap;\n      }\n\n      .okn-logo-text.small {\n          font-size: 18px;\n      }\n      .okn-logo-text.tiny {\n          font-size: 10px;\n          /* border-width: 1px; */\n          border: none;\n      }\n      .okn-logo-text.tiny .key {\n          font-weight: 700;\n      }\n\n      .okn-logo-text.light {\n          color: #333; /* Dark text color */\n          background-color: #fff; /* Light background */\n          border-color: #333; /* Dark border */\n      }\n\n      .okn-logo-text .key {\n          display: inline;\n          padding: .1em .2em;\n          margin: 0 .1em;\n          background-color: #ffffff; /* Light background */\n          color: #333; /* Dark text */\n          line-height: 1;\n          /* font-size: 0.6em; */\n          position: relative;\n          top: -.3em;\n      }\n\n      .okn-logo-text.light .key {\n          background-color: #333; /* Dark background */\n          color: #ffffff; /* Light text */\n      }\n\n      .okn-logo-text .key::before,\n      .okn-logo-text .key::after {\n          content: \"\";\n          position: absolute;\n          left: 50%;\n          transform: translateX(-50%);\n      }\n\n      .okn-logo-text .key::before {\n          --border-size: 0.5em; /* Base border size */\n          --min-border-size: 5px; /* Minimum pixel size */\n\n          border-top: max(var(--border-size), var(--min-border-size)) solid #333;\n          bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n          border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n          border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n      }\n      .okn-logo-text.light .key::before {\n          border-top-color: #fff; /* Dark top triangle */\n      }\n\n      .okn-logo-text .key::after {\n          --border-size: .4em; /* Base border size */\n          --min-border-size: 4px; /* Minimum pixel size */\n\n          border-top: max( calc( var(--border-size) + 2px) , var(--min-border-size)) solid #fff;\n          bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n          border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n          border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n      }\n\n      .okn-logo-text.light .key::after {\n          border-top-color: #333; /* Light bottom triangle */\n      }\n      ";
-	  style.textContent += keyButtonStyles;
-	  // *:focus { // could be problematic to edit focus states throughout a website
-	  //   outline: 2px ${openKeyNav.config.focus.outlineStyle} ${openKeyNav.config.focus.outlineColor} !important; 
-	  //   outline-offset: -2px !important;
-	  // }
-	  // `;
-	  // ensuring hidden labeled elements are made visible
-	  style.textContent += "\n        [data-openkeynav-label]:not(.openKeyNav-label){\n          opacity:1 !important;\n          visibility:visible !important;\n        }\n      ";
-	  style.textContent += "\n        [data-openkeynav-focused]{\n          outline: 2px ".concat(openKeyNav.config.focus.outlineStyle, " ").concat(openKeyNav.config.focus.outlineColor, " !important; \n          outline-offset: -2px !important;\n        }\n      ");
-	  document.head.appendChild(style);
-	};
-	var deleteStylesheets = styles.deleteStylesheets = function deleteStylesheets() {
-	  document.querySelectorAll('.' + styleClassname).forEach(function (el) {
-	    el.parentNode && el.parentNode.removeChild(el);
-	  });
-	};
-	styles.injectToolbarStyleSheet = function injectToolbarStyleSheet(parent) {
-	  openKeyNav = parent;
-	  if (!!document.querySelector(toolbarStyleClassname)) {
-	    return false;
-	  }
-	  var style = document.createElement('style');
-	  style.setAttribute("class", toolbarStyleClassname);
-	  var toolBarHeight = openKeyNav.config.toolBar.height;
-	  var toolBarVerticalPadding = 6;
-	  var toolbarBackground = "\n      background-color: ".concat(openKeyNav.config.toolBar.backgroundColor.value, ";\n      color: ").concat(openKeyNav.config.toolBar.contentColor.value, ";\n      border: 1px solid hsl(210, 8%, 68%);\n      border-radius: 4px;\n      padding: 3px ").concat(toolBarVerticalPadding, "px;\n  ");
-	  style.type = 'text/css';
-	  style.textContent = "\n  .openKeyNav-toolBar {\n      // width: 200px;    // needs to have a set width (or a min-width) since the content changes inside... \n                          // min-widh is set inside the init depending on number of keys\n      // max-width: 200px;\n      // background-color: #333;\n      color: #333;\n      // z-index: 10000;\n      ".concat(toolbarBackground, "\n      font-size:12px;\n      display: flex;\n      align-items: center;\n      // align-items: end;\n      flex-direction: column;\n      // direction: rtl;\n      max-height: ").concat(toolBarHeight, "px;\n      position:relative;\n  }\n  .openKeyNav-toolBar > p{\n      overflow: hidden;\n  }\n  .openKeyNav-toolBar p{\n      font-size: 16px;\n      margin-bottom: 0;\n      line-height: ").concat(toolBarHeight - toolBarVerticalPadding, "px;\n      text-align: left;\n  }\n  .openKeyNav-toolBar-expanded {\n      position: absolute;\n      top: 0;\n      margin-top: 40px;\n      width: 100%;\n      ").concat(toolbarBackground, "\n      display: grid;\n      justify-content: left;\n  }\n  // .openKeyNav-toolBar span.stacked {\n  //     display: inline-grid;\n  //     grid-template-rows: auto auto;\n  // }\n  ");
-	  style.textContent += keyButtonStyles;
-	  document.head.appendChild(style);
-	};
-
-	var hasRequiredToolbar;
-	function requireToolbar() {
-	  if (hasRequiredToolbar) return toolbar;
-	  hasRequiredToolbar = 1;
-	  Object.defineProperty(toolbar, "__esModule", {
-	    value: true
-	  });
-	  toolbar.handleToolBar = void 0;
-	  var _signals = signals;
-	  var _keyButton = keyButton;
-	  var _keypress = requireKeypress();
-	  var _styles = styles;
-	  function _createForOfIteratorHelper(r, e) {
-	    var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
-	    if (!t) {
-	      if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e) {
-	        t && (r = t);
-	        var _n = 0,
-	          F = function F() {};
-	        return {
-	          s: F,
-	          n: function n() {
-	            return _n >= r.length ? {
-	              done: true
-	            } : {
-	              done: false,
-	              value: r[_n++]
-	            };
-	          },
-	          e: function e(r) {
-	            throw r;
-	          },
-	          f: F
-	        };
-	      }
-	      throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-	    }
-	    var o,
-	      a = true,
-	      u = false;
-	    return {
-	      s: function s() {
-	        t = t.call(r);
-	      },
-	      n: function n() {
-	        var r = t.next();
-	        return a = r.done, r;
-	      },
-	      e: function e(r) {
-	        u = true, o = r;
-	      },
-	      f: function f() {
-	        try {
-	          a || null == t.return || t.return();
-	        } finally {
-	          if (u) throw o;
-	        }
-	      }
-	    };
-	  }
-	  function _unsupportedIterableToArray(r, a) {
-	    if (r) {
-	      if ("string" == typeof r) return _arrayLikeToArray(r, a);
-	      var t = {}.toString.call(r).slice(8, -1);
-	      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
-	    }
-	  }
-	  function _arrayLikeToArray(r, a) {
-	    (null == a || a > r.length) && (a = r.length);
-	    for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
-	    return n;
-	  } // unified status bar and toolbar
-	  var openKeyNav;
-	  toolbar.handleToolBar = function handleToolBar(openKeyNav_obj) {
-	    openKeyNav = openKeyNav_obj;
-	    function initToolbarLogic(toolBarElement) {
-	      // Check if we've already initialized this toolbar
-	      if (toolBarElement.dataset.initialized === "true") return;
-
-	      // Mark as initialized
-	      toolBarElement.dataset.initialized = "true";
-	      (0, _styles.injectToolbarStyleSheet)(openKeyNav);
-	      var lastMessage;
-	      (0, _signals.effect)(function () {
-	        openKeyNav.config.modes;
-	        openKeyNav.config.typedLabel.value;
-	        openKeyNav.config.debug.inaccessibleCount.value;
-	        updateToolbar(toolBarElement, lastMessage);
-	      });
-	      (0, _signals.effect)(function () {
-	        var backgroundColor = openKeyNav.config.toolBar.backgroundColor.value;
-	        var contentColor = openKeyNav.config.toolBar.contentColor.value;
-	        updateToolbarColors({
-	          backgroundColor: backgroundColor,
-	          contentColor: contentColor
-	        });
-	      });
-	    }
-	    var toolBarElements = document.querySelectorAll('.openKeyNav-toolBar');
-	    toolBarElements.forEach(function (toolBarElement) {
-	      if (toolBarElement) {
-	        initToolbarLogic(toolBarElement);
-	        // return;
-	      }
-	    });
-	    var observer = new MutationObserver(function (mutationsList, observerInstance) {
-	      var _iterator = _createForOfIteratorHelper(mutationsList),
-	        _step;
-	      try {
-	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-	          var mutation = _step.value;
-	          for (var _i = 0, _Array$from = Array.from(mutation.addedNodes); _i < _Array$from.length; _i++) {
-	            var node = _Array$from[_i];
-	            if (node.nodeType === 1 && node.matches && node.matches('.openKeyNav-toolBar')) {
-	              initToolbarLogic(node);
-	              // observerInstance.disconnect();
-	              return;
-	            }
-	            if (node.nodeType === 1) {
-	              var _node$querySelectorAl;
-	              var descendants = (_node$querySelectorAl = node.querySelectorAll) === null || _node$querySelectorAl === void 0 ? void 0 : _node$querySelectorAl.call(node, '.openKeyNav-toolBar');
-	              descendants.forEach(function (descendant) {
-	                if (descendant) {
-	                  initToolbarLogic(descendant);
-	                  // observerInstance.disconnect();
-	                  return;
-	                }
-	              });
-	            }
-	          }
-	        }
-	      } catch (err) {
-	        _iterator.e(err);
-	      } finally {
-	        _iterator.f();
-	      }
-	    });
-	    observer.observe(document.body, {
-	      childList: true,
-	      subtree: true
-	    });
-	  };
-	  var toolbarTemplates = {
-	    default: function _default() {
-	      var toolBarElement = document.querySelector('.openKeyNav-toolBar');
-	      if (!toolBarElement) {
-	        return;
-	      }
-	      toolBarElement.style.minWidth = "150px";
-	      var clickButton = "";
-	      var dragButton = "";
-	      var menuButton = (0, _keyButton.keyButton)([(0, _keypress.modiferKeyString)(openKeyNav), openKeyNav.config.keys.menu], "openKeyNav");
-	      if (openKeyNav.meta.enabled.value) {
-	        menuButton = (0, _keyButton.keyButton)([openKeyNav.config.keys.menu], "Shortcuts");
-	      }
-	      return "<p>\n                    ".concat(menuButton, "\n                    ").concat(dragButton, "\n                    ").concat(clickButton, " \n                </p>\n            ");
-	    },
-	    clickMode: function clickMode() {
-	      var count = openKeyNav.config.debug.inaccessibleCount.value;
-	      if (openKeyNav.config.debug.keyboardAccessible && count > 0) {
-	        return "<p>".concat((0, _keyButton.keyButton)(["Esc"], "Click Mode (Debug: ".concat(count, " inaccessible)")), "</p>");
-	      }
-	      return "<p>".concat((0, _keyButton.keyButton)(["Esc"], "Click Mode"), "</p>");
-	    },
-	    dragMode: function dragMode() {
-	      return "<p>".concat((0, _keyButton.keyButton)(["Esc"], "Drag Mode"), "</p>");
-	    },
-	    menu: function menu() {
-	      var dragButton = "";
-	      if (openKeyNav.config.modesConfig.move.config.length) {
-	        // if drag mode is configured
-	        dragButton = (0, _keyButton.keyButton)([openKeyNav.config.keys.move], "Drag");
-	      }
-	      return "\n            <p>".concat((0, _keyButton.keyButton)(["Esc"], "Shortcuts"), "</p>\n            <div class=\"openKeyNav-toolBar-expanded\">\n                ").concat((0, _keyButton.keyButton)([openKeyNav.config.keys.click], "Click"), "\n                ").concat(dragButton, "\n            </div>\n        ");
-	    }
-	  };
-	  var updateElement = function updateElement(element, html) {
-	    element.innerHTML = html;
-	  };
-	  var updateToolbar = function updateToolbar(toolBarElement, lastMessage) {
-	    if (!toolBarElement) {
-	      return;
-	    }
-	    var message;
-	    var typedLabel = openKeyNav.config.typedLabel.value;
-	    if (openKeyNav.config.modes.clicking.value) {
-	      message = toolbarTemplates.clickMode(typedLabel);
-	    } else if (openKeyNav.config.modes.moving.value) {
-	      message = toolbarTemplates.dragMode(typedLabel);
-	      // message = toolbarTemplates.menu(typedLabel);
-	    } else if (openKeyNav.config.modes.menu.value) {
-	      message = toolbarTemplates.menu(typedLabel);
-	    } else {
-	      message = toolbarTemplates.default(); // Default message
-	    }
-
-	    // Only emit the notification if the message has changed
-	    if (message === lastMessage) {
-	      return;
-	    }
-
-	    // console.log(message);
-	    // Update the toolbar content
-	    updateElement(toolBarElement, message);
-	    lastMessage = message;
-	  };
-	  var updateToolbarColors = function updateToolbarColors(_ref) {
-	    var backgroundColor = _ref.backgroundColor,
-	      contentColor = _ref.contentColor;
-	    var toolbar = document.querySelector('.openKeyNav-toolBar');
-	    if (!toolbar) {
-	      return false;
-	    }
-	    if (backgroundColor) {
-	      toolbar.style.backgroundColor = backgroundColor;
-	    }
-	    if (contentColor) {
-	      toolbar.style.color = contentColor;
-	    }
-	  };
-	  return toolbar;
-	}
-
-	var audit = {};
-
-	var auditPanel = {};
-
-	Object.defineProperty(auditPanel, "__esModule", {
-	  value: true
-	});
-	auditPanel.hideAuditPanel = hideAuditPanel;
-	auditPanel.showAuditPanel = showAuditPanel;
-	/**
-	 * Creates and manages the accessibility audit panel UI with Figma-style design
-	 */
-	function showAuditPanel(inaccessibleElements) {
-	  // Remove existing panel if present
-	  var existingPanel = document.getElementById('okn-audit-panel');
-	  if (existingPanel) {
-	    existingPanel.remove();
-	    // Restore body margin
-	    document.body.style.marginLeft = '';
-	    document.body.style.transition = '';
-	  }
-
-	  // Shift page content to the right to make room for sidebar
-	  var sidebarWidth = '320px';
-	  document.body.style.transition = 'margin-left 0.3s ease';
-	  document.body.style.marginLeft = sidebarWidth;
-
-	  // Create full-screen overlay
-	  var overlay = document.createElement('div');
-	  overlay.id = 'okn-audit-panel';
-	  overlay.style.position = 'fixed';
-	  overlay.style.top = '0';
-	  overlay.style.left = '0';
-	  overlay.style.width = sidebarWidth;
-	  overlay.style.bottom = '0';
-	  overlay.style.zIndex = '999999';
-	  overlay.style.fontFamily = 'Inter, system-ui, -apple-system, sans-serif';
-	  overlay.style.fontSize = '13px';
-	  overlay.style.display = 'flex';
-	  overlay.style.flexDirection = 'column';
-
-	  // Left sidebar - Issue list (now the only element in overlay)
-	  var leftSidebar = document.createElement('div');
-	  leftSidebar.style.flex = '1';
-	  leftSidebar.style.backgroundColor = '#ffffff';
-	  leftSidebar.style.borderRight = '1px solid #e5e5e5';
-	  leftSidebar.style.display = 'flex';
-	  leftSidebar.style.flexDirection = 'column';
-	  leftSidebar.style.boxShadow = '2px 0 8px rgba(0,0,0,0.08)';
-	  leftSidebar.style.overflow = 'hidden';
-
-	  // Sidebar header
-	  var sidebarHeader = document.createElement('div');
-	  sidebarHeader.style.padding = '16px';
-	  sidebarHeader.style.borderBottom = '1px solid #e5e5e5';
-	  sidebarHeader.style.backgroundColor = '#f8f9fa';
-	  var headerTitle = document.createElement('div');
-	  headerTitle.style.fontSize = '12px';
-	  headerTitle.style.fontWeight = '600';
-	  headerTitle.style.color = '#6b7280';
-	  headerTitle.style.textTransform = 'uppercase';
-	  headerTitle.style.letterSpacing = '0.5px';
-	  headerTitle.style.marginBottom = '4px';
-	  headerTitle.textContent = 'Accessibility Audit';
-	  var issueCount = document.createElement('div');
-	  issueCount.style.fontSize = '18px';
-	  issueCount.style.fontWeight = '600';
-	  issueCount.style.color = '#ef4444';
-	  issueCount.style.marginBottom = '12px';
-	  issueCount.textContent = "".concat(inaccessibleElements.length, " ").concat(inaccessibleElements.length === 1 ? 'Issue' : 'Issues', " Found");
-
-	  // Development mode notice
-	  var devNotice = document.createElement('div');
-	  // Use existing OpenKeyNav logo markup (from toolbar/toast)
-	  var logo = document.createElement('div');
-	  logo.className = 'openkeynav-logo';
-	  logo.style.marginBottom = '8px';
-	  // Reuse the exact logo markup used by the toast notification for consistency
-	  // Use the light variant so it renders correctly on the panel's light header
-	  logo.innerHTML = '<div class="okn-logo-text tiny light" role="img" aria-label="OpenKeyNav">Open<span class="key">Key</span>Nav</div>';
-	  sidebarHeader.appendChild(logo);
-	  devNotice.style.fontSize = '11px';
-	  devNotice.style.color = '#6b7280';
-	  devNotice.style.padding = '8px';
-	  devNotice.style.backgroundColor = '#e0f2fe';
-	  devNotice.style.borderRadius = '4px';
-	  devNotice.style.marginTop = '8px';
-	  devNotice.style.lineHeight = '1.5';
-	  devNotice.innerHTML = '💡 <strong>Development Mode</strong><br>OpenKeyNav is running in debug mode with keyboard accessibility audit enabled.';
-
-	  // Close button in header
-	  var closeBtn = document.createElement('button');
-	  closeBtn.innerHTML = '✕';
-	  closeBtn.style.position = 'absolute';
-	  closeBtn.style.top = '12px';
-	  closeBtn.style.right = '12px';
-	  closeBtn.style.background = 'none';
-	  closeBtn.style.border = 'none';
-	  closeBtn.style.color = '#6b7280';
-	  closeBtn.style.fontSize = '18px';
-	  closeBtn.style.cursor = 'pointer';
-	  closeBtn.style.padding = '4px 8px';
-	  closeBtn.style.borderRadius = '4px';
-	  closeBtn.style.transition = 'background-color 0.2s';
-	  closeBtn.setAttribute('aria-label', 'Close audit panel');
-	  closeBtn.onmouseenter = function () {
-	    return closeBtn.style.backgroundColor = '#e5e7eb';
-	  };
-	  closeBtn.onmouseleave = function () {
-	    return closeBtn.style.backgroundColor = 'transparent';
-	  };
-	  closeBtn.addEventListener('click', function () {
-	    overlay.remove();
-	    // Restore body margin
-	    document.body.style.marginLeft = '';
-	    document.body.style.transition = '';
-	  });
-	  sidebarHeader.style.position = 'relative'; // For absolute positioned close button
-	  sidebarHeader.appendChild(headerTitle);
-	  sidebarHeader.appendChild(issueCount);
-	  sidebarHeader.appendChild(devNotice);
-	  sidebarHeader.appendChild(closeBtn);
-
-	  // Info section - collapsible panel about OpenKeyNav
-	  var infoSection = document.createElement('details');
-	  infoSection.style.padding = '12px 16px';
-	  infoSection.style.borderBottom = '1px solid #e5e5e5';
-	  infoSection.style.backgroundColor = '#fafafa';
-	  infoSection.style.cursor = 'pointer';
-	  var infoSummary = document.createElement('summary');
-	  infoSummary.style.fontSize = '12px';
-	  infoSummary.style.fontWeight = '600';
-	  infoSummary.style.color = '#374151';
-	  infoSummary.style.marginBottom = '8px';
-	  infoSummary.style.outline = 'none';
-	  infoSummary.textContent = 'ℹ️ About OpenKeyNav';
-	  var infoContent = document.createElement('div');
-	  infoContent.style.fontSize = '11px';
-	  infoContent.style.color = '#6b7280';
-	  infoContent.style.lineHeight = '1.6';
-	  infoContent.style.marginTop = '8px';
-	  infoContent.innerHTML = "\n    <p style=\"margin: 0 0 8px 0;\"><strong>OpenKeyNav</strong> adds keyboard shortcuts to navigate web pages efficiently.</p>\n    <p style=\"margin: 0 0 8px 0;\"><strong>Common shortcuts:</strong></p>\n    <ul style=\"margin: 0; padding-left: 16px;\">\n      <li><kbd style=\"background: #fff; padding: 2px 4px; border-radius: 2px; font-family: monospace;\">Shift+O</kbd> Enable/disable</li>\n      <li><kbd style=\"background: #fff; padding: 2px 4px; border-radius: 2px; font-family: monospace;\">K</kbd> Click mode</li>\n      <li><kbd style=\"background: #fff; padding: 2px 4px; border-radius: 2px; font-family: monospace;\">H</kbd> Heading navigation</li>\n      <li><kbd style=\"background: #fff; padding: 2px 4px; border-radius: 2px; font-family: monospace;\">Q</kbd> Escape</li>\n    </ul>\n    <p style=\"margin: 8px 0 0 0;\"><a href=\"https://github.com/LDubya/OpenKeyNav\" target=\"_blank\" style=\"color: #3b82f6; text-decoration: none;\">Learn more \u2192</a></p>\n  ";
-	  infoSection.appendChild(infoSummary);
-	  infoSection.appendChild(infoContent);
-
-	  // Sidebar content - issues list
-	  var issuesLabel = document.createElement('div');
-	  issuesLabel.style.padding = '12px 16px 8px';
-	  issuesLabel.style.fontSize = '11px';
-	  issuesLabel.style.fontWeight = '600';
-	  issuesLabel.style.color = '#9ca3af';
-	  issuesLabel.style.textTransform = 'uppercase';
-	  issuesLabel.style.letterSpacing = '0.5px';
-	  issuesLabel.textContent = 'Issues';
-	  var sidebarContent = document.createElement('div');
-	  sidebarContent.style.flex = '1';
-	  sidebarContent.style.overflowY = 'auto';
-	  sidebarContent.style.padding = '8px';
-
-	  // List items with Figma-style design
-	  var selectedItem = null;
-	  inaccessibleElements.forEach(function (el, index) {
-	    var item = document.createElement('div');
-	    item.style.padding = '12px';
-	    item.style.marginBottom = '2px';
-	    item.style.backgroundColor = '#ffffff';
-	    item.style.border = '1px solid transparent';
-	    item.style.borderRadius = '6px';
-	    item.style.cursor = 'pointer';
-	    item.style.transition = 'all 0.15s ease';
-	    var tagInfo = "".concat(el.tagName.toLowerCase()).concat(el.id ? "#".concat(el.id) : '').concat(el.className ? ".".concat(el.className.split(' ')[0]) : '');
-	    var header = document.createElement('div');
-	    header.style.display = 'flex';
-	    header.style.alignItems = 'center';
-	    header.style.marginBottom = '6px';
-	    header.style.gap = '8px';
-	    var errorIcon = document.createElement('div');
-	    errorIcon.style.width = '20px';
-	    errorIcon.style.height = '20px';
-	    errorIcon.style.borderRadius = '4px';
-	    errorIcon.style.backgroundColor = '#fef2f2';
-	    errorIcon.style.border = '1px solid #fecaca';
-	    errorIcon.style.display = 'flex';
-	    errorIcon.style.alignItems = 'center';
-	    errorIcon.style.justifyContent = 'center';
-	    errorIcon.style.fontSize = '12px';
-	    errorIcon.textContent = '⚠️';
-	    var tagEl = document.createElement('code');
-	    tagEl.style.fontFamily = 'SF Mono, Monaco, monospace';
-	    tagEl.style.fontSize = '12px';
-	    tagEl.style.fontWeight = '500';
-	    tagEl.style.color = '#374151';
-	    tagEl.textContent = tagInfo;
-	    header.appendChild(errorIcon);
-	    header.appendChild(tagEl);
-	    var description = document.createElement('div');
-	    description.style.fontSize = '12px';
-	    description.style.color = '#6b7280';
-	    description.style.marginLeft = '28px';
-	    description.textContent = 'Not keyboard accessible';
-
-	    // Details panel (hidden by default) to show why it matters and how to fix
-	    var details = document.createElement('div');
-	    details.className = 'okn-issue-details';
-	    details.style.display = 'none';
-	    details.style.marginTop = '8px';
-	    details.style.padding = '10px';
-	    details.style.background = '#f9fafb';
-	    details.style.borderRadius = '4px';
-	    details.style.fontSize = '12px';
-	    details.style.color = '#374151';
-	    var reason = el.getAttribute('data-openkeynav-inaccessible-reason') || 'No details available.';
-	    details.innerHTML = "\n      <div style=\"font-weight:600; color:#ef4444; margin-bottom:6px;\">Why it matters</div>\n      <div style=\"margin-bottom:10px;\">".concat(reason, "</div>\n      <div style=\"font-weight:600; color:#3b82f6; margin-bottom:6px;\">How to fix</div>\n      <div>").concat(getFixSuggestion(el), "</div>\n    ");
-	    item.appendChild(header);
-	    item.appendChild(description);
-	    item.appendChild(details);
-
-	    // Hover effect
-	    item.onmouseenter = function () {
-	      if (item !== selectedItem) {
-	        item.style.backgroundColor = '#f9fafb';
-	        item.style.borderColor = '#e5e7eb';
-	      }
-	    };
-	    item.onmouseleave = function () {
-	      if (item !== selectedItem) {
-	        item.style.backgroundColor = '#ffffff';
-	        item.style.borderColor = 'transparent';
-	      }
-	    };
-
-	    // Click to highlight element and toggle details
-	    item.addEventListener('click', function () {
-	      // Toggle details visibility
-	      var wasOpen = details.style.display === 'block';
-
-	      // Close previously selected item
-	      if (selectedItem && selectedItem !== item) {
-	        var prevDetails = selectedItem.querySelector('.okn-issue-details');
-	        if (prevDetails) prevDetails.style.display = 'none';
-	        selectedItem.style.backgroundColor = '#ffffff';
-	        selectedItem.style.borderColor = 'transparent';
-	      }
-	      if (wasOpen) {
-	        details.style.display = 'none';
-	        item.style.backgroundColor = '#ffffff';
-	        item.style.borderColor = 'transparent';
-	        selectedItem = null;
-	      } else {
-	        details.style.display = 'block';
-	        selectedItem = item;
-	        item.style.backgroundColor = '#eff6ff';
-	        item.style.borderColor = '#3b82f6';
-
-	        // Scroll to element
-	        el.scrollIntoView({
-	          behavior: 'smooth',
-	          block: 'center'
-	        });
-
-	        // Highlight element
-	        var originalOutline = el.style.outline;
-	        var originalOutlineOffset = el.style.outlineOffset;
-	        el.style.outline = '3px solid #3b82f6';
-	        el.style.outlineOffset = '4px';
-	        setTimeout(function () {
-	          el.style.outline = originalOutline;
-	          el.style.outlineOffset = originalOutlineOffset;
-	        }, 2500);
-	      }
-	    });
-
-	    // Keyboard accessibility: toggle with Enter or Space
-	    item.tabIndex = 0;
-	    item.addEventListener('keydown', function (ev) {
-	      if (ev.key === 'Enter' || ev.key === ' ') {
-	        ev.preventDefault();
-	        item.click();
-	      }
-	    });
-	    sidebarContent.appendChild(item);
-	  });
-
-	  // Helper to suggest fixes based on element properties
-	  function getFixSuggestion(el) {
-	    var tag = el.tagName.toLowerCase();
-	    var role = el.getAttribute('role') || '';
-	    var reason = (el.getAttribute('data-openkeynav-inaccessible-reason') || '').toLowerCase();
-	    if (tag === 'a' && (!el.hasAttribute('href') || el.getAttribute('href') === '')) {
-	      return 'Add a valid href attribute to the <a> element, or give it an ARIA role and tabindex="0" if it is an interactive control.';
-	    }
-	    if (tag === 'button' && el.getAttribute('tabindex') === '-1') {
-	      return 'Remove tabindex="-1" so the button is focusable, or set tabindex="0" if needed.';
-	    }
-	    if (tag === 'div' && role === 'button' && !el.hasAttribute('tabindex')) {
-	      return 'Add tabindex="0" so the element can be focused by keyboard, and ensure ARIA role is appropriate.';
-	    }
-	    if (el.hasAttribute('onclick') && !el.hasAttribute('tabindex')) {
-	      return 'Add tabindex="0" and role="button" (or convert to a &lt;button&gt;) so keyboard users can activate this control.';
-	    }
-	    if (reason.includes('hidden') || reason.includes('visibility')) {
-	      return 'Make the element visible or remove CSS that hides it; keyboard controls must be visible to be usable.';
-	    }
-	    return 'Review ARIA roles, tabindex, and event handlers; convert non-semantic interactive elements to &lt;button&gt; or &lt;a&gt; where appropriate.';
-	  }
-
-	  // Assemble the UI
-	  leftSidebar.appendChild(sidebarHeader);
-	  leftSidebar.appendChild(infoSection);
-	  leftSidebar.appendChild(issuesLabel);
-	  leftSidebar.appendChild(sidebarContent);
-	  overlay.appendChild(leftSidebar);
-	  document.body.appendChild(overlay);
-	}
-
-	// Hide and remove the audit panel if present
-	function hideAuditPanel() {
-	  var panel = document.getElementById('okn-audit-panel');
-	  if (panel) {
-	    panel.remove();
-	    // Restore body margin
-	    document.body.style.marginLeft = '';
-	    document.body.style.transition = '';
-	  }
-	}
-
-	Object.defineProperty(audit, "__esModule", {
-	  value: true
-	});
-	audit.runAccessibilityAudit = runAccessibilityAudit;
-	var _isTabbable = isTabbable$1;
-	var _auditPanel = auditPanel;
-	/**
-	 * Runs accessibility audit on the page
-	 * Checks all interactive elements for keyboard accessibility
-	 * @param {Object} openKeyNav - The OpenKeyNav instance
-	 */
-	function runAccessibilityAudit(openKeyNav) {
-	  // Only run in debug mode
-	  if (!openKeyNav.config.debug.keyboardAccessible) {
-	    return;
-	  }
-	  // To make audit results consistent regardless of the user's current scroll
-	  // position, temporarily scroll to the top of the document, run the audit,
-	  // then restore the original scroll position. This helps avoid cases where
-	  // scrolling has revealed or hidden elements inside overflow containers and
-	  // leads to non-deterministic counts.
-	  var prevScrollX = typeof window !== 'undefined' ? window.scrollX : 0;
-	  var prevScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
-	  try {
-	    if (typeof window !== 'undefined') {
-	      window.scrollTo(0, 0);
-	    }
-	  } catch (e) {
-	    // ignore
-	  }
-
-	  // Defer the audit slightly to allow layout to stabilize after scrolling.
-	  setTimeout(function () {
-	    // Query all potentially interactive elements (same logic as click mode)
-	    var elements = document.querySelectorAll('a, button, input, select, textarea, [role="button"], [role="link"], [tabindex], [onclick]');
-	    var inaccessibleElements = [];
-
-	    // Temporarily allow isTabbable to include offscreen elements so the audit
-	    // can report issues throughout the document, not just those visible in the
-	    // current viewport. Also temporarily set screenReaderVisible so that
-	    // isAnyCornerVisible checks are bypassed during audit. Preserve previous
-	    // values and restore afterwards.
-	    var prevAuditFlag = !!openKeyNav._auditIncludeOffscreen;
-	    var prevScreenReaderVisible = !!openKeyNav.config.debug.screenReaderVisible;
-	    openKeyNav._auditIncludeOffscreen = true;
-	    openKeyNav.config.debug.screenReaderVisible = true;
-	    try {
-	      elements.forEach(function (el) {
-	        // Call isTabbable which will flag inaccessible elements as a side effect
-	        (0, _isTabbable.isTabbable)(el, openKeyNav);
-
-	        // After calling isTabbable, check if it was flagged as inaccessible
-	        if (el.hasAttribute('data-openkeynav-inaccessible-reason')) {
-	          inaccessibleElements.push(el);
-	        }
-	      });
-	    } catch (error) {
-	      console.error('[OpenKeyNav Audit] Error during element check:', error);
-	    } finally {
-	      openKeyNav._auditIncludeOffscreen = prevAuditFlag;
-	      openKeyNav.config.debug.screenReaderVisible = prevScreenReaderVisible;
-	    }
-
-	    // Update the count
-	    openKeyNav.config.debug.inaccessibleCount.value = inaccessibleElements.length;
-
-	    // Log to console
-	    if (inaccessibleElements.length > 0) {
-	      console.warn("[OpenKeyNav Audit] Found ".concat(inaccessibleElements.length, " inaccessible interactive elements:"), inaccessibleElements);
-	    } else {
-	      console.log('[OpenKeyNav Audit] All interactive elements are keyboard accessible!');
-	    }
-
-	    // Show audit panel if issues found
-	    if (inaccessibleElements.length > 0) {
-	      (0, _auditPanel.showAuditPanel)(inaccessibleElements);
-	    }
-
-	    // Restore previous scroll
-	    try {
-	      if (typeof window !== 'undefined') {
-	        window.scrollTo(prevScrollX, prevScrollY);
-	      }
-	    } catch (e) {
-	      // ignore
-	    }
-	  }, 50);
-	}
-
 	var structuralNavigation = {};
 
 	var structuralModel = {};
+
+	var accessibilityName = {};
+
+	var domUtilities = {};
+
+	Object.defineProperty(domUtilities, "__esModule", {
+	  value: true
+	});
+	domUtilities.isShadowRoot = domUtilities.isOpenKeyNavGeneratedUI = domUtilities.isElement = domUtilities.isDocument = domUtilities.isComposedWithin = domUtilities.hasAriaHiddenAncestor = domUtilities.getDeepActiveElement = domUtilities.getComposedParent = domUtilities.getComposedChildren = domUtilities.getComposedAncestors = domUtilities.collectComposedElements = domUtilities.OPENKEYNAV_GENERATED_UI_SELECTOR = void 0;
+	var ELEMENT_NODE = 1;
+	var DOCUMENT_NODE = 9;
+	var DOCUMENT_FRAGMENT_NODE = 11;
+	var OPENKEYNAV_GENERATED_UI_SELECTOR = domUtilities.OPENKEYNAV_GENERATED_UI_SELECTOR = ['[data-openkeynav-ui]', '.openKeyNav-label', '.openKeyNav-toolBar', '.openKeyNav-mouseover-tooltip', '.openKeyNav-structural-status', '#okn-notification-container', '#okn-audit-panel'].join(',');
+	var isElement = domUtilities.isElement = function isElement(node) {
+	  return Boolean(node && node.nodeType === ELEMENT_NODE);
+	};
+	var isDocument = domUtilities.isDocument = function isDocument(node) {
+	  return Boolean(node && node.nodeType === DOCUMENT_NODE);
+	};
+	var isShadowRoot = domUtilities.isShadowRoot = function isShadowRoot(node) {
+	  return Boolean(node && node.nodeType === DOCUMENT_FRAGMENT_NODE && node.host && isElement(node.host));
+	};
+
+	/**
+	 * Returns the parent exposed by the composed tree rather than the light DOM.
+	 */
+	var getComposedParent = domUtilities.getComposedParent = function getComposedParent(node) {
+	  if (!node) return null;
+	  if (node.assignedSlot) return node.assignedSlot;
+	  if (isShadowRoot(node)) return node.host;
+	  return node.parentNode || null;
+	};
+
+	/**
+	 * Includes `node` itself and stops after `boundary` when one is supplied.
+	 */
+	var getComposedAncestors = domUtilities.getComposedAncestors = function getComposedAncestors(node) {
+	  var boundary = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+	  var ancestors = [];
+	  var current = node;
+	  while (current) {
+	    ancestors.push(current);
+	    if (current === boundary) break;
+	    current = getComposedParent(current);
+	  }
+	  return ancestors;
+	};
+	var isComposedWithin = domUtilities.isComposedWithin = function isComposedWithin(boundary, node) {
+	  return Boolean(boundary && node) && getComposedAncestors(node, boundary).includes(boundary);
+	};
+
+	/**
+	 * Returns children in the rendered composed tree, following open shadow roots
+	 * and replacing slots with their assigned nodes when present.
+	 */
+	var getComposedChildren = domUtilities.getComposedChildren = function getComposedChildren(node) {
+	  if (isDocument(node)) {
+	    return node.documentElement ? [node.documentElement] : [];
+	  }
+	  if (isElement(node) && node.shadowRoot) {
+	    return Array.from(node.shadowRoot.childNodes);
+	  }
+	  if (isElement(node) && node.tagName.toLowerCase() === 'slot' && typeof node.assignedNodes === 'function') {
+	    var assigned = node.assignedNodes({
+	      flatten: true
+	    });
+	    if (assigned.length) return assigned;
+	  }
+	  return Array.from((node === null || node === void 0 ? void 0 : node.childNodes) || []);
+	};
+	domUtilities.collectComposedElements = function collectComposedElements(root) {
+	  var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+	    _ref$exclude = _ref.exclude,
+	    exclude = _ref$exclude === void 0 ? null : _ref$exclude;
+	  var elements = [];
+	  var seen = new Set();
+	  var _visit = function visit(node) {
+	    if (!node || seen.has(node)) return;
+	    seen.add(node);
+	    if (isElement(node)) {
+	      if (exclude !== null && exclude !== void 0 && exclude(node)) return;
+	      elements.push(node);
+	    }
+	    getComposedChildren(node).forEach(_visit);
+	  };
+	  _visit(root);
+	  return elements;
+	};
+
+	/**
+	 * Returns true when an element is, or is composed beneath, OpenKeyNav-owned UI.
+	 */
+	domUtilities.isOpenKeyNavGeneratedUI = function isOpenKeyNavGeneratedUI(element) {
+	  var selector = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : OPENKEYNAV_GENERATED_UI_SELECTOR;
+	  return getComposedAncestors(element).some(function (current) {
+	    return isElement(current) && current.matches(selector);
+	  });
+	};
+	domUtilities.hasAriaHiddenAncestor = function hasAriaHiddenAncestor(element) {
+	  var boundary = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+	  return getComposedAncestors(element, boundary).some(function (current) {
+	    return isElement(current) && current.getAttribute('aria-hidden') === 'true';
+	  });
+	};
+
+	/**
+	 * Reads the actual focused element exposed by a document or open shadow root.
+	 * Iframes remain atomic focus targets.
+	 */
+	domUtilities.getDeepActiveElement = function getDeepActiveElement() {
+	  var root = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : typeof document === 'undefined' ? null : document;
+	  if (!root) return null;
+	  var activeRoot = isDocument(root) || isShadowRoot(root) ? root : root.ownerDocument;
+	  var activeElement = activeRoot && activeRoot.activeElement;
+	  while (activeElement && (_activeElement$shadow = activeElement.shadowRoot) !== null && _activeElement$shadow !== void 0 && _activeElement$shadow.activeElement) {
+	    var _activeElement$shadow;
+	    activeElement = activeElement.shadowRoot.activeElement;
+	  }
+	  if (!activeElement || !isComposedWithin(root, activeElement)) return null;
+	  return activeElement;
+	};
+
+	Object.defineProperty(accessibilityName, "__esModule", {
+	  value: true
+	});
+	accessibilityName.normalizeText = accessibilityName.getLabelledByText = accessibilityName.getExplicitAccessibleName = void 0;
+	var _domUtilities$3 = domUtilities;
+	var normalizeText = accessibilityName.normalizeText = function normalizeText(value) {
+	  return String(value || '').replace(/\s+/g, ' ').trim();
+	};
+	var queryReference = function queryReference(element, id) {
+	  var _element$getRootNode, _root$getElementById, _element$ownerDocumen;
+	  var root = (_element$getRootNode = element.getRootNode) === null || _element$getRootNode === void 0 ? void 0 : _element$getRootNode.call(element);
+	  return (root === null || root === void 0 || (_root$getElementById = root.getElementById) === null || _root$getElementById === void 0 ? void 0 : _root$getElementById.call(root, id)) || ((_element$ownerDocumen = element.ownerDocument) === null || _element$ownerDocumen === void 0 ? void 0 : _element$ownerDocumen.getElementById(id));
+	};
+	var getLabelledByText = accessibilityName.getLabelledByText = function getLabelledByText(element) {
+	  var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+	    _ref$excludeHidden = _ref.excludeHidden,
+	    excludeHidden = _ref$excludeHidden === void 0 ? true : _ref$excludeHidden;
+	  if (!(element !== null && element !== void 0 && element.getAttribute)) return '';
+	  return (element.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean).map(function (id) {
+	    return queryReference(element, id);
+	  }).filter(function (label) {
+	    var _element$getRootNode2;
+	    return label && (!excludeHidden || !(0, _domUtilities$3.hasAriaHiddenAncestor)(label, (_element$getRootNode2 = element.getRootNode) === null || _element$getRootNode2 === void 0 ? void 0 : _element$getRootNode2.call(element)));
+	  }).map(function (label) {
+	    return normalizeText(label.textContent);
+	  }).filter(Boolean).join(' ');
+	};
+
+	/**
+	 * Resolves only author-provided ARIA names. It deliberately does not attempt
+	 * the full accessible-name computation used by assistive technologies.
+	 */
+	accessibilityName.getExplicitAccessibleName = function getExplicitAccessibleName(element, options) {
+	  var _element$getAttribute;
+	  return getLabelledByText(element, options) || ((element === null || element === void 0 || (_element$getAttribute = element.getAttribute) === null || _element$getAttribute === void 0 ? void 0 : _element$getAttribute.call(element, 'aria-label')) || '').trim();
+	};
 
 	Object.defineProperty(structuralModel, "__esModule", {
 	  value: true
 	});
 	structuralModel.buildStructuralModel = void 0;
-	function _toConsumableArray$2(r) {
-	  return _arrayWithoutHoles$2(r) || _iterableToArray$2(r) || _unsupportedIterableToArray$2(r) || _nonIterableSpread$2();
+	var _accessibilityName$1 = accessibilityName;
+	var _domUtilities$2 = domUtilities;
+	function _toConsumableArray$1(r) {
+	  return _arrayWithoutHoles$1(r) || _iterableToArray$1(r) || _unsupportedIterableToArray$2(r) || _nonIterableSpread$1();
 	}
-	function _nonIterableSpread$2() {
+	function _nonIterableSpread$1() {
 	  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 	}
-	function _iterableToArray$2(r) {
+	function _iterableToArray$1(r) {
 	  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
 	}
-	function _arrayWithoutHoles$2(r) {
+	function _arrayWithoutHoles$1(r) {
 	  if (Array.isArray(r)) return _arrayLikeToArray$2(r);
 	}
-	function _createForOfIteratorHelper(r, e) {
+	function _createForOfIteratorHelper$1(r, e) {
 	  var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
 	  if (!t) {
 	    if (Array.isArray(r) || (t = _unsupportedIterableToArray$2(r)) || e) {
@@ -2451,61 +1460,18 @@
 	  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
 	  return n;
 	}
-	var ELEMENT_NODE$1 = 1;
-	var DOCUMENT_NODE$1 = 9;
-	var DOCUMENT_FRAGMENT_NODE$1 = 11;
 	var LANDMARK_ROLES = new Set(['banner', 'complementary', 'contentinfo', 'form', 'main', 'navigation', 'region', 'search']);
 	var COMPOSITE_ROLES = new Set(['combobox', 'grid', 'listbox', 'menu', 'menubar', 'radiogroup', 'tablist', 'toolbar', 'tree', 'treegrid']);
 	var SUPPRESSED_ROLES = new Set(['none', 'presentation']);
-	var GENERATED_SELECTOR = ['[data-openkeynav-ui]', '.openKeyNav-label', '.openKeyNav-toolBar', '.openKeyNav-mouseover-tooltip', '.openKeyNav-structural-status', '#okn-notification-container', '#okn-audit-panel'].join(',');
 	var boundaryIdentity = new WeakMap();
 	var nextBoundaryIdentity = 1;
-	var isElement$2 = function isElement(node) {
-	  return Boolean(node && node.nodeType === ELEMENT_NODE$1);
-	};
-	var isDocument$2 = function isDocument(node) {
-	  return Boolean(node && node.nodeType === DOCUMENT_NODE$1);
-	};
-	var isShadowRoot$2 = function isShadowRoot(node) {
-	  return Boolean(node && node.nodeType === DOCUMENT_FRAGMENT_NODE$1 && node.host && isElement$2(node.host));
-	};
-	var composedParent$1 = function composedParent(node) {
-	  if (!node) return null;
-	  if (node.assignedSlot) return node.assignedSlot;
-	  if (isShadowRoot$2(node)) return node.host;
-	  return node.parentNode || null;
-	};
-	var isComposedWithin = function isComposedWithin(boundary, node) {
-	  var current = node;
-	  while (current) {
-	    if (current === boundary) return true;
-	    current = composedParent$1(current);
-	  }
-	  return false;
-	};
-	var isGeneratedUI = function isGeneratedUI(element) {
-	  var current = element;
-	  while (current) {
-	    if (isElement$2(current) && current.matches(GENERATED_SELECTOR)) return true;
-	    current = composedParent$1(current);
-	  }
-	  return false;
-	};
 	var isSemanticallyHidden = function isSemanticallyHidden(element, root) {
-	  var current = element;
-	  while (current) {
-	    if (isElement$2(current) && current.getAttribute('aria-hidden') === 'true') {
-	      return true;
-	    }
-	    if (current === root) break;
-	    current = composedParent$1(current);
-	  }
-	  return false;
+	  return (0, _domUtilities$2.hasAriaHiddenAncestor)(element, root);
 	};
 	var isOperativeSemanticElement = function isOperativeSemanticElement(element, root) {
 	  var current = element;
 	  while (current) {
-	    if (isElement$2(current)) {
+	    if ((0, _domUtilities$2.isElement)(current)) {
 	      var _current$ownerDocumen, _view$getComputedStyl;
 	      if (current.hidden || current.hasAttribute('inert') || current.tagName.toLowerCase() === 'dialog' && !current.hasAttribute('open')) {
 	        return false;
@@ -2514,7 +1480,7 @@
 	        var summary = Array.from(current.children).find(function (child) {
 	          return child.tagName.toLowerCase() === 'summary';
 	        });
-	        if (!summary || !isComposedWithin(summary, element)) return false;
+	        if (!summary || !(0, _domUtilities$2.isComposedWithin)(summary, element)) return false;
 	      }
 	      if (current.hasAttribute('popover')) {
 	        try {
@@ -2531,7 +1497,7 @@
 	      }
 	    }
 	    if (current === root) break;
-	    current = composedParent$1(current);
+	    current = (0, _domUtilities$2.getComposedParent)(current);
 	  }
 	  return true;
 	};
@@ -2542,56 +1508,8 @@
 	  }
 	  return "".concat(prefix, "-").concat(boundaryIdentity.get(boundary));
 	};
-	var composedChildren = function composedChildren(node) {
-	  if (isDocument$2(node)) {
-	    return node.documentElement ? [node.documentElement] : [];
-	  }
-	  if (isElement$2(node) && node.shadowRoot) {
-	    return Array.from(node.shadowRoot.childNodes);
-	  }
-	  if (isElement$2(node) && node.tagName.toLowerCase() === 'slot' && typeof node.assignedNodes === 'function') {
-	    var assigned = node.assignedNodes({
-	      flatten: true
-	    });
-	    if (assigned.length) return assigned;
-	  }
-	  return Array.from((node === null || node === void 0 ? void 0 : node.childNodes) || []);
-	};
-	var composedElements = function composedElements(root) {
-	  var elements = [];
-	  var seen = new Set();
-	  var _visit = function visit(node) {
-	    if (!node || seen.has(node)) return;
-	    seen.add(node);
-	    if (isElement$2(node)) {
-	      if (isGeneratedUI(node)) return;
-	      elements.push(node);
-	    }
-	    composedChildren(node).forEach(_visit);
-	  };
-	  _visit(root);
-	  return elements;
-	};
-	var queryRootById = function queryRootById(element, id) {
-	  var _element$getRootNode, _root$getElementById, _element$ownerDocumen;
-	  var root = (_element$getRootNode = element.getRootNode) === null || _element$getRootNode === void 0 ? void 0 : _element$getRootNode.call(element);
-	  return (root === null || root === void 0 || (_root$getElementById = root.getElementById) === null || _root$getElementById === void 0 ? void 0 : _root$getElementById.call(root, id)) || ((_element$ownerDocumen = element.ownerDocument) === null || _element$ownerDocumen === void 0 ? void 0 : _element$ownerDocumen.getElementById(id));
-	};
-	var labelledByText = function labelledByText(element) {
-	  var ids = (element.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean);
-	  return ids.map(function (id) {
-	    return queryRootById(element, id);
-	  }).filter(function (label) {
-	    return label && !isSemanticallyHidden(label, element.getRootNode());
-	  }).map(function (label) {
-	    return label.textContent.replace(/\s+/g, ' ').trim();
-	  }).filter(Boolean).join(' ');
-	};
-	var explicitAccessibleName = function explicitAccessibleName(element) {
-	  return labelledByText(element) || (element.getAttribute('aria-label') || '').trim();
-	};
 	var headingRank = function headingRank(element) {
-	  if (!isElement$2(element)) return null;
+	  if (!(0, _domUtilities$2.isElement)(element)) return null;
 	  var role = (element.getAttribute('role') || '').trim().toLowerCase();
 	  if (SUPPRESSED_ROLES.has(role)) return null;
 	  var match = /^h([1-6])$/i.exec(element.tagName);
@@ -2607,7 +1525,7 @@
 	  if (SUPPRESSED_ROLES.has(role)) return null;
 	  if (role) {
 	    if (LANDMARK_ROLES.has(role)) {
-	      if (role === 'region' && !explicitAccessibleName(element)) return null;
+	      if (role === 'region' && !(0, _accessibilityName$1.getExplicitAccessibleName)(element)) return null;
 	      return role;
 	    }
 	    if (role === 'list') return 'list';
@@ -2623,23 +1541,23 @@
 	      return 'complementary';
 	    case 'header':
 	      {
-	        var ancestor = composedParent$1(element);
-	        while (ancestor && isElement$2(ancestor)) {
+	        var ancestor = (0, _domUtilities$2.getComposedParent)(element);
+	        while (ancestor && (0, _domUtilities$2.isElement)(ancestor)) {
 	          if (['article', 'aside', 'main', 'nav', 'section'].includes(ancestor.tagName.toLowerCase())) {
 	            return null;
 	          }
-	          ancestor = composedParent$1(ancestor);
+	          ancestor = (0, _domUtilities$2.getComposedParent)(ancestor);
 	        }
 	        return 'banner';
 	      }
 	    case 'footer':
 	      {
-	        var _ancestor = composedParent$1(element);
-	        while (_ancestor && isElement$2(_ancestor)) {
+	        var _ancestor = (0, _domUtilities$2.getComposedParent)(element);
+	        while (_ancestor && (0, _domUtilities$2.isElement)(_ancestor)) {
 	          if (['article', 'aside', 'main', 'nav', 'section'].includes(_ancestor.tagName.toLowerCase())) {
 	            return null;
 	          }
-	          _ancestor = composedParent$1(_ancestor);
+	          _ancestor = (0, _domUtilities$2.getComposedParent)(_ancestor);
 	        }
 	        return 'contentinfo';
 	      }
@@ -2670,7 +1588,7 @@
 	  var legend = Array.from(element.children).find(function (child) {
 	    return child.tagName.toLowerCase() === 'legend';
 	  });
-	  return (legend === null || legend === void 0 ? void 0 : legend.textContent.replace(/\s+/g, ' ').trim()) || '';
+	  return (0, _accessibilityName$1.normalizeText)(legend === null || legend === void 0 ? void 0 : legend.textContent);
 	};
 	var contextFallbackName = function contextFallbackName(type) {
 	  var names = {
@@ -2692,7 +1610,7 @@
 	};
 	var contextNameForElement = function contextNameForElement(element, type) {
 	  var associatedHeading = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-	  return firstLegendText(element) || explicitAccessibleName(element) || (associatedHeading === null || associatedHeading === void 0 ? void 0 : associatedHeading.textContent.replace(/\s+/g, ' ').trim()) || contextFallbackName(type);
+	  return firstLegendText(element) || (0, _accessibilityName$1.getExplicitAccessibleName)(element) || (0, _accessibilityName$1.normalizeText)(associatedHeading === null || associatedHeading === void 0 ? void 0 : associatedHeading.textContent) || contextFallbackName(type);
 	};
 	var makeContext = function makeContext(_ref) {
 	  var id = _ref.id,
@@ -2713,6 +1631,8 @@
 	    rangeStart = _ref$rangeStart === void 0 ? null : _ref$rangeStart,
 	    _ref$rangeEnd = _ref.rangeEnd,
 	    rangeEnd = _ref$rangeEnd === void 0 ? null : _ref$rangeEnd,
+	    _ref$rangeBoundary = _ref.rangeBoundary,
+	    rangeBoundary = _ref$rangeBoundary === void 0 ? null : _ref$rangeBoundary,
 	    _ref$containerContext = _ref.containerContext,
 	    containerContext = _ref$containerContext === void 0 ? null : _ref$containerContext,
 	    _ref$visualElements = _ref.visualElements,
@@ -2737,6 +1657,7 @@
 	    required: required,
 	    rangeStart: rangeStart,
 	    rangeEnd: rangeEnd,
+	    rangeBoundary: rangeBoundary,
 	    containerContext: containerContext,
 	    visualElements: Array.from(visualElements),
 	    explicitParentId: explicitParentId,
@@ -2748,15 +1669,15 @@
 	  while (current) {
 	    if (boundaryContexts.has(current)) return boundaryContexts.get(current);
 	    if (current === stopRoot) break;
-	    current = composedParent$1(current);
+	    current = (0, _domUtilities$2.getComposedParent)(current);
 	  }
 	  return null;
 	};
 	var nearestAncestorContext = function nearestAncestorContext(boundary, boundaryContexts, rootContext) {
-	  var current = composedParent$1(boundary);
+	  var current = (0, _domUtilities$2.getComposedParent)(boundary);
 	  while (current) {
 	    if (boundaryContexts.has(current)) return boundaryContexts.get(current);
-	    current = composedParent$1(current);
+	    current = (0, _domUtilities$2.getComposedParent)(current);
 	  }
 	  return rootContext;
 	};
@@ -2767,7 +1688,7 @@
 	  var _descriptor$boundary, _root$querySelector;
 	  var candidate = resolveContributionValue((_descriptor$boundary = descriptor.boundary) !== null && _descriptor$boundary !== void 0 ? _descriptor$boundary : descriptor.element, details);
 	  if (typeof candidate === 'string') return ((_root$querySelector = root.querySelector) === null || _root$querySelector === void 0 ? void 0 : _root$querySelector.call(root, candidate)) || null;
-	  return isElement$2(candidate) || isShadowRoot$2(candidate) || isDocument$2(candidate) ? candidate : null;
+	  return (0, _domUtilities$2.isElement)(candidate) || (0, _domUtilities$2.isShadowRoot)(candidate) || (0, _domUtilities$2.isDocument)(candidate) ? candidate : null;
 	};
 	var resolveMembers = function resolveMembers(descriptor, boundary, root, targets, details) {
 	  var _descriptor$targets;
@@ -2786,13 +1707,13 @@
 	  }
 	  if (boundary) {
 	    return targets.filter(function (target) {
-	      return isComposedWithin(boundary, target);
+	      return (0, _domUtilities$2.isComposedWithin)(boundary, target);
 	    });
 	  }
 	  return [];
 	};
 	var setsOverlap = function setsOverlap(left, right) {
-	  var _iterator = _createForOfIteratorHelper(left),
+	  var _iterator = _createForOfIteratorHelper$1(left),
 	    _step;
 	  try {
 	    for (_iterator.s(); !(_step = _iterator.n()).done;) {
@@ -2810,7 +1731,7 @@
 	  return left.size === right.size && isSubset(left, right);
 	};
 	var isSubset = function isSubset(candidate, container) {
-	  var _iterator2 = _createForOfIteratorHelper(candidate),
+	  var _iterator2 = _createForOfIteratorHelper$1(candidate),
 	    _step2;
 	  try {
 	    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
@@ -2899,22 +1820,24 @@
 	    typedContexts = _ref2$typedContexts === void 0 ? [] : _ref2$typedContexts,
 	    _ref2$previousModel = _ref2.previousModel,
 	    previousModel = _ref2$previousModel === void 0 ? null : _ref2$previousModel;
-	  if (!root || !isDocument$2(root) && !isElement$2(root) && !isShadowRoot$2(root)) {
+	  if (!root || !(0, _domUtilities$2.isDocument)(root) && !(0, _domUtilities$2.isElement)(root) && !(0, _domUtilities$2.isShadowRoot)(root)) {
 	    throw new TypeError('buildStructuralModel requires an Element, Document, or ShadowRoot root.');
 	  }
 	  var liveTargets = Array.from(targets).filter(function (target) {
-	    return (target === null || target === void 0 ? void 0 : target.isConnected) && isComposedWithin(root, target);
+	    return (target === null || target === void 0 ? void 0 : target.isConnected) && (0, _domUtilities$2.isComposedWithin)(root, target);
 	  }).filter(function (target, index, values) {
 	    return values.indexOf(target) === index;
 	  });
-	  var elements = composedElements(root);
+	  var elements = (0, _domUtilities$2.collectComposedElements)(root, {
+	    exclude: _domUtilities$2.isOpenKeyNavGeneratedUI
+	  });
 	  var orderByElement = new Map(elements.map(function (element, index) {
 	    return [element, index];
 	  }));
 	  var targetOrder = function targetOrder(target) {
 	    return orderByElement.has(target) ? orderByElement.get(target) : Number.MAX_SAFE_INTEGER;
 	  };
-	  var rootName = isDocument$2(root) ? 'Document' : isElement$2(root) ? contextNameForElement(root, contextTypeForElement(root) || 'region') : 'Shadow root';
+	  var rootName = (0, _domUtilities$2.isDocument)(root) ? 'Document' : (0, _domUtilities$2.isElement)(root) ? contextNameForElement(root, contextTypeForElement(root) || 'region') : 'Shadow root';
 	  var rootContext = makeContext({
 	    id: stableBoundaryId(root, 'root'),
 	    name: rootName,
@@ -2938,7 +1861,7 @@
 	    var type = contextTypeForElement(element);
 	    if (!type) return;
 	    var memberTargets = liveTargets.filter(function (target) {
-	      return isComposedWithin(element, target);
+	      return (0, _domUtilities$2.isComposedWithin)(element, target);
 	    });
 	    if (!memberTargets.length) return;
 	    var context = makeContext({
@@ -2958,7 +1881,7 @@
 	  });
 	  automaticContexts.forEach(function (context) {
 	    var directHeadings = headings.filter(function (heading) {
-	      return isComposedWithin(context.boundary, heading) && nearestContextBoundary(composedParent$1(heading), boundaryContexts, root) === context;
+	      return (0, _domUtilities$2.isComposedWithin)(context.boundary, heading) && nearestContextBoundary((0, _domUtilities$2.getComposedParent)(heading), boundaryContexts, root) === context;
 	    });
 	    var labelledHeadingIds = new Set((context.boundary.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean));
 	    var explicitlyAssociated = directHeadings.find(function (heading) {
@@ -2995,7 +1918,7 @@
 	    var memberTargets = resolveMembers(descriptor, boundary, root, liveTargets, details);
 	    if (!memberTargets.length) return;
 	    var existing = boundary && boundaryContexts.get(boundary);
-	    var order = Number.isFinite(Number(descriptor.order)) ? Number(descriptor.order) : boundary && orderByElement.has(boundary) ? orderByElement.get(boundary) : Math.min.apply(Math, _toConsumableArray$2(memberTargets.map(targetOrder)));
+	    var order = Number.isFinite(Number(descriptor.order)) ? Number(descriptor.order) : boundary && orderByElement.has(boundary) ? orderByElement.get(boundary) : Math.min.apply(Math, _toConsumableArray$1(memberTargets.map(targetOrder)));
 	    if (!Number.isFinite(order)) {
 	      throw new TypeError("Structural context \"".concat(descriptor.id, "\" requires a deterministic order."));
 	    }
@@ -3058,7 +1981,7 @@
 	  // Heading contexts are ordered ranges within the nearest explicit semantic
 	  // container. Native section headings associated with that same boundary are
 	  // deliberately merged into the explicit context and skipped here.
-	  var containerContexts = [rootContext].concat(_toConsumableArray$2(allContexts.slice(1).filter(function (context) {
+	  var containerContexts = [rootContext].concat(_toConsumableArray$1(allContexts.slice(1).filter(function (context) {
 	    return context.boundary;
 	  })));
 	  var headingContexts = [];
@@ -3066,32 +1989,67 @@
 	    var boundary = container.boundary;
 	    var containerHeadings = headings.filter(function (heading) {
 	      if (heading === container.associatedHeading) return false;
-	      if (!isComposedWithin(boundary, heading)) return false;
-	      var nearest = nearestContextBoundary(composedParent$1(heading), boundaryContexts, root);
+	      if (!(0, _domUtilities$2.isComposedWithin)(boundary, heading)) return false;
+	      var nearest = nearestContextBoundary((0, _domUtilities$2.getComposedParent)(heading), boundaryContexts, root);
 	      return (nearest || rootContext) === container;
 	    });
 	    if (!containerHeadings.length) return;
 	    var scopeOrders = elements.filter(function (element) {
-	      return isComposedWithin(boundary, element);
+	      return (0, _domUtilities$2.isComposedWithin)(boundary, element);
 	    }).map(function (element) {
 	      return orderByElement.get(element);
 	    });
-	    var scopeEnd = scopeOrders.length ? Math.max.apply(Math, _toConsumableArray$2(scopeOrders)) + 1 : elements.length + 1;
+	    var scopeEnd = scopeOrders.length ? Math.max.apply(Math, _toConsumableArray$1(scopeOrders)) + 1 : elements.length + 1;
 	    var stack = [];
+
+	    // A generic authored wrapper does not become a structural context, but it
+	    // can still provide a credible end for the headings and targets grouped
+	    // inside it. Use the nearest ancestor below the semantic container that
+	    // contains a following target outside the heading itself. This prevents a
+	    // final heading range from absorbing later sibling content merely because
+	    // no same-or-higher heading follows it.
+	    var rangeBoundaryForHeading = function rangeBoundaryForHeading(heading) {
+	      var headingOrder = orderByElement.get(heading);
+	      var candidate = (0, _domUtilities$2.getComposedParent)(heading);
+	      while (candidate && candidate !== boundary) {
+	        if ((0, _domUtilities$2.isElement)(candidate) && liveTargets.some(function (target) {
+	          return container.memberSet.has(target) && !isSemanticallyHidden(target, root) && !(0, _domUtilities$2.isComposedWithin)(heading, target) && (0, _domUtilities$2.isComposedWithin)(candidate, target) && targetOrder(target) > headingOrder;
+	        })) {
+	          return candidate;
+	        }
+	        candidate = (0, _domUtilities$2.getComposedParent)(candidate);
+	      }
+	      return boundary;
+	    };
+	    var rangeEndForBoundary = function rangeEndForBoundary(rangeBoundary) {
+	      var rangeOrders = elements.filter(function (element) {
+	        return (0, _domUtilities$2.isComposedWithin)(rangeBoundary, element);
+	      }).map(function (element) {
+	        return orderByElement.get(element);
+	      });
+	      return rangeOrders.length ? Math.max.apply(Math, _toConsumableArray$1(rangeOrders)) + 1 : scopeEnd;
+	    };
+	    var closeHeadingContext = function closeHeadingContext(closing, requestedEnd) {
+	      var context = closing.context;
+	      context.rangeEnd = Math.min(closing.scopeEnd, requestedEnd);
+	      context.memberTargets = liveTargets.filter(function (target) {
+	        return targetOrder(target) >= context.rangeStart && targetOrder(target) < context.rangeEnd && container.memberSet.has(target) && !isSemanticallyHidden(target, root) && (0, _domUtilities$2.isComposedWithin)(context.rangeBoundary, target);
+	      });
+	      context.memberSet = new Set(context.memberTargets);
+	    };
 	    containerHeadings.forEach(function (heading) {
 	      var level = headingRank(heading);
 	      var start = orderByElement.get(heading);
-	      var _loop = function _loop() {
+	      while (stack.length && stack[stack.length - 1].scopeEnd <= start) {
 	        var closing = stack.pop();
-	        closing.context.rangeEnd = start;
-	        closing.context.memberTargets = liveTargets.filter(function (target) {
-	          return targetOrder(target) >= closing.context.rangeStart && targetOrder(target) < closing.context.rangeEnd && container.memberSet.has(target);
-	        });
-	        closing.context.memberSet = new Set(closing.context.memberTargets);
-	      };
-	      while (stack.length && stack[stack.length - 1].level >= level) {
-	        _loop();
+	        closeHeadingContext(closing, closing.scopeEnd);
 	      }
+	      while (stack.length && stack[stack.length - 1].level >= level) {
+	        var _closing = stack.pop();
+	        closeHeadingContext(_closing, start);
+	      }
+	      var rangeBoundary = rangeBoundaryForHeading(heading);
+	      var headingScopeEnd = rangeEndForBoundary(rangeBoundary);
 	      var context = makeContext({
 	        id: stableBoundaryId(heading, 'heading'),
 	        name: heading.textContent.replace(/\s+/g, ' ').trim() || "Heading level ".concat(level),
@@ -3102,26 +2060,21 @@
 	        memberTargets: [],
 	        parentHint: stack.length ? stack[stack.length - 1].context : container,
 	        rangeStart: start,
-	        rangeEnd: scopeEnd,
+	        rangeEnd: headingScopeEnd,
+	        rangeBoundary: rangeBoundary,
 	        containerContext: container,
 	        headingLevel: level
 	      });
 	      headingContexts.push(context);
 	      stack.push({
 	        level: level,
-	        context: context
+	        context: context,
+	        scopeEnd: headingScopeEnd
 	      });
 	    });
-	    var _loop2 = function _loop2() {
-	      var closing = stack.pop();
-	      closing.context.rangeEnd = scopeEnd;
-	      closing.context.memberTargets = liveTargets.filter(function (target) {
-	        return targetOrder(target) >= closing.context.rangeStart && targetOrder(target) < closing.context.rangeEnd && container.memberSet.has(target);
-	      });
-	      closing.context.memberSet = new Set(closing.context.memberTargets);
-	    };
 	    while (stack.length) {
-	      _loop2();
+	      var closing = stack.pop();
+	      closeHeadingContext(closing, closing.scopeEnd);
 	    }
 	  });
 
@@ -3131,7 +2084,7 @@
 	  headingContexts.forEach(function (context) {
 	    context.visualElements = elements.filter(function (element) {
 	      var order = orderByElement.get(element);
-	      return order >= context.rangeStart && order < context.rangeEnd && isComposedWithin(context.containerContext.boundary, element);
+	      return order >= context.rangeStart && order < context.rangeEnd && !isSemanticallyHidden(element, root) && (0, _domUtilities$2.isComposedWithin)(context.rangeBoundary, element);
 	    });
 	  });
 	  headingContexts.filter(function (context) {
@@ -3153,11 +2106,11 @@
 	      if (role !== 'listitem' && (tagName !== 'li' || Boolean(role))) {
 	        return false;
 	      }
-	      var current = composedParent$1(element);
+	      var current = (0, _domUtilities$2.getComposedParent)(element);
 	      while (current) {
 	        var currentContext = boundaryContexts.get(current);
 	        if ((currentContext === null || currentContext === void 0 ? void 0 : currentContext.type) === 'list') return currentContext === listContext;
-	        current = composedParent$1(current);
+	        current = (0, _domUtilities$2.getComposedParent)(current);
 	      }
 	      return false;
 	    });
@@ -3166,7 +2119,7 @@
 	        element: element,
 	        index: index,
 	        targets: liveTargets.filter(function (target) {
-	          return isComposedWithin(element, target);
+	          return (0, _domUtilities$2.isComposedWithin)(element, target);
 	        })
 	      };
 	    }).filter(function (item) {
@@ -3175,7 +2128,7 @@
 	    var hasRichItem = items.some(function (item) {
 	      if (item.targets.length > 1) return true;
 	      return allContexts.some(function (context) {
-	        return context !== listContext && context.boundary && isComposedWithin(item.element, context.boundary) && context.memberTargets.length;
+	        return context !== listContext && context.boundary && (0, _domUtilities$2.isComposedWithin)(item.element, context.boundary) && context.memberTargets.length;
 	      });
 	    });
 	    if (items.length < 2 || !hasRichItem) return;
@@ -3199,7 +2152,7 @@
 
 	  // Put explicit child boundaries into the applicable heading range and rich
 	  // list-item context. These are range/containment parents, not focus stops.
-	  var rangeParents = [].concat(_toConsumableArray$2(headingContexts.filter(function (context) {
+	  var rangeParents = [].concat(_toConsumableArray$1(headingContexts.filter(function (context) {
 	    return context.memberTargets.length;
 	  })), listItemContexts);
 	  allContexts.slice(1).forEach(function (context) {
@@ -3211,7 +2164,7 @@
 	        var boundaryOrder = context.boundary ? orderByElement.get(context.boundary) : context.order;
 	        return boundaryOrder >= parent.rangeStart && boundaryOrder < parent.rangeEnd && isSubset(context.memberSet, parent.memberSet);
 	      }
-	      return context.boundary && isComposedWithin(parent.boundary, context.boundary) && isSubset(context.memberSet, parent.memberSet);
+	      return context.boundary && (0, _domUtilities$2.isComposedWithin)(parent.boundary, context.boundary) && isSubset(context.memberSet, parent.memberSet);
 	    }).sort(function (left, right) {
 	      return left.memberSet.size - right.memberSet.size || left.rangeEnd - left.rangeStart - (right.rangeEnd - right.rangeStart);
 	    });
@@ -3268,10 +2221,10 @@
 	    var bottomUp = usableContexts.slice(1).sort(function (left, right) {
 	      return contextDepth(right) - contextDepth(left);
 	    });
-	    var _iterator3 = _createForOfIteratorHelper(bottomUp),
+	    var _iterator3 = _createForOfIteratorHelper$1(bottomUp),
 	      _step3;
 	    try {
-	      var _loop3 = function _loop3() {
+	      var _loop = function _loop() {
 	          var _parent$children;
 	          var context = _step3.value;
 	          var parent = context.parent;
@@ -3282,7 +2235,7 @@
 	          context.children.forEach(function (child) {
 	            child.parent = parent;
 	          });
-	          (_parent$children = parent.children).splice.apply(_parent$children, [childIndex, 1].concat(_toConsumableArray$2(context.children)));
+	          (_parent$children = parent.children).splice.apply(_parent$children, [childIndex, 1].concat(_toConsumableArray$1(context.children)));
 	          parent.children.sort(function (left, right) {
 	            return left.order - right.order;
 	          });
@@ -3292,7 +2245,7 @@
 	        },
 	        _ret;
 	      for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-	        _ret = _loop3();
+	        _ret = _loop();
 	        if (_ret === 0) continue;
 	        if (_ret === 1) break;
 	      }
@@ -3352,6 +2305,77 @@
 	      return typedContextsByTarget.get(target) || [];
 	    }
 	  };
+	};
+
+	var keyboardEvents = {};
+
+	Object.defineProperty(keyboardEvents, "__esModule", {
+	  value: true
+	});
+	keyboardEvents.preventAcceptedCommand = keyboardEvents.normalizeShortcut = keyboardEvents.matchesShortcut = keyboardEvents.MODIFIER_KEYS = void 0;
+	function _typeof$2(o) {
+	  "@babel/helpers - typeof";
+
+	  return _typeof$2 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+	    return typeof o;
+	  } : function (o) {
+	    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+	  }, _typeof$2(o);
+	}
+	var MODIFIER_KEYS = keyboardEvents.MODIFIER_KEYS = Object.freeze(['altKey', 'ctrlKey', 'metaKey', 'shiftKey']);
+	var normalizeShortcut = keyboardEvents.normalizeShortcut = function normalizeShortcut(shortcut) {
+	  if (!shortcut) return null;
+	  if (typeof shortcut === 'string') return {
+	    key: shortcut
+	  };
+	  if (_typeof$2(shortcut) === 'object' && typeof shortcut.key === 'string') {
+	    return shortcut;
+	  }
+	  return null;
+	};
+	var keysEqual = function keysEqual(left, right) {
+	  if (left.length === 1 && right.length === 1) {
+	    return left.toLowerCase() === right.toLowerCase();
+	  }
+	  return left === right;
+	};
+
+	/**
+	 * Match a configured shortcut exactly. Modifiers omitted by the configuration
+	 * are treated as false so browser and application chords do not collide.
+	 * A caller may permit specific extra modifiers without weakening an explicit
+	 * `true` or `false` requirement in the configured shortcut.
+	 */
+	keyboardEvents.matchesShortcut = function matchesShortcut(event, shortcut) {
+	  var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+	  var normalized = normalizeShortcut(shortcut);
+	  if (!normalized || !keysEqual(event.key, normalized.key)) return false;
+
+	  // Preserve the original string form for callers that deliberately need to
+	  // ignore a modifier entirely. New ownership overrides should use
+	  // `allowedExtraModifiers` so explicit shortcut requirements remain exact.
+	  var optionBag = _typeof$2(options) === 'object' && options !== null ? options : {};
+	  var ignoredModifier = typeof options === 'string' ? options : optionBag.ignoredModifier || null;
+	  var allowedExtras = optionBag.allowedExtraModifiers || [];
+	  var allowedExtraModifiers = new Set(Array.isArray(allowedExtras) ? allowedExtras : [allowedExtras].filter(Boolean));
+	  return MODIFIER_KEYS.every(function (modifier) {
+	    if (modifier === ignoredModifier) return true;
+	    var eventHasModifier = Boolean(event[modifier]);
+	    var shortcutDeclaresModifier = Object.prototype.hasOwnProperty.call(normalized, modifier);
+	    if (allowedExtraModifiers.has(modifier) && !shortcutDeclaresModifier && eventHasModifier) {
+	      return true;
+	    }
+	    return eventHasModifier === Boolean(normalized[modifier]);
+	  });
+	};
+
+	/**
+	 * Cancel one keyboard command after OpenKeyNav has accepted ownership of it.
+	 */
+	keyboardEvents.preventAcceptedCommand = function preventAcceptedCommand(event) {
+	  event.preventDefault();
+	  event.stopPropagation();
+	  return true;
 	};
 
 	var tabbableTargets = {};
@@ -3956,196 +2980,162 @@
 
 	var require$$0 = /*@__PURE__*/getAugmentedNamespace(index_esm);
 
-	Object.defineProperty(tabbableTargets, "__esModule", {
-	  value: true
-	});
-	tabbableTargets.isOpenKeyNavGeneratedUI = tabbableTargets.getDeepActiveElement = tabbableTargets.discoverTabbableTargets = tabbableTargets.OPENKEYNAV_GENERATED_UI_SELECTOR = void 0;
-	var _tabbable = require$$0;
-	function _toConsumableArray$1(r) {
-	  return _arrayWithoutHoles$1(r) || _iterableToArray$1(r) || _unsupportedIterableToArray$1(r) || _nonIterableSpread$1();
-	}
-	function _nonIterableSpread$1() {
-	  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-	}
-	function _unsupportedIterableToArray$1(r, a) {
-	  if (r) {
-	    if ("string" == typeof r) return _arrayLikeToArray$1(r, a);
-	    var t = {}.toString.call(r).slice(8, -1);
-	    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$1(r, a) : void 0;
-	  }
-	}
-	function _iterableToArray$1(r) {
-	  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
-	}
-	function _arrayWithoutHoles$1(r) {
-	  if (Array.isArray(r)) return _arrayLikeToArray$1(r);
-	}
-	function _arrayLikeToArray$1(r, a) {
-	  (null == a || a > r.length) && (a = r.length);
-	  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
-	  return n;
-	}
-	var OPENKEYNAV_GENERATED_UI_SELECTOR = tabbableTargets.OPENKEYNAV_GENERATED_UI_SELECTOR = ['[data-openkeynav-ui]', '.openKeyNav-label', '.openKeyNav-toolBar', '.openKeyNav-mouseover-tooltip', '.openKeyNav-structural-status', '#okn-notification-container', '#okn-audit-panel'].join(',');
-	var ELEMENT_NODE = 1;
-	var DOCUMENT_NODE = 9;
-	var DOCUMENT_FRAGMENT_NODE = 11;
-	var isElement$1 = function isElement(node) {
-	  return Boolean(node && node.nodeType === ELEMENT_NODE);
-	};
-	var isDocument$1 = function isDocument(node) {
-	  return Boolean(node && node.nodeType === DOCUMENT_NODE);
-	};
-	var isShadowRoot$1 = function isShadowRoot(node) {
-	  return Boolean(node && node.nodeType === DOCUMENT_FRAGMENT_NODE && node.host && isElement$1(node.host));
-	};
-	var getComposedParent = function getComposedParent(node) {
-	  if (!node) return null;
-	  if (node.assignedSlot) return node.assignedSlot;
-	  if (isShadowRoot$1(node)) return node.host;
-	  return node.parentNode || null;
-	};
-	var isWithinRoot$1 = function isWithinRoot(root, node) {
-	  var current = node;
-	  while (current) {
-	    if (current === root) return true;
-	    current = getComposedParent(current);
-	  }
-	  return false;
-	};
+	(function (exports$1) {
 
-	/**
-	 * Returns true when an element is, or is composed beneath, OpenKeyNav-owned UI.
-	 * Composed ancestry is intentional so generated UI inside an open shadow root is
-	 * excluded when its host carries the marker.
-	 */
-	var isOpenKeyNavGeneratedUI = tabbableTargets.isOpenKeyNavGeneratedUI = function isOpenKeyNavGeneratedUI(element) {
-	  var selector = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : OPENKEYNAV_GENERATED_UI_SELECTOR;
-	  var current = element;
-	  while (current) {
-	    if (isElement$1(current) && current.matches(selector)) return true;
-	    current = getComposedParent(current);
-	  }
-	  return false;
-	};
-
-	/**
-	 * Reads the actual focused element exposed by the active document or shadow root.
-	 * It follows open Shadow DOM focus, but deliberately treats iframes as atomic.
-	 */
-	tabbableTargets.getDeepActiveElement = function getDeepActiveElement() {
-	  var root = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : typeof document === 'undefined' ? null : document;
-	  if (!root) return null;
-	  var activeRoot = isDocument$1(root) || isShadowRoot$1(root) ? root : root.ownerDocument;
-	  var activeElement = activeRoot && activeRoot.activeElement;
-	  while (activeElement && (_activeElement$shadow = activeElement.shadowRoot) !== null && _activeElement$shadow !== void 0 && _activeElement$shadow.activeElement) {
-	    var _activeElement$shadow;
-	    activeElement = activeElement.shadowRoot.activeElement;
-	  }
-	  if (!activeElement || !isWithinRoot$1(root, activeElement)) return null;
-	  return activeElement;
-	};
-	var normalizeDiscoveryRoot = function normalizeDiscoveryRoot(root) {
-	  if (isDocument$1(root)) {
-	    if (!root.documentElement) {
-	      throw new TypeError('The discovery document must have a document element.');
+	  Object.defineProperty(exports$1, "__esModule", {
+	    value: true
+	  });
+	  Object.defineProperty(exports$1, "OPENKEYNAV_GENERATED_UI_SELECTOR", {
+	    enumerable: true,
+	    get: function get() {
+	      return _domUtilities.OPENKEYNAV_GENERATED_UI_SELECTOR;
 	    }
-	    return root.documentElement;
+	  });
+	  exports$1.discoverTabbableTargets = void 0;
+	  Object.defineProperty(exports$1, "getDeepActiveElement", {
+	    enumerable: true,
+	    get: function get() {
+	      return _domUtilities.getDeepActiveElement;
+	    }
+	  });
+	  Object.defineProperty(exports$1, "isOpenKeyNavGeneratedUI", {
+	    enumerable: true,
+	    get: function get() {
+	      return _domUtilities.isOpenKeyNavGeneratedUI;
+	    }
+	  });
+	  var _tabbable = require$$0;
+	  var _domUtilities = domUtilities;
+	  function _toConsumableArray(r) {
+	    return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread();
 	  }
-	  if (isShadowRoot$1(root)) return root.host;
-	  if (isElement$1(root)) return root;
-	  throw new TypeError('discoverTabbableTargets requires an Element, Document, or ShadowRoot.');
-	};
-	var getTabbableOptions = function getTabbableOptions(root, options) {
-	  var _options$displayCheck = options.displayCheck,
-	    displayCheck = _options$displayCheck === void 0 ? 'full' : _options$displayCheck,
-	    _options$getShadowRoo = options.getShadowRoot,
-	    getShadowRoot = _options$getShadowRoo === void 0 ? true : _options$getShadowRoo,
-	    _options$includeConta = options.includeContainer,
-	    includeContainer = _options$includeConta === void 0 ? isElement$1(root) : _options$includeConta;
-
-	  // Tabbable traverses a ShadowRoot through its host. Supplying the exact root
-	  // also keeps this boundary usable if a caller was deliberately given a root
-	  // that is not available through host.shadowRoot.
-	  var shadowRootResolver = isShadowRoot$1(root) ? function (node) {
-	    if (node === root.host) return root;
-	    if (typeof getShadowRoot === 'function') return getShadowRoot(node);
-	    return false;
-	  } : getShadowRoot;
-	  return {
-	    displayCheck: displayCheck,
-	    getShadowRoot: shadowRootResolver,
-	    includeContainer: includeContainer
+	  function _nonIterableSpread() {
+	    throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	  }
+	  function _unsupportedIterableToArray(r, a) {
+	    if (r) {
+	      if ("string" == typeof r) return _arrayLikeToArray(r, a);
+	      var t = {}.toString.call(r).slice(8, -1);
+	      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+	    }
+	  }
+	  function _iterableToArray(r) {
+	    if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
+	  }
+	  function _arrayWithoutHoles(r) {
+	    if (Array.isArray(r)) return _arrayLikeToArray(r);
+	  }
+	  function _arrayLikeToArray(r, a) {
+	    (null == a || a > r.length) && (a = r.length);
+	    for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+	    return n;
+	  }
+	  var normalizeDiscoveryRoot = function normalizeDiscoveryRoot(root) {
+	    if ((0, _domUtilities.isDocument)(root)) {
+	      if (!root.documentElement) {
+	        throw new TypeError('The discovery document must have a document element.');
+	      }
+	      return root.documentElement;
+	    }
+	    if ((0, _domUtilities.isShadowRoot)(root)) return root.host;
+	    if ((0, _domUtilities.isElement)(root)) return root;
+	    throw new TypeError('discoverTabbableTargets requires an Element, Document, or ShadowRoot.');
 	  };
-	};
-	var includeProgrammaticCandidates = function includeProgrammaticCandidates(discoveryRoot, candidates, tabbableOptions) {
-	  var focusableCandidates = (0, _tabbable.focusable)(discoveryRoot, tabbableOptions);
-	  var positiveTabbables = candidates.filter(function (candidate) {
-	    return (0, _tabbable.getTabIndex)(candidate) > 0;
-	  });
-	  var positiveSet = new Set(positiveTabbables);
+	  var getTabbableOptions = function getTabbableOptions(root, options) {
+	    var _options$displayCheck = options.displayCheck,
+	      displayCheck = _options$displayCheck === void 0 ? 'full' : _options$displayCheck,
+	      _options$getShadowRoo = options.getShadowRoot,
+	      getShadowRoot = _options$getShadowRoo === void 0 ? true : _options$getShadowRoo,
+	      _options$includeConta = options.includeContainer,
+	      includeContainer = _options$includeConta === void 0 ? (0, _domUtilities.isElement)(root) : _options$includeConta;
 
-	  // Preserve the browser-like positive-tabindex prefix, then use composed source
-	  // order for the zero- and negative-tabindex focusable elements. Opting in to
-	  // programmatic targets necessarily differs from native Tab order.
-	  return [].concat(_toConsumableArray$1(positiveTabbables), _toConsumableArray$1(focusableCandidates.filter(function (candidate) {
-	    return !positiveSet.has(candidate);
-	  })));
-	};
-
-	/**
-	 * Discovers live focus destinations in the active navigation root.
-	 *
-	 * `displayCheck` defaults to Tabbable's browser-accurate `full` strategy. Tests
-	 * running in jsdom should opt into `displayCheck: 'none'` explicitly.
-	 */
-	tabbableTargets.discoverTabbableTargets = function discoverTabbableTargets(root) {
-	  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-	  var _options$excludeGener = options.excludeGeneratedUI,
-	    excludeGeneratedUI = _options$excludeGener === void 0 ? true : _options$excludeGener,
-	    _options$generatedUIS = options.generatedUISelector,
-	    generatedUISelector = _options$generatedUIS === void 0 ? OPENKEYNAV_GENERATED_UI_SELECTOR : _options$generatedUIS,
-	    _options$includeProgr = options.includeProgrammatic,
-	    includeProgrammatic = _options$includeProgr === void 0 ? false : _options$includeProgr,
-	    _options$targetFilter = options.targetFilter,
-	    targetFilter = _options$targetFilter === void 0 ? null : _options$targetFilter;
-	  if (targetFilter !== null && typeof targetFilter !== 'function') {
-	    throw new TypeError('targetFilter must be a function when provided.');
-	  }
-	  var discoveryRoot = normalizeDiscoveryRoot(root);
-	  var tabbableOptions = getTabbableOptions(root, options);
-	  var candidates = (0, _tabbable.tabbable)(discoveryRoot, tabbableOptions);
-	  if (includeProgrammatic) {
-	    candidates = includeProgrammaticCandidates(discoveryRoot, candidates, tabbableOptions);
-	  }
-	  var seen = new Set();
-	  return candidates.filter(function (candidate) {
-	    if (seen.has(candidate)) return false;
-	    seen.add(candidate);
-	    if (!candidate.isConnected || !isWithinRoot$1(root, candidate)) return false;
-	    if (excludeGeneratedUI && isOpenKeyNavGeneratedUI(candidate, generatedUISelector)) {
+	    // Tabbable traverses a ShadowRoot through its host. Supplying the exact root
+	    // also keeps this boundary usable if a caller was deliberately given a root
+	    // that is not available through host.shadowRoot.
+	    var shadowRootResolver = (0, _domUtilities.isShadowRoot)(root) ? function (node) {
+	      if (node === root.host) return root;
+	      if (typeof getShadowRoot === 'function') return getShadowRoot(node);
 	      return false;
-	    }
-	    if (targetFilter && !targetFilter(candidate)) return false;
+	    } : getShadowRoot;
+	    return {
+	      displayCheck: displayCheck,
+	      getShadowRoot: shadowRootResolver,
+	      includeContainer: includeContainer
+	    };
+	  };
+	  var includeProgrammaticCandidates = function includeProgrammaticCandidates(discoveryRoot, candidates, tabbableOptions) {
+	    var focusableCandidates = (0, _tabbable.focusable)(discoveryRoot, tabbableOptions);
+	    var positiveTabbables = candidates.filter(function (candidate) {
+	      return (0, _tabbable.getTabIndex)(candidate) > 0;
+	    });
+	    var positiveSet = new Set(positiveTabbables);
 
-	    // A filter is application code and may synchronously detach or relocate a
-	    // candidate. Recheck liveness before returning it.
-	    return candidate.isConnected && isWithinRoot$1(root, candidate);
-	  });
-	};
+	    // Preserve the browser-like positive-tabindex prefix, then use composed source
+	    // order for the zero- and negative-tabindex focusable elements. Opting in to
+	    // programmatic targets necessarily differs from native Tab order.
+	    return [].concat(_toConsumableArray(positiveTabbables), _toConsumableArray(focusableCandidates.filter(function (candidate) {
+	      return !positiveSet.has(candidate);
+	    })));
+	  };
+
+	  /**
+	   * Discovers live focus destinations in the active navigation root.
+	   *
+	   * `displayCheck` defaults to Tabbable's browser-accurate `full` strategy. Tests
+	   * running in jsdom should opt into `displayCheck: 'none'` explicitly.
+	   */
+	  exports$1.discoverTabbableTargets = function discoverTabbableTargets(root) {
+	    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	    var _options$excludeGener = options.excludeGeneratedUI,
+	      excludeGeneratedUI = _options$excludeGener === void 0 ? true : _options$excludeGener,
+	      _options$generatedUIS = options.generatedUISelector,
+	      generatedUISelector = _options$generatedUIS === void 0 ? _domUtilities.OPENKEYNAV_GENERATED_UI_SELECTOR : _options$generatedUIS,
+	      _options$includeProgr = options.includeProgrammatic,
+	      includeProgrammatic = _options$includeProgr === void 0 ? false : _options$includeProgr,
+	      _options$targetFilter = options.targetFilter,
+	      targetFilter = _options$targetFilter === void 0 ? null : _options$targetFilter;
+	    if (targetFilter !== null && typeof targetFilter !== 'function') {
+	      throw new TypeError('targetFilter must be a function when provided.');
+	    }
+	    var discoveryRoot = normalizeDiscoveryRoot(root);
+	    var tabbableOptions = getTabbableOptions(root, options);
+	    var candidates = (0, _tabbable.tabbable)(discoveryRoot, tabbableOptions);
+	    if (includeProgrammatic) {
+	      candidates = includeProgrammaticCandidates(discoveryRoot, candidates, tabbableOptions);
+	    }
+	    var seen = new Set();
+	    return candidates.filter(function (candidate) {
+	      if (seen.has(candidate)) return false;
+	      seen.add(candidate);
+	      if (!candidate.isConnected || !(0, _domUtilities.isComposedWithin)(root, candidate)) return false;
+	      if (excludeGeneratedUI && (0, _domUtilities.isOpenKeyNavGeneratedUI)(candidate, generatedUISelector)) {
+	        return false;
+	      }
+	      if (targetFilter && !targetFilter(candidate)) return false;
+
+	      // A filter is application code and may synchronously detach or relocate a
+	      // candidate. Recheck liveness before returning it.
+	      return candidate.isConnected && (0, _domUtilities.isComposedWithin)(root, candidate);
+	    });
+	  };
+	})(tabbableTargets);
 
 	Object.defineProperty(structuralNavigation, "__esModule", {
 	  value: true
 	});
 	structuralNavigation.matchesStructuralShortcut = structuralNavigation.classifyStructuralKeyOwnership = structuralNavigation.StructuralNavigationController = structuralNavigation.STRUCTURAL_NAVIGATION_COMMANDS = void 0;
 	var _structuralModel = structuralModel;
+	var _accessibilityName = accessibilityName;
+	var _domUtilities$1 = domUtilities;
+	var _keyboardEvents = keyboardEvents;
 	var _tabbableTargets = tabbableTargets;
-	function _slicedToArray(r, e) {
-	  return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
+	function _slicedToArray$1(r, e) {
+	  return _arrayWithHoles$1(r) || _iterableToArrayLimit$1(r, e) || _unsupportedIterableToArray$1(r, e) || _nonIterableRest$1();
 	}
-	function _nonIterableRest() {
+	function _nonIterableRest$1() {
 	  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 	}
-	function _iterableToArrayLimit(r, l) {
+	function _iterableToArrayLimit$1(r, l) {
 	  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
 	  if (null != t) {
 	    var e,
@@ -4169,66 +3159,66 @@
 	    return a;
 	  }
 	}
-	function _arrayWithHoles(r) {
+	function _arrayWithHoles$1(r) {
 	  if (Array.isArray(r)) return r;
 	}
-	function _classCallCheck(a, n) {
+	function _classCallCheck$1(a, n) {
 	  if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
 	}
-	function _defineProperties(e, r) {
+	function _defineProperties$1(e, r) {
 	  for (var t = 0; t < r.length; t++) {
 	    var o = r[t];
-	    o.enumerable = o.enumerable || false, o.configurable = true, "value" in o && (o.writable = true), Object.defineProperty(e, _toPropertyKey(o.key), o);
+	    o.enumerable = o.enumerable || false, o.configurable = true, "value" in o && (o.writable = true), Object.defineProperty(e, _toPropertyKey$1(o.key), o);
 	  }
 	}
-	function _createClass(e, r, t) {
-	  return r && _defineProperties(e.prototype, r), Object.defineProperty(e, "prototype", {
+	function _createClass$1(e, r, t) {
+	  return r && _defineProperties$1(e.prototype, r), Object.defineProperty(e, "prototype", {
 	    writable: false
 	  }), e;
 	}
-	function _toPropertyKey(t) {
-	  var i = _toPrimitive(t, "string");
-	  return "symbol" == _typeof(i) ? i : i + "";
+	function _toPropertyKey$1(t) {
+	  var i = _toPrimitive$1(t, "string");
+	  return "symbol" == _typeof$1(i) ? i : i + "";
 	}
-	function _toPrimitive(t, r) {
-	  if ("object" != _typeof(t) || !t) return t;
+	function _toPrimitive$1(t, r) {
+	  if ("object" != _typeof$1(t) || !t) return t;
 	  var e = t[Symbol.toPrimitive];
 	  if (void 0 !== e) {
 	    var i = e.call(t, r);
-	    if ("object" != _typeof(i)) return i;
+	    if ("object" != _typeof$1(i)) return i;
 	    throw new TypeError("@@toPrimitive must return a primitive value.");
 	  }
 	  return (String )(t);
 	}
-	function _typeof(o) {
+	function _typeof$1(o) {
 	  "@babel/helpers - typeof";
 
-	  return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+	  return _typeof$1 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
 	    return typeof o;
 	  } : function (o) {
 	    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
-	  }, _typeof(o);
+	  }, _typeof$1(o);
 	}
 	function _toConsumableArray(r) {
-	  return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread();
+	  return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray$1(r) || _nonIterableSpread();
 	}
 	function _nonIterableSpread() {
 	  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 	}
-	function _unsupportedIterableToArray(r, a) {
+	function _unsupportedIterableToArray$1(r, a) {
 	  if (r) {
-	    if ("string" == typeof r) return _arrayLikeToArray(r, a);
+	    if ("string" == typeof r) return _arrayLikeToArray$1(r, a);
 	    var t = {}.toString.call(r).slice(8, -1);
-	    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+	    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$1(r, a) : void 0;
 	  }
 	}
 	function _iterableToArray(r) {
 	  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
 	}
 	function _arrayWithoutHoles(r) {
-	  if (Array.isArray(r)) return _arrayLikeToArray(r);
+	  if (Array.isArray(r)) return _arrayLikeToArray$1(r);
 	}
-	function _arrayLikeToArray(r, a) {
+	function _arrayLikeToArray$1(r, a) {
 	  (null == a || a > r.length) && (a = r.length);
 	  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
 	  return n;
@@ -4243,63 +3233,34 @@
 	  previousPeerContext: 'previousPeerContext',
 	  nextPeerContext: 'nextPeerContext'
 	});
-	var MODIFIER_KEYS = ['altKey', 'ctrlKey', 'metaKey', 'shiftKey'];
+	var STRUCTURAL_STATUS_CHANNEL = 'structural-navigation';
+	var STRUCTURAL_EXIT_STATUS_CHANNEL = 'structural-navigation-exit';
 	var ARROW_OWNING_ROLES = new Set(['combobox', 'grid', 'listbox', 'menu', 'menubar', 'radiogroup', 'scrollbar', 'slider', 'spinbutton', 'tablist', 'toolbar', 'tree', 'treegrid']);
 	var ESCAPE_OWNING_ROLES = new Set([].concat(_toConsumableArray(ARROW_OWNING_ROLES), ['dialog']));
 	var TEXT_INPUT_TYPES = new Set(['date', 'datetime-local', 'email', 'month', 'number', 'password', 'range', 'search', 'tel', 'text', 'time', 'url', 'week']);
-	var isElement = function isElement(node) {
-	  return Boolean(node && node.nodeType === 1);
-	};
-	var isDocument = function isDocument(node) {
-	  return Boolean(node && node.nodeType === 9);
-	};
-	var isShadowRoot = function isShadowRoot(node) {
-	  return Boolean(node && node.nodeType === 11 && node.host && isElement(node.host));
-	};
-	var composedParent = function composedParent(node) {
-	  if (!node) return null;
-	  if (node.assignedSlot) return node.assignedSlot;
-	  if (isShadowRoot(node)) return node.host;
-	  return node.parentNode || null;
-	};
-	var isWithinRoot = function isWithinRoot(root, node) {
-	  var current = node;
-	  while (current) {
-	    if (current === root) return true;
-	    current = composedParent(current);
-	  }
-	  return false;
-	};
-	var normalizeShortcut = function normalizeShortcut(shortcut) {
-	  if (!shortcut) return null;
-	  if (typeof shortcut === 'string') return {
-	    key: shortcut
-	  };
-	  if (_typeof(shortcut) === 'object' && typeof shortcut.key === 'string') {
-	    return shortcut;
-	  }
-	  return null;
-	};
-	var keysEqual = function keysEqual(left, right) {
-	  if (left.length === 1 && right.length === 1) {
-	    return left.toLowerCase() === right.toLowerCase();
-	  }
-	  return left === right;
+	var SHORTCUT_MODIFIER_LABELS = Object.freeze({
+	  ctrlKey: 'Ctrl',
+	  altKey: 'Alt',
+	  shiftKey: 'Shift',
+	  metaKey: 'Meta'
+	});
+	var shortcutLabel = function shortcutLabel(shortcut) {
+	  var normalized = (0, _keyboardEvents.normalizeShortcut)(shortcut);
+	  if (!normalized) return '';
+	  var modifiers = _keyboardEvents.MODIFIER_KEYS.filter(function (modifier) {
+	    return normalized[modifier];
+	  }).map(function (modifier) {
+	    return SHORTCUT_MODIFIER_LABELS[modifier];
+	  });
+	  var key = normalized.key === 'Escape' ? 'Esc' : normalized.key === ' ' ? 'Space' : normalized.key;
+	  return [].concat(_toConsumableArray(modifiers), [key]).join('+');
 	};
 
 	/**
 	 * Matches one exact configured shortcut. Unspecified modifiers are false.
-	 * `ignoredModifier` is used only for the deliberate widget override modifier.
+	 * Callers may explicitly permit an extra ownership-override modifier.
 	 */
-	var matchesStructuralShortcut = structuralNavigation.matchesStructuralShortcut = function matchesStructuralShortcut(event, shortcut) {
-	  var ignoredModifier = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-	  var normalized = normalizeShortcut(shortcut);
-	  if (!normalized || !keysEqual(event.key, normalized.key)) return false;
-	  return MODIFIER_KEYS.every(function (modifier) {
-	    if (modifier === ignoredModifier) return true;
-	    return Boolean(event[modifier]) === Boolean(normalized[modifier]);
-	  });
-	};
+	var matchesStructuralShortcut = structuralNavigation.matchesStructuralShortcut = _keyboardEvents.matchesShortcut;
 	var getEventPath = function getEventPath(event) {
 	  if (typeof event.composedPath === 'function') {
 	    var _path = event.composedPath();
@@ -4309,12 +3270,12 @@
 	  var current = event.target;
 	  while (current) {
 	    path.push(current);
-	    current = composedParent(current);
+	    current = (0, _domUtilities$1.getComposedParent)(current);
 	  }
 	  return path;
 	};
 	var hasEditableContent = function hasEditableContent(element) {
-	  if (!isElement(element)) return false;
+	  if (!(0, _domUtilities$1.isElement)(element)) return false;
 	  var value = element.getAttribute('contenteditable');
 	  return element.isContentEditable || value === '' || value === 'true' || value === 'plaintext-only';
 	};
@@ -4325,7 +3286,7 @@
 	    escape: false,
 	    character: false
 	  };
-	  if (!isElement(element)) return ownership;
+	  if (!(0, _domUtilities$1.isElement)(element)) return ownership;
 	  var declared = [element.getAttribute('data-openkeynav-key-owner'), element.getAttribute('data-openkeynav-owns-keys')].filter(Boolean).join(' ').toLowerCase();
 	  if (declared.includes('all')) {
 	    return {
@@ -4403,7 +3364,7 @@
 	        character: true
 	      };
 	    }
-	    if (declared && _typeof(declared) === 'object') {
+	    if (declared && _typeof$1(declared) === 'object') {
 	      result.all = result.all || Boolean(declared.all);
 	      result.arrows = result.arrows || Boolean(declared.arrows);
 	      result.escape = result.escape || Boolean(declared.escape);
@@ -4453,7 +3414,7 @@
 	  var map = model.directContextByTarget || model.targetContexts || model.directContexts;
 	  if (map instanceof Map) {
 	    var value = map.get(target);
-	    return _typeof(value) === 'object' ? value : modelContextById(model, value);
+	    return _typeof$1(value) === 'object' ? value : modelContextById(model, value);
 	  }
 	  if (typeof model.getDirectContext === 'function') {
 	    return model.getDirectContext(target);
@@ -4468,16 +3429,27 @@
 	    values = model.getTypedContexts(target);
 	  }
 	  return Array.from(values || []).map(function (value) {
-	    return _typeof(value) === 'object' ? value : modelTypedContextById(model, value);
+	    return _typeof$1(value) === 'object' ? value : modelTypedContextById(model, value);
 	  }).filter(Boolean);
 	};
 	var parentContext = function parentContext(model, context) {
 	  if (!context || !context.parent) return null;
-	  return _typeof(context.parent) === 'object' ? context.parent : modelContextById(model, context.parent);
+	  return _typeof$1(context.parent) === 'object' ? context.parent : modelContextById(model, context.parent);
+	};
+	var contextHierarchyLevel = function contextHierarchyLevel(model, context) {
+	  var level = 0;
+	  var current = context;
+	  var seen = new Set();
+	  while (current && !seen.has(current)) {
+	    seen.add(current);
+	    level += 1;
+	    current = parentContext(model, current);
+	  }
+	  return Math.max(1, level);
 	};
 	var normalizeContextChildren = function normalizeContextChildren(model, context) {
 	  return contextChildren(context).map(function (child) {
-	    return _typeof(child) === 'object' ? child : modelContextById(model, child);
+	    return _typeof$1(child) === 'object' ? child : modelContextById(model, child);
 	  }).filter(Boolean);
 	};
 	var modelStructuralContexts = function modelStructuralContexts(model) {
@@ -4496,17 +3468,21 @@
 	};
 
 	/**
-	 * Heading-backed contexts move horizontally by authored heading rank, even
-	 * when those contexts have different structural parents. Contexts without a
-	 * heading rank retain ordinary same-parent sibling behavior.
+	 * True structural siblings are always horizontal peers. A heading-backed
+	 * context may also bridge to any other heading-backed context at the same
+	 * canonical hierarchy depth, regardless of authored H1-H6 rank. Authored rank
+	 * must not split one structural level into separate horizontal lanes.
 	 */
 	var horizontalContextPeers = function horizontalContextPeers(model, context) {
 	  var headingLevel = contextHeadingLevel(context);
-	  var contexts = headingLevel === null ? normalizeContextChildren(model, parentContext(model, context)) : modelStructuralContexts(model).filter(function (candidate) {
-	    return contextHeadingLevel(candidate) === headingLevel;
+	  var hierarchyLevel = contextHierarchyLevel(model, context);
+	  var structuralParent = parentContext(model, context);
+	  var contexts = headingLevel === null ? normalizeContextChildren(model, structuralParent) : modelStructuralContexts(model).filter(function (candidate) {
+	    return parentContext(model, candidate) === structuralParent || contextHeadingLevel(candidate) !== null && contextHierarchyLevel(model, candidate) === hierarchyLevel;
 	  });
 	  return {
 	    headingLevel: headingLevel,
+	    hierarchyLevel: hierarchyLevel,
 	    contexts: contexts.filter(function (candidate) {
 	      return contextTargets(candidate).length > 0;
 	    }).sort(function (left, right) {
@@ -4514,44 +3490,51 @@
 	    })
 	  };
 	};
+
+	/**
+	 * Finds the next page-forward context one canonical level deeper. Heading
+	 * contexts also advance exactly one authored rank so an H2 fallback reaches
+	 * the next nonempty H3 rather than an unrelated unheaded level-three context.
+	 */
+	var nextNarrowFallbackContext = function nextNarrowFallbackContext(model, context) {
+	  var headingLevel = contextHeadingLevel(context);
+	  if (headingLevel !== null && headingLevel >= 6) return null;
+	  var hierarchyLevel = contextHierarchyLevel(model, context);
+	  var nextHeadingLevel = headingLevel === null ? null : headingLevel + 1;
+	  var orderedContexts = modelStructuralContexts(model).filter(function (candidate) {
+	    return contextTargets(candidate).length > 0;
+	  }).sort(function (left, right) {
+	    return contextOrder(left) - contextOrder(right) || String(contextId(left)).localeCompare(String(contextId(right)));
+	  });
+	  var currentIndex = orderedContexts.indexOf(context);
+	  var followingContexts = currentIndex >= 0 ? orderedContexts.slice(currentIndex + 1) : orderedContexts;
+	  return followingContexts.find(function (candidate) {
+	    return contextHierarchyLevel(model, candidate) === hierarchyLevel + 1 && (nextHeadingLevel === null || contextHeadingLevel(candidate) === nextHeadingLevel);
+	  }) || null;
+	};
 	var targetName = function targetName(target) {
-	  var _target$getAttribute, _target$getAttribute2, _target$getAttribute3, _target$getAttribute4, _target$tagName;
+	  var _target$getAttribute, _target$getAttribute2, _target$tagName;
 	  if (!target) return '';
-	  var current = target;
-	  while (current) {
-	    if (isElement(current) && current.getAttribute('aria-hidden') === 'true') {
-	      return target.tagName ? target.tagName.toLowerCase() : 'target';
-	    }
-	    current = composedParent(current);
+	  if ((0, _domUtilities$1.hasAriaHiddenAncestor)(target)) {
+	    return target.tagName ? target.tagName.toLowerCase() : 'target';
 	  }
-	  var ariaLabel = (_target$getAttribute = target.getAttribute) === null || _target$getAttribute === void 0 || (_target$getAttribute = _target$getAttribute.call(target, 'aria-label')) === null || _target$getAttribute === void 0 ? void 0 : _target$getAttribute.trim();
-	  if (ariaLabel) return ariaLabel;
-	  var labelledBy = (_target$getAttribute2 = target.getAttribute) === null || _target$getAttribute2 === void 0 ? void 0 : _target$getAttribute2.call(target, 'aria-labelledby');
-	  if (labelledBy) {
-	    var root = target.getRootNode();
-	    var labels = labelledBy.split(/\s+/).map(function (id) {
-	      var _root$getElementById;
-	      return ((_root$getElementById = root.getElementById) === null || _root$getElementById === void 0 ? void 0 : _root$getElementById.call(root, id)) || target.ownerDocument.getElementById(id);
-	    }).filter(Boolean).map(function (element) {
-	      return element.textContent.trim();
-	    }).filter(Boolean);
-	    if (labels.length) return labels.join(' ');
-	  }
+	  var explicitName = (0, _accessibilityName.getExplicitAccessibleName)(target);
+	  if (explicitName) return explicitName;
 	  var labelText = Array.from(target.labels || []).map(function (label) {
-	    return label.textContent.trim();
+	    return (0, _accessibilityName.normalizeText)(label.textContent);
 	  }).filter(Boolean).join(' ');
 	  if (labelText) return labelText;
-	  var value = ((_target$getAttribute3 = target.getAttribute) === null || _target$getAttribute3 === void 0 ? void 0 : _target$getAttribute3.call(target, 'title')) || ((_target$getAttribute4 = target.getAttribute) === null || _target$getAttribute4 === void 0 ? void 0 : _target$getAttribute4.call(target, 'name')) || target.textContent;
-	  var normalized = String(value || '').replace(/\s+/g, ' ').trim();
+	  var value = ((_target$getAttribute = target.getAttribute) === null || _target$getAttribute === void 0 ? void 0 : _target$getAttribute.call(target, 'title')) || ((_target$getAttribute2 = target.getAttribute) === null || _target$getAttribute2 === void 0 ? void 0 : _target$getAttribute2.call(target, 'name')) || target.textContent;
+	  var normalized = (0, _accessibilityName.normalizeText)(value);
 	  return normalized.slice(0, 80) || ((_target$tagName = target.tagName) === null || _target$tagName === void 0 ? void 0 : _target$tagName.toLowerCase()) || 'target';
 	};
 	var topmostNativeModal = function topmostNativeModal(documentObject) {
 	  if (!(documentObject !== null && documentObject !== void 0 && documentObject.querySelectorAll)) return null;
 	  try {
 	    var modals = Array.from(documentObject.querySelectorAll('dialog:modal'));
-	    var focused = (0, _tabbableTargets.getDeepActiveElement)(documentObject);
+	    var focused = (0, _domUtilities$1.getDeepActiveElement)(documentObject);
 	    var focusedModals = modals.filter(function (modal) {
-	      return isWithinRoot(modal, focused);
+	      return (0, _domUtilities$1.isComposedWithin)(modal, focused);
 	    });
 	    if (focusedModals.length) {
 	      return focusedModals[focusedModals.length - 1];
@@ -4568,7 +3551,7 @@
 	var openShadowRootsWithin = function openShadowRootsWithin(root) {
 	  var roots = new Set();
 	  var _visit = function visit(scope) {
-	    if (isShadowRoot(scope)) roots.add(scope);
+	    if ((0, _domUtilities$1.isShadowRoot)(scope)) roots.add(scope);
 	    if (!(scope !== null && scope !== void 0 && scope.querySelectorAll)) return;
 	    scope.querySelectorAll('*').forEach(function (element) {
 	      if (element.shadowRoot) _visit(element.shadowRoot);
@@ -4581,13 +3564,9 @@
 	  var changedNodes = [].concat(_toConsumableArray(Array.from(mutation.addedNodes || [])), _toConsumableArray(Array.from(mutation.removedNodes || [])));
 	  var candidates = changedNodes.length ? changedNodes : [mutation.target];
 	  return candidates.length > 0 && candidates.every(function (node) {
-	    var element = isElement(node) ? node : node.parentElement || mutation.target;
-	    return element && (0, _tabbableTargets.isOpenKeyNavGeneratedUI)(element);
+	    var element = (0, _domUtilities$1.isElement)(node) ? node : node.parentElement || mutation.target;
+	    return element && (0, _domUtilities$1.isOpenKeyNavGeneratedUI)(element);
 	  });
-	};
-	var preventAcceptedCommand = function preventAcceptedCommand(event) {
-	  event.preventDefault();
-	  event.stopPropagation();
 	};
 	var elementClientRects = function elementClientRects(element) {
 	  if (!(element !== null && element !== void 0 && element.getBoundingClientRect)) return [];
@@ -4618,7 +3597,7 @@
 	};
 	structuralNavigation.StructuralNavigationController = /*#__PURE__*/function () {
 	  function StructuralNavigationController(openKeyNav) {
-	    _classCallCheck(this, StructuralNavigationController);
+	    _classCallCheck$1(this, StructuralNavigationController);
 	    this.openKeyNav = openKeyNav;
 	    this.document = typeof document === 'undefined' ? null : document;
 	    this.root = null;
@@ -4628,11 +3607,10 @@
 	    this.currentTarget = null;
 	    this.activeStructuralContext = null;
 	    this.activeTypedContext = null;
+	    this.statusDismissed = false;
 	    this.dirty = true;
 	    this.observer = null;
 	    this.observedShadowRoots = new Set();
-	    this.statusElement = null;
-	    this.lastStatus = '';
 	    this.focusSyncToken = 0;
 	    this.contextIndicatorElement = null;
 	    this.contextIndicatorFrame = null;
@@ -4644,7 +3622,7 @@
 	    this.invalidate = this.invalidate.bind(this);
 	    this.scheduleContextIndicatorUpdate = this.scheduleContextIndicatorUpdate.bind(this);
 	  }
-	  return _createClass(StructuralNavigationController, [{
+	  return _createClass$1(StructuralNavigationController, [{
 	    key: "config",
 	    get: function get() {
 	      return this.openKeyNav.config.modesConfig.structuralNavigation;
@@ -4660,13 +3638,13 @@
 	      var details = {
 	        document: this.document,
 	        openKeyNav: this.openKeyNav,
-	        activeElement: (0, _tabbableTargets.getDeepActiveElement)(this.document)
+	        activeElement: (0, _domUtilities$1.getDeepActiveElement)(this.document)
 	      };
 	      var configured = resolveSelectorRoot(resolveValue(this.config.activeRoot, details), this.document);
-	      var customRoot = isDocument(configured) || isShadowRoot(configured) && configured.host.isConnected || isElement(configured) && configured.isConnected ? configured : null;
+	      var customRoot = (0, _domUtilities$1.isDocument)(configured) || (0, _domUtilities$1.isShadowRoot)(configured) && configured.host.isConnected || (0, _domUtilities$1.isElement)(configured) && configured.isConnected ? configured : null;
 	      var modal = topmostNativeModal(this.document);
 	      if (!modal) return customRoot || this.document;
-	      if (customRoot && customRoot !== this.document && isWithinRoot(modal, customRoot)) {
+	      if (customRoot && customRoot !== this.document && (0, _domUtilities$1.isComposedWithin)(modal, customRoot)) {
 	        return customRoot;
 	      }
 	      return modal;
@@ -4691,6 +3669,7 @@
 	      }
 	      if (this.active) {
 	        var _this$document$defaul;
+	        this.openKeyNav.clearStatus(STRUCTURAL_EXIT_STATUS_CHANNEL);
 	        this.document.addEventListener('focusin', this.handleFocusIn, true);
 	        this.document.addEventListener('change', this.invalidate, true);
 	        this.document.addEventListener('toggle', this.invalidate, true);
@@ -4698,7 +3677,6 @@
 	        (_this$document$defaul = this.document.defaultView) === null || _this$document$defaul === void 0 || _this$document$defaul.addEventListener('popstate', this.invalidate);
 	        this.connectContextIndicatorListeners();
 	        this.refresh();
-	        this.ensureStatus();
 	        this.updateStatus('Structural navigation active.');
 	        return true;
 	      }
@@ -4706,6 +3684,8 @@
 	        this.openKeyNav.removeOverlays(true);
 	      }
 	      this.openKeyNav.config.modes.structuralNavigation.value = true;
+	      this.statusDismissed = false;
+	      this.openKeyNav.clearStatus(STRUCTURAL_EXIT_STATUS_CHANNEL);
 	      this.dirty = true;
 	      this.document.addEventListener('focusin', this.handleFocusIn, true);
 	      this.document.addEventListener('change', this.invalidate, true);
@@ -4719,29 +3699,25 @@
 	        announce: false,
 	        refresh: false
 	      });
-	      this.ensureStatus();
 	      this.updateStatus('Structural navigation active.');
 	      return true;
 	    }
 	  }, {
 	    key: "deactivate",
 	    value: function deactivate() {
-	      var _this$document, _this$document2, _this$document3, _this$document4, _this$document5, _this$statusElement;
+	      var _this$document, _this$document2, _this$document3, _this$document4, _this$document5;
 	      var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
 	        _ref$announce = _ref.announce,
 	        announce = _ref$announce === void 0 ? true : _ref$announce;
-	      if (!this.active && !this.model && !this.observer && !this.statusElement && !this.contextIndicatorElement) {
+	      if (!this.active && !this.model && !this.observer && !this.openKeyNav.getStatusElement(STRUCTURAL_STATUS_CHANNEL) && !this.contextIndicatorElement) {
 	        return false;
 	      }
-	      if (announce) {
-	        var _this$config$status, _this$config$status2;
-	        this.updateStatus('Structural navigation off.', {
-	          force: true
-	        });
-	        if ((_this$config$status = this.config.status) !== null && _this$config$status !== void 0 && _this$config$status.enabled && ((_this$config$status2 = this.config.status) === null || _this$config$status2 === void 0 ? void 0 : _this$config$status2.announcements) !== false && typeof this.openKeyNav.emitNotification === 'function') {
-	          this.openKeyNav.emitNotification('Structural navigation off.');
-	        }
-	      }
+	      var statusConfig = this.config.status || {};
+	      var statusWasDismissed = this.statusDismissed;
+	      var configuredExitDuration = Number(this.openKeyNav.config.notifications.duration);
+	      var exitDuration = Number.isFinite(configuredExitDuration) && configuredExitDuration > 0 ? configuredExitDuration : 3000;
+	      var announceExit = Boolean(announce && statusConfig.enabled && statusConfig.announcements !== false);
+	      var exitHost = this.root;
 	      this.openKeyNav.config.modes.structuralNavigation.value = false;
 	      (_this$document = this.document) === null || _this$document === void 0 || _this$document.removeEventListener('focusin', this.handleFocusIn, true);
 	      (_this$document2 = this.document) === null || _this$document2 === void 0 || _this$document2.removeEventListener('change', this.invalidate, true);
@@ -4750,10 +3726,9 @@
 	      (_this$document5 = this.document) === null || _this$document5 === void 0 || (_this$document5 = _this$document5.defaultView) === null || _this$document5 === void 0 || _this$document5.removeEventListener('popstate', this.invalidate);
 	      this.disconnectContextIndicatorListeners();
 	      this.disconnectObservers();
-	      (_this$statusElement = this.statusElement) === null || _this$statusElement === void 0 || _this$statusElement.remove();
-	      this.statusElement = null;
+	      this.openKeyNav.clearStatus(STRUCTURAL_STATUS_CHANNEL);
+	      this.openKeyNav.clearStatus(STRUCTURAL_EXIT_STATUS_CHANNEL);
 	      this.removeContextIndicator();
-	      this.lastStatus = '';
 	      this.root = null;
 	      this.model = null;
 	      this.targets = [];
@@ -4761,8 +3736,20 @@
 	      this.currentTarget = null;
 	      this.activeStructuralContext = null;
 	      this.activeTypedContext = null;
+	      this.statusDismissed = false;
 	      this.dirty = true;
 	      this.focusSyncToken += 1;
+	      if (announceExit) {
+	        this.openKeyNav.setStatus(STRUCTURAL_EXIT_STATUS_CHANNEL, 'Structural navigation off.', {
+	          className: 'openKeyNav-structural-exit-status',
+	          ui: 'structural-status',
+	          politeness: 'polite',
+	          visible: statusConfig.visible !== false && !statusWasDismissed,
+	          duration: exitDuration,
+	          toolName: this.openKeyNav.config.notifications.displayToolName,
+	          host: exitHost
+	        });
+	      }
 	      return true;
 	    }
 	  }, {
@@ -4779,7 +3766,7 @@
 	        if (this.openKeyNav.config.modes.clicking.value || this.openKeyNav.config.modes.moving.value || this.openKeyNav.config.modes.menu.value || ownership.character || !matchesStructuralShortcut(event, activationShortcut)) {
 	          return false;
 	        }
-	        preventAcceptedCommand(event);
+	        (0, _keyboardEvents.preventAcceptedCommand)(event);
 	        this.activate();
 	        return true;
 	      }
@@ -4788,7 +3775,7 @@
 	        key: this.openKeyNav.config.keys.structuralNavigation,
 	        altKey: true
 	      };
-	      var exitShortcut = normalizeShortcut(this.config.exitCommand) || defaultExit;
+	      var exitShortcut = (0, _keyboardEvents.normalizeShortcut)(this.config.exitCommand) || defaultExit;
 	      var plainToggle = matchesStructuralShortcut(event, activationShortcut);
 	      var configuredExit = matchesStructuralShortcut(event, exitShortcut);
 	      var openKeyNavExit = matchesStructuralShortcut(event, {
@@ -4796,8 +3783,20 @@
 	      });
 	      var safeEscape = this.config.escapeExits && event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey && !ownership.escape;
 	      if (configuredExit || safeEscape || (plainToggle || openKeyNavExit) && !ownership.character) {
-	        preventAcceptedCommand(event);
+	        (0, _keyboardEvents.preventAcceptedCommand)(event);
 	        this.deactivate();
+	        return true;
+	      }
+	      var statusConfig = this.config.status || {};
+	      var dismissShortcut = (0, _keyboardEvents.normalizeShortcut)(statusConfig.dismissCommand);
+	      var dismissIsArrowKey = event.key.startsWith('Arrow');
+	      var dismissIsCharacterKey = event.key.length === 1;
+	      var pageOwnsDismissShortcut = Boolean(ownership.all || event.key === 'Escape' && ownership.escape || dismissIsArrowKey && ownership.arrows || dismissIsCharacterKey && ownership.character);
+	      var dismissStatus = Boolean(dismissShortcut && statusConfig.enabled !== false && statusConfig.visible !== false && !this.statusDismissed && this.openKeyNav.getStatusElement(STRUCTURAL_STATUS_CHANNEL) && !pageOwnsDismissShortcut && matchesStructuralShortcut(event, dismissShortcut));
+	      if (dismissStatus) {
+	        (0, _keyboardEvents.preventAcceptedCommand)(event);
+	        this.statusDismissed = true;
+	        this.updateStatus('Status closed.');
 	        return true;
 	      }
 	      if (event.key === 'Tab' || event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar' || event.key === 'Escape') {
@@ -4806,19 +3805,31 @@
 	      var isArrowKey = event.key.startsWith('Arrow');
 	      var isCharacterKey = event.key.length === 1;
 	      var ownsArrow = isArrowKey && ownership.arrows;
-	      var overrideModifier = this.config.overrideModifier;
-	      var override = ownsArrow && MODIFIER_KEYS.includes(overrideModifier) && Boolean(event[overrideModifier]);
-	      if (ownership.all || ownsArrow && !override || isCharacterKey && ownership.character) {
+	      var configuredOverrideModifier = this.config.overrideModifier;
+	      var overrideModifier = _keyboardEvents.MODIFIER_KEYS.includes(configuredOverrideModifier) ? configuredOverrideModifier : null;
+	      var overridePressed = Boolean(overrideModifier && event[overrideModifier]);
+	      var overridesArrowOwnership = ownsArrow && overridePressed;
+	      if (ownership.all || ownsArrow && !overridesArrowOwnership || isCharacterKey && ownership.character) {
 	        return false;
 	      }
 	      var commandEntries = Object.entries(this.config.commands || {});
-	      var matched = commandEntries.find(function (_ref2) {
-	        var _ref3 = _slicedToArray(_ref2, 2),
+	      var exactMatch = commandEntries.find(function (_ref2) {
+	        var _ref3 = _slicedToArray$1(_ref2, 2),
 	          shortcut = _ref3[1];
-	        return matchesStructuralShortcut(event, shortcut, override ? overrideModifier : null);
+	        return matchesStructuralShortcut(event, shortcut);
 	      });
+	      // Option/Alt is an ownership override, not part of the structural arrow
+	      // chord. Once held, it may stay held as focus leaves a widget. Exact
+	      // bindings still win, and explicit modifier requirements remain exact.
+	      var matched = exactMatch || (isArrowKey && overridePressed ? commandEntries.find(function (_ref4) {
+	        var _ref5 = _slicedToArray$1(_ref4, 2),
+	          shortcut = _ref5[1];
+	        return matchesStructuralShortcut(event, shortcut, {
+	          allowedExtraModifiers: [overrideModifier]
+	        });
+	      }) : null);
 	      if (!matched) return false;
-	      preventAcceptedCommand(event);
+	      (0, _keyboardEvents.preventAcceptedCommand)(event);
 	      this.execute(matched[0]);
 	      return true;
 	    }
@@ -4905,30 +3916,29 @@
 	      });
 	      this.dirty = false;
 	      this.reconnectObservers();
-	      var focused = (0, _tabbableTargets.getDeepActiveElement)(this.root);
+	      var focused = (0, _domUtilities$1.getDeepActiveElement)(this.root);
 	      this.currentTarget = this.targetSet.has(focused) ? focused : this.targetSet.has(previousTarget) ? previousTarget : null;
 	      var preservedStructural = modelContextById(this.model, previousStructuralId);
 	      var direct = directContextForTarget(this.model, this.currentTarget);
 	      this.activeStructuralContext = preservedStructural && (!this.currentTarget || contextTargets(preservedStructural).includes(this.currentTarget)) ? preservedStructural : direct || this.model.rootContext;
 	      var preservedTyped = modelTypedContextById(this.model, previousTypedId);
 	      this.activeTypedContext = preservedTyped && this.currentTarget && contextTargets(preservedTyped).includes(this.currentTarget) ? preservedTyped : null;
-	      this.ensureStatus();
 	      this.scheduleContextIndicatorUpdate();
 	      return true;
 	    }
 	  }, {
 	    key: "synchronizeFocus",
 	    value: function synchronizeFocus() {
-	      var _ref4 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-	        _ref4$preserveRoute = _ref4.preserveRoute,
-	        preserveRoute = _ref4$preserveRoute === void 0 ? true : _ref4$preserveRoute,
-	        _ref4$announce = _ref4.announce,
-	        announce = _ref4$announce === void 0 ? true : _ref4$announce,
-	        _ref4$refresh = _ref4.refresh,
-	        refresh = _ref4$refresh === void 0 ? true : _ref4$refresh;
+	      var _ref6 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+	        _ref6$preserveRoute = _ref6.preserveRoute,
+	        preserveRoute = _ref6$preserveRoute === void 0 ? true : _ref6$preserveRoute,
+	        _ref6$announce = _ref6.announce,
+	        announce = _ref6$announce === void 0 ? true : _ref6$announce,
+	        _ref6$refresh = _ref6.refresh,
+	        refresh = _ref6$refresh === void 0 ? true : _ref6$refresh;
 	      if (!this.active) return;
 	      if (refresh) this.refresh();
-	      var focused = (0, _tabbableTargets.getDeepActiveElement)(this.root);
+	      var focused = (0, _domUtilities$1.getDeepActiveElement)(this.root);
 	      if (!this.targetSet.has(focused)) {
 	        this.currentTarget = null;
 	        this.activeTypedContext = null;
@@ -4984,7 +3994,7 @@
 	  }, {
 	    key: "handleSlotChange",
 	    value: function handleSlotChange(event) {
-	      if ((0, _tabbableTargets.isOpenKeyNavGeneratedUI)(event.target)) return;
+	      if ((0, _domUtilities$1.isOpenKeyNavGeneratedUI)(event.target)) return;
 	      this.dirty = true;
 	      this.scheduleContextIndicatorUpdate();
 	    }
@@ -5063,7 +4073,7 @@
 	        return;
 	      }
 	      this.currentTarget = target;
-	      target.focus();
+	      this.openKeyNav.focus(target);
 	      this.updateStatus();
 	      var token = ++this.focusSyncToken;
 	      setTimeout(function () {
@@ -5080,11 +4090,12 @@
 	      this.useStructuralRoute();
 	      var _horizontalContextPee = horizontalContextPeers(this.model, this.activeStructuralContext),
 	        peers = _horizontalContextPee.contexts,
-	        headingLevel = _horizontalContextPee.headingLevel;
+	        headingLevel = _horizontalContextPee.headingLevel,
+	        hierarchyLevel = _horizontalContextPee.hierarchyLevel;
 	      var currentIndex = peers.indexOf(this.activeStructuralContext);
 	      var nextIndex = currentIndex + direction;
 	      if (currentIndex < 0 || nextIndex < 0 || nextIndex >= peers.length) {
-	        var relation = headingLevel === null ? 'sibling context' : "context at heading level ".concat(headingLevel);
+	        var relation = headingLevel === null ? 'sibling context' : "peer context at hierarchy level ".concat(hierarchyLevel);
 	        this.updateStatus(direction > 0 ? "No next ".concat(relation, ".") : "No previous ".concat(relation, "."));
 	        return;
 	      }
@@ -5104,26 +4115,36 @@
 	        return;
 	      }
 	      this.activeStructuralContext = parent;
-	      this.updateStatus('Broadened context.');
+	      this.updateStatus();
 	    }
 	  }, {
 	    key: "narrowContext",
 	    value: function narrowContext() {
 	      var _this7 = this;
 	      this.useStructuralRoute();
-	      if (!this.currentTarget) {
-	        this.updateStatus('No current target identifies a child context.');
-	        return;
-	      }
-	      var child = normalizeContextChildren(this.model, this.activeStructuralContext).find(function (context) {
+	      var activeContext = this.activeStructuralContext || this.model.rootContext;
+	      var child = this.currentTarget ? normalizeContextChildren(this.model, activeContext).find(function (context) {
 	        return contextTargets(context).includes(_this7.currentTarget);
-	      });
-	      if (!child) {
-	        this.updateStatus('No narrower context contains the current target.');
+	      }) : null;
+	      if (child) {
+	        this.activeStructuralContext = child;
+	        this.updateStatus();
 	        return;
 	      }
-	      this.activeStructuralContext = child;
-	      this.updateStatus('Narrowed context.');
+	      var headingLevel = contextHeadingLevel(activeContext);
+	      if (headingLevel !== null && headingLevel >= 6) {
+	        this.updateStatus('Already at heading level 6.');
+	        return;
+	      }
+	      var fallback = nextNarrowFallbackContext(this.model, activeContext);
+	      if (!fallback) {
+	        var nextHierarchyLevel = contextHierarchyLevel(this.model, activeContext) + 1;
+	        this.updateStatus(headingLevel === null ? "No next context at hierarchy level ".concat(nextHierarchyLevel, ".") : "No next H".concat(headingLevel + 1, " context at hierarchy level ").concat(nextHierarchyLevel, "."));
+	        return;
+	      }
+	      this.activeStructuralContext = fallback;
+	      this.activeTypedContext = null;
+	      this.focusTarget(contextTargets(fallback)[0]);
 	    }
 	  }, {
 	    key: "cyclePeerContext",
@@ -5148,7 +4169,7 @@
 	      if (!this.activeTypedContext) {
 	        this.activeStructuralContext = directContextForTarget(this.model, this.currentTarget) || this.model.rootContext;
 	      }
-	      this.updateStatus(this.activeTypedContext ? "Using ".concat(this.activeTypedContext.name, ".") : 'Using structural context.');
+	      this.updateStatus();
 	    }
 	  }, {
 	    key: "useStructuralRoute",
@@ -5215,13 +4236,6 @@
 	        element.className = 'openKeyNav-structural-context-outline';
 	        element.setAttribute('data-openkeynav-ui', 'structural-context-outline');
 	        element.setAttribute('aria-hidden', 'true');
-	        element.style.boxSizing = 'border-box';
-	        element.style.position = 'fixed';
-	        element.style.zIndex = '2147483646';
-	        element.style.pointerEvents = 'none';
-	        element.style.background = 'transparent';
-	        element.style.borderRadius = '4px';
-	        element.style.display = 'none';
 	        this.contextIndicatorElement = element;
 	      }
 	      var host = this.contextIndicatorHost();
@@ -5248,8 +4262,8 @@
 	      if (context.source === 'heading' && (_context$visualElemen = context.visualElements) !== null && _context$visualElemen !== void 0 && _context$visualElemen.length) {
 	        return context.visualElements;
 	      }
-	      if (isShadowRoot(context.boundary)) return [context.boundary.host];
-	      if (isElement(context.boundary)) return [context.boundary];
+	      if ((0, _domUtilities$1.isShadowRoot)(context.boundary)) return [context.boundary.host];
+	      if ((0, _domUtilities$1.isElement)(context.boundary)) return [context.boundary];
 	      return contextTargets(context);
 	    }
 	  }, {
@@ -5259,7 +4273,7 @@
 	        _this0 = this;
 	      var ResizeObserverClass = (_this$document1 = this.document) === null || _this$document1 === void 0 || (_this$document1 = _this$document1.defaultView) === null || _this$document1 === void 0 ? void 0 : _this$document1.ResizeObserver;
 	      if (typeof ResizeObserverClass !== 'function') return;
-	      var nextElements = new Set(elements.filter(isElement));
+	      var nextElements = new Set(elements.filter(_domUtilities$1.isElement));
 	      if (nextElements.size === this.contextIndicatorObservedElements.size && Array.from(nextElements).every(function (element) {
 	        return _this0.contextIndicatorObservedElements.has(element);
 	      })) {
@@ -5296,7 +4310,7 @@
 	      var viewportHeight = (view === null || view === void 0 ? void 0 : view.innerHeight) || ((_this$document$docume2 = this.document.documentElement) === null || _this$document$docume2 === void 0 ? void 0 : _this$document$docume2.clientHeight) || 0;
 	      var elements = this.contextIndicatorElements(context);
 	      var rect;
-	      if (isDocument(context.boundary)) {
+	      if ((0, _domUtilities$1.isDocument)(context.boundary)) {
 	        elements = [this.document.documentElement].filter(Boolean);
 	        rect = {
 	          left: 0,
@@ -5306,7 +4320,7 @@
 	        };
 	      } else {
 	        var rects = elements.flatMap(elementClientRects);
-	        if (!rects.length && isElement(context.boundary)) {
+	        if (!rects.length && (0, _domUtilities$1.isElement)(context.boundary)) {
 	          elements = contextTargets(context);
 	          rects = elements.flatMap(elementClientRects);
 	        }
@@ -5329,7 +4343,7 @@
 	      }
 	      var configuredWidth = Number((_this$config$contextI4 = this.config.contextIndicator) === null || _this$config$contextI4 === void 0 ? void 0 : _this$config$contextI4.width);
 	      var width = Number.isFinite(configuredWidth) ? Math.max(1, configuredWidth) : 3;
-	      var color = ((_this$config$contextI5 = this.config.contextIndicator) === null || _this$config$contextI5 === void 0 ? void 0 : _this$config$contextI5.color) || '#0088cc';
+	      var color = ((_this$config$contextI5 = this.config.contextIndicator) === null || _this$config$contextI5 === void 0 ? void 0 : _this$config$contextI5.color) || this.openKeyNav.config.focus.outlineColor || '#0088cc';
 	      indicator.style.display = 'block';
 	      indicator.style.left = "".concat(left, "px");
 	      indicator.style.top = "".concat(top, "px");
@@ -5341,89 +4355,46 @@
 	      indicator.dataset.contextType = this.activeTypedContext ? this.activeTypedContext.type || 'typed' : 'structural';
 	    }
 	  }, {
-	    key: "statusHost",
-	    value: function statusHost() {
-	      if (isShadowRoot(this.root)) return this.root;
-	      if (isElement(this.root) && !['INPUT', 'SELECT', 'TEXTAREA'].includes(this.root.tagName)) {
-	        return this.root;
-	      }
-	      return this.document.body || this.document.documentElement;
-	    }
-	  }, {
-	    key: "ensureStatus",
-	    value: function ensureStatus() {
-	      var _this$config$status3;
-	      if (!this.active || !((_this$config$status3 = this.config.status) !== null && _this$config$status3 !== void 0 && _this$config$status3.enabled)) return;
-	      if (!this.statusElement) {
-	        var element = this.document.createElement('div');
-	        element.className = 'openKeyNav-structural-status';
-	        element.setAttribute('data-openkeynav-ui', 'structural-status');
-	        element.setAttribute('role', 'status');
-	        element.setAttribute('aria-live', this.config.status.announcements === false ? 'off' : 'polite');
-	        element.setAttribute('aria-atomic', 'true');
-	        element.style.boxSizing = 'border-box';
-	        element.style.position = 'fixed';
-	        element.style.left = '12px';
-	        element.style.bottom = '12px';
-	        element.style.zIndex = '2147483647';
-	        element.style.maxWidth = 'min(34rem, calc(100vw - 24px))';
-	        element.style.padding = '8px 12px';
-	        element.style.border = '1px solid #666';
-	        element.style.borderRadius = '4px';
-	        element.style.color = '#fff';
-	        element.style.background = 'rgba(20, 24, 28, .94)';
-	        element.style.font = '14px/1.35 sans-serif';
-	        element.style.pointerEvents = 'none';
-	        if (this.config.status.visible === false) {
-	          element.style.width = '1px';
-	          element.style.height = '1px';
-	          element.style.padding = '0';
-	          element.style.margin = '-1px';
-	          element.style.overflow = 'hidden';
-	          element.style.clip = 'rect(0 0 0 0)';
-	          element.style.whiteSpace = 'nowrap';
-	        }
-	        this.statusElement = element;
-	      }
-	      var host = this.statusHost();
-	      if (host && this.statusElement.parentNode !== host) {
-	        host.appendChild(this.statusElement);
-	      }
-	    }
-	  }, {
 	    key: "updateStatus",
 	    value: function updateStatus() {
-	      var _this1 = this;
+	      var _this$config$status, _this$config$status2, _this$config$status3;
 	      var prefix = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-	      var _ref5 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
-	        _ref5$force = _ref5.force,
-	        force = _ref5$force === void 0 ? false : _ref5$force;
+	      var _ref7 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+	        _ref7$force = _ref7.force,
+	        force = _ref7$force === void 0 ? false : _ref7$force;
 	      if (!this.active && !force) return;
 	      if (this.active) this.scheduleContextIndicatorUpdate();
-	      this.ensureStatus();
-	      if (!this.statusElement) return;
+	      if (!((_this$config$status = this.config.status) !== null && _this$config$status !== void 0 && _this$config$status.enabled)) {
+	        this.openKeyNav.clearStatus(STRUCTURAL_STATUS_CHANNEL);
+	        return;
+	      }
 	      var route = this.activeTypedContext || this.activeStructuralContext;
 	      var sequence = this.activeSequence();
 	      var index = sequence.indexOf(this.currentTarget);
 	      var contextName = (route === null || route === void 0 ? void 0 : route.name) || 'Document';
 	      var targetDescription = this.currentTarget ? "".concat(targetName(this.currentTarget), ", ").concat(index >= 0 ? index + 1 : '?', " of ").concat(sequence.length) : "".concat(sequence.length, " available ").concat(sequence.length === 1 ? 'target' : 'targets');
-	      var horizontalPeers = horizontalContextPeers(this.model, this.activeStructuralContext);
-	      var otherHorizontalContexts = horizontalPeers.contexts.filter(function (context) {
-	        return context !== _this1.activeStructuralContext;
-	      });
+	      var hierarchyContext = this.activeTypedContext ? directContextForTarget(this.model, this.currentTarget) || this.activeStructuralContext || this.model.rootContext : this.activeStructuralContext || this.model.rootContext;
+	      var hierarchyLevel = contextHierarchyLevel(this.model, hierarchyContext);
+	      var hierarchyDescription = this.activeTypedContext ? "Underlying hierarchy level: ".concat(hierarchyLevel, ".") : "Hierarchy level: ".concat(hierarchyLevel, ".");
 	      var typedContexts = typedContextsForTarget(this.model, this.currentTarget);
-	      var siblingDescription = otherHorizontalContexts.length ? " ".concat(horizontalPeers.headingLevel === null ? 'Sibling contexts' : "Same-level contexts (heading level ".concat(horizontalPeers.headingLevel, ")"), ": ").concat(otherHorizontalContexts.map(function (context) {
-	        return context.name;
-	      }).join(', '), ".") : '';
-	      var typedDescription = typedContexts.length ? " Typed contexts: ".concat(typedContexts.map(function (context) {
-	        return context.name;
-	      }).join(', '), ".") : '';
-	      var message = [prefix, "Context: ".concat(contextName, "."), targetDescription ? "".concat(targetDescription, ".") : '', siblingDescription, typedDescription].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
-	      if (message === this.lastStatus) return;
-	      this.lastStatus = message;
-	      this.statusElement.textContent = message;
-	      this.statusElement.dataset.contextId = String(contextId(route) || '');
-	      this.statusElement.dataset.contextType = this.activeTypedContext ? this.activeTypedContext.type || 'typed' : 'structural';
+	      var typedDescription = typedContexts.length ? "".concat(typedContexts.length, " alternate ").concat(typedContexts.length === 1 ? 'route' : 'routes', " available.") : '';
+	      var dismissLabel = shortcutLabel((_this$config$status2 = this.config.status) === null || _this$config$status2 === void 0 ? void 0 : _this$config$status2.dismissCommand);
+	      var dismissDescription = dismissLabel && ((_this$config$status3 = this.config.status) === null || _this$config$status3 === void 0 ? void 0 : _this$config$status3.visible) !== false && !this.statusDismissed ? "".concat(dismissLabel, " to close.") : '';
+	      var contextDescription = this.activeTypedContext ? "Typed context: ".concat(contextName, ".") : "Context: ".concat(contextName, ".");
+	      var message = [prefix, contextDescription, hierarchyDescription, targetDescription ? "".concat(targetDescription, ".") : '', typedDescription].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+	      this.openKeyNav.setStatus(STRUCTURAL_STATUS_CHANNEL, message, {
+	        className: 'openKeyNav-structural-status',
+	        ui: 'structural-status',
+	        politeness: this.config.status.announcements === false ? 'off' : 'polite',
+	        visible: this.config.status.visible !== false && !this.statusDismissed,
+	        hint: dismissDescription,
+	        toolName: this.openKeyNav.config.notifications.displayToolName,
+	        host: this.root,
+	        data: {
+	          contextId: String(contextId(route) || ''),
+	          contextType: this.activeTypedContext ? this.activeTypedContext.type || 'typed' : 'structural'
+	        }
+	      });
 	    }
 	  }, {
 	    key: "getState",
@@ -5437,8 +4408,1704 @@
 	        activeContext: this.activeTypedContext || this.activeStructuralContext,
 	        activeStructuralContext: this.activeStructuralContext,
 	        activeTypedContext: this.activeTypedContext,
+	        statusDismissed: this.statusDismissed,
 	        dirty: this.dirty
 	      };
+	    }
+	  }]);
+	}();
+
+	var hasRequiredKeypress;
+	function requireKeypress() {
+	  if (hasRequiredKeypress) return keypress;
+	  hasRequiredKeypress = 1;
+	  Object.defineProperty(keypress, "__esModule", {
+	    value: true
+	  });
+	  keypress.modiferKeyString = keypress.handleKeyPress = void 0;
+	  var _clicking = requireClicking();
+	  var _dragAndDrop = dragAndDrop;
+	  var _escape = _escape$1;
+	  var _focus = focus;
+	  var _isTabbable = isTabbable$1;
+	  var _keylabels = keylabels;
+	  var _keyButton = keyButton;
+	  var _structuralNavigation = structuralNavigation;
+	  var _keyboardEvents = keyboardEvents;
+	  var NUMBER_KEY_BY_CODE = Object.freeze({
+	    Digit1: '1',
+	    Digit2: '2',
+	    Digit3: '3',
+	    Digit4: '4',
+	    Digit5: '5',
+	    Digit6: '6',
+	    Digit7: '7',
+	    Digit8: '8',
+	    Digit9: '9',
+	    Digit0: '0'
+	  });
+	  var legacyHeadingLevel = function legacyHeadingLevel(openKeyNav, event) {
+	    var numberPressed = NUMBER_KEY_BY_CODE[event.code];
+	    if (!numberPressed) return null;
+	    for (var level = 1; level <= 6; level += 1) {
+	      if (numberPressed === openKeyNav.config.keys["heading_".concat(level)]) {
+	        return level;
+	      }
+	    }
+	    return null;
+	  };
+	  var isLegacyFocusNavigationCommand = function isLegacyFocusNavigationCommand(openKeyNav, event) {
+	    var key = typeof event.key === 'string' ? event.key.toLowerCase() : '';
+	    return key === openKeyNav.config.keys.heading.toLowerCase() || key === openKeyNav.config.keys.scroll.toLowerCase() || legacyHeadingLevel(openKeyNav, event) !== null;
+	  };
+	  var pageOwnsLegacyFocusNavigationCommand = function pageOwnsLegacyFocusNavigationCommand(openKeyNav, event) {
+	    var config = openKeyNav.config.modesConfig.structuralNavigation;
+	    var ownership = (0, _structuralNavigation.classifyStructuralKeyOwnership)(event, config);
+	    return ownership.all || ownership.character;
+	  };
+	  var hasSystemShortcutModifier = function hasSystemShortcutModifier(event) {
+	    return Boolean(event.altKey) || Boolean(event.ctrlKey) || Boolean(event.metaKey);
+	  };
+	  function getMetaKeyName() {
+	    var userAgent = window.navigator.userAgent.toLowerCase();
+	    if (userAgent.indexOf('mac') >= 0) return 'Cmd';
+	    if (userAgent.indexOf('win') >= 0) return 'Win';
+	    if (userAgent.indexOf('linux') >= 0) return 'Super';
+	    // fallback
+	    return 'Meta';
+	  }
+	  var modiferKeyString = keypress.modiferKeyString = function modiferKeyString(openKeyNav) {
+	    switch (openKeyNav.config.keys.modifierKey) {
+	      case 'shiftKey':
+	        return 'Shift';
+	      case 'altKey':
+	        return 'Alt';
+	      case 'metaKey':
+	        return getMetaKeyName();
+	      default:
+	        return openKeyNav.config.keys.modifierKey;
+	    }
+	  };
+	  keypress.handleKeyPress = function handleKeyPress(openKeyNav, e) {
+	    if (e.isComposing || e.keyCode === 229) {
+	      return true;
+	    }
+	    if (e.openKeyNavIframeBridge && !openKeyNav.config.modes.clicking.value) {
+	      return true;
+	    }
+	    var isTextInputActive = openKeyNav.isTextInputActive();
+
+	    // enable / disable openKeyNav
+	    if (e[openKeyNav.config.keys.modifierKey] && openKeyNav.config.keys.menu.toLowerCase() == e.key.toLowerCase()) {
+	      if (isTextInputActive) {
+	        if (!e[openKeyNav.config.keys.inputEscape]) {
+	          return true;
+	        }
+	      }
+	      if (!openKeyNav.meta.enabled.value) {
+	        // if openKeyNav disabled
+	        openKeyNav.enable();
+	        var message = "openKeyNav enabled. Press ".concat((0, _keyButton.keyButton)([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu]), " to disable.");
+	        openKeyNav.emitNotification(message, null, {
+	          trustedHtml: true
+	        });
+	        return true;
+	      } else {
+	        if (openKeyNav.config.modes.clicking.value || openKeyNav.config.modes.moving.value || openKeyNav.config.modes.menu.value) {
+	          (0, _escape.handleEscape)(openKeyNav, e);
+	        }
+	        openKeyNav.disable();
+	        var _message = "openKeyNav disabled. Press ".concat((0, _keyButton.keyButton)([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu]), " to enable.");
+	        openKeyNav.emitNotification(_message, null, {
+	          trustedHtml: true
+	        });
+	        return true;
+	      }
+	    }
+
+	    // Structural navigation owns only its configured commands while active.
+	    // It makes widget ownership decisions before preventing any page key.
+	    if (openKeyNav.structuralNavigation && openKeyNav.structuralNavigation.handleKeyDown(e)) {
+	      return true;
+	    }
+
+	    // Structural mode keeps real focus on its existing interactive target.
+	    // Do not let the legacy h/1-6/s shortcuts create temporary focus stops on
+	    // headings or scroll containers. Editing widgets and application-declared
+	    // key owners still receive their character keys unchanged.
+	    if (openKeyNav.config.modes.structuralNavigation.value && isLegacyFocusNavigationCommand(openKeyNav, e)) {
+	      if (pageOwnsLegacyFocusNavigationCommand(openKeyNav, e) || hasSystemShortcutModifier(e)) {
+	        return true;
+	      }
+	      return (0, _keyboardEvents.preventAcceptedCommand)(e);
+	    }
+
+	    // first check for modifier keys and escape
+	    switch (e.key) {
+	      case 'Shift': // exit this event listener if it's the shift key press
+	      case 'Control': // exit this event listener if it's the control key press
+	      case 'Alt': // exit this event listener if it's the alt key press
+	      case 'Meta': // exit this event listener if it's the meta key (Command/Windows) press
+	      case ' ':
+	        // exit this event listener if it's the space bar key press
+	        // Prevent default action and stop the function
+	        // e.preventDefault();
+	        return true;
+
+	      // handle escape first
+	      case 'Escape':
+	        // escaping
+	        if (openKeyNav.config.modes.clicking.value || openKeyNav.config.modes.moving.value || openKeyNav.config.modes.menu.value) {
+	          (0, _escape.handleEscape)(openKeyNav, e);
+	        }
+	        return true;
+	    }
+
+	    // check if currently in any openkeynav modes
+	    if (openKeyNav.config.modes.clicking.value) {
+	      return handleClickMode(openKeyNav, e);
+	    }
+	    if (openKeyNav.config.modes.moving.value) {
+	      return handleMoveMode(openKeyNav, e);
+	    }
+	    if (openKeyNav.config.modes.menu.value) {
+	      handleMenuMode();
+	    }
+	    if (isTextInputActive) {
+	      if (!e[openKeyNav.config.keys.inputEscape]) {
+	        return true;
+	      }
+	    }
+	    if (!openKeyNav.meta.enabled.value) {
+	      return true;
+	    }
+	    // escape and toggles
+	    switch (e.key) {
+	      case openKeyNav.config.keys.escape:
+	        // escaping
+	        // alert("Escape");
+
+	        (0, _escape.handleEscape)(openKeyNav, e);
+	        return true;
+
+	      // case openKeyNav.config.keys.toggleCursor: // toggle Cursor
+	      //     // toggle class openKeyNav-noCursor for body
+	      //     document.body.classList.toggle('openKeyNav-noCursor');
+	      //     return true;
+	      //     break;
+	    }
+
+	    // modes
+	    switch (e.key) {
+	      case openKeyNav.config.keys.click: // possibly attempting to initiate click mode
+	      case openKeyNav.config.keys.click.toUpperCase():
+	        openKeyNav.exitStructuralNavigation({
+	          announce: false
+	        });
+	        e.preventDefault();
+	        openKeyNav.config.modes.clicking.value = true;
+	        if (e.key == openKeyNav.config.keys.click.toUpperCase()) {
+	          openKeyNav.config.modesConfig.click.modifier = true;
+	        }
+	        (0, _keylabels.showClickableOverlays)(openKeyNav);
+	        openKeyNav.preventpropagation(e);
+	        return true;
+
+	      // possibly attempting to initiate moving mode
+	      case openKeyNav.config.keys.move:
+	      case openKeyNav.config.keys.move.toUpperCase():
+	        openKeyNav.exitStructuralNavigation({
+	          announce: false
+	        });
+	        // Toggle move mode
+	        e.preventDefault();
+	        openKeyNav.config.modes.moving.value = true; // Assuming you add a 'move' flag to your modes object
+	        if (e.key == openKeyNav.config.keys.move.toUpperCase()) {
+	          openKeyNav.config.modesConfig.move.modifier = true;
+	        }
+	        (0, _keylabels.showMoveableFromOverlays)(openKeyNav); // This will be a new function similar to showClickableOverlays
+	        openKeyNav.preventpropagation(e);
+	        return true;
+	      case openKeyNav.config.keys.menu:
+	      case openKeyNav.config.keys.menu.toUpperCase():
+	        openKeyNav.exitStructuralNavigation({
+	          announce: false
+	        });
+	        openKeyNav.config.modes.menu.value = true;
+	        if (e.key == openKeyNav.config.keys.menu.toUpperCase()) {
+	          openKeyNav.config.modesConfig.menu.modifier = true;
+	        }
+	        openKeyNav.preventpropagation(e);
+	        return true;
+	    }
+
+	    // focus / navigation (can be modified by shift, so always check for lowercase)
+	    switch (e.key.toLowerCase()) {
+	      // Check if the pressed key is for headings
+	      case openKeyNav.config.keys.heading.toLowerCase():
+	        /*
+	        const OpenKeyNav = {
+	          currentHeadingIndex: 0,
+	          keys: {
+	              heading: 'h',
+	          },
+	          headings: [],
+	        };
+	        */
+
+	        (0, _keyboardEvents.preventAcceptedCommand)(e);
+	        (0, _focus.focusOnHeadings)(openKeyNav, 'h1, h2, h3, h4, h5, h6', e);
+	        return true;
+	      case openKeyNav.config.keys.scroll.toLowerCase():
+	        /*
+	        const OpenKeyNav = {
+	          currentScrollableIndex: 0,
+	          keys: {
+	              scroll: 's',
+	          },
+	          scrollables: [],
+	        };
+	        */
+
+	        (0, _keyboardEvents.preventAcceptedCommand)(e);
+	        (0, _focus.focusOnScrollables)(openKeyNav, e);
+	        return true;
+	    }
+
+	    // handle keycodes, aka for specific headings
+	    var headingLevel = legacyHeadingLevel(openKeyNav, e);
+	    if (headingLevel !== null) {
+	      (0, _keyboardEvents.preventAcceptedCommand)(e);
+	      (0, _focus.focusOnHeadings)(openKeyNav, "h".concat(headingLevel), e);
+	      return true;
+	    }
+	  };
+	  var handleClickMode = function handleClickMode(openKeyNav, e) {
+	    e.preventDefault();
+	    openKeyNav.config.typedLabel.value += e.key.toLowerCase();
+	    var target = document.querySelector("[data-openkeynav-label=\"".concat(openKeyNav.config.typedLabel.value, "\"]"));
+	    if (!target) {
+	      document.querySelectorAll('iframe').forEach(function (iframe) {
+	        addKeydownEventListenerToIframe(openKeyNav, iframe);
+	      });
+	    }
+	    if (target) {
+	      setTimeout(function () {
+	        (0, _clicking.handleTargetClickInteraction)(openKeyNav, target, e);
+	      }, 0);
+	    } else {
+	      (0, _keylabels.filterRemainingOverlays)(openKeyNav, e);
+	      return false;
+	    }
+	    return true;
+	  };
+	  var handleMoveMode = function handleMoveMode(openKeyNav, e) {
+	    var showMoveableToOverlays = function showMoveableToOverlays(selectedMoveable) {
+	      // temporarily persist modifier
+	      var modifer = openKeyNav.config.modesConfig.move.modifier;
+
+	      // Remove existing overlays or switch to target overlays
+	      openKeyNav.removeOverlays();
+
+	      // Set moving mode and selected moveable element
+	      openKeyNav.config.modes.moving.value = true;
+	      openKeyNav.config.modesConfig.move.selectedMoveable = selectedMoveable;
+	      openKeyNav.config.modesConfig.move.selectedMoveableHTML = selectedMoveable.innerHTML;
+	      openKeyNav.config.modesConfig.move.modifier = modifer;
+
+	      // Get the configuration index from the selected moveable
+	      var configIndex = selectedMoveable.getAttribute('data-openkeynav-moveconfig');
+	      if (configIndex === null) return;
+
+	      // Convert the index to a number
+	      var configKeyForSelectedMoveable = parseInt(configIndex, 10);
+
+	      // Store the selected configuration index
+	      openKeyNav.config.modesConfig.move.selectedConfig = configKeyForSelectedMoveable;
+
+	      // Find the corresponding move configuration
+	      var moveConfig = openKeyNav.config.modesConfig.move.config[configKeyForSelectedMoveable];
+	      if (!moveConfig) return;
+
+	      // Get all target elements for the selectedMoveable
+	      // let targetElements = document.querySelectorAll(moveConfig.toElements);
+
+	      // targetElements = targetElements.filter(el => {
+	      //   return isTabbable(el, openKeyNav);
+	      // });
+
+	      function tabbableFilter(openKeyNav) {
+	        return function (el) {
+	          return (0, _isTabbable.isTabbable)(el, openKeyNav);
+	        };
+	      }
+	      var targetElements = [].filter.call(document.querySelectorAll(moveConfig.toElements), tabbableFilter(openKeyNav));
+
+	      // Generate labels for the target elements
+	      var labels = (0, _keylabels.generateLabels)(openKeyNav, targetElements.length);
+	      targetElements.forEach(function (element, index) {
+	        element.setAttribute('data-openkeynav-label', labels[index]);
+	      });
+	      targetElements.forEach(function (element, index) {
+	        if (!openKeyNav.isNonzeroSize(element)) return;
+	        openKeyNav.createOverlay(element, labels[index]);
+	        element.setAttribute('data-openkeynav-dropzone', 'true');
+	      });
+	    };
+	    function findElementWithQuery(startElement, queryString) {
+	      var direction = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'next';
+	      var currentElement = startElement;
+	      while (currentElement) {
+	        if (direction === 'previous') {
+	          // Traverse previous siblings and their descendants
+	          currentElement = currentElement.previousElementSibling;
+	          while (!currentElement && startElement.parentElement) {
+	            currentElement = startElement.parentElement.previousElementSibling;
+	            startElement = startElement.parentElement;
+	          }
+	          if (currentElement) {
+	            // Look for the last matching descendant
+	            var descendants = currentElement.querySelectorAll(queryString);
+	            if (descendants.length > 0) {
+	              return descendants[descendants.length - 1];
+	            }
+	            if (currentElement.matches(queryString)) {
+	              return currentElement;
+	            }
+	          }
+	        } else if (direction === 'next') {
+	          // Traverse next siblings and their descendants
+	          currentElement = currentElement.nextElementSibling;
+	          while (!currentElement && startElement.parentElement) {
+	            currentElement = startElement.parentElement.nextElementSibling;
+	            startElement = startElement.parentElement;
+	          }
+	          if (currentElement) {
+	            if (currentElement.matches(queryString)) {
+	              return currentElement;
+	            }
+	            var foundElement = currentElement.querySelector(queryString);
+	            if (foundElement) {
+	              return foundElement;
+	            }
+	          }
+	        } else {
+	          throw new Error("Invalid direction. Use 'previous' or 'next'.");
+	        }
+	      }
+	      return null;
+	    }
+	    function cycleThroughMoveTargets(event) {
+	      event.preventDefault();
+	      var direction = 'next';
+	      if (event.shiftKey) {
+	        direction = 'previous';
+	      }
+	      // the moveable element should be stored as openKeyNav.config.modesConfig.move.selectedMoveable
+	      return findElementWithQuery(openKeyNav.config.modesConfig.move.selectedMoveable, '[data-openkeynav-label]:not(.openKeyNav-label)', direction);
+	    }
+
+	    // in moving mode
+	    // Handle typing in move mode, similar to how you handle clicking mode
+	    // Accumulate typed characters as in labeling mode
+
+	    // ensure the typed key is valid label candidate (aka not something like )
+	    // e.key/.
+
+	    var validLabelChars = (0, _keylabels.generateValidKeyChars)(openKeyNav);
+	    var isValidLabelChar = Array.from(validLabelChars).some(function (validChar) {
+	      return validChar.toLowerCase() == e.key.toLowerCase();
+	    });
+	    var selectedTarget;
+	    if (isValidLabelChar) {
+	      openKeyNav.config.typedLabel.value += e.key.toLowerCase();
+	      selectedTarget = document.querySelector("[data-openkeynav-label=\"".concat(openKeyNav.config.typedLabel.value, "\"]:not(.openKeyNav-label)"));
+	    } else {
+	      // tab-based moving
+	      if (e.key === "Tab") {
+	        selectedTarget = cycleThroughMoveTargets(e);
+	      }
+	    }
+	    if (!selectedTarget) {
+	      // no selected target. filter remaining overlays and exit.
+	      (0, _keylabels.filterRemainingOverlays)(openKeyNav, e);
+	      return false;
+	    }
+	    if (!openKeyNav.config.modesConfig.move.selectedMoveable) {
+	      // new selected target.
+	      // setting selectedTarget as selectedMoveable
+	      console.log("Selected element to move:", selectedTarget);
+	      showMoveableToOverlays(selectedTarget);
+	      (0, _dragAndDrop.beginDrag)(openKeyNav);
+	      return true;
+	    }
+
+	    // moving selectedMoveable to target
+	    moveSelectedMoveableToTarget(openKeyNav, selectedTarget);
+	    return true;
+	  };
+	  var handleMenuMode = function handleMenuMode(e) {
+	    return true;
+	  };
+	  var moveSelectedMoveableToTarget = function moveSelectedMoveableToTarget(openKeyNav, selectedTarget) {
+	    // const modifier = true; // for whether move is sticky or not (sticky mode?)
+	    console.log("Selected move target:", selectedTarget);
+	    openKeyNav.config.modesConfig.move.selectedDropZone = selectedTarget;
+	    var callback = openKeyNav.config.modesConfig.move.config[openKeyNav.config.modesConfig.move.selectedConfig].callback;
+	    if (!callback) {
+	      //   console.error("No callback function has been set to execute this move operation");
+	      (0, _dragAndDrop.simulateDragAndDrop)(openKeyNav, openKeyNav.config.modesConfig.move.selectedMoveable, openKeyNav.config.modesConfig.move.selectedDropZone);
+	    } else {
+	      openKeyNav.config.modesConfig.move.config[openKeyNav.config.modesConfig.move.selectedConfig].callback(openKeyNav.config.modesConfig.move.selectedMoveable, openKeyNav.config.modesConfig.move.selectedDropZone);
+	    }
+	    if (!openKeyNav.config.modesConfig.move.modifier) {
+	      openKeyNav.removeOverlays(true);
+	      openKeyNav.clearMoveAttributes();
+	    }
+	    return true;
+	  };
+	  var addKeydownEventListenerToIframe = function addKeydownEventListenerToIframe(openKeyNav, iframe) {
+	    try {
+	      var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+	      var potentialTarget = iframeDoc.querySelector("[data-openkeynav-label=\"".concat(openKeyNav.config.typedLabel.value, "\"]"));
+	      if (potentialTarget) {
+	        // target = potentialTarget; TODO: check if this was important. Target is undefined so commenting out.
+
+	        // Check if the keypress listener has already been added
+	        if (!iframeDoc.keypressListenerAdded) {
+	          var script = iframeDoc.createElement('script');
+	          script.textContent = '' + "document.addEventListener('keydown', function(event) {" + 'window.parent.postMessage({' + "type: 'keydown'," + 'key: event.key,' + 'keyCode: event.keyCode,' + 'altKey: event.altKey,' + 'ctrlKey: event.ctrlKey,' + 'shiftKey: event.shiftKey,' + 'metaKey: event.metaKey' + "}, '*');" + '});' + 'document.keypressListenerAdded = true;'; // Set flag to true
+	          iframeDoc.body.appendChild(script);
+	        }
+	      }
+	    } catch (error) {
+	      console.log('Error accessing iframe content', error);
+	    }
+	  };
+	  return keypress;
+	}
+
+	var styles = {};
+
+	Object.defineProperty(styles, "__esModule", {
+	  value: true
+	});
+	styles.statusStyles = styles.injectToolbarStyleSheet = styles.injectStylesheet = styles.deleteStylesheets = void 0;
+	var openKeyNav;
+	var styleClassname = "openKeyNav-style";
+	var toolbarStyleClassname = "okn-toolbar-stylesheet";
+	var keyButtonStyles = "\n  .keyButtonContainer {\n      margin: 0 .1em;\n      display: inline-grid;\n      grid-template-columns: min-content auto;\n      align-items: baseline;\n      column-gap: 4px;\n  }\n  .keyButtonContainer .keyButtonLabel{\n    white-space:nowrap;\n  }\n  .keyButton {\n    display: inline-block;\n    padding: 1px 4px;\n    min-width: 1.3em;\n    text-align: center;\n    line-height: 1;\n    color: hsl(210, 8%, 5%);\n    text-shadow: 0 1px 0 hsl(0, 0%, 100%);\n    background-color: hsl(210, 8%, 90%);\n    border: 1px solid hsl(210, 8%, 68%);\n    border-radius: 3px;\n    box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);\n    white-space: nowrap;\n    margin: 0 1px;\n  }\n";
+	var logoStyles = "\n  .okn-logo-text {\n      font-size: 36px;\n      font-weight: 600;\n      color: #ffffff;\n      background-color: #333;\n      padding: .1em .2em;\n      border-radius: 1em;\n      box-sizing: border-box;\n      line-height: 1;\n      text-align: center;\n      position: relative;\n      display: inline-block;\n      min-width: 1rem;\n      border: max(.1em, 2px) solid #ffffff;\n      white-space: nowrap;\n  }\n\n  .okn-logo-text.small {\n      font-size: 18px;\n  }\n  .okn-logo-text.tiny {\n      font-size: 10px;\n      border: none;\n  }\n  .okn-logo-text.tiny .key {\n      font-weight: 700;\n  }\n\n  .okn-logo-text.light {\n      color: #333;\n      background-color: #fff;\n      border-color: #333;\n  }\n\n  .okn-logo-text .key {\n      display: inline;\n      padding: .1em .2em;\n      margin: 0 .1em;\n      background-color: #ffffff;\n      color: #333;\n      line-height: 1;\n      position: relative;\n      top: -.3em;\n  }\n\n  .okn-logo-text.light .key {\n      background-color: #333;\n      color: #ffffff;\n  }\n\n  .okn-logo-text .key::before,\n  .okn-logo-text .key::after {\n      content: \"\";\n      position: absolute;\n      left: 50%;\n      transform: translateX(-50%);\n  }\n\n  .okn-logo-text .key::before {\n      --border-size: 0.5em;\n      --min-border-size: 5px;\n      border-top: max(var(--border-size), var(--min-border-size)) solid #333;\n      bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n      border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n      border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n  }\n  .okn-logo-text.light .key::before {\n      border-top-color: #fff;\n  }\n\n  .okn-logo-text .key::after {\n      --border-size: .4em;\n      --min-border-size: 4px;\n      border-top: max(calc(var(--border-size) + 2px), var(--min-border-size)) solid #fff;\n      bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n      border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n      border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n  }\n  .okn-logo-text.light .key::after {\n      border-top-color: #333;\n  }\n";
+
+	// Shared by the document stylesheet and StatusService-owned ShadowRoot/document
+	// styles. Keeping this as one source ensures notifications remain styled after
+	// OpenKeyNav is disabled and inside supported Shadow DOM roots.
+	var statusStyles = styles.statusStyles = "\n  ".concat(logoStyles, "\n\n  .openKeyNav-status {\n      box-sizing: border-box;\n      position: fixed;\n      left: 12px;\n      bottom: 12px;\n      z-index: 2147483647;\n      max-width: min(34rem, calc(100vw - 24px));\n      padding: 8px 12px;\n      border: 1px solid #666;\n      border-radius: 4px;\n      color: #fff;\n      background: rgba(20, 24, 28, .94);\n      box-shadow: 0 4px 6px rgba(0, 0, 0, .16);\n      font: 14px/1.35 sans-serif;\n      text-align: left;\n      pointer-events: none;\n  }\n\n  .openKeyNav-status--visually-hidden {\n      width: 1px !important;\n      height: 1px !important;\n      padding: 0 !important;\n      margin: -1px !important;\n      border: 0 !important;\n      overflow: hidden !important;\n      clip: rect(0 0 0 0) !important;\n      clip-path: inset(50%) !important;\n      white-space: nowrap !important;\n  }\n\n  .openKeyNav-notification-container {\n      position: fixed;\n      left: 50%;\n      bottom: 10px;\n      z-index: 2147483647;\n      display: flex;\n      flex-direction: column;\n      align-items: center;\n      gap: 10px;\n      width: min(34rem, calc(100vw - 24px));\n      transform: translateX(-50%);\n      pointer-events: none;\n  }\n\n  .openKeyNav-notification-container .openKeyNav-notification {\n      position: relative;\n      left: auto;\n      bottom: auto;\n      display: inline-block;\n      max-width: 100%;\n      padding: 10px 20px;\n      text-align: center;\n      pointer-events: auto;\n  }\n\n  .openKeyNav-status__dismiss {\n      position: absolute;\n      top: 5px;\n      right: 8px;\n      border: 0;\n      padding: 0 2px;\n      color: inherit;\n      background: transparent;\n      font: 20px/1 sans-serif;\n      cursor: pointer;\n  }\n\n  .openKeyNav-status__hint {\n      margin-top: 4px;\n      font-size: .85em;\n      opacity: .8;\n  }\n\n  .openKeyNav-status--dismissible {\n      padding-right: 30px;\n  }\n");
+	styles.injectStylesheet = function injectStylesheet(parent, replace) {
+	  openKeyNav = parent;
+	  if (document.querySelectorAll('.' + styleClassname).length > 0) {
+	    if (!replace) {
+	      return;
+	    }
+	    deleteStylesheets();
+	  }
+	  var style = document.createElement('style');
+	  style.className = styleClassname;
+	  style.type = 'text/css';
+	  style.textContent = ".openKeyNav-label {\n        font: inherit;\n        vertical-align: baseline;\n        box-sizing: border-box;\n        white-space: nowrap;\n        border: 1px solid ".concat(openKeyNav.config.spot.fontColor, "; \n        // box-shadow: inset 0 -2.5px 0 ").concat(openKeyNav.config.spot.insetColor, ", inset 0 -3px 0 #999, 0 0 4px #fff; \n        // background: linear-gradient(to top, #999 5%, ").concat(openKeyNav.config.spot.backgroundColor, " 20%); \n        background-color: ").concat(openKeyNav.config.spot.backgroundColor, "; \n        // border-radius: calc( 4px );\n        color: ").concat(openKeyNav.config.spot.fontColor, "; \n        display: inline-block;\n        font-size: ").concat(openKeyNav.config.spot.fontSize, "; \n        // outline : 2px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n        outline-offset: -2px !important;\n        // +\"font-weight: bold;\"\n        font-weight: inherit;\n        // line-height: 1.5;\n        line-height: 1;\n        margin: 0 .1em 0 1px;\n        overflow-wrap: break-word;\n        // padding: .0 .15em .1em;\n        padding: 3px;\n        text-shadow: 0 1px 0 ").concat(openKeyNav.config.spot.insetColor, "; \n        min-width: 1rem;\n        text-align: center;\n        position: absolute;\n        z-index: 99999999;\n        font-family: monospace;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        content: \"\";\n        position: absolute;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        top: 50%;\n        transform: translateY(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        left: 50%;\n        transform: translateX(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before {\n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        right: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after {\n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        right: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before {\n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        left: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        left: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]{\n        padding-bottom: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before {\n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        bottom: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after {\n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        bottom: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]{\n        padding-top: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before {\n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        top: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        top: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label-selected{\n        // padding : 0;\n        // margin : 0;\n        display : grid;\n        align-content : center;\n        color : ").concat(openKeyNav.config.spot.fontColor, "; \n        background : ").concat(openKeyNav.config.spot.backgroundColor, "; \n        // outline : 4px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n        outline: none; \n        // border-radius: 100%; \n        // width: 1rem; \n        // height: 1rem; \n        // text-shadow : none;\n        // padding : 0 !important;\n        // margin: 0 !important;\n      }\n      [data-openkeynav-label]:not(.openKeyNav-label):not(button){\n        // outline: 2px double ").concat(openKeyNav.config.focus.outlineColor, " !important; \n        // outline-offset: 2px !important;\n        box-shadow:  inset 0 0 0 .5px #000,\n                      0 0 0 .75px #000,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        // border-radius: 3px;\n        border-color: #000;\n        border-radius: 3px;\n      }\n      button[data-openkeynav-label]{\n        outline:2px solid #000 !important;\n      }\n      .openKeyNav-inaccessible:not(.openKeyNav-label):not(button){\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        border-color: #f00;\n        border-radius: 3px;\n      }\n      button.openKeyNav-inaccessible{\n        outline:2px solid #f00 !important;\n      }\n      .openKeyNav-inaccessible.openKeyNav-label{\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        border-color: #f00;\n        border-radius: 3px;\n      }\n      .openKeyNav-label.debug-inaccessible{\n        background-color: #ff4444 !important;\n        border-color: #cc0000 !important;\n        color: #ffffff !important;\n        text-shadow: 0 1px 0 rgba(0,0,0,0.5) !important;\n      }\n        //   +\"span[data-openkeynav-label]{\"\n        //       +\"display: inherit;\"\n        //   +\"}\"\n      .openKeyNav-noCursor *{\n        cursor: none !important;\n      }\n      .openKeyNav-mouseover-tooltip{\n        position: absolute;\n        background-color: #333;\n        color: #fff;\n        padding: 5px;\n        border-radius: 5px;\n        display: none;\n        z-index: 1000;\n        font-size: 12px;\n      }\n      .openKeyNav-mouseover-tooltip::before{\n        content: \"Debug mode\"\n      }\n      //   [data-openkeynav-draggable=\"true\"] {\n      //   outline: 2px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n      //   outline-offset: -1px !important;\n      // }\n      ;\n      ");
+	  style.textContent += statusStyles;
+	  style.textContent += keyButtonStyles;
+	  // *:focus { // could be problematic to edit focus states throughout a website
+	  //   outline: 2px ${openKeyNav.config.focus.outlineStyle} ${openKeyNav.config.focus.outlineColor} !important;
+	  //   outline-offset: -2px !important;
+	  // }
+	  // `;
+	  // ensuring hidden labeled elements are made visible
+	  style.textContent += "\n        [data-openkeynav-label]:not(.openKeyNav-label){\n          opacity:1 !important;\n          visibility:visible !important;\n        }\n      ";
+	  style.textContent += "\n        [data-openkeynav-focused]{\n          outline: 2px ".concat(openKeyNav.config.focus.outlineStyle, " ").concat(openKeyNav.config.focus.outlineColor, " !important; \n          outline-offset: -2px !important;\n        }\n\n        .openKeyNav-structural-context-outline {\n          box-sizing: border-box;\n          position: fixed;\n          z-index: 2147483646;\n          display: none;\n          border-radius: 4px;\n          background: transparent;\n          pointer-events: none;\n        }\n      ");
+	  document.head.appendChild(style);
+	};
+	var deleteStylesheets = styles.deleteStylesheets = function deleteStylesheets() {
+	  document.querySelectorAll('.' + styleClassname).forEach(function (el) {
+	    el.parentNode && el.parentNode.removeChild(el);
+	  });
+	};
+	styles.injectToolbarStyleSheet = function injectToolbarStyleSheet(parent) {
+	  openKeyNav = parent;
+	  if (!!document.querySelector(toolbarStyleClassname)) {
+	    return false;
+	  }
+	  var style = document.createElement('style');
+	  style.setAttribute("class", toolbarStyleClassname);
+	  var toolBarHeight = openKeyNav.config.toolBar.height;
+	  var toolBarVerticalPadding = 6;
+	  var toolbarBackground = "\n      background-color: ".concat(openKeyNav.config.toolBar.backgroundColor.value, ";\n      color: ").concat(openKeyNav.config.toolBar.contentColor.value, ";\n      border: 1px solid hsl(210, 8%, 68%);\n      border-radius: 4px;\n      padding: 3px ").concat(toolBarVerticalPadding, "px;\n  ");
+	  style.type = 'text/css';
+	  style.textContent = "\n  .openKeyNav-toolBar {\n      // width: 200px;    // needs to have a set width (or a min-width) since the content changes inside... \n                          // min-widh is set inside the init depending on number of keys\n      // max-width: 200px;\n      // background-color: #333;\n      color: #333;\n      // z-index: 10000;\n      ".concat(toolbarBackground, "\n      font-size:12px;\n      display: flex;\n      align-items: center;\n      // align-items: end;\n      flex-direction: column;\n      // direction: rtl;\n      max-height: ").concat(toolBarHeight, "px;\n      position:relative;\n  }\n  .openKeyNav-toolBar > p{\n      overflow: hidden;\n  }\n  .openKeyNav-toolBar p{\n      font-size: 16px;\n      margin-bottom: 0;\n      line-height: ").concat(toolBarHeight - toolBarVerticalPadding, "px;\n      text-align: left;\n  }\n  .openKeyNav-toolBar-expanded {\n      position: absolute;\n      top: 0;\n      margin-top: 40px;\n      width: 100%;\n      ").concat(toolbarBackground, "\n      display: grid;\n      justify-content: left;\n  }\n  // .openKeyNav-toolBar span.stacked {\n  //     display: inline-grid;\n  //     grid-template-rows: auto auto;\n  // }\n  ");
+	  style.textContent += keyButtonStyles;
+	  document.head.appendChild(style);
+	};
+
+	var hasRequiredToolbar;
+	function requireToolbar() {
+	  if (hasRequiredToolbar) return toolbar;
+	  hasRequiredToolbar = 1;
+	  Object.defineProperty(toolbar, "__esModule", {
+	    value: true
+	  });
+	  toolbar.handleToolBar = void 0;
+	  var _signals = signals;
+	  var _keyButton = keyButton;
+	  var _keypress = requireKeypress();
+	  var _styles = styles;
+	  function _createForOfIteratorHelper(r, e) {
+	    var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+	    if (!t) {
+	      if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e) {
+	        t && (r = t);
+	        var _n = 0,
+	          F = function F() {};
+	        return {
+	          s: F,
+	          n: function n() {
+	            return _n >= r.length ? {
+	              done: true
+	            } : {
+	              done: false,
+	              value: r[_n++]
+	            };
+	          },
+	          e: function e(r) {
+	            throw r;
+	          },
+	          f: F
+	        };
+	      }
+	      throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	    }
+	    var o,
+	      a = true,
+	      u = false;
+	    return {
+	      s: function s() {
+	        t = t.call(r);
+	      },
+	      n: function n() {
+	        var r = t.next();
+	        return a = r.done, r;
+	      },
+	      e: function e(r) {
+	        u = true, o = r;
+	      },
+	      f: function f() {
+	        try {
+	          a || null == t.return || t.return();
+	        } finally {
+	          if (u) throw o;
+	        }
+	      }
+	    };
+	  }
+	  function _unsupportedIterableToArray(r, a) {
+	    if (r) {
+	      if ("string" == typeof r) return _arrayLikeToArray(r, a);
+	      var t = {}.toString.call(r).slice(8, -1);
+	      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+	    }
+	  }
+	  function _arrayLikeToArray(r, a) {
+	    (null == a || a > r.length) && (a = r.length);
+	    for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+	    return n;
+	  } // unified status bar and toolbar
+	  var openKeyNav;
+	  toolbar.handleToolBar = function handleToolBar(openKeyNav_obj) {
+	    openKeyNav = openKeyNav_obj;
+	    function initToolbarLogic(toolBarElement) {
+	      // Check if we've already initialized this toolbar
+	      if (toolBarElement.dataset.initialized === "true") return;
+
+	      // Mark as initialized
+	      toolBarElement.dataset.initialized = "true";
+	      (0, _styles.injectToolbarStyleSheet)(openKeyNav);
+	      var lastMessage;
+	      (0, _signals.effect)(function () {
+	        openKeyNav.config.modes;
+	        openKeyNav.config.typedLabel.value;
+	        openKeyNav.config.debug.inaccessibleCount.value;
+	        updateToolbar(toolBarElement, lastMessage);
+	      });
+	      (0, _signals.effect)(function () {
+	        var backgroundColor = openKeyNav.config.toolBar.backgroundColor.value;
+	        var contentColor = openKeyNav.config.toolBar.contentColor.value;
+	        updateToolbarColors({
+	          backgroundColor: backgroundColor,
+	          contentColor: contentColor
+	        });
+	      });
+	    }
+	    var toolBarElements = document.querySelectorAll('.openKeyNav-toolBar');
+	    toolBarElements.forEach(function (toolBarElement) {
+	      if (toolBarElement) {
+	        initToolbarLogic(toolBarElement);
+	        // return;
+	      }
+	    });
+	    var observer = new MutationObserver(function (mutationsList, observerInstance) {
+	      var _iterator = _createForOfIteratorHelper(mutationsList),
+	        _step;
+	      try {
+	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	          var mutation = _step.value;
+	          for (var _i = 0, _Array$from = Array.from(mutation.addedNodes); _i < _Array$from.length; _i++) {
+	            var node = _Array$from[_i];
+	            if (node.nodeType === 1 && node.matches && node.matches('.openKeyNav-toolBar')) {
+	              initToolbarLogic(node);
+	              // observerInstance.disconnect();
+	              return;
+	            }
+	            if (node.nodeType === 1) {
+	              var _node$querySelectorAl;
+	              var descendants = (_node$querySelectorAl = node.querySelectorAll) === null || _node$querySelectorAl === void 0 ? void 0 : _node$querySelectorAl.call(node, '.openKeyNav-toolBar');
+	              descendants.forEach(function (descendant) {
+	                if (descendant) {
+	                  initToolbarLogic(descendant);
+	                  // observerInstance.disconnect();
+	                  return;
+	                }
+	              });
+	            }
+	          }
+	        }
+	      } catch (err) {
+	        _iterator.e(err);
+	      } finally {
+	        _iterator.f();
+	      }
+	    });
+	    observer.observe(document.body, {
+	      childList: true,
+	      subtree: true
+	    });
+	  };
+	  var toolbarTemplates = {
+	    default: function _default() {
+	      var toolBarElement = document.querySelector('.openKeyNav-toolBar');
+	      if (!toolBarElement) {
+	        return;
+	      }
+	      toolBarElement.style.minWidth = "150px";
+	      var clickButton = "";
+	      var dragButton = "";
+	      var menuButton = (0, _keyButton.keyButton)([(0, _keypress.modiferKeyString)(openKeyNav), openKeyNav.config.keys.menu], "openKeyNav");
+	      if (openKeyNav.meta.enabled.value) {
+	        menuButton = (0, _keyButton.keyButton)([openKeyNav.config.keys.menu], "Shortcuts");
+	      }
+	      return "<p>\n                    ".concat(menuButton, "\n                    ").concat(dragButton, "\n                    ").concat(clickButton, " \n                </p>\n            ");
+	    },
+	    clickMode: function clickMode() {
+	      var count = openKeyNav.config.debug.inaccessibleCount.value;
+	      if (openKeyNav.config.debug.keyboardAccessible && count > 0) {
+	        return "<p>".concat((0, _keyButton.keyButton)(["Esc"], "Click Mode (Debug: ".concat(count, " inaccessible)")), "</p>");
+	      }
+	      return "<p>".concat((0, _keyButton.keyButton)(["Esc"], "Click Mode"), "</p>");
+	    },
+	    dragMode: function dragMode() {
+	      return "<p>".concat((0, _keyButton.keyButton)(["Esc"], "Drag Mode"), "</p>");
+	    },
+	    structuralNavigation: function structuralNavigation() {
+	      return "<p>".concat((0, _keyButton.keyButton)(['Alt', openKeyNav.config.keys.structuralNavigation], 'Structural Navigation'), "</p>");
+	    },
+	    menu: function menu() {
+	      var dragButton = "";
+	      if (openKeyNav.config.modesConfig.move.config.length) {
+	        // if drag mode is configured
+	        dragButton = (0, _keyButton.keyButton)([openKeyNav.config.keys.move], "Drag");
+	      }
+	      return "\n            <p>".concat((0, _keyButton.keyButton)(["Esc"], "Shortcuts"), "</p>\n            <div class=\"openKeyNav-toolBar-expanded\">\n                ").concat((0, _keyButton.keyButton)([openKeyNav.config.keys.click], "Click"), "\n                ").concat(dragButton, "\n            </div>\n        ");
+	    }
+	  };
+	  var updateElement = function updateElement(element, html) {
+	    element.innerHTML = html;
+	  };
+	  var updateToolbar = function updateToolbar(toolBarElement, lastMessage) {
+	    if (!toolBarElement) {
+	      return;
+	    }
+	    var message;
+	    var typedLabel = openKeyNav.config.typedLabel.value;
+	    if (openKeyNav.config.modes.clicking.value) {
+	      message = toolbarTemplates.clickMode(typedLabel);
+	    } else if (openKeyNav.config.modes.moving.value) {
+	      message = toolbarTemplates.dragMode(typedLabel);
+	      // message = toolbarTemplates.menu(typedLabel);
+	    } else if (openKeyNav.config.modes.menu.value) {
+	      message = toolbarTemplates.menu(typedLabel);
+	    } else if (openKeyNav.config.modes.structuralNavigation.value) {
+	      message = toolbarTemplates.structuralNavigation();
+	    } else {
+	      message = toolbarTemplates.default(); // Default message
+	    }
+
+	    // Only emit the notification if the message has changed
+	    if (message === lastMessage) {
+	      return;
+	    }
+
+	    // console.log(message);
+	    // Update the toolbar content
+	    updateElement(toolBarElement, message);
+	    lastMessage = message;
+	  };
+	  var updateToolbarColors = function updateToolbarColors(_ref) {
+	    var backgroundColor = _ref.backgroundColor,
+	      contentColor = _ref.contentColor;
+	    var toolbar = document.querySelector('.openKeyNav-toolBar');
+	    if (!toolbar) {
+	      return false;
+	    }
+	    if (backgroundColor) {
+	      toolbar.style.backgroundColor = backgroundColor;
+	    }
+	    if (contentColor) {
+	      toolbar.style.color = contentColor;
+	    }
+	  };
+	  return toolbar;
+	}
+
+	var audit = {};
+
+	var auditPanel = {};
+
+	Object.defineProperty(auditPanel, "__esModule", {
+	  value: true
+	});
+	auditPanel.hideAuditPanel = hideAuditPanel;
+	auditPanel.showAuditPanel = showAuditPanel;
+	/**
+	 * Creates and manages the accessibility audit panel UI with Figma-style design
+	 */
+	function showAuditPanel(inaccessibleElements) {
+	  // Remove existing panel if present
+	  var existingPanel = document.getElementById('okn-audit-panel');
+	  if (existingPanel) {
+	    existingPanel.remove();
+	    // Restore body margin
+	    document.body.style.marginLeft = '';
+	    document.body.style.transition = '';
+	  }
+
+	  // Shift page content to the right to make room for sidebar
+	  var sidebarWidth = '320px';
+	  document.body.style.transition = 'margin-left 0.3s ease';
+	  document.body.style.marginLeft = sidebarWidth;
+
+	  // Create full-screen overlay
+	  var overlay = document.createElement('div');
+	  overlay.id = 'okn-audit-panel';
+	  overlay.style.position = 'fixed';
+	  overlay.style.top = '0';
+	  overlay.style.left = '0';
+	  overlay.style.width = sidebarWidth;
+	  overlay.style.bottom = '0';
+	  overlay.style.zIndex = '999999';
+	  overlay.style.fontFamily = 'Inter, system-ui, -apple-system, sans-serif';
+	  overlay.style.fontSize = '13px';
+	  overlay.style.display = 'flex';
+	  overlay.style.flexDirection = 'column';
+
+	  // Left sidebar - Issue list (now the only element in overlay)
+	  var leftSidebar = document.createElement('div');
+	  leftSidebar.style.flex = '1';
+	  leftSidebar.style.backgroundColor = '#ffffff';
+	  leftSidebar.style.borderRight = '1px solid #e5e5e5';
+	  leftSidebar.style.display = 'flex';
+	  leftSidebar.style.flexDirection = 'column';
+	  leftSidebar.style.boxShadow = '2px 0 8px rgba(0,0,0,0.08)';
+	  leftSidebar.style.overflow = 'hidden';
+
+	  // Sidebar header
+	  var sidebarHeader = document.createElement('div');
+	  sidebarHeader.style.padding = '16px';
+	  sidebarHeader.style.borderBottom = '1px solid #e5e5e5';
+	  sidebarHeader.style.backgroundColor = '#f8f9fa';
+	  var headerTitle = document.createElement('div');
+	  headerTitle.style.fontSize = '12px';
+	  headerTitle.style.fontWeight = '600';
+	  headerTitle.style.color = '#6b7280';
+	  headerTitle.style.textTransform = 'uppercase';
+	  headerTitle.style.letterSpacing = '0.5px';
+	  headerTitle.style.marginBottom = '4px';
+	  headerTitle.textContent = 'Accessibility Audit';
+	  var issueCount = document.createElement('div');
+	  issueCount.style.fontSize = '18px';
+	  issueCount.style.fontWeight = '600';
+	  issueCount.style.color = '#ef4444';
+	  issueCount.style.marginBottom = '12px';
+	  issueCount.textContent = "".concat(inaccessibleElements.length, " ").concat(inaccessibleElements.length === 1 ? 'Issue' : 'Issues', " Found");
+
+	  // Development mode notice
+	  var devNotice = document.createElement('div');
+	  // Use existing OpenKeyNav logo markup (from toolbar/toast)
+	  var logo = document.createElement('div');
+	  logo.className = 'openkeynav-logo';
+	  logo.style.marginBottom = '8px';
+	  // Reuse the exact logo markup used by the toast notification for consistency
+	  // Use the light variant so it renders correctly on the panel's light header
+	  logo.innerHTML = '<div class="okn-logo-text tiny light" role="img" aria-label="OpenKeyNav">Open<span class="key">Key</span>Nav</div>';
+	  sidebarHeader.appendChild(logo);
+	  devNotice.style.fontSize = '11px';
+	  devNotice.style.color = '#6b7280';
+	  devNotice.style.padding = '8px';
+	  devNotice.style.backgroundColor = '#e0f2fe';
+	  devNotice.style.borderRadius = '4px';
+	  devNotice.style.marginTop = '8px';
+	  devNotice.style.lineHeight = '1.5';
+	  devNotice.innerHTML = '💡 <strong>Development Mode</strong><br>OpenKeyNav is running in debug mode with keyboard accessibility audit enabled.';
+
+	  // Close button in header
+	  var closeBtn = document.createElement('button');
+	  closeBtn.innerHTML = '✕';
+	  closeBtn.style.position = 'absolute';
+	  closeBtn.style.top = '12px';
+	  closeBtn.style.right = '12px';
+	  closeBtn.style.background = 'none';
+	  closeBtn.style.border = 'none';
+	  closeBtn.style.color = '#6b7280';
+	  closeBtn.style.fontSize = '18px';
+	  closeBtn.style.cursor = 'pointer';
+	  closeBtn.style.padding = '4px 8px';
+	  closeBtn.style.borderRadius = '4px';
+	  closeBtn.style.transition = 'background-color 0.2s';
+	  closeBtn.setAttribute('aria-label', 'Close audit panel');
+	  closeBtn.onmouseenter = function () {
+	    return closeBtn.style.backgroundColor = '#e5e7eb';
+	  };
+	  closeBtn.onmouseleave = function () {
+	    return closeBtn.style.backgroundColor = 'transparent';
+	  };
+	  closeBtn.addEventListener('click', function () {
+	    overlay.remove();
+	    // Restore body margin
+	    document.body.style.marginLeft = '';
+	    document.body.style.transition = '';
+	  });
+	  sidebarHeader.style.position = 'relative'; // For absolute positioned close button
+	  sidebarHeader.appendChild(headerTitle);
+	  sidebarHeader.appendChild(issueCount);
+	  sidebarHeader.appendChild(devNotice);
+	  sidebarHeader.appendChild(closeBtn);
+
+	  // Info section - collapsible panel about OpenKeyNav
+	  var infoSection = document.createElement('details');
+	  infoSection.style.padding = '12px 16px';
+	  infoSection.style.borderBottom = '1px solid #e5e5e5';
+	  infoSection.style.backgroundColor = '#fafafa';
+	  infoSection.style.cursor = 'pointer';
+	  var infoSummary = document.createElement('summary');
+	  infoSummary.style.fontSize = '12px';
+	  infoSummary.style.fontWeight = '600';
+	  infoSummary.style.color = '#374151';
+	  infoSummary.style.marginBottom = '8px';
+	  infoSummary.style.outline = 'none';
+	  infoSummary.textContent = 'ℹ️ About OpenKeyNav';
+	  var infoContent = document.createElement('div');
+	  infoContent.style.fontSize = '11px';
+	  infoContent.style.color = '#6b7280';
+	  infoContent.style.lineHeight = '1.6';
+	  infoContent.style.marginTop = '8px';
+	  infoContent.innerHTML = "\n    <p style=\"margin: 0 0 8px 0;\"><strong>OpenKeyNav</strong> adds keyboard shortcuts to navigate web pages efficiently.</p>\n    <p style=\"margin: 0 0 8px 0;\"><strong>Common shortcuts:</strong></p>\n    <ul style=\"margin: 0; padding-left: 16px;\">\n      <li><kbd style=\"background: #fff; padding: 2px 4px; border-radius: 2px; font-family: monospace;\">Shift+O</kbd> Enable/disable</li>\n      <li><kbd style=\"background: #fff; padding: 2px 4px; border-radius: 2px; font-family: monospace;\">K</kbd> Click mode</li>\n      <li><kbd style=\"background: #fff; padding: 2px 4px; border-radius: 2px; font-family: monospace;\">H</kbd> Heading navigation</li>\n      <li><kbd style=\"background: #fff; padding: 2px 4px; border-radius: 2px; font-family: monospace;\">Q</kbd> Escape</li>\n    </ul>\n    <p style=\"margin: 8px 0 0 0;\"><a href=\"https://github.com/LDubya/OpenKeyNav\" target=\"_blank\" style=\"color: #3b82f6; text-decoration: none;\">Learn more \u2192</a></p>\n  ";
+	  infoSection.appendChild(infoSummary);
+	  infoSection.appendChild(infoContent);
+
+	  // Sidebar content - issues list
+	  var issuesLabel = document.createElement('div');
+	  issuesLabel.style.padding = '12px 16px 8px';
+	  issuesLabel.style.fontSize = '11px';
+	  issuesLabel.style.fontWeight = '600';
+	  issuesLabel.style.color = '#9ca3af';
+	  issuesLabel.style.textTransform = 'uppercase';
+	  issuesLabel.style.letterSpacing = '0.5px';
+	  issuesLabel.textContent = 'Issues';
+	  var sidebarContent = document.createElement('div');
+	  sidebarContent.style.flex = '1';
+	  sidebarContent.style.overflowY = 'auto';
+	  sidebarContent.style.padding = '8px';
+
+	  // List items with Figma-style design
+	  var selectedItem = null;
+	  inaccessibleElements.forEach(function (el, index) {
+	    var item = document.createElement('div');
+	    item.style.padding = '12px';
+	    item.style.marginBottom = '2px';
+	    item.style.backgroundColor = '#ffffff';
+	    item.style.border = '1px solid transparent';
+	    item.style.borderRadius = '6px';
+	    item.style.cursor = 'pointer';
+	    item.style.transition = 'all 0.15s ease';
+	    var tagInfo = "".concat(el.tagName.toLowerCase()).concat(el.id ? "#".concat(el.id) : '').concat(el.className ? ".".concat(el.className.split(' ')[0]) : '');
+	    var header = document.createElement('div');
+	    header.style.display = 'flex';
+	    header.style.alignItems = 'center';
+	    header.style.marginBottom = '6px';
+	    header.style.gap = '8px';
+	    var errorIcon = document.createElement('div');
+	    errorIcon.style.width = '20px';
+	    errorIcon.style.height = '20px';
+	    errorIcon.style.borderRadius = '4px';
+	    errorIcon.style.backgroundColor = '#fef2f2';
+	    errorIcon.style.border = '1px solid #fecaca';
+	    errorIcon.style.display = 'flex';
+	    errorIcon.style.alignItems = 'center';
+	    errorIcon.style.justifyContent = 'center';
+	    errorIcon.style.fontSize = '12px';
+	    errorIcon.textContent = '⚠️';
+	    var tagEl = document.createElement('code');
+	    tagEl.style.fontFamily = 'SF Mono, Monaco, monospace';
+	    tagEl.style.fontSize = '12px';
+	    tagEl.style.fontWeight = '500';
+	    tagEl.style.color = '#374151';
+	    tagEl.textContent = tagInfo;
+	    header.appendChild(errorIcon);
+	    header.appendChild(tagEl);
+	    var description = document.createElement('div');
+	    description.style.fontSize = '12px';
+	    description.style.color = '#6b7280';
+	    description.style.marginLeft = '28px';
+	    description.textContent = 'Not keyboard accessible';
+
+	    // Details panel (hidden by default) to show why it matters and how to fix
+	    var details = document.createElement('div');
+	    details.className = 'okn-issue-details';
+	    details.style.display = 'none';
+	    details.style.marginTop = '8px';
+	    details.style.padding = '10px';
+	    details.style.background = '#f9fafb';
+	    details.style.borderRadius = '4px';
+	    details.style.fontSize = '12px';
+	    details.style.color = '#374151';
+	    var reason = el.getAttribute('data-openkeynav-inaccessible-reason') || 'No details available.';
+	    details.innerHTML = "\n      <div style=\"font-weight:600; color:#ef4444; margin-bottom:6px;\">Why it matters</div>\n      <div style=\"margin-bottom:10px;\">".concat(reason, "</div>\n      <div style=\"font-weight:600; color:#3b82f6; margin-bottom:6px;\">How to fix</div>\n      <div>").concat(getFixSuggestion(el), "</div>\n    ");
+	    item.appendChild(header);
+	    item.appendChild(description);
+	    item.appendChild(details);
+
+	    // Hover effect
+	    item.onmouseenter = function () {
+	      if (item !== selectedItem) {
+	        item.style.backgroundColor = '#f9fafb';
+	        item.style.borderColor = '#e5e7eb';
+	      }
+	    };
+	    item.onmouseleave = function () {
+	      if (item !== selectedItem) {
+	        item.style.backgroundColor = '#ffffff';
+	        item.style.borderColor = 'transparent';
+	      }
+	    };
+
+	    // Click to highlight element and toggle details
+	    item.addEventListener('click', function () {
+	      // Toggle details visibility
+	      var wasOpen = details.style.display === 'block';
+
+	      // Close previously selected item
+	      if (selectedItem && selectedItem !== item) {
+	        var prevDetails = selectedItem.querySelector('.okn-issue-details');
+	        if (prevDetails) prevDetails.style.display = 'none';
+	        selectedItem.style.backgroundColor = '#ffffff';
+	        selectedItem.style.borderColor = 'transparent';
+	      }
+	      if (wasOpen) {
+	        details.style.display = 'none';
+	        item.style.backgroundColor = '#ffffff';
+	        item.style.borderColor = 'transparent';
+	        selectedItem = null;
+	      } else {
+	        details.style.display = 'block';
+	        selectedItem = item;
+	        item.style.backgroundColor = '#eff6ff';
+	        item.style.borderColor = '#3b82f6';
+
+	        // Scroll to element
+	        el.scrollIntoView({
+	          behavior: 'smooth',
+	          block: 'center'
+	        });
+
+	        // Highlight element
+	        var originalOutline = el.style.outline;
+	        var originalOutlineOffset = el.style.outlineOffset;
+	        el.style.outline = '3px solid #3b82f6';
+	        el.style.outlineOffset = '4px';
+	        setTimeout(function () {
+	          el.style.outline = originalOutline;
+	          el.style.outlineOffset = originalOutlineOffset;
+	        }, 2500);
+	      }
+	    });
+
+	    // Keyboard accessibility: toggle with Enter or Space
+	    item.tabIndex = 0;
+	    item.addEventListener('keydown', function (ev) {
+	      if (ev.key === 'Enter' || ev.key === ' ') {
+	        ev.preventDefault();
+	        item.click();
+	      }
+	    });
+	    sidebarContent.appendChild(item);
+	  });
+
+	  // Helper to suggest fixes based on element properties
+	  function getFixSuggestion(el) {
+	    var tag = el.tagName.toLowerCase();
+	    var role = el.getAttribute('role') || '';
+	    var reason = (el.getAttribute('data-openkeynav-inaccessible-reason') || '').toLowerCase();
+	    if (tag === 'a' && (!el.hasAttribute('href') || el.getAttribute('href') === '')) {
+	      return 'Add a valid href attribute to the <a> element, or give it an ARIA role and tabindex="0" if it is an interactive control.';
+	    }
+	    if (tag === 'button' && el.getAttribute('tabindex') === '-1') {
+	      return 'Remove tabindex="-1" so the button is focusable, or set tabindex="0" if needed.';
+	    }
+	    if (tag === 'div' && role === 'button' && !el.hasAttribute('tabindex')) {
+	      return 'Add tabindex="0" so the element can be focused by keyboard, and ensure ARIA role is appropriate.';
+	    }
+	    if (el.hasAttribute('onclick') && !el.hasAttribute('tabindex')) {
+	      return 'Add tabindex="0" and role="button" (or convert to a &lt;button&gt;) so keyboard users can activate this control.';
+	    }
+	    if (reason.includes('hidden') || reason.includes('visibility')) {
+	      return 'Make the element visible or remove CSS that hides it; keyboard controls must be visible to be usable.';
+	    }
+	    return 'Review ARIA roles, tabindex, and event handlers; convert non-semantic interactive elements to &lt;button&gt; or &lt;a&gt; where appropriate.';
+	  }
+
+	  // Assemble the UI
+	  leftSidebar.appendChild(sidebarHeader);
+	  leftSidebar.appendChild(infoSection);
+	  leftSidebar.appendChild(issuesLabel);
+	  leftSidebar.appendChild(sidebarContent);
+	  overlay.appendChild(leftSidebar);
+	  document.body.appendChild(overlay);
+	}
+
+	// Hide and remove the audit panel if present
+	function hideAuditPanel() {
+	  var panel = document.getElementById('okn-audit-panel');
+	  if (panel) {
+	    panel.remove();
+	    // Restore body margin
+	    document.body.style.marginLeft = '';
+	    document.body.style.transition = '';
+	  }
+	}
+
+	Object.defineProperty(audit, "__esModule", {
+	  value: true
+	});
+	audit.runAccessibilityAudit = runAccessibilityAudit;
+	var _isTabbable = isTabbable$1;
+	var _auditPanel = auditPanel;
+	/**
+	 * Runs accessibility audit on the page
+	 * Checks all interactive elements for keyboard accessibility
+	 * @param {Object} openKeyNav - The OpenKeyNav instance
+	 */
+	function runAccessibilityAudit(openKeyNav) {
+	  // Only run in debug mode
+	  if (!openKeyNav.config.debug.keyboardAccessible) {
+	    return;
+	  }
+	  // To make audit results consistent regardless of the user's current scroll
+	  // position, temporarily scroll to the top of the document, run the audit,
+	  // then restore the original scroll position. This helps avoid cases where
+	  // scrolling has revealed or hidden elements inside overflow containers and
+	  // leads to non-deterministic counts.
+	  var prevScrollX = typeof window !== 'undefined' ? window.scrollX : 0;
+	  var prevScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+	  try {
+	    if (typeof window !== 'undefined') {
+	      window.scrollTo(0, 0);
+	    }
+	  } catch (e) {
+	    // ignore
+	  }
+
+	  // Defer the audit slightly to allow layout to stabilize after scrolling.
+	  setTimeout(function () {
+	    // Query all potentially interactive elements (same logic as click mode)
+	    var elements = document.querySelectorAll('a, button, input, select, textarea, [role="button"], [role="link"], [tabindex], [onclick]');
+	    var inaccessibleElements = [];
+
+	    // Temporarily allow isTabbable to include offscreen elements so the audit
+	    // can report issues throughout the document, not just those visible in the
+	    // current viewport. Also temporarily set screenReaderVisible so that
+	    // isAnyCornerVisible checks are bypassed during audit. Preserve previous
+	    // values and restore afterwards.
+	    var prevAuditFlag = !!openKeyNav._auditIncludeOffscreen;
+	    var prevScreenReaderVisible = !!openKeyNav.config.debug.screenReaderVisible;
+	    openKeyNav._auditIncludeOffscreen = true;
+	    openKeyNav.config.debug.screenReaderVisible = true;
+	    try {
+	      elements.forEach(function (el) {
+	        // Call isTabbable which will flag inaccessible elements as a side effect
+	        (0, _isTabbable.isTabbable)(el, openKeyNav);
+
+	        // After calling isTabbable, check if it was flagged as inaccessible
+	        if (el.hasAttribute('data-openkeynav-inaccessible-reason')) {
+	          inaccessibleElements.push(el);
+	        }
+	      });
+	    } catch (error) {
+	      console.error('[OpenKeyNav Audit] Error during element check:', error);
+	    } finally {
+	      openKeyNav._auditIncludeOffscreen = prevAuditFlag;
+	      openKeyNav.config.debug.screenReaderVisible = prevScreenReaderVisible;
+	    }
+
+	    // Update the count
+	    openKeyNav.config.debug.inaccessibleCount.value = inaccessibleElements.length;
+
+	    // Log to console
+	    if (inaccessibleElements.length > 0) {
+	      console.warn("[OpenKeyNav Audit] Found ".concat(inaccessibleElements.length, " inaccessible interactive elements:"), inaccessibleElements);
+	    } else {
+	      console.log('[OpenKeyNav Audit] All interactive elements are keyboard accessible!');
+	    }
+
+	    // Show audit panel if issues found
+	    if (inaccessibleElements.length > 0) {
+	      (0, _auditPanel.showAuditPanel)(inaccessibleElements);
+	    }
+
+	    // Restore previous scroll
+	    try {
+	      if (typeof window !== 'undefined') {
+	        window.scrollTo(prevScrollX, prevScrollY);
+	      }
+	    } catch (e) {
+	      // ignore
+	    }
+	  }, 50);
+	}
+
+	var status = {};
+
+	function _typeof(o) {
+	  "@babel/helpers - typeof";
+
+	  return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+	    return typeof o;
+	  } : function (o) {
+	    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+	  }, _typeof(o);
+	}
+	Object.defineProperty(status, "__esModule", {
+	  value: true
+	});
+	status.resolveStatusHost = status.StatusService = void 0;
+	var _domUtilities = domUtilities;
+	var _styles = styles;
+	function _createForOfIteratorHelper(r, e) {
+	  var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+	  if (!t) {
+	    if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e) {
+	      t && (r = t);
+	      var _n = 0,
+	        F = function F() {};
+	      return {
+	        s: F,
+	        n: function n() {
+	          return _n >= r.length ? {
+	            done: true
+	          } : {
+	            done: false,
+	            value: r[_n++]
+	          };
+	        },
+	        e: function e(r) {
+	          throw r;
+	        },
+	        f: F
+	      };
+	    }
+	    throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	  }
+	  var o,
+	    a = true,
+	    u = false;
+	  return {
+	    s: function s() {
+	      t = t.call(r);
+	    },
+	    n: function n() {
+	      var r = t.next();
+	      return a = r.done, r;
+	    },
+	    e: function e(r) {
+	      u = true, o = r;
+	    },
+	    f: function f() {
+	      try {
+	        a || null == t.return || t.return();
+	      } finally {
+	        if (u) throw o;
+	      }
+	    }
+	  };
+	}
+	function _classCallCheck(a, n) {
+	  if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
+	}
+	function _defineProperties(e, r) {
+	  for (var t = 0; t < r.length; t++) {
+	    var o = r[t];
+	    o.enumerable = o.enumerable || false, o.configurable = true, "value" in o && (o.writable = true), Object.defineProperty(e, _toPropertyKey(o.key), o);
+	  }
+	}
+	function _createClass(e, r, t) {
+	  return r && _defineProperties(e.prototype, r), Object.defineProperty(e, "prototype", {
+	    writable: false
+	  }), e;
+	}
+	function _toPropertyKey(t) {
+	  var i = _toPrimitive(t, "string");
+	  return "symbol" == _typeof(i) ? i : i + "";
+	}
+	function _toPrimitive(t, r) {
+	  if ("object" != _typeof(t) || !t) return t;
+	  var e = t[Symbol.toPrimitive];
+	  if (void 0 !== e) {
+	    var i = e.call(t, r);
+	    if ("object" != _typeof(i)) return i;
+	    throw new TypeError("@@toPrimitive must return a primitive value.");
+	  }
+	  return (String )(t);
+	}
+	function _slicedToArray(r, e) {
+	  return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
+	}
+	function _nonIterableRest() {
+	  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	}
+	function _unsupportedIterableToArray(r, a) {
+	  if (r) {
+	    if ("string" == typeof r) return _arrayLikeToArray(r, a);
+	    var t = {}.toString.call(r).slice(8, -1);
+	    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+	  }
+	}
+	function _arrayLikeToArray(r, a) {
+	  (null == a || a > r.length) && (a = r.length);
+	  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+	  return n;
+	}
+	function _iterableToArrayLimit(r, l) {
+	  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+	  if (null != t) {
+	    var e,
+	      n,
+	      i,
+	      u,
+	      a = [],
+	      f = true,
+	      o = false;
+	    try {
+	      if (i = (t = t.call(r)).next, 0 === l) ; else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+	    } catch (r) {
+	      o = true, n = r;
+	    } finally {
+	      try {
+	        if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return;
+	      } finally {
+	        if (o) throw n;
+	      }
+	    }
+	    return a;
+	  }
+	}
+	function _arrayWithHoles(r) {
+	  if (Array.isArray(r)) return r;
+	}
+	var INVALID_STATUS_HOSTS = new Set(['AREA', 'BASE', 'BR', 'BUTTON', 'COL', 'EMBED', 'HR', 'IMG', 'INPUT', 'LINK', 'META', 'OPTGROUP', 'OPTION', 'PARAM', 'SOURCE', 'SELECT', 'TEXTAREA', 'TRACK', 'WBR']);
+	var canContainStatus = function canContainStatus(value) {
+	  return (0, _domUtilities.isShadowRoot)(value) || (0, _domUtilities.isElement)(value) && !INVALID_STATUS_HOSTS.has(value.tagName);
+	};
+	var topmostModal = function topmostModal(document) {
+	  if (!(document !== null && document !== void 0 && document.querySelectorAll)) return null;
+	  try {
+	    var nativeModals = Array.from(document.querySelectorAll('dialog:modal'));
+	    if (nativeModals.length) return nativeModals[nativeModals.length - 1];
+	  } catch (error) {
+	    // DOM implementations without :modal support fall through to ARIA dialogs.
+	  }
+	  var ariaModals = Array.from(document.querySelectorAll('[role="dialog"][aria-modal="true"]')).filter(function (element) {
+	    return element.isConnected;
+	  });
+	  return ariaModals[ariaModals.length - 1] || null;
+	};
+	var resolveStatusHost = status.resolveStatusHost = function resolveStatusHost(document, requestedHost) {
+	  var resolved = typeof requestedHost === 'function' ? requestedHost() : requestedHost;
+	  if (resolved === 'modal') {
+	    return topmostModal(document) || (document === null || document === void 0 ? void 0 : document.body) || (document === null || document === void 0 ? void 0 : document.documentElement) || null;
+	  }
+	  if (resolved === 'body' || !resolved || (0, _domUtilities.isDocument)(resolved)) {
+	    return (document === null || document === void 0 ? void 0 : document.body) || (document === null || document === void 0 ? void 0 : document.documentElement) || null;
+	  }
+	  if (canContainStatus(resolved)) return resolved;
+	  return (document === null || document === void 0 ? void 0 : document.body) || (document === null || document === void 0 ? void 0 : document.documentElement) || null;
+	};
+	var normalizeClassNames = function normalizeClassNames(value) {
+	  return (Array.isArray(value) ? value : String(value || '').split(/\s+/)).filter(Boolean);
+	};
+	var applyVisibility = function applyVisibility(element, visible) {
+	  element.classList.toggle('openKeyNav-status--visually-hidden', visible === false);
+	};
+	var applyDataset = function applyDataset(element) {
+	  var values = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	  Object.entries(values).forEach(function (_ref) {
+	    var _ref2 = _slicedToArray(_ref, 2),
+	      name = _ref2[0],
+	      value = _ref2[1];
+	    if (value === null || value === undefined) {
+	      delete element.dataset[name];
+	      return;
+	    }
+	    element.dataset[name] = String(value);
+	  });
+	};
+	var setContent = function setContent(entry, message, options) {
+	  var content = entry.content;
+	  var normalizedMessage = String(message !== null && message !== void 0 ? message : '');
+	  var trustedHtml = options.trustedHtml === true;
+	  var contentKey = "".concat(trustedHtml ? 'html' : 'text', ":").concat(normalizedMessage);
+	  if (options.dedupe !== false && entry.contentKey === contentKey) {
+	    return false;
+	  }
+	  if (trustedHtml) {
+	    content.innerHTML = normalizedMessage;
+	  } else {
+	    content.textContent = normalizedMessage;
+	  }
+	  entry.contentKey = contentKey;
+	  return true;
+	};
+	var addToolName = function addToolName(document, element) {
+	  var logo = document.createElement('div');
+	  logo.className = 'okn-logo-text tiny';
+	  logo.setAttribute('role', 'img');
+	  logo.setAttribute('aria-label', 'OpenKeyNav');
+	  logo.innerHTML = 'Open<span class="key">Key</span>Nav';
+	  element.prepend(logo);
+	  return logo;
+	};
+
+	/**
+	 * Owns OpenKeyNav's live status and notification surfaces for one instance.
+	 *
+	 * Text is escaped by default. Callers must opt in with `trustedHtml: true` for
+	 * markup that OpenKeyNav itself generated.
+	 */
+	status.StatusService = /*#__PURE__*/function () {
+	  function StatusService() {
+	    var _ref3 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+	      ownerDocument = _ref3.document;
+	    _classCallCheck(this, StatusService);
+	    this.document = ownerDocument || null;
+	    this.channels = new Map();
+	    this.containers = new Map();
+	    this.styles = new Map();
+	  }
+	  return _createClass(StatusService, [{
+	    key: "ownerDocument",
+	    value: function ownerDocument() {
+	      if (this.document) return this.document;
+	      return typeof document === 'undefined' ? null : document;
+	    }
+	  }, {
+	    key: "containerFor",
+	    value: function containerFor(host, options) {
+	      var _container;
+	      if (!options.containerClass) return host;
+	      var key = "".concat(options.containerKey || options.containerClass);
+	      var hostContainers = this.containers.get(host);
+	      if (!hostContainers) {
+	        hostContainers = new Map();
+	        this.containers.set(host, hostContainers);
+	      }
+	      var container = hostContainers.get(key);
+	      if (((_container = container) === null || _container === void 0 ? void 0 : _container.parentNode) !== host) {
+	        var _document = this.ownerDocument();
+	        container = _document.createElement('div');
+	        container.className = normalizeClassNames(options.containerClass).join(' ');
+	        container.setAttribute('data-openkeynav-ui', 'status-container');
+	        container.dataset.openkeynavStatusContainer = key;
+	        host.appendChild(container);
+	        hostContainers.set(key, container);
+	      }
+	      if (options.containerId && (!this.ownerDocument().getElementById(options.containerId) || container.id === options.containerId)) {
+	        container.id = options.containerId;
+	      }
+	      return container;
+	    }
+	  }, {
+	    key: "styleRootFor",
+	    value: function styleRootFor(host) {
+	      var _host$getRootNode;
+	      if ((0, _domUtilities.isShadowRoot)(host)) return host;
+	      var root = host === null || host === void 0 || (_host$getRootNode = host.getRootNode) === null || _host$getRootNode === void 0 ? void 0 : _host$getRootNode.call(host);
+	      if ((0, _domUtilities.isShadowRoot)(root)) return root;
+	      return this.ownerDocument();
+	    }
+	  }, {
+	    key: "ensureStyles",
+	    value: function ensureStyles(host) {
+	      var _style;
+	      var document = this.ownerDocument();
+	      var root = this.styleRootFor(host);
+	      if (!document || !root) return null;
+	      var style = this.styles.get(root);
+	      if ((_style = style) !== null && _style !== void 0 && _style.parentNode) return root;
+	      style = document.createElement('style');
+	      style.className = 'openKeyNav-status-service-style';
+	      style.setAttribute('data-openkeynav-ui', 'status-style');
+	      style.textContent = _styles.statusStyles;
+	      if ((0, _domUtilities.isDocument)(root)) {
+	        (root.head || root.documentElement).appendChild(style);
+	      } else {
+	        root.prepend(style);
+	      }
+	      this.styles.set(root, style);
+	      return root;
+	    }
+	  }, {
+	    key: "pruneStyles",
+	    value: function pruneStyles() {
+	      var _this = this;
+	      var _iterator = _createForOfIteratorHelper(this.styles),
+	        _step;
+	      try {
+	        var _loop = function _loop() {
+	          var _step$value = _slicedToArray(_step.value, 2),
+	            root = _step$value[0],
+	            style = _step$value[1];
+	          var inUse = Array.from(_this.channels.values()).some(function (entry) {
+	            return entry.styleRoot === root;
+	          });
+	          if (!inUse) {
+	            style.remove();
+	            _this.styles.delete(root);
+	          }
+	        };
+	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	          _loop();
+	        }
+	      } catch (err) {
+	        _iterator.e(err);
+	      } finally {
+	        _iterator.f();
+	      }
+	    }
+	  }, {
+	    key: "removeEmptyContainer",
+	    value: function removeEmptyContainer(container) {
+	      var _container$hasAttribu;
+	      if (!(container !== null && container !== void 0 && (_container$hasAttribu = container.hasAttribute) !== null && _container$hasAttribu !== void 0 && _container$hasAttribu.call(container, 'data-openkeynav-status-container')) || container.childElementCount) {
+	        return;
+	      }
+	      container.remove();
+	      var _iterator2 = _createForOfIteratorHelper(this.containers),
+	        _step2;
+	      try {
+	        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+	          var _step2$value = _slicedToArray(_step2.value, 2),
+	            host = _step2$value[0],
+	            hostContainers = _step2$value[1];
+	          var _iterator3 = _createForOfIteratorHelper(hostContainers),
+	            _step3;
+	          try {
+	            for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+	              var _step3$value = _slicedToArray(_step3.value, 2),
+	                key = _step3$value[0],
+	                candidate = _step3$value[1];
+	              if (candidate === container) hostContainers.delete(key);
+	            }
+	          } catch (err) {
+	            _iterator3.e(err);
+	          } finally {
+	            _iterator3.f();
+	          }
+	          if (!hostContainers.size) this.containers.delete(host);
+	        }
+	      } catch (err) {
+	        _iterator2.e(err);
+	      } finally {
+	        _iterator2.f();
+	      }
+	    }
+	  }, {
+	    key: "createEntry",
+	    value: function createEntry(channel, options) {
+	      var document = this.ownerDocument();
+	      if (!document) return null;
+	      var element = document.createElement('div');
+	      element.classList.add('openKeyNav-status');
+	      element.setAttribute('data-openkeynav-ui', options.ui || 'status');
+	      element.dataset.openkeynavStatusChannel = channel;
+	      element.setAttribute('aria-atomic', 'true');
+	      var content = document.createElement('div');
+	      content.className = 'openKeyNav-status__content';
+	      element.appendChild(content);
+	      var entry = {
+	        channel: channel,
+	        element: element,
+	        content: content,
+	        contentKey: null,
+	        timer: null,
+	        duration: null,
+	        container: null,
+	        styleRoot: null,
+	        optionClassNames: new Set(),
+	        toolName: null,
+	        hint: null,
+	        dismiss: null
+	      };
+	      this.channels.set(channel, entry);
+	      return entry;
+	    }
+	  }, {
+	    key: "set",
+	    value: function set(channel, message) {
+	      var _this2 = this,
+	        _options$hint;
+	      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+	      var document = this.ownerDocument();
+	      if (!document) return null;
+	      var normalizedChannel = String(channel || '').trim();
+	      if (!normalizedChannel) {
+	        throw new TypeError('A non-empty status channel is required.');
+	      }
+	      var host = resolveStatusHost(document, options.host);
+	      if (!host) return null;
+	      var styleRoot = this.ensureStyles(host);
+	      var entry = this.channels.get(normalizedChannel);
+	      if (!entry) {
+	        entry = this.createEntry(normalizedChannel, options);
+	      }
+	      if (!entry) return null;
+	      entry.optionClassNames.forEach(function (className) {
+	        entry.element.classList.remove(className);
+	      });
+	      entry.optionClassNames = new Set(normalizeClassNames(options.className));
+	      entry.optionClassNames.forEach(function (className) {
+	        entry.element.classList.add(className);
+	      });
+	      if (options.toolName && !entry.toolName) {
+	        entry.toolName = addToolName(document, entry.element);
+	      } else if (!options.toolName && entry.toolName) {
+	        entry.toolName.remove();
+	        entry.toolName = null;
+	      }
+	      var politeness = ['assertive', 'off'].includes(options.politeness) ? options.politeness : 'polite';
+	      var role = options.role || (politeness === 'assertive' ? 'alert' : 'status');
+	      entry.element.setAttribute('role', role);
+	      entry.element.setAttribute('aria-live', politeness);
+	      entry.element.classList.toggle('openKeyNav-status--assertive', politeness === 'assertive');
+	      applyVisibility(entry.element, options.visible);
+	      applyDataset(entry.element, options.data);
+	      var previousContainer = entry.container;
+	      var container = this.containerFor(host, options);
+	      if (entry.element.parentNode !== container) {
+	        container.appendChild(entry.element);
+	      }
+	      entry.container = container;
+	      entry.styleRoot = styleRoot;
+	      if (previousContainer !== container) {
+	        this.removeEmptyContainer(previousContainer);
+	        this.pruneStyles();
+	      }
+	      var contentChanged = setContent(entry, message, options);
+	      var duration = Number.isFinite(options.duration) && options.duration > 0 ? options.duration : null;
+	      var durationChanged = duration !== entry.duration;
+	      if (entry.timer && (contentChanged || durationChanged)) {
+	        clearTimeout(entry.timer);
+	        entry.timer = null;
+	      }
+	      if ((contentChanged || durationChanged) && duration !== null) {
+	        entry.timer = setTimeout(function () {
+	          _this2.clear(normalizedChannel);
+	        }, duration);
+	      }
+	      entry.duration = duration;
+	      var hintMessage = String((_options$hint = options.hint) !== null && _options$hint !== void 0 ? _options$hint : '').trim();
+	      if (hintMessage) {
+	        if (!entry.hint) {
+	          var hint = document.createElement('div');
+	          hint.className = 'openKeyNav-status__hint';
+	          hint.setAttribute('aria-hidden', 'true');
+	          entry.element.appendChild(hint);
+	          entry.hint = hint;
+	        }
+	        entry.hint.textContent = hintMessage;
+	      } else if (entry.hint) {
+	        entry.hint.remove();
+	        entry.hint = null;
+	      }
+	      if (options.dismissible === true && !entry.dismiss) {
+	        var dismiss = document.createElement('button');
+	        dismiss.className = 'openKeyNav-status__dismiss';
+	        dismiss.type = 'button';
+	        dismiss.setAttribute('aria-label', 'Close notification');
+	        dismiss.textContent = '×';
+	        dismiss.addEventListener('click', function () {
+	          _this2.clear(normalizedChannel);
+	        });
+	        entry.element.appendChild(dismiss);
+	        entry.dismiss = dismiss;
+	      } else if (options.dismissible !== true && entry.dismiss) {
+	        entry.dismiss.remove();
+	        entry.dismiss = null;
+	      }
+	      entry.element.classList.toggle('openKeyNav-status--dismissible', options.dismissible === true);
+	      return entry.element;
+	    }
+	  }, {
+	    key: "get",
+	    value: function get(channel) {
+	      var _this$channels$get;
+	      return ((_this$channels$get = this.channels.get(String(channel))) === null || _this$channels$get === void 0 ? void 0 : _this$channels$get.element) || null;
+	    }
+	  }, {
+	    key: "has",
+	    value: function has(channel) {
+	      return this.channels.has(String(channel));
+	    }
+	  }, {
+	    key: "clear",
+	    value: function clear(channel) {
+	      var normalizedChannel = String(channel);
+	      var entry = this.channels.get(normalizedChannel);
+	      if (!entry) return false;
+	      if (entry.timer) clearTimeout(entry.timer);
+	      var container = entry.container;
+	      entry.element.remove();
+	      this.channels.delete(normalizedChannel);
+	      this.removeEmptyContainer(container);
+	      this.pruneStyles();
+	      return true;
+	    }
+	  }, {
+	    key: "clearAll",
+	    value: function clearAll() {
+	      var _this3 = this;
+	      Array.from(this.channels.keys()).forEach(function (channel) {
+	        _this3.clear(channel);
+	      });
+	      this.containers.clear();
+	      this.styles.forEach(function (style) {
+	        return style.remove();
+	      });
+	      this.styles.clear();
 	    }
 	  }]);
 	}();
@@ -5461,6 +6128,9 @@
 	  var _audit = audit;
 	  var _auditPanel = auditPanel;
 	  var _structuralNavigation = structuralNavigation;
+	  var _status = status;
+	  var _domUtilities = domUtilities;
+	  var _keyboardEvents = keyboardEvents;
 	  function _createForOfIteratorHelper(r, e) {
 	    var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
 	    if (!t) {
@@ -5807,11 +6477,15 @@
 	            status: {
 	              enabled: true,
 	              visible: true,
-	              announcements: true
+	              announcements: true,
+	              dismissCommand: {
+	                key: 'Escape',
+	                shiftKey: true
+	              }
 	            },
 	            contextIndicator: {
 	              enabled: true,
-	              color: '#0088cc',
+	              color: null,
 	              width: 3,
 	              offset: 4
 	            },
@@ -5867,6 +6541,10 @@
 	      this.meta = {
 	        enabled: (0, _signals.signal)(false)
 	      };
+	      this.statusService = new _status.StatusService({
+	        document: typeof document === 'undefined' ? null : document
+	      });
+	      this._notificationSequence = 0;
 	      this.structuralNavigation = new _structuralNavigation.StructuralNavigationController(this);
 	      this.enable = function () {
 	        _this.meta.enabled.value = true;
@@ -5886,6 +6564,7 @@
 	        _this.exitStructuralNavigation({
 	          announce: false
 	        });
+	        _this.statusService.clearAll();
 	        _this.meta.enabled.value = false;
 	        _this.getSetCookie(_this.config.enabledCookie, false);
 	        // Remove audit panel if present when disabling
@@ -5908,12 +6587,55 @@
 	    return _createClass(OpenKeyNav, [{
 	      key: "focus",
 	      value: function focus(target) {
-	        target.focus();
-	        target.setAttribute('data-openkeynav-focused', true);
-	        target.addEventListener('blur', function handler() {
-	          target.removeAttribute('data-openkeynav-focused');
-	          target.removeEventListener('blur', handler); // Clean up the event listener
+	        var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	        if (!target || typeof target.focus !== 'function') return null;
+	        var decorate = options.decorate !== false;
+	        var receivedFocus = false;
+	        var handleFocus = function handleFocus() {
+	          receivedFocus = true;
+	        };
+	        target.addEventListener('focus', handleFocus, {
+	          once: true
 	        });
+	        try {
+	          target.focus(options.focusOptions);
+	        } finally {
+	          target.removeEventListener('focus', handleFocus);
+	        }
+	        var ownerDocument = target.ownerDocument || (typeof document === 'undefined' ? null : document);
+	        var settledTarget = (0, _domUtilities.getDeepActiveElement)(ownerDocument);
+	        if (!decorate || !settledTarget || !receivedFocus && settledTarget !== target) {
+	          return settledTarget;
+	        }
+	        settledTarget.setAttribute('data-openkeynav-focused', 'true');
+	        settledTarget.addEventListener('blur', function () {
+	          settledTarget.removeAttribute('data-openkeynav-focused');
+	        }, {
+	          once: true
+	        });
+	        return settledTarget;
+	      }
+	    }, {
+	      key: "setStatus",
+	      value: function setStatus(channel, message) {
+	        var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+	        return this.statusService.set(channel, message, options);
+	      }
+	    }, {
+	      key: "getStatusElement",
+	      value: function getStatusElement(channel) {
+	        return this.statusService.get(channel);
+	      }
+	    }, {
+	      key: "clearStatus",
+	      value: function clearStatus(channel) {
+	        return this.statusService.clear(channel);
+	      }
+	    }, {
+	      key: "clearAllStatuses",
+	      value: function clearAllStatuses() {
+	        this.statusService.clearAll();
+	        return this;
 	      }
 	    }, {
 	      key: "enterStructuralNavigation",
@@ -5951,8 +6673,7 @@
 	    }, {
 	      key: "preventpropagation",
 	      value: function preventpropagation(e) {
-	        e.preventDefault();
-	        e.stopPropagation();
+	        (0, _keyboardEvents.preventAcceptedCommand)(e);
 	        return false;
 	      }
 
@@ -6039,10 +6760,7 @@
 	    }, {
 	      key: "isTextInputActive",
 	      value: function isTextInputActive() {
-	        var activeElement = document.activeElement;
-	        while (activeElement && activeElement.shadowRoot && activeElement.shadowRoot.activeElement) {
-	          activeElement = activeElement.shadowRoot.activeElement;
-	        }
+	        var activeElement = (0, _domUtilities.getDeepActiveElement)(document);
 	        if (!activeElement || !activeElement.tagName) {
 	          return false;
 	        }
@@ -6648,123 +7366,39 @@
 	        }
 	      }
 
-	      // Function to emit a temporary notification
+	      // Emit an assertive notification through the shared status renderer.
+	      // Messages are text by default; trusted OpenKeyNav markup must opt in.
 	    }, {
 	      key: "emitNotification",
 	      value: function emitNotification(message) {
 	        var duration = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-	        // Use provided duration or fall back to config
-	        var notificationDuration = duration !== null ? duration : this.config.notifications.duration;
-
-	        // Function to create or select the notification container
-	        var getSetNotificationContainer = function getSetNotificationContainer() {
-	          // Create or select the notification container
-	          var notificationContainer = document.getElementById('okn-notification-container');
-	          if (!notificationContainer) {
-	            notificationContainer = document.createElement('div');
-	            notificationContainer.id = 'okn-notification-container';
-	            notificationContainer.className = 'openKeyNav-ignore-overlap';
-	            notificationContainer.style.position = 'fixed';
-	            notificationContainer.style.bottom = '10px';
-	            notificationContainer.style.left = '50%';
-	            notificationContainer.style.transform = 'translateX(-50%)';
-	            notificationContainer.style.display = 'flex';
-	            notificationContainer.style.flexDirection = 'column';
-	            notificationContainer.style.alignItems = 'center';
-	            notificationContainer.style.gap = '10px';
-	            notificationContainer.style.zIndex = '1000';
-	            document.body.appendChild(notificationContainer);
-	          }
-	          return notificationContainer;
-	        };
-
-	        // Check if notifications are enabled
-	        if (!this.config.notifications.enabled) {
-	          console.log('[emitNotification] Notifications disabled, returning');
-	          return;
+	        var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+	        if (duration && _typeof(duration) === 'object') {
+	          options = duration;
+	          duration = null;
 	        }
-	        console.log('[emitNotification] Getting notification container...');
-	        // Get the notification container
-	        var notificationContainer = getSetNotificationContainer();
-	        console.log('[emitNotification] Got container:', !!notificationContainer, 'id:', notificationContainer === null || notificationContainer === void 0 ? void 0 : notificationContainer.id);
-
-	        // Remove any existing NON-PERSISTENT notifications before creating a new one
-	        // Preserve persistent notifications (those with close button)
-	        console.log('[emitNotification] Removing non-persistent notifications...');
-	        try {
-	          Array.from(notificationContainer.children).forEach(function (child) {
-	            var isPersistent = child.querySelector('button[aria-label="Close notification"]');
-	            if (!isPersistent) {
-	              child.remove();
-	            }
-	          });
-	          console.log('[emitNotification] Removal complete');
-	        } catch (error) {
-	          console.error('[emitNotification] Error removing notifications:', error);
-	        }
-	        console.log('[emitNotification] Creating notification element...');
-	        // Create the notification element
-	        var notification = document.createElement('div');
-	        console.log('[emitNotification] Notification element created');
-	        notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-	        notification.style.color = '#fff';
-	        notification.style.padding = '10px 20px';
-	        notification.style.borderRadius = '5px';
-	        notification.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-	        notification.style.maxWidth = '400px';
-	        notification.style.textAlign = 'center';
-	        notification.style.position = 'relative';
-	        notification.style.display = 'inline-block';
-
-	        // Add ARIA role for accessibility
-	        notification.setAttribute('role', 'alert');
-	        notification.setAttribute('aria-live', 'assertive');
-	        notification.setAttribute('aria-atomic', 'true');
-
-	        // Optionally display the tool name in the notification
-	        if (this.config.notifications.displayToolName) {
-	          var logo = document.createElement('div');
-	          logo.className = 'okn-logo-text tiny';
-	          logo.setAttribute('role', 'img'); // Assigning an image role
-	          logo.setAttribute('aria-label', 'OpenKeyNav');
-	          logo.innerHTML = 'Open<span class="key">Key</span>Nav';
-	          notification.appendChild(logo);
-	        }
-
-	        // Create the message element
-	        var messageDiv = document.createElement('div');
-	        messageDiv.innerHTML = message;
-	        // Append the message to the notification
-	        notification.appendChild(messageDiv);
-
-	        // Append the notification to the notification container
-	        notificationContainer.appendChild(notification);
-
-	        // Add close button for persistent notifications
-	        if (notificationDuration === 0) {
-	          var closeBtn = document.createElement('button');
-	          closeBtn.innerHTML = '×';
-	          closeBtn.style.position = 'absolute';
-	          closeBtn.style.top = '5px';
-	          closeBtn.style.right = '10px';
-	          closeBtn.style.background = 'none';
-	          closeBtn.style.border = 'none';
-	          closeBtn.style.color = '#fff';
-	          closeBtn.style.fontSize = '20px';
-	          closeBtn.style.cursor = 'pointer';
-	          closeBtn.style.padding = '0';
-	          closeBtn.style.lineHeight = '1';
-	          closeBtn.setAttribute('aria-label', 'Close notification');
-	          closeBtn.addEventListener('click', function () {
-	            notification.remove();
-	          });
-	          notification.appendChild(closeBtn);
-	        } else {
-	          // Automatically remove the notification after the specified duration
-	          setTimeout(function () {
-	            notification.remove();
-	          }, notificationDuration);
-	        }
+	        if (!this.config.notifications.enabled) return null;
+	        var requestedDuration = duration !== null ? duration : this.config.notifications.duration;
+	        var parsedDuration = Number(requestedDuration);
+	        var notificationDuration = Number.isFinite(parsedDuration) ? parsedDuration : 3000;
+	        var persistent = notificationDuration === 0;
+	        var channel = persistent ? "notification-".concat(++this._notificationSequence) : 'notification';
+	        if (persistent) this.clearStatus('notification');
+	        return this.setStatus(channel, message, {
+	          className: 'openKeyNav-notification',
+	          containerClass: 'openKeyNav-notification-container openKeyNav-ignore-overlap',
+	          containerKey: 'notifications',
+	          containerId: 'okn-notification-container',
+	          ui: 'notification',
+	          role: 'alert',
+	          politeness: 'assertive',
+	          visible: true,
+	          duration: notificationDuration,
+	          dismissible: persistent,
+	          toolName: this.config.notifications.displayToolName,
+	          trustedHtml: options.trustedHtml === true,
+	          host: options.host || 'modal'
+	        });
 	      }
 	    }, {
 	      key: "initStatusBar",
@@ -6792,7 +7426,9 @@
 
 	          // Emit the notification with the current message
 	          // console.log(message);
-	          _this8.emitNotification(message);
+	          _this8.emitNotification(message, null, {
+	            trustedHtml: true
+	          });
 	          lastMessage = message;
 	        });
 
@@ -6813,6 +7449,8 @@
 	            statusBar.textContent = "In click mode. Press Esc to exit.";
 	          } else if (modes.moving.value) {
 	            statusBar.textContent = "In drag mode. Press Esc to exit.";
+	          } else if (modes.structuralNavigation.value) {
+	            statusBar.textContent = "Structural navigation active. Press Alt+R to exit.";
 	          } else {
 	            statusBar.textContent = "No mode active.";
 	          }
@@ -6978,6 +7616,7 @@
 	        this.exitStructuralNavigation({
 	          announce: false
 	        });
+	        this.statusService.clearAll();
 	        this.removeKeydownEventListener();
 	        this.removeOverlays(true);
 	        this.clearAuditFlags();

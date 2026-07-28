@@ -101,10 +101,11 @@
     <ul>
       <li><kbd>Shift</kbd> + <kbd>O</kbd> enables OpenKeyNav; <kbd>R</kbd> enters structural navigation.</li>
       <li><kbd>Tab</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd> moves sequentially using native browser focus.</li>
-      <li><kbd>Shift</kbd> + <kbd>Up</kbd> / <kbd>Down</kbd> moves to the parent / child context without moving focus.</li>
-      <li><kbd>Shift</kbd> + <kbd>Left</kbd> / <kbd>Right</kbd> moves to the previous / next context at the same heading level—even across parent headings—and focuses its first stop. Unheaded contexts use structural siblings.</li>
-      <li>Inside an arrow-owning control, add <kbd>Alt</kbd> to a structural <kbd>Shift</kbd> + arrow command to override the widget.</li>
-      <li><kbd>F7</kbd> / <kbd>F8</kbd> cycles explicit typed routes in the Typed workspace example.</li>
+      <li>While structural navigation is active, legacy <kbd>H</kbd>, <kbd>1</kbd>–<kbd>6</kbd>, and <kbd>S</kbd> navigation is suspended so focus stays on interactive targets.</li>
+      <li><kbd>Shift</kbd> + <kbd>Up</kbd> moves to the parent without moving focus. <kbd>Shift</kbd> + <kbd>Down</kbd> follows the current target into a child; if none is on that path, H1–H5 advances to the next nonempty H(n+1) at the next hierarchy level and focuses its first stop. H6 is the fallback boundary.</li>
+      <li><kbd>Shift</kbd> + <kbd>Left</kbd> / <kbd>Right</kbd> moves to the previous / next horizontal peer at the same hierarchy depth and focuses its first stop. True structural siblings are always peers; heading-backed contexts may bridge different parents at the same depth regardless of authored heading rank.</li>
+      <li>Inside an arrow-owning control, add <kbd>Alt</kbd> to a structural <kbd>Shift</kbd> + arrow command to override the widget. You can keep holding <kbd>Alt</kbd> while continuing through sibling contexts.</li>
+      <li><kbd>Shift</kbd> + <kbd>Escape</kbd> closes the visual context status without exiting structural navigation. Escape-owning widgets retain the key.</li>
       <li><kbd>Alt</kbd> + <kbd>R</kbd> exits while preserving focus.</li>
     </ul>
   </div>
@@ -285,7 +286,7 @@
 
   <div id="structural-fixture-end" aria-hidden="true"></div>
 
-  <script src="../dist/openkeynav.umd.js?v=20260724-same-heading-level-v4"></script>
+  <script src="../dist/openkeynav.umd.js?v=20260725-peer-depth-v9"></script>
   <script>
     (() => {
       const fixture = {
@@ -457,9 +458,6 @@
         debug: {
           keyboardAccessible: false
         },
-        notifications: {
-          duration: 50
-        },
         modesConfig: {
           structuralNavigation: {
             displayCheck: 'full',
@@ -476,9 +474,7 @@
               previousSiblingContext: { key: 'ArrowLeft', shiftKey: true },
               nextSiblingContext: { key: 'ArrowRight', shiftKey: true },
               broadenContext: { key: 'ArrowUp', shiftKey: true },
-              narrowContext: { key: 'ArrowDown', shiftKey: true },
-              previousPeerContext: { key: 'F7' },
-              nextPeerContext: { key: 'F8' }
+              narrowContext: { key: 'ArrowDown', shiftKey: true }
             },
             typedContexts: [
               {
