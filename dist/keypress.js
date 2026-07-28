@@ -33,6 +33,12 @@ var modiferKeyString = exports.modiferKeyString = function modiferKeyString(open
   }
 };
 var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav, e) {
+  if (e.isComposing || e.keyCode === 229) {
+    return true;
+  }
+  if (e.openKeyNavIframeBridge && !openKeyNav.config.modes.clicking.value) {
+    return true;
+  }
   var isTextInputActive = openKeyNav.isTextInputActive();
 
   // enable / disable openKeyNav
@@ -49,12 +55,20 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
       openKeyNav.emitNotification(message);
       return true;
     } else {
-      (0, _escape.handleEscape)(openKeyNav, e);
+      if (openKeyNav.config.modes.clicking.value || openKeyNav.config.modes.moving.value || openKeyNav.config.modes.menu.value) {
+        (0, _escape.handleEscape)(openKeyNav, e);
+      }
       openKeyNav.disable();
       var _message = "openKeyNav disabled. Press ".concat((0, _keyButton.keyButton)([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu]), " to enable.");
       openKeyNav.emitNotification(_message);
       return true;
     }
+  }
+
+  // Structural navigation owns only its configured commands while active.
+  // It makes widget ownership decisions before preventing any page key.
+  if (openKeyNav.structuralNavigation && openKeyNav.structuralNavigation.handleKeyDown(e)) {
+    return true;
   }
 
   // first check for modifier keys and escape
@@ -73,9 +87,10 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
     // handle escape first
     case 'Escape':
       // escaping
-      // alert("Escape");
-      (0, _escape.handleEscape)(openKeyNav, e);
-      break;
+      if (openKeyNav.config.modes.clicking.value || openKeyNav.config.modes.moving.value || openKeyNav.config.modes.menu.value) {
+        (0, _escape.handleEscape)(openKeyNav, e);
+      }
+      return true;
   }
 
   // check if currently in any openkeynav modes
@@ -117,6 +132,9 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
   switch (e.key) {
     case openKeyNav.config.keys.click: // possibly attempting to initiate click mode
     case openKeyNav.config.keys.click.toUpperCase():
+      openKeyNav.exitStructuralNavigation({
+        announce: false
+      });
       e.preventDefault();
       openKeyNav.config.modes.clicking.value = true;
       if (e.key == openKeyNav.config.keys.click.toUpperCase()) {
@@ -130,6 +148,9 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
     // possibly attempting to initiate moving mode
     case openKeyNav.config.keys.move:
     case openKeyNav.config.keys.move.toUpperCase():
+      openKeyNav.exitStructuralNavigation({
+        announce: false
+      });
       // Toggle move mode
       e.preventDefault();
       openKeyNav.config.modes.moving.value = true; // Assuming you add a 'move' flag to your modes object
@@ -141,6 +162,9 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
       return true;
     case openKeyNav.config.keys.menu:
     case openKeyNav.config.keys.menu.toUpperCase():
+      openKeyNav.exitStructuralNavigation({
+        announce: false
+      });
       openKeyNav.config.modes.menu.value = true;
       if (e.key == openKeyNav.config.keys.menu.toUpperCase()) {
         openKeyNav.config.modesConfig.menu.modifier = true;

@@ -27,6 +27,34 @@ test.describe('OpenKeyNav E2E', () => {
     await page.screenshot({ path: path.join(artifactsDir, '02-enabled.png'), fullPage: true });
   });
 
+  test('keyboard error corpus covers major failure categories', async ({ page }) => {
+    await page.goto(`file://${path.join(__dirname, '../../demo/demo.html')}`);
+    await page.waitForFunction(() => window.OpenKeyNav !== undefined);
+
+    const fixtures = page.locator('[data-keyboard-error]');
+    expect(await fixtures.count()).toBeGreaterThanOrEqual(31);
+
+    const categories = await fixtures.evaluateAll(elements =>
+      Array.from(new Set(elements.map(element => element.getAttribute('data-keyboard-error')))).sort()
+    );
+
+    expect(categories).toEqual(expect.arrayContaining([
+      'activation',
+      'character-shortcut',
+      'custom-widget',
+      'focus-management',
+      'focus-order',
+      'focus-visibility',
+      'focusability',
+      'hover-only',
+      'keyboard-event',
+      'keyboard-trap',
+      'pointer-only',
+      'scrolling',
+      'semantics'
+    ]));
+  });
+
   test('click mode shows overlays', async ({ page }) => {
     await page.goto(`file://${path.join(__dirname, '../../demo/demo.html')}`);
     await page.waitForFunction(() => window.OpenKeyNav !== undefined);

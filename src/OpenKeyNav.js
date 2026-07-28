@@ -8,6 +8,7 @@ import { handleKeyPress } from "./keypress.js";
 import { handleEscape } from "./escape";
 import { runAccessibilityAudit } from './audit.js';
 import { hideAuditPanel } from './auditPanel.js';
+import { StructuralNavigationController } from './structuralNavigation.js';
 
 /*
 OpenKeyNav.js
@@ -125,6 +126,7 @@ class OpenKeyNav {
           heading_4: '4', // focus on the next heading of level 4 // as seen in JAWS, NVDA // do not modify
           heading_5: '5', // focus on the next heading of level 5 // as seen in JAWS, NVDA // do not modify
           heading_6: '6', // focus on the next heading of level 6 // as seen in JAWS, NVDA // do not modify
+          structuralNavigation: 'r', // enter/exit structural focus navigation ("route" mode)
           menu: 'o',
           audit: 'a', // enter audit mode to check keyboard accessibility
           inputEscape: 'ctrlKey', // for escaping input to trigger a command
@@ -158,6 +160,40 @@ class OpenKeyNav {
           },
           menu : {
             modifier: false,
+          },
+          structuralNavigation: {
+            enabled: true,
+            escapeExits: false,
+            exitCommand: null,
+            overrideModifier: 'altKey',
+            activeRoot: null,
+            includeProgrammatic: false,
+            targetFilter: null,
+            structuralContexts: [],
+            typedContexts: [],
+            ownsKey: null,
+            displayCheck: 'full',
+            status: {
+              enabled: true,
+              visible: true,
+              announcements: true
+            },
+            contextIndicator: {
+              enabled: true,
+              color: '#0088cc',
+              width: 3,
+              offset: 4
+            },
+            commands: {
+              previousTarget: null,
+              nextTarget: null,
+              previousSiblingContext: { key: 'ArrowLeft', shiftKey: true },
+              nextSiblingContext: { key: 'ArrowRight', shiftKey: true },
+              broadenContext: { key: 'ArrowUp', shiftKey: true },
+              narrowContext: { key: 'ArrowDown', shiftKey: true },
+              previousPeerContext: null,
+              nextPeerContext: null
+            }
           }
         },
         log: [],
@@ -174,6 +210,7 @@ class OpenKeyNav {
           clicking: signal(false),
           moving: signal(false),
           menu: signal(false),
+          structuralNavigation: signal(false),
         },
         debug: {
           screenReaderVisible: false,
@@ -185,6 +222,7 @@ class OpenKeyNav {
       this.meta = {
         enabled : signal(false),
       }
+      this.structuralNavigation = new StructuralNavigationController(this);
       this.enable = () => {
         this.meta.enabled.value = true;
         this.injectStyles();
@@ -201,6 +239,7 @@ class OpenKeyNav {
         return this;
       };
       this.disable = () => {
+        this.exitStructuralNavigation({ announce: false });
         this.meta.enabled.value = false;
         this.getSetCookie(this.config.enabledCookie, false)
         // Remove audit panel if present when disabling
@@ -229,6 +268,33 @@ class OpenKeyNav {
         target.removeAttribute('data-openkeynav-focused');
         target.removeEventListener('blur', handler); // Clean up the event listener
       });
+    }
+
+    enterStructuralNavigation() {
+      if (!this.meta.enabled.value) {
+        return false;
+      }
+      return this.structuralNavigation.activate();
+    }
+
+    exitStructuralNavigation(options = {}) {
+      return this.structuralNavigation.deactivate(options);
+    }
+
+    structuralNavigate(command) {
+      if (!this.meta.enabled.value || !this.config.modes.structuralNavigation.value) {
+        return false;
+      }
+      return this.structuralNavigation.execute(command);
+    }
+
+    getStructuralNavigationState() {
+      return this.structuralNavigation.getState();
+    }
+
+    invalidateStructuralNavigation() {
+      this.structuralNavigation.invalidate();
+      return this;
     }
 
     preventpropagation(e){
@@ -268,13 +334,31 @@ class OpenKeyNav {
   
     deepMerge(target, source) {
       Object.keys(source).forEach(key => {
-        if (source[key] && typeof source[key] === 'object') {
-          if (!target[key] || typeof target[key] !== 'object') {
+        const sourceValue = source[key];
+        const sourcePrototype = sourceValue && typeof sourceValue === 'object'
+          ? Object.getPrototypeOf(sourceValue)
+          : null;
+        const isPlainObject =
+          sourceValue !== null &&
+          typeof sourceValue === 'object' &&
+          (sourcePrototype === Object.prototype || sourcePrototype === null);
+
+        if (sourceValue && isPlainObject && !Array.isArray(sourceValue)) {
+          const targetValue = target[key];
+          const targetPrototype = targetValue && typeof targetValue === 'object'
+            ? Object.getPrototypeOf(targetValue)
+            : null;
+          const targetIsPlainObject =
+            targetValue !== null &&
+            typeof targetValue === 'object' &&
+            (targetPrototype === Object.prototype || targetPrototype === null);
+
+          if (!targetIsPlainObject || Array.isArray(targetValue)) {
             target[key] = {};
           }
-          this.deepMerge(target[key], source[key]);
+          this.deepMerge(target[key], sourceValue);
         } else {
-          target[key] = source[key];
+          target[key] = sourceValue;
         }
       });
       return target;
@@ -298,8 +382,15 @@ class OpenKeyNav {
     }
   
     isTextInputActive() {
-      const tagName = document.activeElement.tagName.toLowerCase();
-      const editable = document.activeElement.getAttribute('contenteditable');
+      let activeElement = document.activeElement;
+      while (activeElement && activeElement.shadowRoot && activeElement.shadowRoot.activeElement) {
+        activeElement = activeElement.shadowRoot.activeElement;
+      }
+      if (!activeElement || !activeElement.tagName) {
+        return false;
+      }
+      const tagName = activeElement.tagName.toLowerCase();
+      const editable = activeElement.getAttribute('contenteditable');
       const inputTypes = ['input', 'textarea'];
       const isEditable = editable === 'true' || editable === 'plaintext-only' || editable === '';
   
@@ -649,7 +740,11 @@ class OpenKeyNav {
   
       const resetModes = () => {
         for (let key in this.config.modes) {
-          this.config.modes[key].value = false;
+          if (key === 'structuralNavigation') {
+            this.exitStructuralNavigation({ announce: false });
+          } else {
+            this.config.modes[key].value = false;
+          }
         }
   
         // reset move mode config
@@ -862,23 +957,20 @@ class OpenKeyNav {
 
 
 
-    addKeydownEventListener() {      
-  
-      
-  
-      // Detect this.config.keys.click to enter label mode
-      // Using an arrow function to maintain 'this' context of class
-      document.addEventListener(
-        'keydown',
-        e => {
-          handleKeyPress(this, e);
-        },
-        true
-      );
-  
-      // Also for the iframes
-      window.addEventListener('message', e => {
-        if (e.data.type === 'keydown') {
+    addKeydownEventListener() {
+      if (this._keydownHandler) {
+        return;
+      }
+
+      this._keydownHandler = e => {
+        handleKeyPress(this, e);
+      };
+      document.addEventListener('keydown', this._keydownHandler, true);
+
+      // Existing click-label iframe support. Structural navigation deliberately
+      // treats each iframe as one atomic target and never uses this bridge.
+      this._messageHandler = e => {
+        if (e.data && e.data.type === 'keydown') {
           console.log('Key pressed in iframe:', e.data.key);
   
           // Create a new event
@@ -892,6 +984,9 @@ class OpenKeyNav {
             bubbles: true, // This ensures the event bubbles up through the DOM
             cancelable: true // This lets it be cancelable
           });
+          Object.defineProperty(newEvent, 'openKeyNavIframeBridge', {
+            value: true
+          });
   
           if (newEvent.key === 'Escape') {
             // Execute escape logic
@@ -901,7 +996,19 @@ class OpenKeyNav {
           // Dispatch it on the document or specific element that your existing handler is attached to
           document.dispatchEvent(newEvent);
         }
-      });
+      };
+      window.addEventListener('message', this._messageHandler);
+    }
+
+    removeKeydownEventListener() {
+      if (this._keydownHandler) {
+        document.removeEventListener('keydown', this._keydownHandler, true);
+        this._keydownHandler = null;
+      }
+      if (this._messageHandler) {
+        window.removeEventListener('message', this._messageHandler);
+        this._messageHandler = null;
+      }
     }
 
     // Function to emit a temporary notification
@@ -1212,12 +1319,29 @@ class OpenKeyNav {
     init(options = {}) {
       this.deepMerge(this.config, options);
       this.addKeydownEventListener();
-      this.initStatusBar();
-      this.initToolBar();
+      if (!this._statusBarInitialized) {
+        this.initStatusBar();
+        this._statusBarInitialized = true;
+      }
+      if (!this._toolBarInitialized) {
+        this.initToolBar();
+        this._toolBarInitialized = true;
+      }
       this.applicationSupport();
       this.checkEnabled();
       
       console.log('Library initialized with config:', this.config);
+      return this;
+    }
+
+    destroy() {
+      this.exitStructuralNavigation({ announce: false });
+      this.removeKeydownEventListener();
+      this.removeOverlays(true);
+      this.clearAuditFlags();
+      hideAuditPanel();
+      this.removeStyles();
+      this.meta.enabled.value = false;
       return this;
     }
 }

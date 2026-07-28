@@ -207,6 +207,146 @@ const openKeyNav = new OpenKeyNav();
 openKeyNav.init(config);
 ```
 
+## Structural Focus Navigation
+
+Structural focus navigation is an optional mode for moving among the page's
+existing Tab targets through semantic landmarks, sections, headings, forms,
+fieldsets, and lists. It does not add focus stops or replace native Tab.
+
+Enable OpenKeyNav with `Shift+o`, then press `r` to enter structural navigation:
+
+| Command | Default |
+| --- | --- |
+| Native sequential focus | `Shift+Tab` / `Tab` |
+| Previous / next target in the active context | Configurable or programmatic |
+| Previous / next context at the same heading level (structural siblings when unheaded) | `Shift+Left` / `Shift+Right` |
+| Broaden to parent / narrow on the current target's path | `Shift+Up` / `Shift+Down` |
+| Cycle application-supplied typed routes | Configurable or programmatic |
+| Reliable exit, including from an editing widget | `Alt+r` |
+
+Parent/child context changes retain the current page focus. Horizontal movement
+selects the previous or next context at the active heading level across the
+navigation root, even when the destination has a different parent heading, and
+focuses that context's first existing focus stop. A context without a heading
+level uses ordinary structural siblings. Native Tab and Shift+Tab handle
+sequential focus. Horizontal and explicit target commands do not wrap; only an
+explicitly invoked typed-context ring wraps. A visible polite status reports
+the active context, target name, position, same-level or sibling contexts, and
+applicable typed contexts. A non-focusable blue box outlines the active context
+without changing the page's Tab order.
+
+Tab, Shift+Tab, Enter, Space, bare Escape, and bare arrow keys keep their page
+meanings. Shift+Arrow context commands also pass through in text editors,
+selects, range/number inputs, radio groups, and ARIA composite widgets. Hold
+`Alt` with a structural arrow command to deliberately override widget
+ownership. Page code can declare additional ownership with `ownsKey` or
+`data-openkeynav-key-owner="arrows escape"`.
+
+```javascript
+const openKeyNav = new OpenKeyNav();
+
+openKeyNav.init({
+  debug: { keyboardAccessible: false },
+  modesConfig: {
+    structuralNavigation: {
+      // A resolver can confine a custom modal or application focus scope.
+      activeRoot: () => document.querySelector('[data-application-scope]') || document,
+
+      // Filtering never mutates the page target.
+      targetFilter: target => !target.matches('[data-skip-structural-navigation]'),
+
+      // Add or rename a credible structural boundary. `required` keeps this
+      // context selectable even if normalization would otherwise collapse it.
+      structuralContexts: [
+        {
+          id: 'application-actions',
+          name: 'Application actions',
+          type: 'workflow',
+          boundary: () => document.querySelector('[data-application-actions]'),
+          required: true
+        }
+      ],
+
+      // Explicit overlapping routes share the same live target identities.
+      typedContexts: [
+        {
+          id: 'pending-actions',
+          name: 'Pending actions',
+          type: 'workflow',
+          provenance: 'application configuration',
+          priority: 10,
+          targets: () => Array.from(
+            document.querySelectorAll('[data-pending-action]')
+          )
+        }
+      ],
+
+      // Typed-route cycling is deliberately not bound by default, leaving the
+      // four Shift+Arrow keys exclusively for structural relationships.
+      commands: {
+        previousPeerContext: { key: 'F7' },
+        nextPeerContext: { key: 'F8' }
+      },
+
+      // The generated indicator never receives focus or pointer events.
+      contextIndicator: {
+        enabled: true,
+        color: '#0088cc',
+        width: 3,
+        offset: 4
+      },
+
+      // Optional custom widget ownership.
+      ownsKey: (event, composedPath) => ({
+        arrows: composedPath.some(node =>
+          node instanceof Element && node.matches?.('[data-chart-editor]')
+        )
+      })
+    }
+  }
+});
+```
+
+The mode can also be controlled programmatically:
+
+```javascript
+openKeyNav.enable();
+openKeyNav.enterStructuralNavigation();
+openKeyNav.structuralNavigate('nextTarget');
+openKeyNav.structuralNavigate('nextPeerContext'); // explicit typed route
+openKeyNav.invalidateStructuralNavigation(); // after non-DOM application state changes
+openKeyNav.exitStructuralNavigation(); // preserves current focus
+```
+
+Target order comes from the pinned
+[`tabbable`](https://github.com/focus-trap/tabbable) dependency. Open Shadow DOM
+is supported and deep focus is synchronized. Closed Shadow DOM is not pierced.
+An iframe is treated as one atomic outer-page target; its document is not
+inspected. The topmost native modal dialog constrains navigation, and an
+application may supply a custom active root. Native Tab remains authoritative,
+including browser/platform differences such as macOS link-focus preferences.
+
+`tabindex="-1"` destinations are excluded by default. Setting
+`includeProgrammatic: true` deliberately includes them and therefore no longer
+promises a native-Tab-equivalent sequence. Automatic static-table row/column
+routes are not currently inferred; use explicit typed contexts when that
+relation is credible.
+
+A screen reader may consume arrow keys in browse/virtual-cursor mode before page
+JavaScript receives them. This mode works when its configured events reach the
+page and moves real DOM focus, but it does not replace screen-reader browse
+navigation.
+
+The peer-context design is inspired by Mei et al.,
+[*Benthic: Perceptually Congruent Structures for Accessible Charts and
+Diagrams*](https://vis.csail.mit.edu/pubs/benthic.pdf) (ASSETS 2025). That study
+motivates this adaptation; it does not validate automatic structure inference
+for arbitrary webpages.
+
+See the
+[implementation note](./docs/structural-navigation-implementation.md) for the
+scope, derivation, invalidation, and testing policy.
+
 ## Documentation
 
 For detailed documentation, guides, and tutorials, visit the [OpenKeyNav Documentation](https://openkeynav.github.io).

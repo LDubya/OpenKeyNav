@@ -9,7 +9,11 @@ playwright-report/
 coverage/
 
 # Build outputs
-dist/
+dist/*
+!dist/structuralModel.js
+!dist/structuralNavigation.js
+!dist/tabbableTargets.js
 
 # Playwright cache
 /playwright/.auth/
+docs/potential.md

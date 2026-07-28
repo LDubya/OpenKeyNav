@@ -8,6 +8,31 @@
 		return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
 	}
 
+	function getAugmentedNamespace(n) {
+	  if (n.__esModule) return n;
+	  var f = n.default;
+		if (typeof f == "function") {
+			var a = function a () {
+				if (this instanceof a) {
+	        return Reflect.construct(f, arguments, this.constructor);
+				}
+				return f.apply(this, arguments);
+			};
+			a.prototype = f.prototype;
+	  } else a = {};
+	  Object.defineProperty(a, '__esModule', {value: true});
+		Object.keys(n).forEach(function (k) {
+			var d = Object.getOwnPropertyDescriptor(n, k);
+			Object.defineProperty(a, k, d.get ? d : {
+				enumerable: true,
+				get: function () {
+					return n[k];
+				}
+			});
+		});
+		return a;
+	}
+
 	var OpenKeyNav$1 = {};
 
 	var version = {};
@@ -168,10 +193,10 @@
 	  value: true
 	});
 	dragAndDrop.simulateDragAndDrop = dragAndDrop.endDrag = dragAndDrop.beginDrag = void 0;
-	function _createForOfIteratorHelper(r, e) {
+	function _createForOfIteratorHelper$1(r, e) {
 	  var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
 	  if (!t) {
-	    if (Array.isArray(r) || (t = _unsupportedIterableToArray$1(r)) || e) {
+	    if (Array.isArray(r) || (t = _unsupportedIterableToArray$4(r)) || e) {
 	      t && (r = t);
 	      var _n = 0,
 	        F = function F() {};
@@ -216,14 +241,14 @@
 	    }
 	  };
 	}
-	function _unsupportedIterableToArray$1(r, a) {
+	function _unsupportedIterableToArray$4(r, a) {
 	  if (r) {
-	    if ("string" == typeof r) return _arrayLikeToArray$1(r, a);
+	    if ("string" == typeof r) return _arrayLikeToArray$4(r, a);
 	    var t = {}.toString.call(r).slice(8, -1);
-	    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$1(r, a) : void 0;
+	    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$4(r, a) : void 0;
 	  }
 	}
-	function _arrayLikeToArray$1(r, a) {
+	function _arrayLikeToArray$4(r, a) {
 	  (null == a || a > r.length) && (a = r.length);
 	  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
 	  return n;
@@ -240,7 +265,7 @@
 
 	      // Get all elements in the document
 	      var allElements = document.querySelectorAll('*');
-	      var _iterator = _createForOfIteratorHelper(allElements),
+	      var _iterator = _createForOfIteratorHelper$1(allElements),
 	        _step;
 	      try {
 	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
@@ -630,12 +655,12 @@
 	  });
 	};
 
-	var isTabbable = {};
+	var isTabbable$1 = {};
 
-	Object.defineProperty(isTabbable, "__esModule", {
+	Object.defineProperty(isTabbable$1, "__esModule", {
 	  value: true
 	});
-	isTabbable.isTabbable = void 0;
+	isTabbable$1.isTabbable = void 0;
 	var isHiddenByOverflow = function isHiddenByOverflow(element) {
 	  var parent = element.parentNode;
 	  // Use the ownerDocument to get the correct document context
@@ -663,7 +688,7 @@
 	  var isInViewport = rect.top < window.innerHeight && rect.left < window.innerWidth && rect.bottom > 0 && rect.right > 0;
 	  return isInViewport;
 	};
-	isTabbable.isTabbable = function isTabbable(el, openKeyNav) {
+	isTabbable$1.isTabbable = function isTabbable(el, openKeyNav) {
 	  var clickableElements = ['a', 'button', 'textarea', 'select', 'input', 'iframe', 'summary', '[onclick]'];
 	  var interactiveRoles = ['button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio'];
 	  var isTypicallyClickableElement = function isTypicallyClickableElement(el) {
@@ -860,28 +885,28 @@
 	});
 	keylabels.showMoveableFromOverlays = keylabels.showClickableOverlays = keylabels.generateValidKeyChars = keylabels.generateLabels = keylabels.filterRemainingOverlays = void 0;
 	var _escape = _escape$1;
-	var _isTabbable$1 = isTabbable;
+	var _isTabbable$1 = isTabbable$1;
 	var _scrolling = scrolling;
-	function _toConsumableArray(r) {
-	  return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread();
+	function _toConsumableArray$3(r) {
+	  return _arrayWithoutHoles$3(r) || _iterableToArray$3(r) || _unsupportedIterableToArray$3(r) || _nonIterableSpread$3();
 	}
-	function _nonIterableSpread() {
+	function _nonIterableSpread$3() {
 	  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 	}
-	function _unsupportedIterableToArray(r, a) {
+	function _unsupportedIterableToArray$3(r, a) {
 	  if (r) {
-	    if ("string" == typeof r) return _arrayLikeToArray(r, a);
+	    if ("string" == typeof r) return _arrayLikeToArray$3(r, a);
 	    var t = {}.toString.call(r).slice(8, -1);
-	    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+	    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$3(r, a) : void 0;
 	  }
 	}
-	function _iterableToArray(r) {
+	function _iterableToArray$3(r) {
 	  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
 	}
-	function _arrayWithoutHoles(r) {
-	  if (Array.isArray(r)) return _arrayLikeToArray(r);
+	function _arrayWithoutHoles$3(r) {
+	  if (Array.isArray(r)) return _arrayLikeToArray$3(r);
 	}
-	function _arrayLikeToArray(r, a) {
+	function _arrayLikeToArray$3(r, a) {
 	  (null == a || a > r.length) && (a = r.length);
 	  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
 	  return n;
@@ -1020,7 +1045,7 @@
 	  var moveables = [];
 
 	  // direct selectors of from elements
-	  var fromElementSelectors = _toConsumableArray(new Set(openKeyNav.config.modesConfig.move.config.filter(function (config) {
+	  var fromElementSelectors = _toConsumableArray$3(new Set(openKeyNav.config.modesConfig.move.config.filter(function (config) {
 	    return config.fromElements;
 	  }).map(function (config) {
 	    return config.fromElements;
@@ -1041,7 +1066,7 @@
 	  }
 
 	  // containers of from elements
-	  var fromContainerSelectors = _toConsumableArray(new Set(openKeyNav.config.modesConfig.move.config.filter(function (config) {
+	  var fromContainerSelectors = _toConsumableArray$3(new Set(openKeyNav.config.modesConfig.move.config.filter(function (config) {
 	    return config.fromContainer;
 	  }).map(function (config) {
 	    return config.fromContainer;
@@ -1180,7 +1205,7 @@
 	  });
 
 	  // Merge with clickEventElements
-	  var mergedSet = new Set([].concat(_toConsumableArray(allElements), _toConsumableArray(openKeyNav.config.modesConfig.click.clickEventElements)));
+	  var mergedSet = new Set([].concat(_toConsumableArray$3(allElements), _toConsumableArray$3(openKeyNav.config.modesConfig.click.clickEventElements)));
 	  return Array.from(mergedSet);
 
 	  // return allElements;
@@ -1207,7 +1232,7 @@
 	  var _dragAndDrop = dragAndDrop;
 	  var _escape = _escape$1;
 	  var _focus = focus;
-	  var _isTabbable = isTabbable;
+	  var _isTabbable = isTabbable$1;
 	  var _keylabels = keylabels;
 	  var _keyButton = keyButton;
 	  function getMetaKeyName() {
@@ -1231,6 +1256,12 @@
 	    }
 	  };
 	  keypress.handleKeyPress = function handleKeyPress(openKeyNav, e) {
+	    if (e.isComposing || e.keyCode === 229) {
+	      return true;
+	    }
+	    if (e.openKeyNavIframeBridge && !openKeyNav.config.modes.clicking.value) {
+	      return true;
+	    }
 	    var isTextInputActive = openKeyNav.isTextInputActive();
 
 	    // enable / disable openKeyNav
@@ -1247,12 +1278,20 @@
 	        openKeyNav.emitNotification(message);
 	        return true;
 	      } else {
-	        (0, _escape.handleEscape)(openKeyNav, e);
+	        if (openKeyNav.config.modes.clicking.value || openKeyNav.config.modes.moving.value || openKeyNav.config.modes.menu.value) {
+	          (0, _escape.handleEscape)(openKeyNav, e);
+	        }
 	        openKeyNav.disable();
 	        var _message = "openKeyNav disabled. Press ".concat((0, _keyButton.keyButton)([modiferKeyString(openKeyNav), openKeyNav.config.keys.menu]), " to enable.");
 	        openKeyNav.emitNotification(_message);
 	        return true;
 	      }
+	    }
+
+	    // Structural navigation owns only its configured commands while active.
+	    // It makes widget ownership decisions before preventing any page key.
+	    if (openKeyNav.structuralNavigation && openKeyNav.structuralNavigation.handleKeyDown(e)) {
+	      return true;
 	    }
 
 	    // first check for modifier keys and escape
@@ -1270,9 +1309,10 @@
 	      // handle escape first
 	      case 'Escape':
 	        // escaping
-	        // alert("Escape");
-	        (0, _escape.handleEscape)(openKeyNav, e);
-	        break;
+	        if (openKeyNav.config.modes.clicking.value || openKeyNav.config.modes.moving.value || openKeyNav.config.modes.menu.value) {
+	          (0, _escape.handleEscape)(openKeyNav, e);
+	        }
+	        return true;
 	    }
 
 	    // check if currently in any openkeynav modes
@@ -1313,6 +1353,9 @@
 	    switch (e.key) {
 	      case openKeyNav.config.keys.click: // possibly attempting to initiate click mode
 	      case openKeyNav.config.keys.click.toUpperCase():
+	        openKeyNav.exitStructuralNavigation({
+	          announce: false
+	        });
 	        e.preventDefault();
 	        openKeyNav.config.modes.clicking.value = true;
 	        if (e.key == openKeyNav.config.keys.click.toUpperCase()) {
@@ -1325,6 +1368,9 @@
 	      // possibly attempting to initiate moving mode
 	      case openKeyNav.config.keys.move:
 	      case openKeyNav.config.keys.move.toUpperCase():
+	        openKeyNav.exitStructuralNavigation({
+	          announce: false
+	        });
 	        // Toggle move mode
 	        e.preventDefault();
 	        openKeyNav.config.modes.moving.value = true; // Assuming you add a 'move' flag to your modes object
@@ -1336,6 +1382,9 @@
 	        return true;
 	      case openKeyNav.config.keys.menu:
 	      case openKeyNav.config.keys.menu.toUpperCase():
+	        openKeyNav.exitStructuralNavigation({
+	          announce: false
+	        });
 	        openKeyNav.config.modes.menu.value = true;
 	        if (e.key == openKeyNav.config.keys.menu.toUpperCase()) {
 	          openKeyNav.config.modesConfig.menu.modifier = true;
@@ -2237,7 +2286,7 @@
 	  value: true
 	});
 	audit.runAccessibilityAudit = runAccessibilityAudit;
-	var _isTabbable = isTabbable;
+	var _isTabbable = isTabbable$1;
 	var _auditPanel = auditPanel;
 	/**
 	 * Runs accessibility audit on the page
@@ -2322,6 +2371,3078 @@
 	  }, 50);
 	}
 
+	var structuralNavigation = {};
+
+	var structuralModel = {};
+
+	Object.defineProperty(structuralModel, "__esModule", {
+	  value: true
+	});
+	structuralModel.buildStructuralModel = void 0;
+	function _toConsumableArray$2(r) {
+	  return _arrayWithoutHoles$2(r) || _iterableToArray$2(r) || _unsupportedIterableToArray$2(r) || _nonIterableSpread$2();
+	}
+	function _nonIterableSpread$2() {
+	  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	}
+	function _iterableToArray$2(r) {
+	  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
+	}
+	function _arrayWithoutHoles$2(r) {
+	  if (Array.isArray(r)) return _arrayLikeToArray$2(r);
+	}
+	function _createForOfIteratorHelper(r, e) {
+	  var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+	  if (!t) {
+	    if (Array.isArray(r) || (t = _unsupportedIterableToArray$2(r)) || e) {
+	      t && (r = t);
+	      var _n = 0,
+	        F = function F() {};
+	      return {
+	        s: F,
+	        n: function n() {
+	          return _n >= r.length ? {
+	            done: true
+	          } : {
+	            done: false,
+	            value: r[_n++]
+	          };
+	        },
+	        e: function e(r) {
+	          throw r;
+	        },
+	        f: F
+	      };
+	    }
+	    throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	  }
+	  var o,
+	    a = true,
+	    u = false;
+	  return {
+	    s: function s() {
+	      t = t.call(r);
+	    },
+	    n: function n() {
+	      var r = t.next();
+	      return a = r.done, r;
+	    },
+	    e: function e(r) {
+	      u = true, o = r;
+	    },
+	    f: function f() {
+	      try {
+	        a || null == t.return || t.return();
+	      } finally {
+	        if (u) throw o;
+	      }
+	    }
+	  };
+	}
+	function _unsupportedIterableToArray$2(r, a) {
+	  if (r) {
+	    if ("string" == typeof r) return _arrayLikeToArray$2(r, a);
+	    var t = {}.toString.call(r).slice(8, -1);
+	    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$2(r, a) : void 0;
+	  }
+	}
+	function _arrayLikeToArray$2(r, a) {
+	  (null == a || a > r.length) && (a = r.length);
+	  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+	  return n;
+	}
+	var ELEMENT_NODE$1 = 1;
+	var DOCUMENT_NODE$1 = 9;
+	var DOCUMENT_FRAGMENT_NODE$1 = 11;
+	var LANDMARK_ROLES = new Set(['banner', 'complementary', 'contentinfo', 'form', 'main', 'navigation', 'region', 'search']);
+	var COMPOSITE_ROLES = new Set(['combobox', 'grid', 'listbox', 'menu', 'menubar', 'radiogroup', 'tablist', 'toolbar', 'tree', 'treegrid']);
+	var SUPPRESSED_ROLES = new Set(['none', 'presentation']);
+	var GENERATED_SELECTOR = ['[data-openkeynav-ui]', '.openKeyNav-label', '.openKeyNav-toolBar', '.openKeyNav-mouseover-tooltip', '.openKeyNav-structural-status', '#okn-notification-container', '#okn-audit-panel'].join(',');
+	var boundaryIdentity = new WeakMap();
+	var nextBoundaryIdentity = 1;
+	var isElement$2 = function isElement(node) {
+	  return Boolean(node && node.nodeType === ELEMENT_NODE$1);
+	};
+	var isDocument$2 = function isDocument(node) {
+	  return Boolean(node && node.nodeType === DOCUMENT_NODE$1);
+	};
+	var isShadowRoot$2 = function isShadowRoot(node) {
+	  return Boolean(node && node.nodeType === DOCUMENT_FRAGMENT_NODE$1 && node.host && isElement$2(node.host));
+	};
+	var composedParent$1 = function composedParent(node) {
+	  if (!node) return null;
+	  if (node.assignedSlot) return node.assignedSlot;
+	  if (isShadowRoot$2(node)) return node.host;
+	  return node.parentNode || null;
+	};
+	var isComposedWithin = function isComposedWithin(boundary, node) {
+	  var current = node;
+	  while (current) {
+	    if (current === boundary) return true;
+	    current = composedParent$1(current);
+	  }
+	  return false;
+	};
+	var isGeneratedUI = function isGeneratedUI(element) {
+	  var current = element;
+	  while (current) {
+	    if (isElement$2(current) && current.matches(GENERATED_SELECTOR)) return true;
+	    current = composedParent$1(current);
+	  }
+	  return false;
+	};
+	var isSemanticallyHidden = function isSemanticallyHidden(element, root) {
+	  var current = element;
+	  while (current) {
+	    if (isElement$2(current) && current.getAttribute('aria-hidden') === 'true') {
+	      return true;
+	    }
+	    if (current === root) break;
+	    current = composedParent$1(current);
+	  }
+	  return false;
+	};
+	var isOperativeSemanticElement = function isOperativeSemanticElement(element, root) {
+	  var current = element;
+	  while (current) {
+	    if (isElement$2(current)) {
+	      var _current$ownerDocumen, _view$getComputedStyl;
+	      if (current.hidden || current.hasAttribute('inert') || current.tagName.toLowerCase() === 'dialog' && !current.hasAttribute('open')) {
+	        return false;
+	      }
+	      if (current.tagName.toLowerCase() === 'details' && !current.hasAttribute('open')) {
+	        var summary = Array.from(current.children).find(function (child) {
+	          return child.tagName.toLowerCase() === 'summary';
+	        });
+	        if (!summary || !isComposedWithin(summary, element)) return false;
+	      }
+	      if (current.hasAttribute('popover')) {
+	        try {
+	          if (!current.matches(':popover-open')) return false;
+	        } catch (error) {
+	          // Browsers without the popover pseudo-class expose no reliable
+	          // automatic state here; target discovery remains authoritative.
+	        }
+	      }
+	      var view = (_current$ownerDocumen = current.ownerDocument) === null || _current$ownerDocumen === void 0 ? void 0 : _current$ownerDocumen.defaultView;
+	      var style = view === null || view === void 0 || (_view$getComputedStyl = view.getComputedStyle) === null || _view$getComputedStyl === void 0 ? void 0 : _view$getComputedStyl.call(view, current);
+	      if ((style === null || style === void 0 ? void 0 : style.display) === 'none' || (style === null || style === void 0 ? void 0 : style.visibility) === 'hidden' || (style === null || style === void 0 ? void 0 : style.visibility) === 'collapse') {
+	        return false;
+	      }
+	    }
+	    if (current === root) break;
+	    current = composedParent$1(current);
+	  }
+	  return true;
+	};
+	var stableBoundaryId = function stableBoundaryId(boundary) {
+	  var prefix = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'context';
+	  if (!boundaryIdentity.has(boundary)) {
+	    boundaryIdentity.set(boundary, nextBoundaryIdentity++);
+	  }
+	  return "".concat(prefix, "-").concat(boundaryIdentity.get(boundary));
+	};
+	var composedChildren = function composedChildren(node) {
+	  if (isDocument$2(node)) {
+	    return node.documentElement ? [node.documentElement] : [];
+	  }
+	  if (isElement$2(node) && node.shadowRoot) {
+	    return Array.from(node.shadowRoot.childNodes);
+	  }
+	  if (isElement$2(node) && node.tagName.toLowerCase() === 'slot' && typeof node.assignedNodes === 'function') {
+	    var assigned = node.assignedNodes({
+	      flatten: true
+	    });
+	    if (assigned.length) return assigned;
+	  }
+	  return Array.from((node === null || node === void 0 ? void 0 : node.childNodes) || []);
+	};
+	var composedElements = function composedElements(root) {
+	  var elements = [];
+	  var seen = new Set();
+	  var _visit = function visit(node) {
+	    if (!node || seen.has(node)) return;
+	    seen.add(node);
+	    if (isElement$2(node)) {
+	      if (isGeneratedUI(node)) return;
+	      elements.push(node);
+	    }
+	    composedChildren(node).forEach(_visit);
+	  };
+	  _visit(root);
+	  return elements;
+	};
+	var queryRootById = function queryRootById(element, id) {
+	  var _element$getRootNode, _root$getElementById, _element$ownerDocumen;
+	  var root = (_element$getRootNode = element.getRootNode) === null || _element$getRootNode === void 0 ? void 0 : _element$getRootNode.call(element);
+	  return (root === null || root === void 0 || (_root$getElementById = root.getElementById) === null || _root$getElementById === void 0 ? void 0 : _root$getElementById.call(root, id)) || ((_element$ownerDocumen = element.ownerDocument) === null || _element$ownerDocumen === void 0 ? void 0 : _element$ownerDocumen.getElementById(id));
+	};
+	var labelledByText = function labelledByText(element) {
+	  var ids = (element.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean);
+	  return ids.map(function (id) {
+	    return queryRootById(element, id);
+	  }).filter(function (label) {
+	    return label && !isSemanticallyHidden(label, element.getRootNode());
+	  }).map(function (label) {
+	    return label.textContent.replace(/\s+/g, ' ').trim();
+	  }).filter(Boolean).join(' ');
+	};
+	var explicitAccessibleName = function explicitAccessibleName(element) {
+	  return labelledByText(element) || (element.getAttribute('aria-label') || '').trim();
+	};
+	var headingRank = function headingRank(element) {
+	  if (!isElement$2(element)) return null;
+	  var role = (element.getAttribute('role') || '').trim().toLowerCase();
+	  if (SUPPRESSED_ROLES.has(role)) return null;
+	  var match = /^h([1-6])$/i.exec(element.tagName);
+	  if (match) return !role || role === 'heading' ? Number(match[1]) : null;
+	  if (role !== 'heading') {
+	    return null;
+	  }
+	  var level = Number(element.getAttribute('aria-level'));
+	  return Number.isInteger(level) && level > 0 ? level : null;
+	};
+	var contextTypeForElement = function contextTypeForElement(element) {
+	  var role = (element.getAttribute('role') || '').trim().toLowerCase();
+	  if (SUPPRESSED_ROLES.has(role)) return null;
+	  if (role) {
+	    if (LANDMARK_ROLES.has(role)) {
+	      if (role === 'region' && !explicitAccessibleName(element)) return null;
+	      return role;
+	    }
+	    if (role === 'list') return 'list';
+	    if (COMPOSITE_ROLES.has(role)) return 'widget';
+	  }
+	  var tagName = element.tagName.toLowerCase();
+	  switch (tagName) {
+	    case 'main':
+	      return 'main';
+	    case 'nav':
+	      return 'navigation';
+	    case 'aside':
+	      return 'complementary';
+	    case 'header':
+	      {
+	        var ancestor = composedParent$1(element);
+	        while (ancestor && isElement$2(ancestor)) {
+	          if (['article', 'aside', 'main', 'nav', 'section'].includes(ancestor.tagName.toLowerCase())) {
+	            return null;
+	          }
+	          ancestor = composedParent$1(ancestor);
+	        }
+	        return 'banner';
+	      }
+	    case 'footer':
+	      {
+	        var _ancestor = composedParent$1(element);
+	        while (_ancestor && isElement$2(_ancestor)) {
+	          if (['article', 'aside', 'main', 'nav', 'section'].includes(_ancestor.tagName.toLowerCase())) {
+	            return null;
+	          }
+	          _ancestor = composedParent$1(_ancestor);
+	        }
+	        return 'contentinfo';
+	      }
+	    case 'section':
+	      return 'section';
+	    case 'article':
+	      return 'article';
+	    case 'form':
+	      return role === 'search' ? 'search' : 'form';
+	    case 'search':
+	      return 'search';
+	    case 'fieldset':
+	      return 'fieldset';
+	    case 'ol':
+	    case 'ul':
+	      return 'list';
+	    default:
+	      return null;
+	  }
+	};
+	var titleCase = function titleCase(value) {
+	  return value.replace(/[-_]+/g, ' ').replace(/\b\w/g, function (character) {
+	    return character.toUpperCase();
+	  });
+	};
+	var firstLegendText = function firstLegendText(element) {
+	  if (element.tagName.toLowerCase() !== 'fieldset') return '';
+	  var legend = Array.from(element.children).find(function (child) {
+	    return child.tagName.toLowerCase() === 'legend';
+	  });
+	  return (legend === null || legend === void 0 ? void 0 : legend.textContent.replace(/\s+/g, ' ').trim()) || '';
+	};
+	var contextFallbackName = function contextFallbackName(type) {
+	  var names = {
+	    banner: 'Header',
+	    complementary: 'Complementary',
+	    contentinfo: 'Footer',
+	    fieldset: 'Fieldset',
+	    form: 'Form',
+	    list: 'List',
+	    main: 'Main',
+	    navigation: 'Navigation',
+	    region: 'Region',
+	    search: 'Search',
+	    section: 'Section',
+	    article: 'Article',
+	    widget: 'Widget'
+	  };
+	  return names[type] || titleCase(type || 'Context');
+	};
+	var contextNameForElement = function contextNameForElement(element, type) {
+	  var associatedHeading = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+	  return firstLegendText(element) || explicitAccessibleName(element) || (associatedHeading === null || associatedHeading === void 0 ? void 0 : associatedHeading.textContent.replace(/\s+/g, ' ').trim()) || contextFallbackName(type);
+	};
+	var makeContext = function makeContext(_ref) {
+	  var id = _ref.id,
+	    name = _ref.name,
+	    type = _ref.type,
+	    source = _ref.source,
+	    _ref$boundary = _ref.boundary,
+	    boundary = _ref$boundary === void 0 ? null : _ref$boundary,
+	    _ref$order = _ref.order,
+	    order = _ref$order === void 0 ? 0 : _ref$order,
+	    _ref$memberTargets = _ref.memberTargets,
+	    memberTargets = _ref$memberTargets === void 0 ? [] : _ref$memberTargets,
+	    _ref$parentHint = _ref.parentHint,
+	    parentHint = _ref$parentHint === void 0 ? null : _ref$parentHint,
+	    _ref$required = _ref.required,
+	    required = _ref$required === void 0 ? false : _ref$required,
+	    _ref$rangeStart = _ref.rangeStart,
+	    rangeStart = _ref$rangeStart === void 0 ? null : _ref$rangeStart,
+	    _ref$rangeEnd = _ref.rangeEnd,
+	    rangeEnd = _ref$rangeEnd === void 0 ? null : _ref$rangeEnd,
+	    _ref$containerContext = _ref.containerContext,
+	    containerContext = _ref$containerContext === void 0 ? null : _ref$containerContext,
+	    _ref$visualElements = _ref.visualElements,
+	    visualElements = _ref$visualElements === void 0 ? [] : _ref$visualElements,
+	    _ref$explicitParentId = _ref.explicitParentId,
+	    explicitParentId = _ref$explicitParentId === void 0 ? null : _ref$explicitParentId,
+	    _ref$headingLevel = _ref.headingLevel,
+	    headingLevel = _ref$headingLevel === void 0 ? null : _ref$headingLevel;
+	  return {
+	    id: id,
+	    name: name,
+	    type: type,
+	    source: source,
+	    boundary: boundary,
+	    order: order,
+	    memberTargets: Array.from(memberTargets),
+	    memberSet: new Set(memberTargets),
+	    parent: parentHint,
+	    children: [],
+	    directTargets: [],
+	    targets: [],
+	    required: required,
+	    rangeStart: rangeStart,
+	    rangeEnd: rangeEnd,
+	    containerContext: containerContext,
+	    visualElements: Array.from(visualElements),
+	    explicitParentId: explicitParentId,
+	    headingLevel: headingLevel
+	  };
+	};
+	var nearestContextBoundary = function nearestContextBoundary(element, boundaryContexts, stopRoot) {
+	  var current = element;
+	  while (current) {
+	    if (boundaryContexts.has(current)) return boundaryContexts.get(current);
+	    if (current === stopRoot) break;
+	    current = composedParent$1(current);
+	  }
+	  return null;
+	};
+	var nearestAncestorContext = function nearestAncestorContext(boundary, boundaryContexts, rootContext) {
+	  var current = composedParent$1(boundary);
+	  while (current) {
+	    if (boundaryContexts.has(current)) return boundaryContexts.get(current);
+	    current = composedParent$1(current);
+	  }
+	  return rootContext;
+	};
+	var resolveContributionValue = function resolveContributionValue(value, details) {
+	  return typeof value === 'function' ? value(details) : value;
+	};
+	var resolveBoundary = function resolveBoundary(descriptor, root, details) {
+	  var _descriptor$boundary, _root$querySelector;
+	  var candidate = resolveContributionValue((_descriptor$boundary = descriptor.boundary) !== null && _descriptor$boundary !== void 0 ? _descriptor$boundary : descriptor.element, details);
+	  if (typeof candidate === 'string') return ((_root$querySelector = root.querySelector) === null || _root$querySelector === void 0 ? void 0 : _root$querySelector.call(root, candidate)) || null;
+	  return isElement$2(candidate) || isShadowRoot$2(candidate) || isDocument$2(candidate) ? candidate : null;
+	};
+	var resolveMembers = function resolveMembers(descriptor, boundary, root, targets, details) {
+	  var _descriptor$targets;
+	  var configured = resolveContributionValue((_descriptor$targets = descriptor.targets) !== null && _descriptor$targets !== void 0 ? _descriptor$targets : descriptor.members, details);
+	  if (typeof configured === 'string') {
+	    var _root$querySelectorAl;
+	    configured = Array.from(((_root$querySelectorAl = root.querySelectorAll) === null || _root$querySelectorAl === void 0 ? void 0 : _root$querySelectorAl.call(root, configured)) || []);
+	  }
+	  if (configured) {
+	    var allowed = new Set(targets);
+	    return Array.from(configured).filter(function (target) {
+	      return allowed.has(target);
+	    }).filter(function (target, index, values) {
+	      return values.indexOf(target) === index;
+	    });
+	  }
+	  if (boundary) {
+	    return targets.filter(function (target) {
+	      return isComposedWithin(boundary, target);
+	    });
+	  }
+	  return [];
+	};
+	var setsOverlap = function setsOverlap(left, right) {
+	  var _iterator = _createForOfIteratorHelper(left),
+	    _step;
+	  try {
+	    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	      var value = _step.value;
+	      if (right.has(value)) return true;
+	    }
+	  } catch (err) {
+	    _iterator.e(err);
+	  } finally {
+	    _iterator.f();
+	  }
+	  return false;
+	};
+	var setsEqual = function setsEqual(left, right) {
+	  return left.size === right.size && isSubset(left, right);
+	};
+	var isSubset = function isSubset(candidate, container) {
+	  var _iterator2 = _createForOfIteratorHelper(candidate),
+	    _step2;
+	  try {
+	    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+	      var value = _step2.value;
+	      if (!container.has(value)) return false;
+	    }
+	  } catch (err) {
+	    _iterator2.e(err);
+	  } finally {
+	    _iterator2.f();
+	  }
+	  return true;
+	};
+	var contextDepth = function contextDepth(context) {
+	  var depth = 0;
+	  var current = context;
+	  var seen = new Set();
+	  while ((_current = current) !== null && _current !== void 0 && _current.parent && !seen.has(current)) {
+	    var _current;
+	    seen.add(current);
+	    depth += 1;
+	    current = current.parent;
+	  }
+	  return depth;
+	};
+	var isContextAncestor = function isContextAncestor(ancestor, context) {
+	  var current = context;
+	  var seen = new Set();
+	  while (current && !seen.has(current)) {
+	    if (current === ancestor) return true;
+	    seen.add(current);
+	    current = current.parent;
+	  }
+	  return false;
+	};
+	var normalizeTypedContexts = function normalizeTypedContexts(descriptors, details, targets) {
+	  var targetSet = new Set(targets);
+	  var contexts = [];
+	  Array.from(descriptors || []).forEach(function (descriptor, registrationOrder) {
+	    var _descriptor$targets2;
+	    if (!descriptor || descriptor.id === null || typeof descriptor.id === 'undefined') {
+	      return;
+	    }
+	    if (typeof descriptor.isValid === 'function' && !descriptor.isValid(details)) {
+	      return;
+	    }
+	    var resolvedTargets = resolveContributionValue((_descriptor$targets2 = descriptor.targets) !== null && _descriptor$targets2 !== void 0 ? _descriptor$targets2 : descriptor.resolveTargets, details);
+	    var seen = new Set();
+	    var liveTargets = Array.from(resolvedTargets || []).filter(function (target) {
+	      if (seen.has(target) || !targetSet.has(target) || !target.isConnected) {
+	        return false;
+	      }
+	      seen.add(target);
+	      return true;
+	    });
+	    if (!liveTargets.length) return;
+	    contexts.push({
+	      id: String(descriptor.id),
+	      name: descriptor.name || descriptor.type || 'Peer context',
+	      type: descriptor.type || 'application',
+	      provenance: descriptor.provenance || 'application configuration',
+	      priority: Number.isFinite(Number(descriptor.priority)) ? Number(descriptor.priority) : registrationOrder,
+	      registrationOrder: registrationOrder,
+	      targets: liveTargets
+	    });
+	  });
+	  contexts.sort(function (left, right) {
+	    return left.priority - right.priority || left.registrationOrder - right.registrationOrder;
+	  });
+	  return contexts;
+	};
+
+	/**
+	 * Builds a deterministic structural tree over one ordered target inventory.
+	 * Contexts are routing metadata; targets are always the original Element
+	 * identities supplied by the discovery boundary.
+	 */
+	structuralModel.buildStructuralModel = function buildStructuralModel() {
+	  var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+	    root = _ref2.root,
+	    _ref2$targets = _ref2.targets,
+	    targets = _ref2$targets === void 0 ? [] : _ref2$targets,
+	    _ref2$structuralConte = _ref2.structuralContexts,
+	    structuralContexts = _ref2$structuralConte === void 0 ? [] : _ref2$structuralConte,
+	    _ref2$typedContexts = _ref2.typedContexts,
+	    typedContexts = _ref2$typedContexts === void 0 ? [] : _ref2$typedContexts,
+	    _ref2$previousModel = _ref2.previousModel,
+	    previousModel = _ref2$previousModel === void 0 ? null : _ref2$previousModel;
+	  if (!root || !isDocument$2(root) && !isElement$2(root) && !isShadowRoot$2(root)) {
+	    throw new TypeError('buildStructuralModel requires an Element, Document, or ShadowRoot root.');
+	  }
+	  var liveTargets = Array.from(targets).filter(function (target) {
+	    return (target === null || target === void 0 ? void 0 : target.isConnected) && isComposedWithin(root, target);
+	  }).filter(function (target, index, values) {
+	    return values.indexOf(target) === index;
+	  });
+	  var elements = composedElements(root);
+	  var orderByElement = new Map(elements.map(function (element, index) {
+	    return [element, index];
+	  }));
+	  var targetOrder = function targetOrder(target) {
+	    return orderByElement.has(target) ? orderByElement.get(target) : Number.MAX_SAFE_INTEGER;
+	  };
+	  var rootName = isDocument$2(root) ? 'Document' : isElement$2(root) ? contextNameForElement(root, contextTypeForElement(root) || 'region') : 'Shadow root';
+	  var rootContext = makeContext({
+	    id: stableBoundaryId(root, 'root'),
+	    name: rootName,
+	    type: 'root',
+	    source: 'root',
+	    boundary: root,
+	    memberTargets: liveTargets,
+	    order: -1,
+	    required: true
+	  });
+	  var boundaryContexts = new Map();
+	  var automaticContexts = [];
+
+	  // Identify explicit semantic boundaries first so associated headings and
+	  // structural parents can be resolved deterministically.
+	  elements.forEach(function (element) {
+	    // An Element supplied as the active root is already represented by the
+	    // root context. Re-inferring it would create two contexts for one boundary.
+	    if (element === root) return;
+	    if (isSemanticallyHidden(element, root)) return;
+	    var type = contextTypeForElement(element);
+	    if (!type) return;
+	    var memberTargets = liveTargets.filter(function (target) {
+	      return isComposedWithin(element, target);
+	    });
+	    if (!memberTargets.length) return;
+	    var context = makeContext({
+	      id: stableBoundaryId(element, 'context'),
+	      name: '',
+	      type: type,
+	      source: 'semantic',
+	      boundary: element,
+	      memberTargets: memberTargets,
+	      order: orderByElement.get(element)
+	    });
+	    boundaryContexts.set(element, context);
+	    automaticContexts.push(context);
+	  });
+	  var headings = elements.filter(function (element) {
+	    return headingRank(element) !== null && !isSemanticallyHidden(element, root) && isOperativeSemanticElement(element, root);
+	  });
+	  automaticContexts.forEach(function (context) {
+	    var directHeadings = headings.filter(function (heading) {
+	      return isComposedWithin(context.boundary, heading) && nearestContextBoundary(composedParent$1(heading), boundaryContexts, root) === context;
+	    });
+	    var labelledHeadingIds = new Set((context.boundary.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean));
+	    var explicitlyAssociated = directHeadings.find(function (heading) {
+	      return heading.id && labelledHeadingIds.has(heading.id);
+	    });
+	    var leadingHeading = directHeadings.find(function (heading) {
+	      var headingOrder = orderByElement.get(heading);
+	      return !context.memberTargets.some(function (target) {
+	        return targetOrder(target) < headingOrder;
+	      });
+	    });
+	    var ownHeading = explicitlyAssociated || leadingHeading || null;
+	    context.associatedHeading = ownHeading || null;
+	    context.headingLevel = ownHeading ? headingRank(ownHeading) : null;
+	    context.name = contextNameForElement(context.boundary, context.type, context.associatedHeading);
+	  });
+	  var allContexts = [rootContext].concat(automaticContexts);
+	  var details = {
+	    root: root,
+	    targets: liveTargets.slice(),
+	    previousModel: previousModel
+	  };
+
+	  // Application contexts merge with the same DOM boundary where possible;
+	  // otherwise they contribute an explicit ordered membership boundary.
+	  Array.from(structuralContexts || []).forEach(function (descriptor, index) {
+	    if (!descriptor || descriptor.id === null || typeof descriptor.id === 'undefined') {
+	      return;
+	    }
+	    if (typeof descriptor.isValid === 'function' && !descriptor.isValid(details)) {
+	      return;
+	    }
+	    var boundary = resolveBoundary(descriptor, root, details);
+	    var memberTargets = resolveMembers(descriptor, boundary, root, liveTargets, details);
+	    if (!memberTargets.length) return;
+	    var existing = boundary && boundaryContexts.get(boundary);
+	    var order = Number.isFinite(Number(descriptor.order)) ? Number(descriptor.order) : boundary && orderByElement.has(boundary) ? orderByElement.get(boundary) : Math.min.apply(Math, _toConsumableArray$2(memberTargets.map(targetOrder)));
+	    if (!Number.isFinite(order)) {
+	      throw new TypeError("Structural context \"".concat(descriptor.id, "\" requires a deterministic order."));
+	    }
+	    if (existing) {
+	      existing.id = String(descriptor.id);
+	      existing.name = descriptor.name || existing.name;
+	      existing.type = descriptor.type || existing.type;
+	      existing.source = 'application';
+	      existing.required = Boolean(descriptor.required || descriptor.preserve || descriptor.selectable);
+	      existing.memberTargets = memberTargets;
+	      existing.memberSet = new Set(memberTargets);
+	      existing.explicitParentId = descriptor.parentId || null;
+	      existing.order = order;
+	      var _configuredHeadingLevel = Number(descriptor.headingLevel);
+	      if (Number.isInteger(_configuredHeadingLevel) && _configuredHeadingLevel > 0) {
+	        existing.headingLevel = _configuredHeadingLevel;
+	      }
+	      return;
+	    }
+	    var configuredHeadingLevel = Number(descriptor.headingLevel);
+	    var applicationHeadingLevel = Number.isInteger(configuredHeadingLevel) && configuredHeadingLevel > 0 ? configuredHeadingLevel : headingRank(boundary);
+	    var context = makeContext({
+	      id: String(descriptor.id),
+	      name: descriptor.name || descriptor.type || 'Application context',
+	      type: descriptor.type || 'application',
+	      source: 'application',
+	      boundary: boundary,
+	      memberTargets: memberTargets,
+	      order: order + index / 100000,
+	      required: Boolean(descriptor.required || descriptor.preserve || descriptor.selectable),
+	      explicitParentId: descriptor.parentId || null,
+	      headingLevel: applicationHeadingLevel
+	    });
+	    if (boundary) boundaryContexts.set(boundary, context);
+	    allContexts.push(context);
+	  });
+	  var contextByIdBeforeRanges = new Map(allContexts.map(function (context) {
+	    return [context.id, context];
+	  }));
+
+	  // Establish the ordinary explicit-container ancestry.
+	  allContexts.slice(1).forEach(function (context) {
+	    if (context.explicitParentId) {
+	      context.parent = contextByIdBeforeRanges.get(String(context.explicitParentId)) || rootContext;
+	    } else if (context.boundary) {
+	      context.parent = nearestAncestorContext(context.boundary, boundaryContexts, rootContext);
+	    } else {
+	      var containers = allContexts.filter(function (candidate) {
+	        return candidate !== context;
+	      }).filter(function (candidate) {
+	        return isSubset(context.memberSet, candidate.memberSet);
+	      }).sort(function (left, right) {
+	        return left.memberSet.size - right.memberSet.size || right.order - left.order;
+	      });
+	      context.parent = containers[0] || rootContext;
+	    }
+	    if (context.parent === context) context.parent = rootContext;
+	  });
+
+	  // Heading contexts are ordered ranges within the nearest explicit semantic
+	  // container. Native section headings associated with that same boundary are
+	  // deliberately merged into the explicit context and skipped here.
+	  var containerContexts = [rootContext].concat(_toConsumableArray$2(allContexts.slice(1).filter(function (context) {
+	    return context.boundary;
+	  })));
+	  var headingContexts = [];
+	  containerContexts.forEach(function (container) {
+	    var boundary = container.boundary;
+	    var containerHeadings = headings.filter(function (heading) {
+	      if (heading === container.associatedHeading) return false;
+	      if (!isComposedWithin(boundary, heading)) return false;
+	      var nearest = nearestContextBoundary(composedParent$1(heading), boundaryContexts, root);
+	      return (nearest || rootContext) === container;
+	    });
+	    if (!containerHeadings.length) return;
+	    var scopeOrders = elements.filter(function (element) {
+	      return isComposedWithin(boundary, element);
+	    }).map(function (element) {
+	      return orderByElement.get(element);
+	    });
+	    var scopeEnd = scopeOrders.length ? Math.max.apply(Math, _toConsumableArray$2(scopeOrders)) + 1 : elements.length + 1;
+	    var stack = [];
+	    containerHeadings.forEach(function (heading) {
+	      var level = headingRank(heading);
+	      var start = orderByElement.get(heading);
+	      var _loop = function _loop() {
+	        var closing = stack.pop();
+	        closing.context.rangeEnd = start;
+	        closing.context.memberTargets = liveTargets.filter(function (target) {
+	          return targetOrder(target) >= closing.context.rangeStart && targetOrder(target) < closing.context.rangeEnd && container.memberSet.has(target);
+	        });
+	        closing.context.memberSet = new Set(closing.context.memberTargets);
+	      };
+	      while (stack.length && stack[stack.length - 1].level >= level) {
+	        _loop();
+	      }
+	      var context = makeContext({
+	        id: stableBoundaryId(heading, 'heading'),
+	        name: heading.textContent.replace(/\s+/g, ' ').trim() || "Heading level ".concat(level),
+	        type: 'heading',
+	        source: 'heading',
+	        boundary: heading,
+	        order: start,
+	        memberTargets: [],
+	        parentHint: stack.length ? stack[stack.length - 1].context : container,
+	        rangeStart: start,
+	        rangeEnd: scopeEnd,
+	        containerContext: container,
+	        headingLevel: level
+	      });
+	      headingContexts.push(context);
+	      stack.push({
+	        level: level,
+	        context: context
+	      });
+	    });
+	    var _loop2 = function _loop2() {
+	      var closing = stack.pop();
+	      closing.context.rangeEnd = scopeEnd;
+	      closing.context.memberTargets = liveTargets.filter(function (target) {
+	        return targetOrder(target) >= closing.context.rangeStart && targetOrder(target) < closing.context.rangeEnd && container.memberSet.has(target);
+	      });
+	      closing.context.memberSet = new Set(closing.context.memberTargets);
+	    };
+	    while (stack.length) {
+	      _loop2();
+	    }
+	  });
+
+	  // Preserve the authored visual range for heading-only contexts. The
+	  // controller uses this to draw one context indicator around the heading and
+	  // all of its content without turning any of those elements into focus stops.
+	  headingContexts.forEach(function (context) {
+	    context.visualElements = elements.filter(function (element) {
+	      var order = orderByElement.get(element);
+	      return order >= context.rangeStart && order < context.rangeEnd && isComposedWithin(context.containerContext.boundary, element);
+	    });
+	  });
+	  headingContexts.filter(function (context) {
+	    return context.memberTargets.length;
+	  }).forEach(function (context) {
+	    return allContexts.push(context);
+	  });
+
+	  // Lists remain a single context when every nonempty item has exactly one
+	  // target. Richer lists receive item child contexts.
+	  var listItemContexts = [];
+	  automaticContexts.filter(function (context) {
+	    return context.type === 'list';
+	  }).forEach(function (listContext) {
+	    var listItems = elements.filter(function (element) {
+	      var tagName = element.tagName.toLowerCase();
+	      var role = (element.getAttribute('role') || '').toLowerCase();
+	      if (SUPPRESSED_ROLES.has(role)) return false;
+	      if (role !== 'listitem' && (tagName !== 'li' || Boolean(role))) {
+	        return false;
+	      }
+	      var current = composedParent$1(element);
+	      while (current) {
+	        var currentContext = boundaryContexts.get(current);
+	        if ((currentContext === null || currentContext === void 0 ? void 0 : currentContext.type) === 'list') return currentContext === listContext;
+	        current = composedParent$1(current);
+	      }
+	      return false;
+	    });
+	    var items = listItems.map(function (element, index) {
+	      return {
+	        element: element,
+	        index: index,
+	        targets: liveTargets.filter(function (target) {
+	          return isComposedWithin(element, target);
+	        })
+	      };
+	    }).filter(function (item) {
+	      return item.targets.length;
+	    });
+	    var hasRichItem = items.some(function (item) {
+	      if (item.targets.length > 1) return true;
+	      return allContexts.some(function (context) {
+	        return context !== listContext && context.boundary && isComposedWithin(item.element, context.boundary) && context.memberTargets.length;
+	      });
+	    });
+	    if (items.length < 2 || !hasRichItem) return;
+	    items.forEach(function (item) {
+	      var text = item.element.textContent.replace(/\s+/g, ' ').trim();
+	      listItemContexts.push(makeContext({
+	        id: stableBoundaryId(item.element, 'list-item'),
+	        name: text.slice(0, 60) || "Item ".concat(item.index + 1),
+	        type: 'listitem',
+	        source: 'list-item',
+	        boundary: item.element,
+	        order: orderByElement.get(item.element),
+	        memberTargets: item.targets,
+	        parentHint: listContext
+	      }));
+	    });
+	  });
+	  listItemContexts.forEach(function (context) {
+	    return allContexts.push(context);
+	  });
+
+	  // Put explicit child boundaries into the applicable heading range and rich
+	  // list-item context. These are range/containment parents, not focus stops.
+	  var rangeParents = [].concat(_toConsumableArray$2(headingContexts.filter(function (context) {
+	    return context.memberTargets.length;
+	  })), listItemContexts);
+	  allContexts.slice(1).forEach(function (context) {
+	    if (rangeParents.includes(context)) return;
+	    var candidates = rangeParents.filter(function (parent) {
+	      return parent !== context;
+	    }).filter(function (parent) {
+	      if (parent.source === 'heading') {
+	        var boundaryOrder = context.boundary ? orderByElement.get(context.boundary) : context.order;
+	        return boundaryOrder >= parent.rangeStart && boundaryOrder < parent.rangeEnd && isSubset(context.memberSet, parent.memberSet);
+	      }
+	      return context.boundary && isComposedWithin(parent.boundary, context.boundary) && isSubset(context.memberSet, parent.memberSet);
+	    }).sort(function (left, right) {
+	      return left.memberSet.size - right.memberSet.size || left.rangeEnd - left.rangeStart - (right.rangeEnd - right.rangeStart);
+	    });
+	    var selected = candidates[0];
+	    if (selected && selected !== context.parent && !isContextAncestor(context, selected)) {
+	      context.parent = selected;
+	    }
+	  });
+	  var usableContexts = [rootContext];
+	  var rejectedContexts = [];
+	  var orderedCandidates = allContexts.slice(1).filter(function (context) {
+	    return context.memberTargets.length;
+	  }).sort(function (left, right) {
+	    return Number(right.required) - Number(left.required) || Number(Boolean(right.boundary)) - Number(Boolean(left.boundary)) || left.order - right.order;
+	  });
+
+	  // Reject partial sibling overlap instead of forcing it into the structural
+	  // tree. Typed contexts are the supported representation for such relations.
+	  orderedCandidates.forEach(function (context) {
+	    if (!context.parent || context.parent === context) context.parent = rootContext;
+	    var siblings = usableContexts.filter(function (candidate) {
+	      return candidate.parent === context.parent;
+	    });
+	    var invalidOverlap = siblings.some(function (sibling) {
+	      return setsOverlap(context.memberSet, sibling.memberSet) && !isSubset(context.memberSet, sibling.memberSet) && !isSubset(sibling.memberSet, context.memberSet);
+	    });
+	    if (invalidOverlap) {
+	      rejectedContexts.push(context);
+	      return;
+	    }
+	    usableContexts.push(context);
+	  });
+	  usableContexts.forEach(function (context) {
+	    context.children = [];
+	    context.directTargets = [];
+	    context.targets = [];
+	  });
+	  usableContexts.slice(1).forEach(function (context) {
+	    if (!usableContexts.includes(context.parent)) context.parent = rootContext;
+	    context.parent.children.push(context);
+	  });
+	  usableContexts.forEach(function (context) {
+	    context.children.sort(function (left, right) {
+	      return left.order - right.order;
+	    });
+	  });
+
+	  // Collapse a redundant unary child when it represents exactly the same
+	  // target sequence as its parent. Required application contexts are retained.
+	  // Repeat bottom-up because collapsing one layer can expose another.
+	  var collapsedContext = true;
+	  while (collapsedContext) {
+	    collapsedContext = false;
+	    var bottomUp = usableContexts.slice(1).sort(function (left, right) {
+	      return contextDepth(right) - contextDepth(left);
+	    });
+	    var _iterator3 = _createForOfIteratorHelper(bottomUp),
+	      _step3;
+	    try {
+	      var _loop3 = function _loop3() {
+	          var _parent$children;
+	          var context = _step3.value;
+	          var parent = context.parent;
+	          if (context.required || context.headingLevel !== null || !parent || parent.children.length !== 1 || !setsEqual(context.memberSet, parent.memberSet)) {
+	            return 0; // continue
+	          }
+	          var childIndex = parent.children.indexOf(context);
+	          context.children.forEach(function (child) {
+	            child.parent = parent;
+	          });
+	          (_parent$children = parent.children).splice.apply(_parent$children, [childIndex, 1].concat(_toConsumableArray$2(context.children)));
+	          parent.children.sort(function (left, right) {
+	            return left.order - right.order;
+	          });
+	          usableContexts.splice(usableContexts.indexOf(context), 1);
+	          collapsedContext = true;
+	          return 1; // break
+	        },
+	        _ret;
+	      for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+	        _ret = _loop3();
+	        if (_ret === 0) continue;
+	        if (_ret === 1) break;
+	      }
+	    } catch (err) {
+	      _iterator3.e(err);
+	    } finally {
+	      _iterator3.f();
+	    }
+	  }
+	  var _deepestContextForTarget = function deepestContextForTarget(context, target) {
+	    var children = context.children.filter(function (child) {
+	      return child.memberSet.has(target);
+	    });
+	    if (!children.length) return context;
+	    children.sort(function (left, right) {
+	      return contextDepth(right) - contextDepth(left) || left.memberSet.size - right.memberSet.size || left.order - right.order;
+	    });
+	    return _deepestContextForTarget(children[0], target);
+	  };
+	  var directContextByTarget = new Map();
+	  liveTargets.forEach(function (target) {
+	    var direct = _deepestContextForTarget(rootContext, target);
+	    directContextByTarget.set(target, direct);
+	    direct.directTargets.push(target);
+	  });
+	  usableContexts.forEach(function (context) {
+	    context.targets = liveTargets.filter(function (target) {
+	      return isContextAncestor(context, directContextByTarget.get(target));
+	    });
+	  });
+	  var contexts = new Map(usableContexts.map(function (context) {
+	    return [context.id, context];
+	  }));
+	  var normalizedTyped = normalizeTypedContexts(typedContexts, details, liveTargets);
+	  var typedContextMap = new Map(normalizedTyped.map(function (context) {
+	    return [context.id, context];
+	  }));
+	  var typedContextsByTarget = new Map();
+	  liveTargets.forEach(function (target) {
+	    typedContextsByTarget.set(target, normalizedTyped.filter(function (context) {
+	      return context.targets.includes(target);
+	    }));
+	  });
+	  return {
+	    root: root,
+	    targets: liveTargets,
+	    rootContext: rootContext,
+	    contexts: contexts,
+	    directContextByTarget: directContextByTarget,
+	    typedContexts: typedContextMap,
+	    typedContextsByTarget: typedContextsByTarget,
+	    rejectedContexts: rejectedContexts,
+	    getDirectContext: function getDirectContext(target) {
+	      return directContextByTarget.get(target) || null;
+	    },
+	    getTypedContexts: function getTypedContexts(target) {
+	      return typedContextsByTarget.get(target) || [];
+	    }
+	  };
+	};
+
+	var tabbableTargets = {};
+
+	/*!
+	* tabbable 6.5.0
+	* @license MIT, https://github.com/focus-trap/tabbable/blob/master/LICENSE
+	*/
+	// NOTE: separate `:not()` selectors has broader browser support than the newer
+	//  `:not([inert], [inert] *)` (Feb 2023)
+	var candidateSelectors = ['input:not([inert]):not([inert] *)', 'select:not([inert]):not([inert] *)', 'textarea:not([inert]):not([inert] *)', 'a[href]:not([inert]):not([inert] *)', 'area[href]:not([inert]):not([inert] *)', 'button:not([inert]):not([inert] *)', '[tabindex]:not(slot):not([inert]):not([inert] *)', 'audio[controls]:not([inert]):not([inert] *)', 'video[controls]:not([inert]):not([inert] *)', '[contenteditable]:not([contenteditable="false"]):not([inert]):not([inert] *)', 'details>summary:first-of-type:not([inert]):not([inert] *)', 'details:not([inert]):not([inert] *)'];
+	var candidateSelector = /* #__PURE__ */candidateSelectors.join(',');
+	var NoElement = typeof Element === 'undefined';
+	var matches = NoElement ? function () {} : Element.prototype.matches || Element.prototype.msMatchesSelector || Element.prototype.webkitMatchesSelector;
+	var getRootNode = !NoElement && Element.prototype.getRootNode ? function (element) {
+	  var _element$getRootNode;
+	  return element === null || element === void 0 ? void 0 : (_element$getRootNode = element.getRootNode) === null || _element$getRootNode === void 0 ? void 0 : _element$getRootNode.call(element);
+	} : function (element) {
+	  return element === null || element === void 0 ? void 0 : element.ownerDocument;
+	};
+
+	/**
+	 * Determines if a node is inert or in an inert ancestor.
+	 * @param {Node} [node]
+	 * @param {boolean} [lookUp] If true and `node` is not inert, looks up at ancestors to
+	 *  see if any of them are inert. If false, only `node` itself is considered.
+	 * @returns {boolean} True if inert itself or by way of being in an inert ancestor.
+	 *  False if `node` is falsy.
+	 */
+	var _isInert = function isInert(node, lookUp) {
+	  var _node$getAttribute;
+	  if (lookUp === void 0) {
+	    lookUp = true;
+	  }
+	  // CAREFUL: JSDom does not support inert at all, so we can't use the `HTMLElement.inert`
+	  //  JS API property; we have to check the attribute, which can either be empty or 'true';
+	  //  if it's `null` (not specified) or 'false', it's an active element
+	  var inertAtt = node === null || node === void 0 ? void 0 : (_node$getAttribute = node.getAttribute) === null || _node$getAttribute === void 0 ? void 0 : _node$getAttribute.call(node, 'inert');
+	  var inert = inertAtt === '' || inertAtt === 'true';
+
+	  // NOTE: this could also be handled with `node.matches('[inert], :is([inert] *)')`
+	  //  if it weren't for `matches()` not being a function on shadow roots; the following
+	  //  code works for any kind of node
+	  var result = inert || lookUp && node && (
+	  // closest does not exist on shadow roots, so we fall back to a manual
+	  // lookup upward, in case it is not defined.
+	  typeof node.closest === 'function' ? node.closest('[inert]') : _isInert(node.parentNode));
+	  return result;
+	};
+
+	/**
+	 * Determines if a node's content is editable.
+	 * @param {Element} [node]
+	 * @returns True if it's content-editable; false if it's not or `node` is falsy.
+	 */
+	var isContentEditable = function isContentEditable(node) {
+	  var _node$getAttribute2;
+	  // CAREFUL: JSDom does not support the `HTMLElement.isContentEditable` API so we have
+	  //  to use the attribute directly to check for this, which can either be empty or 'true';
+	  //  if it's `null` (not specified) or 'false', it's a non-editable element
+	  var attValue = node === null || node === void 0 ? void 0 : (_node$getAttribute2 = node.getAttribute) === null || _node$getAttribute2 === void 0 ? void 0 : _node$getAttribute2.call(node, 'contenteditable');
+	  return attValue === '' || attValue === 'true';
+	};
+
+	/**
+	 * @param {Element} el container to check in
+	 * @param {boolean} includeContainer add container to check
+	 * @param {(node: Element) => boolean} filter filter candidates
+	 * @returns {Element[]}
+	 */
+	var getCandidates = function getCandidates(el, includeContainer, filter) {
+	  // even if `includeContainer=false`, we still have to check it for inertness because
+	  //  if it's inert (either by itself or via its parent), then all its children are inert
+	  if (_isInert(el)) {
+	    return [];
+	  }
+	  var candidates = Array.prototype.slice.apply(el.querySelectorAll(candidateSelector));
+	  if (includeContainer && matches.call(el, candidateSelector)) {
+	    candidates.unshift(el);
+	  }
+	  candidates = candidates.filter(filter);
+	  return candidates;
+	};
+
+	/**
+	 * @callback GetShadowRoot
+	 * @param {Element} element to check for shadow root
+	 * @returns {ShadowRoot|boolean} ShadowRoot if available or boolean indicating if a shadowRoot is attached but not available.
+	 */
+
+	/**
+	 * @callback ShadowRootFilter
+	 * @param {Element} shadowHostNode the element which contains shadow content
+	 * @returns {boolean} true if a shadow root could potentially contain valid candidates.
+	 */
+
+	/**
+	 * @typedef {Object} CandidateScope
+	 * @property {Element} scopeParent contains inner candidates
+	 * @property {Element[]} candidates list of candidates found in the scope parent
+	 */
+
+	/**
+	 * @typedef {Object} IterativeOptions
+	 * @property {GetShadowRoot|boolean} getShadowRoot true if shadow support is enabled; falsy if not;
+	 *  if a function, implies shadow support is enabled and either returns the shadow root of an element
+	 *  or a boolean stating if it has an undisclosed shadow root
+	 * @property {(node: Element) => boolean} filter filter candidates
+	 * @property {boolean} flatten if true then result will flatten any CandidateScope into the returned list
+	 * @property {ShadowRootFilter} shadowRootFilter filter shadow roots;
+	 */
+
+	/**
+	 * @param {Element[]} elements list of element containers to match candidates from
+	 * @param {boolean} includeContainer add container list to check
+	 * @param {IterativeOptions} options
+	 * @returns {Array.<Element|CandidateScope>}
+	 */
+	var _getCandidatesIteratively = function getCandidatesIteratively(elements, includeContainer, options) {
+	  var candidates = [];
+	  var elementsToCheck = Array.from(elements);
+	  while (elementsToCheck.length) {
+	    var element = elementsToCheck.shift();
+	    if (_isInert(element, false)) {
+	      // no need to look up since we're drilling down
+	      // anything inside this container will also be inert
+	      continue;
+	    }
+	    if (element.tagName === 'SLOT') {
+	      // add shadow dom slot scope (slot itself cannot be focusable)
+	      var assigned = element.assignedElements();
+	      var content = assigned.length ? assigned : element.children;
+	      var nestedCandidates = _getCandidatesIteratively(content, true, options);
+	      if (options.flatten) {
+	        candidates.push.apply(candidates, nestedCandidates);
+	      } else {
+	        candidates.push({
+	          scopeParent: element,
+	          candidates: nestedCandidates
+	        });
+	      }
+	    } else {
+	      // check candidate element
+	      var validCandidate = matches.call(element, candidateSelector);
+	      if (validCandidate && options.filter(element) && (includeContainer || !elements.includes(element))) {
+	        candidates.push(element);
+	      }
+
+	      // iterate over shadow content if possible
+	      var shadowRoot = element.shadowRoot ||
+	      // check for an undisclosed shadow
+	      typeof options.getShadowRoot === 'function' && options.getShadowRoot(element);
+
+	      // no inert look up because we're already drilling down and checking for inertness
+	      //  on the way down, so all containers to this root node should have already been
+	      //  vetted as non-inert
+	      var validShadowRoot = !_isInert(shadowRoot, false) && (!options.shadowRootFilter || options.shadowRootFilter(element));
+	      if (shadowRoot && validShadowRoot) {
+	        // add shadow dom scope IIF a shadow root node was given; otherwise, an undisclosed
+	        //  shadow exists, so look at light dom children as fallback BUT create a scope for any
+	        //  child candidates found because they're likely slotted elements (elements that are
+	        //  children of the web component element (which has the shadow), in the light dom, but
+	        //  slotted somewhere _inside_ the undisclosed shadow) -- the scope is created below,
+	        //  _after_ we return from this recursive call
+	        var _nestedCandidates = _getCandidatesIteratively(shadowRoot === true ? element.children : shadowRoot.children, true, options);
+	        if (options.flatten) {
+	          candidates.push.apply(candidates, _nestedCandidates);
+	        } else {
+	          candidates.push({
+	            scopeParent: element,
+	            candidates: _nestedCandidates
+	          });
+	        }
+	      } else {
+	        // there's not shadow so just dig into the element's (light dom) children
+	        //  __without__ giving the element special scope treatment
+	        elementsToCheck.unshift.apply(elementsToCheck, element.children);
+	      }
+	    }
+	  }
+	  return candidates;
+	};
+
+	/**
+	 * @private
+	 * Determines if the node has an explicitly specified `tabindex` attribute.
+	 * @param {HTMLElement} node
+	 * @returns {boolean} True if so; false if not.
+	 */
+	var hasTabIndex = function hasTabIndex(node) {
+	  return !isNaN(parseInt(node.getAttribute('tabindex'), 10));
+	};
+
+	/**
+	 * Determine the tab index of a given node.
+	 * @param {HTMLElement} node
+	 * @returns {number} Tab order (negative, 0, or positive number).
+	 * @throws {Error} If `node` is falsy.
+	 */
+	var getTabIndex = function getTabIndex(node) {
+	  if (!node) {
+	    throw new Error('No node provided');
+	  }
+	  if (node.tabIndex < 0) {
+	    // in Chrome, <details/>, <audio controls/> and <video controls/> elements get a default
+	    // `tabIndex` of -1 when the 'tabindex' attribute isn't specified in the DOM,
+	    // yet they are still part of the regular tab order; in FF, they get a default
+	    // `tabIndex` of 0; since Chrome still puts those elements in the regular tab
+	    // order, consider their tab index to be 0.
+	    // Also browsers do not return `tabIndex` correctly for contentEditable nodes;
+	    // so if they don't have a tabindex attribute specifically set, assume it's 0.
+	    if ((/^(AUDIO|VIDEO|DETAILS)$/.test(node.tagName) || isContentEditable(node)) && !hasTabIndex(node)) {
+	      return 0;
+	    }
+	  }
+	  return node.tabIndex;
+	};
+
+	/**
+	 * Determine the tab index of a given node __for sort order purposes__.
+	 * @param {HTMLElement} node
+	 * @param {boolean} [isScope] True for a custom element with shadow root or slot that, by default,
+	 *  has tabIndex -1, but needs to be sorted by document order in order for its content to be
+	 *  inserted into the correct sort position.
+	 * @returns {number} Tab order (negative, 0, or positive number).
+	 */
+	var getSortOrderTabIndex = function getSortOrderTabIndex(node, isScope) {
+	  var tabIndex = getTabIndex(node);
+	  if (tabIndex < 0 && isScope && !hasTabIndex(node)) {
+	    return 0;
+	  }
+	  return tabIndex;
+	};
+	var sortOrderedTabbables = function sortOrderedTabbables(a, b) {
+	  return a.tabIndex === b.tabIndex ? a.documentOrder - b.documentOrder : a.tabIndex - b.tabIndex;
+	};
+	var isInput = function isInput(node) {
+	  return node.tagName === 'INPUT';
+	};
+	var isHiddenInput = function isHiddenInput(node) {
+	  return isInput(node) && node.type === 'hidden';
+	};
+	var isDetailsWithSummary = function isDetailsWithSummary(node) {
+	  var r = node.tagName === 'DETAILS' && Array.prototype.slice.apply(node.children).some(function (child) {
+	    return child.tagName === 'SUMMARY';
+	  });
+	  return r;
+	};
+	var getCheckedRadio = function getCheckedRadio(nodes, form) {
+	  for (var i = 0; i < nodes.length; i++) {
+	    if (nodes[i].checked && nodes[i].form === form) {
+	      return nodes[i];
+	    }
+	  }
+	};
+	var isTabbableRadio = function isTabbableRadio(node) {
+	  if (!node.name) {
+	    return true;
+	  }
+	  var radioScope = node.form || getRootNode(node);
+	  var queryRadios = function queryRadios(name) {
+	    return radioScope.querySelectorAll('input[type="radio"][name="' + name + '"]');
+	  };
+	  var radioSet;
+	  if (typeof window !== 'undefined' && typeof window.CSS !== 'undefined' && typeof window.CSS.escape === 'function') {
+	    radioSet = queryRadios(window.CSS.escape(node.name));
+	  } else {
+	    try {
+	      radioSet = queryRadios(node.name);
+	    } catch (err) {
+	      // eslint-disable-next-line no-console
+	      console.error('Looks like you have a radio button with a name attribute containing invalid CSS selector characters and need the CSS.escape polyfill: %s', err.message);
+	      return false;
+	    }
+	  }
+	  var checked = getCheckedRadio(radioSet, node.form);
+	  return !checked || checked === node;
+	};
+	var isRadio = function isRadio(node) {
+	  return isInput(node) && node.type === 'radio';
+	};
+	var isNonTabbableRadio = function isNonTabbableRadio(node) {
+	  return isRadio(node) && !isTabbableRadio(node);
+	};
+
+	// determines if a node is ultimately attached to the window's document
+	var isNodeAttached = function isNodeAttached(node) {
+	  var _nodeRoot;
+	  // The root node is the shadow root if the node is in a shadow DOM; some document otherwise
+	  //  (but NOT _the_ document; see second 'If' comment below for more).
+	  // If rootNode is shadow root, it'll have a host, which is the element to which the shadow
+	  //  is attached, and the one we need to check if it's in the document or not (because the
+	  //  shadow, and all nodes it contains, is never considered in the document since shadows
+	  //  behave like self-contained DOMs; but if the shadow's HOST, which is part of the document,
+	  //  is hidden, or is not in the document itself but is detached, it will affect the shadow's
+	  //  visibility, including all the nodes it contains). The host could be any normal node,
+	  //  or a custom element (i.e. web component). Either way, that's the one that is considered
+	  //  part of the document, not the shadow root, nor any of its children (i.e. the node being
+	  //  tested).
+	  // To further complicate things, we have to look all the way up until we find a shadow HOST
+	  //  that is attached (or find none) because the node might be in nested shadows...
+	  // If rootNode is not a shadow root, it won't have a host, and so rootNode should be the
+	  //  document (per the docs) and while it's a Document-type object, that document does not
+	  //  appear to be the same as the node's `ownerDocument` for some reason, so it's safer
+	  //  to ignore the rootNode at this point, and use `node.ownerDocument`. Otherwise,
+	  //  using `rootNode.contains(node)` will _always_ be true we'll get false-positives when
+	  //  node is actually detached.
+	  // NOTE: If `nodeRootHost` or `node` happens to be the `document` itself (which is possible
+	  //  if a tabbable/focusable node was quickly added to the DOM, focused, and then removed
+	  //  from the DOM as in https://github.com/focus-trap/focus-trap-react/issues/905), then
+	  //  `ownerDocument` will be `null`, hence the optional chaining on it.
+	  var nodeRoot = node && getRootNode(node);
+	  var nodeRootHost = (_nodeRoot = nodeRoot) === null || _nodeRoot === void 0 ? void 0 : _nodeRoot.host;
+
+	  // in some cases, a detached node will return itself as the root instead of a document or
+	  //  shadow root object, in which case, we shouldn't try to look further up the host chain
+	  var attached = false;
+	  if (nodeRoot && nodeRoot !== node) {
+	    var _nodeRootHost, _nodeRootHost$ownerDo, _node$ownerDocument;
+	    attached = !!((_nodeRootHost = nodeRootHost) !== null && _nodeRootHost !== void 0 && (_nodeRootHost$ownerDo = _nodeRootHost.ownerDocument) !== null && _nodeRootHost$ownerDo !== void 0 && _nodeRootHost$ownerDo.contains(nodeRootHost) || node !== null && node !== void 0 && (_node$ownerDocument = node.ownerDocument) !== null && _node$ownerDocument !== void 0 && _node$ownerDocument.contains(node));
+	    while (!attached && nodeRootHost) {
+	      var _nodeRoot2, _nodeRootHost2, _nodeRootHost2$ownerD;
+	      // since it's not attached and we have a root host, the node MUST be in a nested shadow DOM,
+	      //  which means we need to get the host's host and check if that parent host is contained
+	      //  in (i.e. attached to) the document
+	      nodeRoot = getRootNode(nodeRootHost);
+	      nodeRootHost = (_nodeRoot2 = nodeRoot) === null || _nodeRoot2 === void 0 ? void 0 : _nodeRoot2.host;
+	      attached = !!((_nodeRootHost2 = nodeRootHost) !== null && _nodeRootHost2 !== void 0 && (_nodeRootHost2$ownerD = _nodeRootHost2.ownerDocument) !== null && _nodeRootHost2$ownerD !== void 0 && _nodeRootHost2$ownerD.contains(nodeRootHost));
+	    }
+	  }
+	  return attached;
+	};
+	var isZeroArea = function isZeroArea(node) {
+	  var _node$getBoundingClie = node.getBoundingClientRect(),
+	    width = _node$getBoundingClie.width,
+	    height = _node$getBoundingClie.height;
+	  return width === 0 && height === 0;
+	};
+	var isHidden = function isHidden(node, _ref) {
+	  var displayCheck = _ref.displayCheck,
+	    getShadowRoot = _ref.getShadowRoot;
+	  if (displayCheck === 'full-native') {
+	    if ('checkVisibility' in node) {
+	      // Chrome >= 105, Edge >= 105, Firefox >= 106, Safari >= 17.4
+	      // @see https://developer.mozilla.org/en-US/docs/Web/API/Element/checkVisibility#browser_compatibility
+	      var visible = node.checkVisibility({
+	        // Checking opacity might be desirable for some use cases, but natively,
+	        // opacity zero elements _are_ focusable and tabbable.
+	        checkOpacity: false,
+	        opacityProperty: false,
+	        contentVisibilityAuto: true,
+	        visibilityProperty: true,
+	        // This is an alias for `visibilityProperty`. Contemporary browsers
+	        // support both. However, this alias has wider browser support (Chrome
+	        // >= 105 and Firefox >= 106, vs. Chrome >= 121 and Firefox >= 122), so
+	        // we include it anyway.
+	        checkVisibilityCSS: true
+	      });
+	      return !visible;
+	    }
+	    // Fall through to manual visibility checks
+	  }
+
+	  // NOTE: visibility will be `undefined` if node is detached from the document
+	  //  (see notes about this further down), which means we will consider it visible
+	  //  (this is legacy behavior from a very long way back)
+	  // NOTE: we check this regardless of `displayCheck="none"` because this is a
+	  //  _visibility_ check, not a _display_ check
+	  var _getComputedStyle = getComputedStyle(node),
+	    visibility = _getComputedStyle.visibility;
+	  if (visibility === 'hidden' || visibility === 'collapse') {
+	    return true;
+	  }
+	  var isDirectSummary = matches.call(node, 'details>summary:first-of-type');
+	  var nodeUnderDetails = isDirectSummary ? node.parentElement : node;
+	  if (matches.call(nodeUnderDetails, 'details:not([open]) *')) {
+	    return true;
+	  }
+	  if (!displayCheck || displayCheck === 'full' ||
+	  // full-native can run this branch when it falls through in case
+	  // Element#checkVisibility is unsupported
+	  displayCheck === 'full-native' || displayCheck === 'legacy-full') {
+	    if (typeof getShadowRoot === 'function') {
+	      // figure out if we should consider the node to be in an undisclosed shadow and use the
+	      //  'non-zero-area' fallback
+	      var originalNode = node;
+	      while (node) {
+	        var parentElement = node.parentElement;
+	        var rootNode = getRootNode(node);
+	        if (parentElement && !parentElement.shadowRoot && getShadowRoot(parentElement) === true // check if there's an undisclosed shadow
+	        ) {
+	          // node has an undisclosed shadow which means we can only treat it as a black box, so we
+	          //  fall back to a non-zero-area test
+	          return isZeroArea(node);
+	        } else if (node.assignedSlot) {
+	          // iterate up slot
+	          node = node.assignedSlot;
+	        } else if (!parentElement && rootNode !== node.ownerDocument) {
+	          // cross shadow boundary
+	          node = rootNode.host;
+	        } else {
+	          // iterate up normal dom
+	          node = parentElement;
+	        }
+	      }
+	      node = originalNode;
+	    }
+	    // else, `getShadowRoot` might be true, but all that does is enable shadow DOM support
+	    //  (i.e. it does not also presume that all nodes might have undisclosed shadows); or
+	    //  it might be a falsy value, which means shadow DOM support is disabled
+
+	    // Since we didn't find it sitting in an undisclosed shadow (or shadows are disabled)
+	    //  now we can just test to see if it would normally be visible or not, provided it's
+	    //  attached to the main document.
+	    // NOTE: We must consider case where node is inside a shadow DOM and given directly to
+	    //  `isTabbable()` or `isFocusable()` -- regardless of `getShadowRoot` option setting.
+
+	    if (isNodeAttached(node)) {
+	      // this works wherever the node is: if there's at least one client rect, it's
+	      //  somehow displayed; it also covers the CSS 'display: contents' case where the
+	      //  node itself is hidden in place of its contents; and there's no need to search
+	      //  up the hierarchy either
+	      return !node.getClientRects().length;
+	    }
+
+	    // Else, the node isn't attached to the document, which means the `getClientRects()`
+	    //  API will __always__ return zero rects (this can happen, for example, if React
+	    //  is used to render nodes onto a detached tree, as confirmed in this thread:
+	    //  https://github.com/facebook/react/issues/9117#issuecomment-284228870)
+	    //
+	    // It also means that even window.getComputedStyle(node).display will return `undefined`
+	    //  because styles are only computed for nodes that are in the document.
+	    //
+	    // NOTE: THIS HAS BEEN THE CASE FOR YEARS. It is not new, nor is it caused by tabbable
+	    //  somehow. Though it was never stated officially, anyone who has ever used tabbable
+	    //  APIs on nodes in detached containers has actually implicitly used tabbable in what
+	    //  was later (as of v5.2.0 on Apr 9, 2021) called `displayCheck="none"` mode -- essentially
+	    //  considering __everything__ to be visible because of the innability to determine styles.
+	    //
+	    // v6.0.0: As of this major release, the default 'full' option __no longer treats detached
+	    //  nodes as visible with the 'none' fallback.__
+	    if (displayCheck !== 'legacy-full') {
+	      return true; // hidden
+	    }
+	    // else, fallback to 'none' mode and consider the node visible
+	  } else if (displayCheck === 'non-zero-area') {
+	    // NOTE: Even though this tests that the node's client rect is non-zero to determine
+	    //  whether it's displayed, and that a detached node will __always__ have a zero-area
+	    //  client rect, we don't special-case for whether the node is attached or not. In
+	    //  this mode, we do want to consider nodes that have a zero area to be hidden at all
+	    //  times, and that includes attached or not.
+	    return isZeroArea(node);
+	  }
+
+	  // visible, as far as we can tell, or per current `displayCheck=none` mode, we assume
+	  //  it's visible
+	  return false;
+	};
+
+	// form fields (nested) inside a disabled fieldset are not focusable/tabbable
+	//  unless they are in the _first_ <legend> element of the top-most disabled
+	//  fieldset
+	var isDisabledFromFieldset = function isDisabledFromFieldset(node) {
+	  if (/^(INPUT|BUTTON|SELECT|TEXTAREA)$/.test(node.tagName)) {
+	    var parentNode = node.parentElement;
+	    // check if `node` is contained in a disabled <fieldset>
+	    while (parentNode) {
+	      if (parentNode.tagName === 'FIELDSET' && parentNode.disabled) {
+	        // look for the first <legend> among the children of the disabled <fieldset>
+	        for (var i = 0; i < parentNode.children.length; i++) {
+	          var child = parentNode.children.item(i);
+	          // when the first <legend> (in document order) is found
+	          if (child.tagName === 'LEGEND') {
+	            // if its parent <fieldset> is not nested in another disabled <fieldset>,
+	            // return whether `node` is a descendant of its first <legend>
+	            return matches.call(parentNode, 'fieldset[disabled] *') ? true : !child.contains(node);
+	          }
+	        }
+	        // the disabled <fieldset> containing `node` has no <legend>
+	        return true;
+	      }
+	      parentNode = parentNode.parentElement;
+	    }
+	  }
+
+	  // else, node's tabbable/focusable state should not be affected by a fieldset's
+	  //  enabled/disabled state
+	  return false;
+	};
+	var isNodeMatchingSelectorFocusable = function isNodeMatchingSelectorFocusable(options, node) {
+	  if (node.disabled || isHiddenInput(node) || isHidden(node, options) ||
+	  // For a details element with a summary, the summary element gets the focus
+	  isDetailsWithSummary(node) || isDisabledFromFieldset(node)) {
+	    return false;
+	  }
+	  return true;
+	};
+	var isNodeMatchingSelectorTabbable = function isNodeMatchingSelectorTabbable(options, node) {
+	  if (isNonTabbableRadio(node) || getTabIndex(node) < 0 || !isNodeMatchingSelectorFocusable(options, node)) {
+	    return false;
+	  }
+	  return true;
+	};
+	var isShadowRootTabbable = function isShadowRootTabbable(shadowHostNode) {
+	  var tabIndex = parseInt(shadowHostNode.getAttribute('tabindex'), 10);
+	  if (isNaN(tabIndex) || tabIndex >= 0) {
+	    return true;
+	  }
+	  // If a custom element has an explicit negative tabindex,
+	  // browsers will not allow tab targeting said element's children.
+	  return false;
+	};
+
+	/**
+	 * @param {Array.<Element|CandidateScope>} candidates
+	 * @returns Element[]
+	 */
+	var _sortByOrder = function sortByOrder(candidates) {
+	  var regularTabbables = [];
+	  var orderedTabbables = [];
+	  candidates.forEach(function (item, i) {
+	    var isScope = !!item.scopeParent;
+	    var element = isScope ? item.scopeParent : item;
+	    var candidateTabindex = getSortOrderTabIndex(element, isScope);
+	    var elements = isScope ? _sortByOrder(item.candidates) : element;
+	    if (candidateTabindex === 0) {
+	      isScope ? regularTabbables.push.apply(regularTabbables, elements) : regularTabbables.push(element);
+	    } else {
+	      orderedTabbables.push({
+	        documentOrder: i,
+	        tabIndex: candidateTabindex,
+	        item: item,
+	        isScope: isScope,
+	        content: elements
+	      });
+	    }
+	  });
+	  return orderedTabbables.sort(sortOrderedTabbables).reduce(function (acc, sortable) {
+	    sortable.isScope ? acc.push.apply(acc, sortable.content) : acc.push(sortable.content);
+	    return acc;
+	  }, []).concat(regularTabbables);
+	};
+	var tabbable = function tabbable(container, options) {
+	  options = options || {};
+	  var candidates;
+	  if (options.getShadowRoot) {
+	    candidates = _getCandidatesIteratively([container], options.includeContainer, {
+	      filter: isNodeMatchingSelectorTabbable.bind(null, options),
+	      flatten: false,
+	      getShadowRoot: options.getShadowRoot,
+	      shadowRootFilter: isShadowRootTabbable
+	    });
+	  } else {
+	    candidates = getCandidates(container, options.includeContainer, isNodeMatchingSelectorTabbable.bind(null, options));
+	  }
+	  return _sortByOrder(candidates);
+	};
+	var focusable = function focusable(container, options) {
+	  options = options || {};
+	  var candidates;
+	  if (options.getShadowRoot) {
+	    candidates = _getCandidatesIteratively([container], options.includeContainer, {
+	      filter: isNodeMatchingSelectorFocusable.bind(null, options),
+	      flatten: true,
+	      getShadowRoot: options.getShadowRoot
+	    });
+	  } else {
+	    candidates = getCandidates(container, options.includeContainer, isNodeMatchingSelectorFocusable.bind(null, options));
+	  }
+	  return candidates;
+	};
+	var isTabbable = function isTabbable(node, options) {
+	  options = options || {};
+	  if (!node) {
+	    throw new Error('No node provided');
+	  }
+	  if (matches.call(node, candidateSelector) === false) {
+	    return false;
+	  }
+	  return isNodeMatchingSelectorTabbable(options, node);
+	};
+	var focusableCandidateSelector = /* #__PURE__ */candidateSelectors.concat('iframe:not([inert]):not([inert] *)').join(',');
+	var isFocusable = function isFocusable(node, options) {
+	  options = options || {};
+	  if (!node) {
+	    throw new Error('No node provided');
+	  }
+	  if (matches.call(node, focusableCandidateSelector) === false) {
+	    return false;
+	  }
+	  return isNodeMatchingSelectorFocusable(options, node);
+	};
+
+	var index_esm = /*#__PURE__*/Object.freeze({
+		__proto__: null,
+		focusable: focusable,
+		getTabIndex: getTabIndex,
+		isFocusable: isFocusable,
+		isTabbable: isTabbable,
+		tabbable: tabbable
+	});
+
+	var require$$0 = /*@__PURE__*/getAugmentedNamespace(index_esm);
+
+	Object.defineProperty(tabbableTargets, "__esModule", {
+	  value: true
+	});
+	tabbableTargets.isOpenKeyNavGeneratedUI = tabbableTargets.getDeepActiveElement = tabbableTargets.discoverTabbableTargets = tabbableTargets.OPENKEYNAV_GENERATED_UI_SELECTOR = void 0;
+	var _tabbable = require$$0;
+	function _toConsumableArray$1(r) {
+	  return _arrayWithoutHoles$1(r) || _iterableToArray$1(r) || _unsupportedIterableToArray$1(r) || _nonIterableSpread$1();
+	}
+	function _nonIterableSpread$1() {
+	  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	}
+	function _unsupportedIterableToArray$1(r, a) {
+	  if (r) {
+	    if ("string" == typeof r) return _arrayLikeToArray$1(r, a);
+	    var t = {}.toString.call(r).slice(8, -1);
+	    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$1(r, a) : void 0;
+	  }
+	}
+	function _iterableToArray$1(r) {
+	  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
+	}
+	function _arrayWithoutHoles$1(r) {
+	  if (Array.isArray(r)) return _arrayLikeToArray$1(r);
+	}
+	function _arrayLikeToArray$1(r, a) {
+	  (null == a || a > r.length) && (a = r.length);
+	  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+	  return n;
+	}
+	var OPENKEYNAV_GENERATED_UI_SELECTOR = tabbableTargets.OPENKEYNAV_GENERATED_UI_SELECTOR = ['[data-openkeynav-ui]', '.openKeyNav-label', '.openKeyNav-toolBar', '.openKeyNav-mouseover-tooltip', '.openKeyNav-structural-status', '#okn-notification-container', '#okn-audit-panel'].join(',');
+	var ELEMENT_NODE = 1;
+	var DOCUMENT_NODE = 9;
+	var DOCUMENT_FRAGMENT_NODE = 11;
+	var isElement$1 = function isElement(node) {
+	  return Boolean(node && node.nodeType === ELEMENT_NODE);
+	};
+	var isDocument$1 = function isDocument(node) {
+	  return Boolean(node && node.nodeType === DOCUMENT_NODE);
+	};
+	var isShadowRoot$1 = function isShadowRoot(node) {
+	  return Boolean(node && node.nodeType === DOCUMENT_FRAGMENT_NODE && node.host && isElement$1(node.host));
+	};
+	var getComposedParent = function getComposedParent(node) {
+	  if (!node) return null;
+	  if (node.assignedSlot) return node.assignedSlot;
+	  if (isShadowRoot$1(node)) return node.host;
+	  return node.parentNode || null;
+	};
+	var isWithinRoot$1 = function isWithinRoot(root, node) {
+	  var current = node;
+	  while (current) {
+	    if (current === root) return true;
+	    current = getComposedParent(current);
+	  }
+	  return false;
+	};
+
+	/**
+	 * Returns true when an element is, or is composed beneath, OpenKeyNav-owned UI.
+	 * Composed ancestry is intentional so generated UI inside an open shadow root is
+	 * excluded when its host carries the marker.
+	 */
+	var isOpenKeyNavGeneratedUI = tabbableTargets.isOpenKeyNavGeneratedUI = function isOpenKeyNavGeneratedUI(element) {
+	  var selector = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : OPENKEYNAV_GENERATED_UI_SELECTOR;
+	  var current = element;
+	  while (current) {
+	    if (isElement$1(current) && current.matches(selector)) return true;
+	    current = getComposedParent(current);
+	  }
+	  return false;
+	};
+
+	/**
+	 * Reads the actual focused element exposed by the active document or shadow root.
+	 * It follows open Shadow DOM focus, but deliberately treats iframes as atomic.
+	 */
+	tabbableTargets.getDeepActiveElement = function getDeepActiveElement() {
+	  var root = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : typeof document === 'undefined' ? null : document;
+	  if (!root) return null;
+	  var activeRoot = isDocument$1(root) || isShadowRoot$1(root) ? root : root.ownerDocument;
+	  var activeElement = activeRoot && activeRoot.activeElement;
+	  while (activeElement && (_activeElement$shadow = activeElement.shadowRoot) !== null && _activeElement$shadow !== void 0 && _activeElement$shadow.activeElement) {
+	    var _activeElement$shadow;
+	    activeElement = activeElement.shadowRoot.activeElement;
+	  }
+	  if (!activeElement || !isWithinRoot$1(root, activeElement)) return null;
+	  return activeElement;
+	};
+	var normalizeDiscoveryRoot = function normalizeDiscoveryRoot(root) {
+	  if (isDocument$1(root)) {
+	    if (!root.documentElement) {
+	      throw new TypeError('The discovery document must have a document element.');
+	    }
+	    return root.documentElement;
+	  }
+	  if (isShadowRoot$1(root)) return root.host;
+	  if (isElement$1(root)) return root;
+	  throw new TypeError('discoverTabbableTargets requires an Element, Document, or ShadowRoot.');
+	};
+	var getTabbableOptions = function getTabbableOptions(root, options) {
+	  var _options$displayCheck = options.displayCheck,
+	    displayCheck = _options$displayCheck === void 0 ? 'full' : _options$displayCheck,
+	    _options$getShadowRoo = options.getShadowRoot,
+	    getShadowRoot = _options$getShadowRoo === void 0 ? true : _options$getShadowRoo,
+	    _options$includeConta = options.includeContainer,
+	    includeContainer = _options$includeConta === void 0 ? isElement$1(root) : _options$includeConta;
+
+	  // Tabbable traverses a ShadowRoot through its host. Supplying the exact root
+	  // also keeps this boundary usable if a caller was deliberately given a root
+	  // that is not available through host.shadowRoot.
+	  var shadowRootResolver = isShadowRoot$1(root) ? function (node) {
+	    if (node === root.host) return root;
+	    if (typeof getShadowRoot === 'function') return getShadowRoot(node);
+	    return false;
+	  } : getShadowRoot;
+	  return {
+	    displayCheck: displayCheck,
+	    getShadowRoot: shadowRootResolver,
+	    includeContainer: includeContainer
+	  };
+	};
+	var includeProgrammaticCandidates = function includeProgrammaticCandidates(discoveryRoot, candidates, tabbableOptions) {
+	  var focusableCandidates = (0, _tabbable.focusable)(discoveryRoot, tabbableOptions);
+	  var positiveTabbables = candidates.filter(function (candidate) {
+	    return (0, _tabbable.getTabIndex)(candidate) > 0;
+	  });
+	  var positiveSet = new Set(positiveTabbables);
+
+	  // Preserve the browser-like positive-tabindex prefix, then use composed source
+	  // order for the zero- and negative-tabindex focusable elements. Opting in to
+	  // programmatic targets necessarily differs from native Tab order.
+	  return [].concat(_toConsumableArray$1(positiveTabbables), _toConsumableArray$1(focusableCandidates.filter(function (candidate) {
+	    return !positiveSet.has(candidate);
+	  })));
+	};
+
+	/**
+	 * Discovers live focus destinations in the active navigation root.
+	 *
+	 * `displayCheck` defaults to Tabbable's browser-accurate `full` strategy. Tests
+	 * running in jsdom should opt into `displayCheck: 'none'` explicitly.
+	 */
+	tabbableTargets.discoverTabbableTargets = function discoverTabbableTargets(root) {
+	  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	  var _options$excludeGener = options.excludeGeneratedUI,
+	    excludeGeneratedUI = _options$excludeGener === void 0 ? true : _options$excludeGener,
+	    _options$generatedUIS = options.generatedUISelector,
+	    generatedUISelector = _options$generatedUIS === void 0 ? OPENKEYNAV_GENERATED_UI_SELECTOR : _options$generatedUIS,
+	    _options$includeProgr = options.includeProgrammatic,
+	    includeProgrammatic = _options$includeProgr === void 0 ? false : _options$includeProgr,
+	    _options$targetFilter = options.targetFilter,
+	    targetFilter = _options$targetFilter === void 0 ? null : _options$targetFilter;
+	  if (targetFilter !== null && typeof targetFilter !== 'function') {
+	    throw new TypeError('targetFilter must be a function when provided.');
+	  }
+	  var discoveryRoot = normalizeDiscoveryRoot(root);
+	  var tabbableOptions = getTabbableOptions(root, options);
+	  var candidates = (0, _tabbable.tabbable)(discoveryRoot, tabbableOptions);
+	  if (includeProgrammatic) {
+	    candidates = includeProgrammaticCandidates(discoveryRoot, candidates, tabbableOptions);
+	  }
+	  var seen = new Set();
+	  return candidates.filter(function (candidate) {
+	    if (seen.has(candidate)) return false;
+	    seen.add(candidate);
+	    if (!candidate.isConnected || !isWithinRoot$1(root, candidate)) return false;
+	    if (excludeGeneratedUI && isOpenKeyNavGeneratedUI(candidate, generatedUISelector)) {
+	      return false;
+	    }
+	    if (targetFilter && !targetFilter(candidate)) return false;
+
+	    // A filter is application code and may synchronously detach or relocate a
+	    // candidate. Recheck liveness before returning it.
+	    return candidate.isConnected && isWithinRoot$1(root, candidate);
+	  });
+	};
+
+	Object.defineProperty(structuralNavigation, "__esModule", {
+	  value: true
+	});
+	structuralNavigation.matchesStructuralShortcut = structuralNavigation.classifyStructuralKeyOwnership = structuralNavigation.StructuralNavigationController = structuralNavigation.STRUCTURAL_NAVIGATION_COMMANDS = void 0;
+	var _structuralModel = structuralModel;
+	var _tabbableTargets = tabbableTargets;
+	function _slicedToArray(r, e) {
+	  return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
+	}
+	function _nonIterableRest() {
+	  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	}
+	function _iterableToArrayLimit(r, l) {
+	  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+	  if (null != t) {
+	    var e,
+	      n,
+	      i,
+	      u,
+	      a = [],
+	      f = true,
+	      o = false;
+	    try {
+	      if (i = (t = t.call(r)).next, 0 === l) ; else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+	    } catch (r) {
+	      o = true, n = r;
+	    } finally {
+	      try {
+	        if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return;
+	      } finally {
+	        if (o) throw n;
+	      }
+	    }
+	    return a;
+	  }
+	}
+	function _arrayWithHoles(r) {
+	  if (Array.isArray(r)) return r;
+	}
+	function _classCallCheck(a, n) {
+	  if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
+	}
+	function _defineProperties(e, r) {
+	  for (var t = 0; t < r.length; t++) {
+	    var o = r[t];
+	    o.enumerable = o.enumerable || false, o.configurable = true, "value" in o && (o.writable = true), Object.defineProperty(e, _toPropertyKey(o.key), o);
+	  }
+	}
+	function _createClass(e, r, t) {
+	  return r && _defineProperties(e.prototype, r), Object.defineProperty(e, "prototype", {
+	    writable: false
+	  }), e;
+	}
+	function _toPropertyKey(t) {
+	  var i = _toPrimitive(t, "string");
+	  return "symbol" == _typeof(i) ? i : i + "";
+	}
+	function _toPrimitive(t, r) {
+	  if ("object" != _typeof(t) || !t) return t;
+	  var e = t[Symbol.toPrimitive];
+	  if (void 0 !== e) {
+	    var i = e.call(t, r);
+	    if ("object" != _typeof(i)) return i;
+	    throw new TypeError("@@toPrimitive must return a primitive value.");
+	  }
+	  return (String )(t);
+	}
+	function _typeof(o) {
+	  "@babel/helpers - typeof";
+
+	  return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+	    return typeof o;
+	  } : function (o) {
+	    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+	  }, _typeof(o);
+	}
+	function _toConsumableArray(r) {
+	  return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread();
+	}
+	function _nonIterableSpread() {
+	  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	}
+	function _unsupportedIterableToArray(r, a) {
+	  if (r) {
+	    if ("string" == typeof r) return _arrayLikeToArray(r, a);
+	    var t = {}.toString.call(r).slice(8, -1);
+	    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+	  }
+	}
+	function _iterableToArray(r) {
+	  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
+	}
+	function _arrayWithoutHoles(r) {
+	  if (Array.isArray(r)) return _arrayLikeToArray(r);
+	}
+	function _arrayLikeToArray(r, a) {
+	  (null == a || a > r.length) && (a = r.length);
+	  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+	  return n;
+	}
+	var STRUCTURAL_NAVIGATION_COMMANDS = structuralNavigation.STRUCTURAL_NAVIGATION_COMMANDS = Object.freeze({
+	  previousTarget: 'previousTarget',
+	  nextTarget: 'nextTarget',
+	  previousSiblingContext: 'previousSiblingContext',
+	  nextSiblingContext: 'nextSiblingContext',
+	  broadenContext: 'broadenContext',
+	  narrowContext: 'narrowContext',
+	  previousPeerContext: 'previousPeerContext',
+	  nextPeerContext: 'nextPeerContext'
+	});
+	var MODIFIER_KEYS = ['altKey', 'ctrlKey', 'metaKey', 'shiftKey'];
+	var ARROW_OWNING_ROLES = new Set(['combobox', 'grid', 'listbox', 'menu', 'menubar', 'radiogroup', 'scrollbar', 'slider', 'spinbutton', 'tablist', 'toolbar', 'tree', 'treegrid']);
+	var ESCAPE_OWNING_ROLES = new Set([].concat(_toConsumableArray(ARROW_OWNING_ROLES), ['dialog']));
+	var TEXT_INPUT_TYPES = new Set(['date', 'datetime-local', 'email', 'month', 'number', 'password', 'range', 'search', 'tel', 'text', 'time', 'url', 'week']);
+	var isElement = function isElement(node) {
+	  return Boolean(node && node.nodeType === 1);
+	};
+	var isDocument = function isDocument(node) {
+	  return Boolean(node && node.nodeType === 9);
+	};
+	var isShadowRoot = function isShadowRoot(node) {
+	  return Boolean(node && node.nodeType === 11 && node.host && isElement(node.host));
+	};
+	var composedParent = function composedParent(node) {
+	  if (!node) return null;
+	  if (node.assignedSlot) return node.assignedSlot;
+	  if (isShadowRoot(node)) return node.host;
+	  return node.parentNode || null;
+	};
+	var isWithinRoot = function isWithinRoot(root, node) {
+	  var current = node;
+	  while (current) {
+	    if (current === root) return true;
+	    current = composedParent(current);
+	  }
+	  return false;
+	};
+	var normalizeShortcut = function normalizeShortcut(shortcut) {
+	  if (!shortcut) return null;
+	  if (typeof shortcut === 'string') return {
+	    key: shortcut
+	  };
+	  if (_typeof(shortcut) === 'object' && typeof shortcut.key === 'string') {
+	    return shortcut;
+	  }
+	  return null;
+	};
+	var keysEqual = function keysEqual(left, right) {
+	  if (left.length === 1 && right.length === 1) {
+	    return left.toLowerCase() === right.toLowerCase();
+	  }
+	  return left === right;
+	};
+
+	/**
+	 * Matches one exact configured shortcut. Unspecified modifiers are false.
+	 * `ignoredModifier` is used only for the deliberate widget override modifier.
+	 */
+	var matchesStructuralShortcut = structuralNavigation.matchesStructuralShortcut = function matchesStructuralShortcut(event, shortcut) {
+	  var ignoredModifier = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+	  var normalized = normalizeShortcut(shortcut);
+	  if (!normalized || !keysEqual(event.key, normalized.key)) return false;
+	  return MODIFIER_KEYS.every(function (modifier) {
+	    if (modifier === ignoredModifier) return true;
+	    return Boolean(event[modifier]) === Boolean(normalized[modifier]);
+	  });
+	};
+	var getEventPath = function getEventPath(event) {
+	  if (typeof event.composedPath === 'function') {
+	    var _path = event.composedPath();
+	    if (_path.length) return _path;
+	  }
+	  var path = [];
+	  var current = event.target;
+	  while (current) {
+	    path.push(current);
+	    current = composedParent(current);
+	  }
+	  return path;
+	};
+	var hasEditableContent = function hasEditableContent(element) {
+	  if (!isElement(element)) return false;
+	  var value = element.getAttribute('contenteditable');
+	  return element.isContentEditable || value === '' || value === 'true' || value === 'plaintext-only';
+	};
+	var elementKeyOwnership = function elementKeyOwnership(element) {
+	  var ownership = {
+	    all: false,
+	    arrows: false,
+	    escape: false,
+	    character: false
+	  };
+	  if (!isElement(element)) return ownership;
+	  var declared = [element.getAttribute('data-openkeynav-key-owner'), element.getAttribute('data-openkeynav-owns-keys')].filter(Boolean).join(' ').toLowerCase();
+	  if (declared.includes('all')) {
+	    return {
+	      all: true,
+	      arrows: true,
+	      escape: true,
+	      character: true
+	    };
+	  }
+	  if (declared.includes('arrow')) ownership.arrows = true;
+	  if (declared.includes('escape')) ownership.escape = true;
+	  if (declared.includes('character')) ownership.character = true;
+	  if (hasEditableContent(element)) {
+	    ownership.arrows = true;
+	    ownership.escape = true;
+	    ownership.character = true;
+	  }
+	  var tagName = element.tagName.toLowerCase();
+	  if (tagName === 'textarea' || tagName === 'select') {
+	    ownership.arrows = true;
+	    ownership.escape = true;
+	    ownership.character = true;
+	  } else if (tagName === 'input') {
+	    var type = (element.getAttribute('type') || 'text').toLowerCase();
+	    if (TEXT_INPUT_TYPES.has(type) || type === 'radio') {
+	      ownership.arrows = true;
+	      ownership.escape = true;
+	      ownership.character = true;
+	    }
+	  }
+	  var role = (element.getAttribute('role') || '').toLowerCase();
+	  if (ARROW_OWNING_ROLES.has(role)) {
+	    ownership.arrows = true;
+	    ownership.character = true;
+	  }
+	  if (ESCAPE_OWNING_ROLES.has(role)) ownership.escape = true;
+	  var openPopover = false;
+	  try {
+	    openPopover = element.matches('[popover]:popover-open');
+	  } catch (error) {
+	    openPopover = false;
+	  }
+	  if (tagName === 'dialog' && element.hasAttribute('open') || openPopover) {
+	    ownership.escape = true;
+	  }
+	  return ownership;
+	};
+
+	/**
+	 * Classifies page/widget ownership before OpenKeyNav prevents any key.
+	 */
+	var classifyStructuralKeyOwnership = structuralNavigation.classifyStructuralKeyOwnership = function classifyStructuralKeyOwnership(event) {
+	  var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	  var path = getEventPath(event);
+	  var result = {
+	    all: false,
+	    arrows: false,
+	    escape: false,
+	    character: false
+	  };
+	  path.forEach(function (node) {
+	    var ownership = elementKeyOwnership(node);
+	    result.all = result.all || ownership.all;
+	    result.arrows = result.arrows || ownership.arrows;
+	    result.escape = result.escape || ownership.escape;
+	    result.character = result.character || ownership.character;
+	  });
+	  if (typeof config.ownsKey === 'function') {
+	    var declared = config.ownsKey(event, path);
+	    if (declared === true) {
+	      return {
+	        all: true,
+	        arrows: true,
+	        escape: true,
+	        character: true
+	      };
+	    }
+	    if (declared && _typeof(declared) === 'object') {
+	      result.all = result.all || Boolean(declared.all);
+	      result.arrows = result.arrows || Boolean(declared.arrows);
+	      result.escape = result.escape || Boolean(declared.escape);
+	      result.character = result.character || Boolean(declared.character);
+	    }
+	  }
+	  return result;
+	};
+	var resolveValue = function resolveValue(value, details) {
+	  return typeof value === 'function' ? value(details) : value;
+	};
+	var contextTargets = function contextTargets(context) {
+	  if (!context) return [];
+	  return context.targets || context.flattenedTargets || [];
+	};
+	var contextChildren = function contextChildren(context) {
+	  if (!context) return [];
+	  return context.children || [];
+	};
+	var contextId = function contextId(context) {
+	  return context && context.id;
+	};
+	var modelContextById = function modelContextById(model, id) {
+	  var _model$contexts;
+	  if (!model || id === null || typeof id === 'undefined') return null;
+	  if (model.contexts instanceof Map) return model.contexts.get(id) || null;
+	  if (Array.isArray(model.contexts)) {
+	    return model.contexts.find(function (context) {
+	      return context.id === id;
+	    }) || null;
+	  }
+	  return ((_model$contexts = model.contexts) === null || _model$contexts === void 0 ? void 0 : _model$contexts[id]) || null;
+	};
+	var modelTypedContextById = function modelTypedContextById(model, id) {
+	  var _model$typedContexts;
+	  if (!model || id === null || typeof id === 'undefined') return null;
+	  if (model.typedContexts instanceof Map) return model.typedContexts.get(id) || null;
+	  if (Array.isArray(model.typedContexts)) {
+	    return model.typedContexts.find(function (context) {
+	      return context.id === id;
+	    }) || null;
+	  }
+	  return ((_model$typedContexts = model.typedContexts) === null || _model$typedContexts === void 0 ? void 0 : _model$typedContexts[id]) || null;
+	};
+	var directContextForTarget = function directContextForTarget(model, target) {
+	  if (!model || !target) return null;
+	  var map = model.directContextByTarget || model.targetContexts || model.directContexts;
+	  if (map instanceof Map) {
+	    var value = map.get(target);
+	    return _typeof(value) === 'object' ? value : modelContextById(model, value);
+	  }
+	  if (typeof model.getDirectContext === 'function') {
+	    return model.getDirectContext(target);
+	  }
+	  return null;
+	};
+	var typedContextsForTarget = function typedContextsForTarget(model, target) {
+	  if (!model || !target) return [];
+	  var map = model.typedContextsByTarget || model.targetTypedContexts;
+	  var values = map instanceof Map ? map.get(target) : null;
+	  if (!values && typeof model.getTypedContexts === 'function') {
+	    values = model.getTypedContexts(target);
+	  }
+	  return Array.from(values || []).map(function (value) {
+	    return _typeof(value) === 'object' ? value : modelTypedContextById(model, value);
+	  }).filter(Boolean);
+	};
+	var parentContext = function parentContext(model, context) {
+	  if (!context || !context.parent) return null;
+	  return _typeof(context.parent) === 'object' ? context.parent : modelContextById(model, context.parent);
+	};
+	var normalizeContextChildren = function normalizeContextChildren(model, context) {
+	  return contextChildren(context).map(function (child) {
+	    return _typeof(child) === 'object' ? child : modelContextById(model, child);
+	  }).filter(Boolean);
+	};
+	var modelStructuralContexts = function modelStructuralContexts(model) {
+	  if (!(model !== null && model !== void 0 && model.contexts)) return [];
+	  if (model.contexts instanceof Map) return Array.from(model.contexts.values());
+	  if (Array.isArray(model.contexts)) return model.contexts.slice();
+	  return Object.values(model.contexts);
+	};
+	var contextHeadingLevel = function contextHeadingLevel(context) {
+	  var level = Number(context === null || context === void 0 ? void 0 : context.headingLevel);
+	  return Number.isInteger(level) && level > 0 ? level : null;
+	};
+	var contextOrder = function contextOrder(context) {
+	  var order = Number(context === null || context === void 0 ? void 0 : context.order);
+	  return Number.isFinite(order) ? order : Number.MAX_SAFE_INTEGER;
+	};
+
+	/**
+	 * Heading-backed contexts move horizontally by authored heading rank, even
+	 * when those contexts have different structural parents. Contexts without a
+	 * heading rank retain ordinary same-parent sibling behavior.
+	 */
+	var horizontalContextPeers = function horizontalContextPeers(model, context) {
+	  var headingLevel = contextHeadingLevel(context);
+	  var contexts = headingLevel === null ? normalizeContextChildren(model, parentContext(model, context)) : modelStructuralContexts(model).filter(function (candidate) {
+	    return contextHeadingLevel(candidate) === headingLevel;
+	  });
+	  return {
+	    headingLevel: headingLevel,
+	    contexts: contexts.filter(function (candidate) {
+	      return contextTargets(candidate).length > 0;
+	    }).sort(function (left, right) {
+	      return contextOrder(left) - contextOrder(right) || String(contextId(left)).localeCompare(String(contextId(right)));
+	    })
+	  };
+	};
+	var targetName = function targetName(target) {
+	  var _target$getAttribute, _target$getAttribute2, _target$getAttribute3, _target$getAttribute4, _target$tagName;
+	  if (!target) return '';
+	  var current = target;
+	  while (current) {
+	    if (isElement(current) && current.getAttribute('aria-hidden') === 'true') {
+	      return target.tagName ? target.tagName.toLowerCase() : 'target';
+	    }
+	    current = composedParent(current);
+	  }
+	  var ariaLabel = (_target$getAttribute = target.getAttribute) === null || _target$getAttribute === void 0 || (_target$getAttribute = _target$getAttribute.call(target, 'aria-label')) === null || _target$getAttribute === void 0 ? void 0 : _target$getAttribute.trim();
+	  if (ariaLabel) return ariaLabel;
+	  var labelledBy = (_target$getAttribute2 = target.getAttribute) === null || _target$getAttribute2 === void 0 ? void 0 : _target$getAttribute2.call(target, 'aria-labelledby');
+	  if (labelledBy) {
+	    var root = target.getRootNode();
+	    var labels = labelledBy.split(/\s+/).map(function (id) {
+	      var _root$getElementById;
+	      return ((_root$getElementById = root.getElementById) === null || _root$getElementById === void 0 ? void 0 : _root$getElementById.call(root, id)) || target.ownerDocument.getElementById(id);
+	    }).filter(Boolean).map(function (element) {
+	      return element.textContent.trim();
+	    }).filter(Boolean);
+	    if (labels.length) return labels.join(' ');
+	  }
+	  var labelText = Array.from(target.labels || []).map(function (label) {
+	    return label.textContent.trim();
+	  }).filter(Boolean).join(' ');
+	  if (labelText) return labelText;
+	  var value = ((_target$getAttribute3 = target.getAttribute) === null || _target$getAttribute3 === void 0 ? void 0 : _target$getAttribute3.call(target, 'title')) || ((_target$getAttribute4 = target.getAttribute) === null || _target$getAttribute4 === void 0 ? void 0 : _target$getAttribute4.call(target, 'name')) || target.textContent;
+	  var normalized = String(value || '').replace(/\s+/g, ' ').trim();
+	  return normalized.slice(0, 80) || ((_target$tagName = target.tagName) === null || _target$tagName === void 0 ? void 0 : _target$tagName.toLowerCase()) || 'target';
+	};
+	var topmostNativeModal = function topmostNativeModal(documentObject) {
+	  if (!(documentObject !== null && documentObject !== void 0 && documentObject.querySelectorAll)) return null;
+	  try {
+	    var modals = Array.from(documentObject.querySelectorAll('dialog:modal'));
+	    var focused = (0, _tabbableTargets.getDeepActiveElement)(documentObject);
+	    var focusedModals = modals.filter(function (modal) {
+	      return isWithinRoot(modal, focused);
+	    });
+	    if (focusedModals.length) {
+	      return focusedModals[focusedModals.length - 1];
+	    }
+	    return modals[modals.length - 1] || null;
+	  } catch (error) {
+	    return null;
+	  }
+	};
+	var resolveSelectorRoot = function resolveSelectorRoot(value, documentObject) {
+	  if (typeof value !== 'string') return value;
+	  return documentObject.querySelector(value);
+	};
+	var openShadowRootsWithin = function openShadowRootsWithin(root) {
+	  var roots = new Set();
+	  var _visit = function visit(scope) {
+	    if (isShadowRoot(scope)) roots.add(scope);
+	    if (!(scope !== null && scope !== void 0 && scope.querySelectorAll)) return;
+	    scope.querySelectorAll('*').forEach(function (element) {
+	      if (element.shadowRoot) _visit(element.shadowRoot);
+	    });
+	  };
+	  _visit(root);
+	  return roots;
+	};
+	var mutationBelongsOnlyToGeneratedUI = function mutationBelongsOnlyToGeneratedUI(mutation) {
+	  var changedNodes = [].concat(_toConsumableArray(Array.from(mutation.addedNodes || [])), _toConsumableArray(Array.from(mutation.removedNodes || [])));
+	  var candidates = changedNodes.length ? changedNodes : [mutation.target];
+	  return candidates.length > 0 && candidates.every(function (node) {
+	    var element = isElement(node) ? node : node.parentElement || mutation.target;
+	    return element && (0, _tabbableTargets.isOpenKeyNavGeneratedUI)(element);
+	  });
+	};
+	var preventAcceptedCommand = function preventAcceptedCommand(event) {
+	  event.preventDefault();
+	  event.stopPropagation();
+	};
+	var elementClientRects = function elementClientRects(element) {
+	  if (!(element !== null && element !== void 0 && element.getBoundingClientRect)) return [];
+	  var rects = [];
+	  if (typeof element.getClientRects === 'function') {
+	    rects = Array.from(element.getClientRects());
+	  }
+	  if (!rects.length) rects = [element.getBoundingClientRect()];
+	  return rects.filter(function (rect) {
+	    return [rect.left, rect.top, rect.right, rect.bottom].every(Number.isFinite) && rect.right > rect.left && rect.bottom > rect.top;
+	  });
+	};
+	var unionClientRects = function unionClientRects(rects) {
+	  if (!rects.length) return null;
+	  return rects.reduce(function (union, rect) {
+	    return {
+	      left: Math.min(union.left, rect.left),
+	      top: Math.min(union.top, rect.top),
+	      right: Math.max(union.right, rect.right),
+	      bottom: Math.max(union.bottom, rect.bottom)
+	    };
+	  }, {
+	    left: rects[0].left,
+	    top: rects[0].top,
+	    right: rects[0].right,
+	    bottom: rects[0].bottom
+	  });
+	};
+	structuralNavigation.StructuralNavigationController = /*#__PURE__*/function () {
+	  function StructuralNavigationController(openKeyNav) {
+	    _classCallCheck(this, StructuralNavigationController);
+	    this.openKeyNav = openKeyNav;
+	    this.document = typeof document === 'undefined' ? null : document;
+	    this.root = null;
+	    this.model = null;
+	    this.targets = [];
+	    this.targetSet = new Set();
+	    this.currentTarget = null;
+	    this.activeStructuralContext = null;
+	    this.activeTypedContext = null;
+	    this.dirty = true;
+	    this.observer = null;
+	    this.observedShadowRoots = new Set();
+	    this.statusElement = null;
+	    this.lastStatus = '';
+	    this.focusSyncToken = 0;
+	    this.contextIndicatorElement = null;
+	    this.contextIndicatorFrame = null;
+	    this.contextIndicatorResizeObserver = null;
+	    this.contextIndicatorObservedElements = new Set();
+	    this.handleFocusIn = this.handleFocusIn.bind(this);
+	    this.handleMutations = this.handleMutations.bind(this);
+	    this.handleSlotChange = this.handleSlotChange.bind(this);
+	    this.invalidate = this.invalidate.bind(this);
+	    this.scheduleContextIndicatorUpdate = this.scheduleContextIndicatorUpdate.bind(this);
+	  }
+	  return _createClass(StructuralNavigationController, [{
+	    key: "config",
+	    get: function get() {
+	      return this.openKeyNav.config.modesConfig.structuralNavigation;
+	    }
+	  }, {
+	    key: "active",
+	    get: function get() {
+	      return Boolean(this.openKeyNav.config.modes.structuralNavigation.value);
+	    }
+	  }, {
+	    key: "resolveActiveRoot",
+	    value: function resolveActiveRoot() {
+	      var details = {
+	        document: this.document,
+	        openKeyNav: this.openKeyNav,
+	        activeElement: (0, _tabbableTargets.getDeepActiveElement)(this.document)
+	      };
+	      var configured = resolveSelectorRoot(resolveValue(this.config.activeRoot, details), this.document);
+	      var customRoot = isDocument(configured) || isShadowRoot(configured) && configured.host.isConnected || isElement(configured) && configured.isConnected ? configured : null;
+	      var modal = topmostNativeModal(this.document);
+	      if (!modal) return customRoot || this.document;
+	      if (customRoot && customRoot !== this.document && isWithinRoot(modal, customRoot)) {
+	        return customRoot;
+	      }
+	      return modal;
+	    }
+	  }, {
+	    key: "resolveContributions",
+	    value: function resolveContributions(value) {
+	      var details = {
+	        root: this.root,
+	        targets: this.targets.slice(),
+	        openKeyNav: this.openKeyNav
+	      };
+	      var resolved = resolveValue(value, details);
+	      return Array.from(resolved || []);
+	    }
+	  }, {
+	    key: "activate",
+	    value: function activate() {
+	      var _this$document$defaul2;
+	      if (!this.document || !this.openKeyNav.meta.enabled.value || !this.config.enabled) {
+	        return false;
+	      }
+	      if (this.active) {
+	        var _this$document$defaul;
+	        this.document.addEventListener('focusin', this.handleFocusIn, true);
+	        this.document.addEventListener('change', this.invalidate, true);
+	        this.document.addEventListener('toggle', this.invalidate, true);
+	        this.document.addEventListener('beforetoggle', this.invalidate, true);
+	        (_this$document$defaul = this.document.defaultView) === null || _this$document$defaul === void 0 || _this$document$defaul.addEventListener('popstate', this.invalidate);
+	        this.connectContextIndicatorListeners();
+	        this.refresh();
+	        this.ensureStatus();
+	        this.updateStatus('Structural navigation active.');
+	        return true;
+	      }
+	      if (this.openKeyNav.config.modes.clicking.value || this.openKeyNav.config.modes.moving.value || this.openKeyNav.config.modes.menu.value) {
+	        this.openKeyNav.removeOverlays(true);
+	      }
+	      this.openKeyNav.config.modes.structuralNavigation.value = true;
+	      this.dirty = true;
+	      this.document.addEventListener('focusin', this.handleFocusIn, true);
+	      this.document.addEventListener('change', this.invalidate, true);
+	      this.document.addEventListener('toggle', this.invalidate, true);
+	      this.document.addEventListener('beforetoggle', this.invalidate, true);
+	      (_this$document$defaul2 = this.document.defaultView) === null || _this$document$defaul2 === void 0 || _this$document$defaul2.addEventListener('popstate', this.invalidate);
+	      this.connectContextIndicatorListeners();
+	      this.refresh();
+	      this.synchronizeFocus({
+	        preserveRoute: false,
+	        announce: false,
+	        refresh: false
+	      });
+	      this.ensureStatus();
+	      this.updateStatus('Structural navigation active.');
+	      return true;
+	    }
+	  }, {
+	    key: "deactivate",
+	    value: function deactivate() {
+	      var _this$document, _this$document2, _this$document3, _this$document4, _this$document5, _this$statusElement;
+	      var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+	        _ref$announce = _ref.announce,
+	        announce = _ref$announce === void 0 ? true : _ref$announce;
+	      if (!this.active && !this.model && !this.observer && !this.statusElement && !this.contextIndicatorElement) {
+	        return false;
+	      }
+	      if (announce) {
+	        var _this$config$status, _this$config$status2;
+	        this.updateStatus('Structural navigation off.', {
+	          force: true
+	        });
+	        if ((_this$config$status = this.config.status) !== null && _this$config$status !== void 0 && _this$config$status.enabled && ((_this$config$status2 = this.config.status) === null || _this$config$status2 === void 0 ? void 0 : _this$config$status2.announcements) !== false && typeof this.openKeyNav.emitNotification === 'function') {
+	          this.openKeyNav.emitNotification('Structural navigation off.');
+	        }
+	      }
+	      this.openKeyNav.config.modes.structuralNavigation.value = false;
+	      (_this$document = this.document) === null || _this$document === void 0 || _this$document.removeEventListener('focusin', this.handleFocusIn, true);
+	      (_this$document2 = this.document) === null || _this$document2 === void 0 || _this$document2.removeEventListener('change', this.invalidate, true);
+	      (_this$document3 = this.document) === null || _this$document3 === void 0 || _this$document3.removeEventListener('toggle', this.invalidate, true);
+	      (_this$document4 = this.document) === null || _this$document4 === void 0 || _this$document4.removeEventListener('beforetoggle', this.invalidate, true);
+	      (_this$document5 = this.document) === null || _this$document5 === void 0 || (_this$document5 = _this$document5.defaultView) === null || _this$document5 === void 0 || _this$document5.removeEventListener('popstate', this.invalidate);
+	      this.disconnectContextIndicatorListeners();
+	      this.disconnectObservers();
+	      (_this$statusElement = this.statusElement) === null || _this$statusElement === void 0 || _this$statusElement.remove();
+	      this.statusElement = null;
+	      this.removeContextIndicator();
+	      this.lastStatus = '';
+	      this.root = null;
+	      this.model = null;
+	      this.targets = [];
+	      this.targetSet.clear();
+	      this.currentTarget = null;
+	      this.activeStructuralContext = null;
+	      this.activeTypedContext = null;
+	      this.dirty = true;
+	      this.focusSyncToken += 1;
+	      return true;
+	    }
+	  }, {
+	    key: "handleKeyDown",
+	    value: function handleKeyDown(event) {
+	      if (!this.document || !this.openKeyNav.meta.enabled.value || !this.config.enabled || event.isComposing || event.keyCode === 229) {
+	        return false;
+	      }
+	      var ownership = classifyStructuralKeyOwnership(event, this.config);
+	      var activationShortcut = {
+	        key: this.openKeyNav.config.keys.structuralNavigation
+	      };
+	      if (!this.active) {
+	        if (this.openKeyNav.config.modes.clicking.value || this.openKeyNav.config.modes.moving.value || this.openKeyNav.config.modes.menu.value || ownership.character || !matchesStructuralShortcut(event, activationShortcut)) {
+	          return false;
+	        }
+	        preventAcceptedCommand(event);
+	        this.activate();
+	        return true;
+	      }
+	      if (!this.model) this.activate();
+	      var defaultExit = {
+	        key: this.openKeyNav.config.keys.structuralNavigation,
+	        altKey: true
+	      };
+	      var exitShortcut = normalizeShortcut(this.config.exitCommand) || defaultExit;
+	      var plainToggle = matchesStructuralShortcut(event, activationShortcut);
+	      var configuredExit = matchesStructuralShortcut(event, exitShortcut);
+	      var openKeyNavExit = matchesStructuralShortcut(event, {
+	        key: this.openKeyNav.config.keys.escape
+	      });
+	      var safeEscape = this.config.escapeExits && event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey && !ownership.escape;
+	      if (configuredExit || safeEscape || (plainToggle || openKeyNavExit) && !ownership.character) {
+	        preventAcceptedCommand(event);
+	        this.deactivate();
+	        return true;
+	      }
+	      if (event.key === 'Tab' || event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar' || event.key === 'Escape') {
+	        return false;
+	      }
+	      var isArrowKey = event.key.startsWith('Arrow');
+	      var isCharacterKey = event.key.length === 1;
+	      var ownsArrow = isArrowKey && ownership.arrows;
+	      var overrideModifier = this.config.overrideModifier;
+	      var override = ownsArrow && MODIFIER_KEYS.includes(overrideModifier) && Boolean(event[overrideModifier]);
+	      if (ownership.all || ownsArrow && !override || isCharacterKey && ownership.character) {
+	        return false;
+	      }
+	      var commandEntries = Object.entries(this.config.commands || {});
+	      var matched = commandEntries.find(function (_ref2) {
+	        var _ref3 = _slicedToArray(_ref2, 2),
+	          shortcut = _ref3[1];
+	        return matchesStructuralShortcut(event, shortcut, override ? overrideModifier : null);
+	      });
+	      if (!matched) return false;
+	      preventAcceptedCommand(event);
+	      this.execute(matched[0]);
+	      return true;
+	    }
+	  }, {
+	    key: "execute",
+	    value: function execute(command) {
+	      if (!this.active || !Object.values(STRUCTURAL_NAVIGATION_COMMANDS).includes(command)) {
+	        return false;
+	      }
+
+	      // A newly accepted command supersedes any settled-focus callback queued by
+	      // an earlier command. The command synchronizes current focus immediately.
+	      this.focusSyncToken += 1;
+	      this.refresh();
+	      this.synchronizeFocus({
+	        preserveRoute: true,
+	        announce: false,
+	        refresh: false
+	      });
+	      switch (command) {
+	        case STRUCTURAL_NAVIGATION_COMMANDS.previousTarget:
+	          this.moveTarget(-1);
+	          break;
+	        case STRUCTURAL_NAVIGATION_COMMANDS.nextTarget:
+	          this.moveTarget(1);
+	          break;
+	        case STRUCTURAL_NAVIGATION_COMMANDS.previousSiblingContext:
+	          this.moveSiblingContext(-1);
+	          break;
+	        case STRUCTURAL_NAVIGATION_COMMANDS.nextSiblingContext:
+	          this.moveSiblingContext(1);
+	          break;
+	        case STRUCTURAL_NAVIGATION_COMMANDS.broadenContext:
+	          this.broadenContext();
+	          break;
+	        case STRUCTURAL_NAVIGATION_COMMANDS.narrowContext:
+	          this.narrowContext();
+	          break;
+	        case STRUCTURAL_NAVIGATION_COMMANDS.previousPeerContext:
+	          this.cyclePeerContext(-1);
+	          break;
+	        case STRUCTURAL_NAVIGATION_COMMANDS.nextPeerContext:
+	          this.cyclePeerContext(1);
+	          break;
+	        default:
+	          return false;
+	      }
+	      return true;
+	    }
+	  }, {
+	    key: "refresh",
+	    value: function refresh() {
+	      var _this = this;
+	      if (!this.active) return false;
+	      var resolvedRoot = this.resolveActiveRoot();
+	      if (resolvedRoot !== this.root) {
+	        this.root = resolvedRoot;
+	        this.dirty = true;
+	      }
+	      if (!this.dirty && this.model) return false;
+	      var previousModel = this.model;
+	      var previousStructuralId = contextId(this.activeStructuralContext);
+	      var previousTypedId = contextId(this.activeTypedContext);
+	      var previousTarget = this.currentTarget;
+	      var targetFilter = typeof this.config.targetFilter === 'function' ? function (target) {
+	        return _this.config.targetFilter(target, {
+	          root: _this.root,
+	          openKeyNav: _this.openKeyNav
+	        });
+	      } : null;
+	      this.targets = (0, _tabbableTargets.discoverTabbableTargets)(this.root, {
+	        displayCheck: this.config.displayCheck || 'full',
+	        getShadowRoot: true,
+	        includeProgrammatic: Boolean(this.config.includeProgrammatic),
+	        targetFilter: targetFilter
+	      });
+	      this.targetSet = new Set(this.targets);
+	      this.model = (0, _structuralModel.buildStructuralModel)({
+	        root: this.root,
+	        targets: this.targets,
+	        structuralContexts: this.resolveContributions(this.config.structuralContexts),
+	        typedContexts: this.resolveContributions(this.config.typedContexts),
+	        previousModel: previousModel
+	      });
+	      this.dirty = false;
+	      this.reconnectObservers();
+	      var focused = (0, _tabbableTargets.getDeepActiveElement)(this.root);
+	      this.currentTarget = this.targetSet.has(focused) ? focused : this.targetSet.has(previousTarget) ? previousTarget : null;
+	      var preservedStructural = modelContextById(this.model, previousStructuralId);
+	      var direct = directContextForTarget(this.model, this.currentTarget);
+	      this.activeStructuralContext = preservedStructural && (!this.currentTarget || contextTargets(preservedStructural).includes(this.currentTarget)) ? preservedStructural : direct || this.model.rootContext;
+	      var preservedTyped = modelTypedContextById(this.model, previousTypedId);
+	      this.activeTypedContext = preservedTyped && this.currentTarget && contextTargets(preservedTyped).includes(this.currentTarget) ? preservedTyped : null;
+	      this.ensureStatus();
+	      this.scheduleContextIndicatorUpdate();
+	      return true;
+	    }
+	  }, {
+	    key: "synchronizeFocus",
+	    value: function synchronizeFocus() {
+	      var _ref4 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+	        _ref4$preserveRoute = _ref4.preserveRoute,
+	        preserveRoute = _ref4$preserveRoute === void 0 ? true : _ref4$preserveRoute,
+	        _ref4$announce = _ref4.announce,
+	        announce = _ref4$announce === void 0 ? true : _ref4$announce,
+	        _ref4$refresh = _ref4.refresh,
+	        refresh = _ref4$refresh === void 0 ? true : _ref4$refresh;
+	      if (!this.active) return;
+	      if (refresh) this.refresh();
+	      var focused = (0, _tabbableTargets.getDeepActiveElement)(this.root);
+	      if (!this.targetSet.has(focused)) {
+	        this.currentTarget = null;
+	        this.activeTypedContext = null;
+	        if (!this.activeStructuralContext) {
+	          var _this$model;
+	          this.activeStructuralContext = ((_this$model = this.model) === null || _this$model === void 0 ? void 0 : _this$model.rootContext) || null;
+	        }
+	        if (announce) this.updateStatus();
+	        return;
+	      }
+	      var hadCurrentTarget = Boolean(this.currentTarget);
+	      this.currentTarget = focused;
+	      var direct = directContextForTarget(this.model, focused) || this.model.rootContext;
+	      if (this.activeTypedContext && !contextTargets(this.activeTypedContext).includes(focused)) {
+	        this.activeTypedContext = null;
+	      }
+	      if (!this.activeTypedContext) {
+	        var routeStillContainsTarget = preserveRoute && hadCurrentTarget && this.activeStructuralContext && contextTargets(this.activeStructuralContext).includes(focused);
+	        if (!routeStillContainsTarget) this.activeStructuralContext = direct;
+	      }
+	      if (announce) this.updateStatus();
+	    }
+	  }, {
+	    key: "handleFocusIn",
+	    value: function handleFocusIn() {
+	      var _this2 = this;
+	      if (!this.active) return;
+	      var token = ++this.focusSyncToken;
+	      setTimeout(function () {
+	        if (_this2.active && token === _this2.focusSyncToken) {
+	          _this2.synchronizeFocus({
+	            preserveRoute: true
+	          });
+	        }
+	      }, 0);
+	    }
+	  }, {
+	    key: "handleMutations",
+	    value: function handleMutations(mutations) {
+	      if (!this.active) return;
+	      if (mutations.every(mutationBelongsOnlyToGeneratedUI)) return;
+	      this.dirty = true;
+	      this.scheduleContextIndicatorUpdate();
+	    }
+	  }, {
+	    key: "invalidate",
+	    value: function invalidate() {
+	      if (this.active) {
+	        this.dirty = true;
+	        this.scheduleContextIndicatorUpdate();
+	      }
+	    }
+	  }, {
+	    key: "handleSlotChange",
+	    value: function handleSlotChange(event) {
+	      if ((0, _tabbableTargets.isOpenKeyNavGeneratedUI)(event.target)) return;
+	      this.dirty = true;
+	      this.scheduleContextIndicatorUpdate();
+	    }
+	  }, {
+	    key: "reconnectObservers",
+	    value: function reconnectObservers() {
+	      var _this3 = this;
+	      this.disconnectObservers();
+	      if (typeof MutationObserver === 'undefined') return;
+	      this.observer = new MutationObserver(this.handleMutations);
+	      var documentRoot = this.document.documentElement;
+	      if (documentRoot) {
+	        this.observer.observe(documentRoot, {
+	          subtree: true,
+	          childList: true,
+	          characterData: true,
+	          attributes: true,
+	          attributeFilter: ['aria-hidden', 'aria-label', 'aria-labelledby', 'aria-level', 'aria-modal', 'checked', 'class', 'contenteditable', 'controls', 'disabled', 'href', 'hidden', 'id', 'inert', 'name', 'open', 'popover', 'role', 'style', 'tabindex', 'type']
+	        });
+	      }
+	      this.observedShadowRoots = openShadowRootsWithin(this.root);
+	      this.observedShadowRoots.forEach(function (shadowRoot) {
+	        _this3.observer.observe(shadowRoot, {
+	          subtree: true,
+	          childList: true,
+	          characterData: true,
+	          attributes: true,
+	          attributeFilter: ['aria-hidden', 'aria-label', 'aria-labelledby', 'aria-level', 'aria-modal', 'checked', 'class', 'contenteditable', 'controls', 'disabled', 'href', 'hidden', 'id', 'inert', 'name', 'open', 'popover', 'role', 'style', 'tabindex', 'type']
+	        });
+	        shadowRoot.addEventListener('slotchange', _this3.handleSlotChange);
+	      });
+	    }
+	  }, {
+	    key: "disconnectObservers",
+	    value: function disconnectObservers() {
+	      var _this$observer,
+	        _this4 = this;
+	      (_this$observer = this.observer) === null || _this$observer === void 0 || _this$observer.disconnect();
+	      this.observer = null;
+	      this.observedShadowRoots.forEach(function (shadowRoot) {
+	        shadowRoot.removeEventListener('slotchange', _this4.handleSlotChange);
+	      });
+	      this.observedShadowRoots.clear();
+	    }
+	  }, {
+	    key: "activeSequence",
+	    value: function activeSequence() {
+	      var _this5 = this;
+	      return contextTargets(this.activeTypedContext || this.activeStructuralContext).filter(function (target) {
+	        return _this5.targetSet.has(target) && target.isConnected;
+	      });
+	    }
+	  }, {
+	    key: "moveTarget",
+	    value: function moveTarget(direction) {
+	      var sequence = this.activeSequence();
+	      if (!sequence.length) {
+	        this.updateStatus('No targets are available in this context.');
+	        return;
+	      }
+	      var currentIndex = sequence.indexOf(this.currentTarget);
+	      var nextIndex = currentIndex < 0 ? direction > 0 ? 0 : sequence.length - 1 : currentIndex + direction;
+	      if (nextIndex < 0 || nextIndex >= sequence.length) {
+	        this.updateStatus(direction > 0 ? 'End of this context.' : 'Start of this context.');
+	        return;
+	      }
+	      this.focusTarget(sequence[nextIndex]);
+	    }
+	  }, {
+	    key: "focusTarget",
+	    value: function focusTarget(target) {
+	      var _this6 = this;
+	      if (!target || !this.targetSet.has(target) || !target.isConnected) {
+	        this.dirty = true;
+	        this.updateStatus('That target is no longer available.');
+	        return;
+	      }
+	      this.currentTarget = target;
+	      target.focus();
+	      this.updateStatus();
+	      var token = ++this.focusSyncToken;
+	      setTimeout(function () {
+	        if (_this6.active && token === _this6.focusSyncToken) {
+	          _this6.synchronizeFocus({
+	            preserveRoute: true
+	          });
+	        }
+	      }, 0);
+	    }
+	  }, {
+	    key: "moveSiblingContext",
+	    value: function moveSiblingContext(direction) {
+	      this.useStructuralRoute();
+	      var _horizontalContextPee = horizontalContextPeers(this.model, this.activeStructuralContext),
+	        peers = _horizontalContextPee.contexts,
+	        headingLevel = _horizontalContextPee.headingLevel;
+	      var currentIndex = peers.indexOf(this.activeStructuralContext);
+	      var nextIndex = currentIndex + direction;
+	      if (currentIndex < 0 || nextIndex < 0 || nextIndex >= peers.length) {
+	        var relation = headingLevel === null ? 'sibling context' : "context at heading level ".concat(headingLevel);
+	        this.updateStatus(direction > 0 ? "No next ".concat(relation, ".") : "No previous ".concat(relation, "."));
+	        return;
+	      }
+	      var peer = peers[nextIndex];
+	      var target = contextTargets(peer)[0];
+	      this.activeStructuralContext = peer;
+	      this.activeTypedContext = null;
+	      this.focusTarget(target);
+	    }
+	  }, {
+	    key: "broadenContext",
+	    value: function broadenContext() {
+	      this.useStructuralRoute();
+	      var parent = parentContext(this.model, this.activeStructuralContext);
+	      if (!parent) {
+	        this.updateStatus('Already at the broadest context.');
+	        return;
+	      }
+	      this.activeStructuralContext = parent;
+	      this.updateStatus('Broadened context.');
+	    }
+	  }, {
+	    key: "narrowContext",
+	    value: function narrowContext() {
+	      var _this7 = this;
+	      this.useStructuralRoute();
+	      if (!this.currentTarget) {
+	        this.updateStatus('No current target identifies a child context.');
+	        return;
+	      }
+	      var child = normalizeContextChildren(this.model, this.activeStructuralContext).find(function (context) {
+	        return contextTargets(context).includes(_this7.currentTarget);
+	      });
+	      if (!child) {
+	        this.updateStatus('No narrower context contains the current target.');
+	        return;
+	      }
+	      this.activeStructuralContext = child;
+	      this.updateStatus('Narrowed context.');
+	    }
+	  }, {
+	    key: "cyclePeerContext",
+	    value: function cyclePeerContext(direction) {
+	      var _this8 = this;
+	      if (!this.currentTarget) {
+	        this.updateStatus('No current target has an alternate typed context.');
+	        return;
+	      }
+	      var typed = typedContextsForTarget(this.model, this.currentTarget);
+	      if (!typed.length) {
+	        this.updateStatus('No alternate typed context is available.');
+	        return;
+	      }
+	      var ring = [null].concat(_toConsumableArray(typed));
+	      var currentIndex = this.activeTypedContext ? ring.findIndex(function (context) {
+	        return contextId(context) === contextId(_this8.activeTypedContext);
+	      }) : 0;
+	      var normalizedIndex = currentIndex < 0 ? 0 : currentIndex;
+	      var nextIndex = (normalizedIndex + direction + ring.length) % ring.length;
+	      this.activeTypedContext = ring[nextIndex];
+	      if (!this.activeTypedContext) {
+	        this.activeStructuralContext = directContextForTarget(this.model, this.currentTarget) || this.model.rootContext;
+	      }
+	      this.updateStatus(this.activeTypedContext ? "Using ".concat(this.activeTypedContext.name, ".") : 'Using structural context.');
+	    }
+	  }, {
+	    key: "useStructuralRoute",
+	    value: function useStructuralRoute() {
+	      if (!this.activeTypedContext) return;
+	      this.activeTypedContext = null;
+	      this.activeStructuralContext = directContextForTarget(this.model, this.currentTarget) || this.activeStructuralContext || this.model.rootContext;
+	    }
+	  }, {
+	    key: "connectContextIndicatorListeners",
+	    value: function connectContextIndicatorListeners() {
+	      var _this$document6;
+	      var view = (_this$document6 = this.document) === null || _this$document6 === void 0 ? void 0 : _this$document6.defaultView;
+	      view === null || view === void 0 || view.addEventListener('scroll', this.scheduleContextIndicatorUpdate, true);
+	      view === null || view === void 0 || view.addEventListener('resize', this.scheduleContextIndicatorUpdate);
+	    }
+	  }, {
+	    key: "disconnectContextIndicatorListeners",
+	    value: function disconnectContextIndicatorListeners() {
+	      var _this$document7, _this$contextIndicato;
+	      var view = (_this$document7 = this.document) === null || _this$document7 === void 0 ? void 0 : _this$document7.defaultView;
+	      view === null || view === void 0 || view.removeEventListener('scroll', this.scheduleContextIndicatorUpdate, true);
+	      view === null || view === void 0 || view.removeEventListener('resize', this.scheduleContextIndicatorUpdate);
+	      if (this.contextIndicatorFrame !== null && typeof (view === null || view === void 0 ? void 0 : view.cancelAnimationFrame) === 'function') {
+	        view.cancelAnimationFrame(this.contextIndicatorFrame);
+	      }
+	      this.contextIndicatorFrame = null;
+	      (_this$contextIndicato = this.contextIndicatorResizeObserver) === null || _this$contextIndicato === void 0 || _this$contextIndicato.disconnect();
+	      this.contextIndicatorResizeObserver = null;
+	      this.contextIndicatorObservedElements.clear();
+	    }
+	  }, {
+	    key: "scheduleContextIndicatorUpdate",
+	    value: function scheduleContextIndicatorUpdate() {
+	      var _this$document8,
+	        _this9 = this;
+	      if (!this.active) return;
+	      var view = (_this$document8 = this.document) === null || _this$document8 === void 0 ? void 0 : _this$document8.defaultView;
+	      if (typeof (view === null || view === void 0 ? void 0 : view.requestAnimationFrame) !== 'function') {
+	        this.updateContextIndicator();
+	        return;
+	      }
+	      if (this.contextIndicatorFrame !== null) return;
+	      this.contextIndicatorFrame = view.requestAnimationFrame(function () {
+	        _this9.contextIndicatorFrame = null;
+	        _this9.updateContextIndicator();
+	      });
+	    }
+	  }, {
+	    key: "contextIndicatorHost",
+	    value: function contextIndicatorHost() {
+	      var _this$document9, _this$document0;
+	      var activeModal = topmostNativeModal(this.document);
+	      if (activeModal && this.root === activeModal) return activeModal;
+	      return ((_this$document9 = this.document) === null || _this$document9 === void 0 ? void 0 : _this$document9.body) || ((_this$document0 = this.document) === null || _this$document0 === void 0 ? void 0 : _this$document0.documentElement) || null;
+	    }
+	  }, {
+	    key: "ensureContextIndicator",
+	    value: function ensureContextIndicator() {
+	      var _this$config$contextI;
+	      if (!this.active || ((_this$config$contextI = this.config.contextIndicator) === null || _this$config$contextI === void 0 ? void 0 : _this$config$contextI.enabled) === false) return;
+	      if (!this.contextIndicatorElement) {
+	        var element = this.document.createElement('div');
+	        element.className = 'openKeyNav-structural-context-outline';
+	        element.setAttribute('data-openkeynav-ui', 'structural-context-outline');
+	        element.setAttribute('aria-hidden', 'true');
+	        element.style.boxSizing = 'border-box';
+	        element.style.position = 'fixed';
+	        element.style.zIndex = '2147483646';
+	        element.style.pointerEvents = 'none';
+	        element.style.background = 'transparent';
+	        element.style.borderRadius = '4px';
+	        element.style.display = 'none';
+	        this.contextIndicatorElement = element;
+	      }
+	      var host = this.contextIndicatorHost();
+	      if (host && this.contextIndicatorElement.parentNode !== host) {
+	        host.appendChild(this.contextIndicatorElement);
+	      }
+	    }
+	  }, {
+	    key: "removeContextIndicator",
+	    value: function removeContextIndicator() {
+	      var _this$contextIndicato2, _this$contextIndicato3;
+	      (_this$contextIndicato2 = this.contextIndicatorResizeObserver) === null || _this$contextIndicato2 === void 0 || _this$contextIndicato2.disconnect();
+	      this.contextIndicatorResizeObserver = null;
+	      this.contextIndicatorObservedElements.clear();
+	      (_this$contextIndicato3 = this.contextIndicatorElement) === null || _this$contextIndicato3 === void 0 || _this$contextIndicato3.remove();
+	      this.contextIndicatorElement = null;
+	    }
+	  }, {
+	    key: "contextIndicatorElements",
+	    value: function contextIndicatorElements(context) {
+	      var _context$visualElemen;
+	      if (!context) return [];
+	      if (this.activeTypedContext) return contextTargets(context);
+	      if (context.source === 'heading' && (_context$visualElemen = context.visualElements) !== null && _context$visualElemen !== void 0 && _context$visualElemen.length) {
+	        return context.visualElements;
+	      }
+	      if (isShadowRoot(context.boundary)) return [context.boundary.host];
+	      if (isElement(context.boundary)) return [context.boundary];
+	      return contextTargets(context);
+	    }
+	  }, {
+	    key: "observeContextIndicatorElements",
+	    value: function observeContextIndicatorElements(elements) {
+	      var _this$document1,
+	        _this0 = this;
+	      var ResizeObserverClass = (_this$document1 = this.document) === null || _this$document1 === void 0 || (_this$document1 = _this$document1.defaultView) === null || _this$document1 === void 0 ? void 0 : _this$document1.ResizeObserver;
+	      if (typeof ResizeObserverClass !== 'function') return;
+	      var nextElements = new Set(elements.filter(isElement));
+	      if (nextElements.size === this.contextIndicatorObservedElements.size && Array.from(nextElements).every(function (element) {
+	        return _this0.contextIndicatorObservedElements.has(element);
+	      })) {
+	        return;
+	      }
+	      if (!this.contextIndicatorResizeObserver) {
+	        this.contextIndicatorResizeObserver = new ResizeObserverClass(this.scheduleContextIndicatorUpdate);
+	      }
+	      this.contextIndicatorResizeObserver.disconnect();
+	      nextElements.forEach(function (element) {
+	        _this0.contextIndicatorResizeObserver.observe(element);
+	      });
+	      this.contextIndicatorObservedElements = nextElements;
+	    }
+	  }, {
+	    key: "updateContextIndicator",
+	    value: function updateContextIndicator() {
+	      var _this$config$contextI2, _this$document$docume, _this$document$docume2, _this$config$contextI3, _this$config$contextI4, _this$config$contextI5;
+	      if (!this.active || ((_this$config$contextI2 = this.config.contextIndicator) === null || _this$config$contextI2 === void 0 ? void 0 : _this$config$contextI2.enabled) === false) {
+	        var _this$contextIndicato4;
+	        if (this.contextIndicatorElement) {
+	          this.contextIndicatorElement.style.display = 'none';
+	        }
+	        (_this$contextIndicato4 = this.contextIndicatorResizeObserver) === null || _this$contextIndicato4 === void 0 || _this$contextIndicato4.disconnect();
+	        this.contextIndicatorObservedElements.clear();
+	        return;
+	      }
+	      this.ensureContextIndicator();
+	      var indicator = this.contextIndicatorElement;
+	      var context = this.activeTypedContext || this.activeStructuralContext;
+	      if (!indicator || !context) return;
+	      var view = this.document.defaultView;
+	      var viewportWidth = (view === null || view === void 0 ? void 0 : view.innerWidth) || ((_this$document$docume = this.document.documentElement) === null || _this$document$docume === void 0 ? void 0 : _this$document$docume.clientWidth) || 0;
+	      var viewportHeight = (view === null || view === void 0 ? void 0 : view.innerHeight) || ((_this$document$docume2 = this.document.documentElement) === null || _this$document$docume2 === void 0 ? void 0 : _this$document$docume2.clientHeight) || 0;
+	      var elements = this.contextIndicatorElements(context);
+	      var rect;
+	      if (isDocument(context.boundary)) {
+	        elements = [this.document.documentElement].filter(Boolean);
+	        rect = {
+	          left: 0,
+	          top: 0,
+	          right: viewportWidth,
+	          bottom: viewportHeight
+	        };
+	      } else {
+	        var rects = elements.flatMap(elementClientRects);
+	        if (!rects.length && isElement(context.boundary)) {
+	          elements = contextTargets(context);
+	          rects = elements.flatMap(elementClientRects);
+	        }
+	        rect = unionClientRects(rects);
+	      }
+	      this.observeContextIndicatorElements(elements);
+	      if (!rect || !viewportWidth || !viewportHeight) {
+	        indicator.style.display = 'none';
+	        return;
+	      }
+	      var configuredOffset = Number((_this$config$contextI3 = this.config.contextIndicator) === null || _this$config$contextI3 === void 0 ? void 0 : _this$config$contextI3.offset);
+	      var offset = Number.isFinite(configuredOffset) ? Math.max(0, configuredOffset) : 4;
+	      var left = Math.max(0, rect.left - offset);
+	      var top = Math.max(0, rect.top - offset);
+	      var right = Math.min(viewportWidth, rect.right + offset);
+	      var bottom = Math.min(viewportHeight, rect.bottom + offset);
+	      if (right <= left || bottom <= top) {
+	        indicator.style.display = 'none';
+	        return;
+	      }
+	      var configuredWidth = Number((_this$config$contextI4 = this.config.contextIndicator) === null || _this$config$contextI4 === void 0 ? void 0 : _this$config$contextI4.width);
+	      var width = Number.isFinite(configuredWidth) ? Math.max(1, configuredWidth) : 3;
+	      var color = ((_this$config$contextI5 = this.config.contextIndicator) === null || _this$config$contextI5 === void 0 ? void 0 : _this$config$contextI5.color) || '#0088cc';
+	      indicator.style.display = 'block';
+	      indicator.style.left = "".concat(left, "px");
+	      indicator.style.top = "".concat(top, "px");
+	      indicator.style.width = "".concat(right - left, "px");
+	      indicator.style.height = "".concat(bottom - top, "px");
+	      indicator.style.border = "".concat(width, "px solid ").concat(color);
+	      indicator.dataset.contextId = String(contextId(context) || '');
+	      indicator.dataset.contextName = context.name || 'Document';
+	      indicator.dataset.contextType = this.activeTypedContext ? this.activeTypedContext.type || 'typed' : 'structural';
+	    }
+	  }, {
+	    key: "statusHost",
+	    value: function statusHost() {
+	      if (isShadowRoot(this.root)) return this.root;
+	      if (isElement(this.root) && !['INPUT', 'SELECT', 'TEXTAREA'].includes(this.root.tagName)) {
+	        return this.root;
+	      }
+	      return this.document.body || this.document.documentElement;
+	    }
+	  }, {
+	    key: "ensureStatus",
+	    value: function ensureStatus() {
+	      var _this$config$status3;
+	      if (!this.active || !((_this$config$status3 = this.config.status) !== null && _this$config$status3 !== void 0 && _this$config$status3.enabled)) return;
+	      if (!this.statusElement) {
+	        var element = this.document.createElement('div');
+	        element.className = 'openKeyNav-structural-status';
+	        element.setAttribute('data-openkeynav-ui', 'structural-status');
+	        element.setAttribute('role', 'status');
+	        element.setAttribute('aria-live', this.config.status.announcements === false ? 'off' : 'polite');
+	        element.setAttribute('aria-atomic', 'true');
+	        element.style.boxSizing = 'border-box';
+	        element.style.position = 'fixed';
+	        element.style.left = '12px';
+	        element.style.bottom = '12px';
+	        element.style.zIndex = '2147483647';
+	        element.style.maxWidth = 'min(34rem, calc(100vw - 24px))';
+	        element.style.padding = '8px 12px';
+	        element.style.border = '1px solid #666';
+	        element.style.borderRadius = '4px';
+	        element.style.color = '#fff';
+	        element.style.background = 'rgba(20, 24, 28, .94)';
+	        element.style.font = '14px/1.35 sans-serif';
+	        element.style.pointerEvents = 'none';
+	        if (this.config.status.visible === false) {
+	          element.style.width = '1px';
+	          element.style.height = '1px';
+	          element.style.padding = '0';
+	          element.style.margin = '-1px';
+	          element.style.overflow = 'hidden';
+	          element.style.clip = 'rect(0 0 0 0)';
+	          element.style.whiteSpace = 'nowrap';
+	        }
+	        this.statusElement = element;
+	      }
+	      var host = this.statusHost();
+	      if (host && this.statusElement.parentNode !== host) {
+	        host.appendChild(this.statusElement);
+	      }
+	    }
+	  }, {
+	    key: "updateStatus",
+	    value: function updateStatus() {
+	      var _this1 = this;
+	      var prefix = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+	      var _ref5 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+	        _ref5$force = _ref5.force,
+	        force = _ref5$force === void 0 ? false : _ref5$force;
+	      if (!this.active && !force) return;
+	      if (this.active) this.scheduleContextIndicatorUpdate();
+	      this.ensureStatus();
+	      if (!this.statusElement) return;
+	      var route = this.activeTypedContext || this.activeStructuralContext;
+	      var sequence = this.activeSequence();
+	      var index = sequence.indexOf(this.currentTarget);
+	      var contextName = (route === null || route === void 0 ? void 0 : route.name) || 'Document';
+	      var targetDescription = this.currentTarget ? "".concat(targetName(this.currentTarget), ", ").concat(index >= 0 ? index + 1 : '?', " of ").concat(sequence.length) : "".concat(sequence.length, " available ").concat(sequence.length === 1 ? 'target' : 'targets');
+	      var horizontalPeers = horizontalContextPeers(this.model, this.activeStructuralContext);
+	      var otherHorizontalContexts = horizontalPeers.contexts.filter(function (context) {
+	        return context !== _this1.activeStructuralContext;
+	      });
+	      var typedContexts = typedContextsForTarget(this.model, this.currentTarget);
+	      var siblingDescription = otherHorizontalContexts.length ? " ".concat(horizontalPeers.headingLevel === null ? 'Sibling contexts' : "Same-level contexts (heading level ".concat(horizontalPeers.headingLevel, ")"), ": ").concat(otherHorizontalContexts.map(function (context) {
+	        return context.name;
+	      }).join(', '), ".") : '';
+	      var typedDescription = typedContexts.length ? " Typed contexts: ".concat(typedContexts.map(function (context) {
+	        return context.name;
+	      }).join(', '), ".") : '';
+	      var message = [prefix, "Context: ".concat(contextName, "."), targetDescription ? "".concat(targetDescription, ".") : '', siblingDescription, typedDescription].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+	      if (message === this.lastStatus) return;
+	      this.lastStatus = message;
+	      this.statusElement.textContent = message;
+	      this.statusElement.dataset.contextId = String(contextId(route) || '');
+	      this.statusElement.dataset.contextType = this.activeTypedContext ? this.activeTypedContext.type || 'typed' : 'structural';
+	    }
+	  }, {
+	    key: "getState",
+	    value: function getState() {
+	      return {
+	        active: this.active,
+	        root: this.root,
+	        target: this.currentTarget,
+	        targets: this.targets.slice(),
+	        model: this.model,
+	        activeContext: this.activeTypedContext || this.activeStructuralContext,
+	        activeStructuralContext: this.activeStructuralContext,
+	        activeTypedContext: this.activeTypedContext,
+	        dirty: this.dirty
+	      };
+	    }
+	  }]);
+	}();
+
 	var hasRequiredOpenKeyNav;
 	function requireOpenKeyNav() {
 	  if (hasRequiredOpenKeyNav) return OpenKeyNav$1;
@@ -2339,6 +5460,7 @@
 	  var _escape = _escape$1;
 	  var _audit = audit;
 	  var _auditPanel = auditPanel;
+	  var _structuralNavigation = structuralNavigation;
 	  function _createForOfIteratorHelper(r, e) {
 	    var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
 	    if (!t) {
@@ -2632,6 +5754,8 @@
 	          // focus on the next heading of level 5 // as seen in JAWS, NVDA // do not modify
 	          heading_6: '6',
 	          // focus on the next heading of level 6 // as seen in JAWS, NVDA // do not modify
+	          structuralNavigation: 'r',
+	          // enter/exit structural focus navigation ("route" mode)
 	          menu: 'o',
 	          audit: 'a',
 	          // enter audit mode to check keyboard accessibility
@@ -2667,6 +5791,52 @@
 	          },
 	          menu: {
 	            modifier: false
+	          },
+	          structuralNavigation: {
+	            enabled: true,
+	            escapeExits: false,
+	            exitCommand: null,
+	            overrideModifier: 'altKey',
+	            activeRoot: null,
+	            includeProgrammatic: false,
+	            targetFilter: null,
+	            structuralContexts: [],
+	            typedContexts: [],
+	            ownsKey: null,
+	            displayCheck: 'full',
+	            status: {
+	              enabled: true,
+	              visible: true,
+	              announcements: true
+	            },
+	            contextIndicator: {
+	              enabled: true,
+	              color: '#0088cc',
+	              width: 3,
+	              offset: 4
+	            },
+	            commands: {
+	              previousTarget: null,
+	              nextTarget: null,
+	              previousSiblingContext: {
+	                key: 'ArrowLeft',
+	                shiftKey: true
+	              },
+	              nextSiblingContext: {
+	                key: 'ArrowRight',
+	                shiftKey: true
+	              },
+	              broadenContext: {
+	                key: 'ArrowUp',
+	                shiftKey: true
+	              },
+	              narrowContext: {
+	                key: 'ArrowDown',
+	                shiftKey: true
+	              },
+	              previousPeerContext: null,
+	              nextPeerContext: null
+	            }
 	          }
 	        },
 	        log: [],
@@ -2684,7 +5854,8 @@
 	        modes: {
 	          clicking: (0, _signals.signal)(false),
 	          moving: (0, _signals.signal)(false),
-	          menu: (0, _signals.signal)(false)
+	          menu: (0, _signals.signal)(false),
+	          structuralNavigation: (0, _signals.signal)(false)
 	        },
 	        debug: {
 	          screenReaderVisible: false,
@@ -2696,6 +5867,7 @@
 	      this.meta = {
 	        enabled: (0, _signals.signal)(false)
 	      };
+	      this.structuralNavigation = new _structuralNavigation.StructuralNavigationController(this);
 	      this.enable = function () {
 	        _this.meta.enabled.value = true;
 	        _this.injectStyles();
@@ -2711,6 +5883,9 @@
 	        return _this;
 	      };
 	      this.disable = function () {
+	        _this.exitStructuralNavigation({
+	          announce: false
+	        });
 	        _this.meta.enabled.value = false;
 	        _this.getSetCookie(_this.config.enabledCookie, false);
 	        // Remove audit panel if present when disabling
@@ -2739,6 +5914,39 @@
 	          target.removeAttribute('data-openkeynav-focused');
 	          target.removeEventListener('blur', handler); // Clean up the event listener
 	        });
+	      }
+	    }, {
+	      key: "enterStructuralNavigation",
+	      value: function enterStructuralNavigation() {
+	        if (!this.meta.enabled.value) {
+	          return false;
+	        }
+	        return this.structuralNavigation.activate();
+	      }
+	    }, {
+	      key: "exitStructuralNavigation",
+	      value: function exitStructuralNavigation() {
+	        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	        return this.structuralNavigation.deactivate(options);
+	      }
+	    }, {
+	      key: "structuralNavigate",
+	      value: function structuralNavigate(command) {
+	        if (!this.meta.enabled.value || !this.config.modes.structuralNavigation.value) {
+	          return false;
+	        }
+	        return this.structuralNavigation.execute(command);
+	      }
+	    }, {
+	      key: "getStructuralNavigationState",
+	      value: function getStructuralNavigationState() {
+	        return this.structuralNavigation.getState();
+	      }
+	    }, {
+	      key: "invalidateStructuralNavigation",
+	      value: function invalidateStructuralNavigation() {
+	        this.structuralNavigation.invalidate();
+	        return this;
 	      }
 	    }, {
 	      key: "preventpropagation",
@@ -2790,13 +5998,19 @@
 	      value: function deepMerge(target, source) {
 	        var _this3 = this;
 	        Object.keys(source).forEach(function (key) {
-	          if (source[key] && _typeof(source[key]) === 'object') {
-	            if (!target[key] || _typeof(target[key]) !== 'object') {
+	          var sourceValue = source[key];
+	          var sourcePrototype = sourceValue && _typeof(sourceValue) === 'object' ? Object.getPrototypeOf(sourceValue) : null;
+	          var isPlainObject = sourceValue !== null && _typeof(sourceValue) === 'object' && (sourcePrototype === Object.prototype || sourcePrototype === null);
+	          if (sourceValue && isPlainObject && !Array.isArray(sourceValue)) {
+	            var targetValue = target[key];
+	            var targetPrototype = targetValue && _typeof(targetValue) === 'object' ? Object.getPrototypeOf(targetValue) : null;
+	            var targetIsPlainObject = targetValue !== null && _typeof(targetValue) === 'object' && (targetPrototype === Object.prototype || targetPrototype === null);
+	            if (!targetIsPlainObject || Array.isArray(targetValue)) {
 	              target[key] = {};
 	            }
-	            _this3.deepMerge(target[key], source[key]);
+	            _this3.deepMerge(target[key], sourceValue);
 	          } else {
-	            target[key] = source[key];
+	            target[key] = sourceValue;
 	          }
 	        });
 	        return target;
@@ -2825,8 +6039,15 @@
 	    }, {
 	      key: "isTextInputActive",
 	      value: function isTextInputActive() {
-	        var tagName = document.activeElement.tagName.toLowerCase();
-	        var editable = document.activeElement.getAttribute('contenteditable');
+	        var activeElement = document.activeElement;
+	        while (activeElement && activeElement.shadowRoot && activeElement.shadowRoot.activeElement) {
+	          activeElement = activeElement.shadowRoot.activeElement;
+	        }
+	        if (!activeElement || !activeElement.tagName) {
+	          return false;
+	        }
+	        var tagName = activeElement.tagName.toLowerCase();
+	        var editable = activeElement.getAttribute('contenteditable');
 	        var inputTypes = ['input', 'textarea'];
 	        var isEditable = editable === 'true' || editable === 'plaintext-only' || editable === '';
 	        return inputTypes.includes(tagName) || isEditable;
@@ -3165,7 +6386,13 @@
 	        var _this6 = this;
 	        var resetModes = function resetModes() {
 	          for (var key in _this6.config.modes) {
-	            _this6.config.modes[key].value = false;
+	            if (key === 'structuralNavigation') {
+	              _this6.exitStructuralNavigation({
+	                announce: false
+	              });
+	            } else {
+	              _this6.config.modes[key].value = false;
+	            }
 	          }
 
 	          // reset move mode config
@@ -3368,15 +6595,18 @@
 	      key: "addKeydownEventListener",
 	      value: function addKeydownEventListener() {
 	        var _this7 = this;
-	        // Detect this.config.keys.click to enter label mode
-	        // Using an arrow function to maintain 'this' context of class
-	        document.addEventListener('keydown', function (e) {
+	        if (this._keydownHandler) {
+	          return;
+	        }
+	        this._keydownHandler = function (e) {
 	          (0, _keypress.handleKeyPress)(_this7, e);
-	        }, true);
+	        };
+	        document.addEventListener('keydown', this._keydownHandler, true);
 
-	        // Also for the iframes
-	        window.addEventListener('message', function (e) {
-	          if (e.data.type === 'keydown') {
+	        // Existing click-label iframe support. Structural navigation deliberately
+	        // treats each iframe as one atomic target and never uses this bridge.
+	        this._messageHandler = function (e) {
+	          if (e.data && e.data.type === 'keydown') {
 	            console.log('Key pressed in iframe:', e.data.key);
 
 	            // Create a new event
@@ -3391,6 +6621,9 @@
 	              // This ensures the event bubbles up through the DOM
 	              cancelable: true // This lets it be cancelable
 	            });
+	            Object.defineProperty(newEvent, 'openKeyNavIframeBridge', {
+	              value: true
+	            });
 	            if (newEvent.key === 'Escape') {
 	              // Execute escape logic
 	              (0, _escape.handleEscape)(_this7, e);
@@ -3399,7 +6632,20 @@
 	            // Dispatch it on the document or specific element that your existing handler is attached to
 	            document.dispatchEvent(newEvent);
 	          }
-	        });
+	        };
+	        window.addEventListener('message', this._messageHandler);
+	      }
+	    }, {
+	      key: "removeKeydownEventListener",
+	      value: function removeKeydownEventListener() {
+	        if (this._keydownHandler) {
+	          document.removeEventListener('keydown', this._keydownHandler, true);
+	          this._keydownHandler = null;
+	        }
+	        if (this._messageHandler) {
+	          window.removeEventListener('message', this._messageHandler);
+	          this._messageHandler = null;
+	        }
 	      }
 
 	      // Function to emit a temporary notification
@@ -3713,11 +6959,31 @@
 	        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	        this.deepMerge(this.config, options);
 	        this.addKeydownEventListener();
-	        this.initStatusBar();
-	        this.initToolBar();
+	        if (!this._statusBarInitialized) {
+	          this.initStatusBar();
+	          this._statusBarInitialized = true;
+	        }
+	        if (!this._toolBarInitialized) {
+	          this.initToolBar();
+	          this._toolBarInitialized = true;
+	        }
 	        this.applicationSupport();
 	        this.checkEnabled();
 	        console.log('Library initialized with config:', this.config);
+	        return this;
+	      }
+	    }, {
+	      key: "destroy",
+	      value: function destroy() {
+	        this.exitStructuralNavigation({
+	          announce: false
+	        });
+	        this.removeKeydownEventListener();
+	        this.removeOverlays(true);
+	        this.clearAuditFlags();
+	        (0, _auditPanel.hideAuditPanel)();
+	        this.removeStyles();
+	        this.meta.enabled.value = false;
 	        return this;
 	      }
 	    }]);
