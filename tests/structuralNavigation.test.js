@@ -184,6 +184,52 @@ describe('StructuralNavigationController', () => {
     expect(document.querySelector('.openKeyNav-structural-status')).toBeNull();
   });
 
+  it.each([
+    { label: 'programmatically focused heading', focusId: 'alpha-title' },
+    { label: 'programmatically focused scroll region', focusId: 'alpha-scroll' },
+  ])('resynchronizes its context around a $label without promoting it to a target', async ({
+    focusId,
+  }) => {
+    document.body.innerHTML = `
+      <main aria-label="Workspace">
+        <section id="alpha" aria-labelledby="alpha-title">
+          <h2 id="alpha-title">Alpha</h2>
+          <button id="alpha-action">Alpha action</button>
+          <div id="alpha-scroll">Alpha scroll region</div>
+        </section>
+        <section id="beta" aria-labelledby="beta-title">
+          <h2 id="beta-title">Beta</h2>
+          <button id="beta-action">Beta action</button>
+        </section>
+      </main>
+    `;
+    openKeyNav = createOpenKeyNav();
+    const betaAction = document.getElementById('beta-action');
+    const programmaticTarget = document.getElementById(focusId);
+    betaAction.focus();
+    openKeyNav.enterStructuralNavigation();
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Beta');
+
+    programmaticTarget.setAttribute('tabindex', '-1');
+    programmaticTarget.focus();
+    await nextTask();
+
+    const synchronized = openKeyNav.getStructuralNavigationState();
+    expect(document.activeElement).toBe(programmaticTarget);
+    expect(synchronized.active).toBe(true);
+    expect(synchronized.target).toBeNull();
+    expect(synchronized.targets).not.toContain(programmaticTarget);
+    expect(synchronized.activeTypedContext).toBeNull();
+    expect(synchronized.activeContext.name).toBe('Alpha');
+
+    expect(openKeyNav.structuralNavigate('nextTarget')).toBe(true);
+    expect(document.activeElement).toBe(document.getElementById('alpha-action'));
+    expect(openKeyNav.config.modes.structuralNavigation.value).toBe(true);
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Alpha');
+  });
+
   it('keeps the configured Alt override active after leaving an arrow-owning input', () => {
     document.body.innerHTML = `
       <section aria-label="Widgets">

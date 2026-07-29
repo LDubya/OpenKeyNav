@@ -264,6 +264,33 @@ const directContextForTarget = (model, target) => {
   return null;
 };
 
+const structuralContextForElement = (model, element) => {
+  if (!model || !element) return null;
+
+  const direct = directContextForTarget(model, element);
+  if (direct) return direct;
+
+  const contexts = modelStructuralContexts(model);
+  const exact = contexts.filter(context => (
+    context.boundary === element || context.associatedHeading === element
+  ));
+  const containing = exact.length ? exact : contexts.filter(context => {
+    if (context.visualElements?.includes(element)) return true;
+    const boundary = context.boundary;
+    return (
+      isDocument(boundary) ||
+      isShadowRoot(boundary) ||
+      isElement(boundary)
+    ) && isComposedWithin(boundary, element);
+  });
+
+  return containing.sort((left, right) => (
+    contextHierarchyLevel(model, right) - contextHierarchyLevel(model, left) ||
+    contextTargets(left).length - contextTargets(right).length ||
+    contextOrder(left) - contextOrder(right)
+  ))[0] || model.rootContext || null;
+};
+
 const typedContextsForTarget = (model, target) => {
   if (!model || !target) return [];
   const map = model.typedContextsByTarget || model.targetTypedContexts;
@@ -713,8 +740,26 @@ export class StructuralNavigationController {
       altKey: true,
     };
     const exitShortcut = normalizeShortcut(this.config.exitCommand) || defaultExit;
-    const plainToggle = matchesStructuralShortcut(event, activationShortcut);
     const configuredExit = matchesStructuralShortcut(event, exitShortcut);
+    const foregroundModeActive = Boolean(
+      this.openKeyNav.config.modes.clicking.value ||
+      this.openKeyNav.config.modes.moving.value ||
+      this.openKeyNav.config.modes.menu.value
+    );
+
+    // Click, Move, and menu are temporary layers over structural navigation.
+    // Their keystrokes take priority until they finish. The deliberately
+    // configured structural exit remains available (Alt+R by default).
+    if (foregroundModeActive) {
+      if (configuredExit) {
+        preventAcceptedCommand(event);
+        this.deactivate();
+        return true;
+      }
+      return false;
+    }
+
+    const plainToggle = matchesStructuralShortcut(event, activationShortcut);
     const openKeyNavExit = matchesStructuralShortcut(event, {
       key: this.openKeyNav.config.keys.escape,
     });
@@ -937,7 +982,16 @@ export class StructuralNavigationController {
     if (!this.targetSet.has(focused)) {
       this.currentTarget = null;
       this.activeTypedContext = null;
-      if (!this.activeStructuralContext) {
+      const ambientDocumentFocus = Boolean(
+        focused === this.document?.body ||
+        focused === this.document?.documentElement
+      );
+      if (!ambientDocumentFocus) {
+        this.activeStructuralContext = structuralContextForElement(
+          this.model,
+          focused
+        ) || this.activeStructuralContext || this.model?.rootContext || null;
+      } else if (!this.activeStructuralContext) {
         this.activeStructuralContext = this.model?.rootContext || null;
       }
       if (announce) this.updateStatus();

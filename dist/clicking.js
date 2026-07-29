@@ -18,7 +18,7 @@ var handleTargetClickInteraction = exports.handleTargetClickInteraction = functi
     } else {
       openKeyNav.focus(target); // Ensure the target element is focused before dispatching the click event
       if (!openKeyNav.config.modesConfig.click.modifier) {
-        var clickEvent = new MouseEvent('click', {
+        var clickEvent = new win.MouseEvent('click', {
           bubbles: true,
           cancelable: true,
           view: win

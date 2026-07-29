@@ -3,15 +3,17 @@
  */
 import OpenKeyNav from '../src/OpenKeyNav.js';
 
+const nextTask = () => new Promise(resolve => setTimeout(resolve, 0));
+
 const LEGACY_FOCUS_COMMANDS = [
-  { label: 'all headings', key: 'h', code: 'KeyH' },
-  { label: 'level-one headings', key: '1', code: 'Digit1' },
-  { label: 'level-two headings', key: '2', code: 'Digit2' },
-  { label: 'level-three headings', key: '3', code: 'Digit3' },
-  { label: 'level-four headings', key: '4', code: 'Digit4' },
-  { label: 'level-five headings', key: '5', code: 'Digit5' },
-  { label: 'level-six headings', key: '6', code: 'Digit6' },
-  { label: 'scroll containers', key: 's', code: 'KeyS' },
+  { label: 'all headings', key: 'h', code: 'KeyH', selector: 'h1' },
+  { label: 'level-one headings', key: '1', code: 'Digit1', selector: 'h1' },
+  { label: 'level-two headings', key: '2', code: 'Digit2', selector: 'h2' },
+  { label: 'level-three headings', key: '3', code: 'Digit3', selector: 'h3' },
+  { label: 'level-four headings', key: '4', code: 'Digit4', selector: 'h4' },
+  { label: 'level-five headings', key: '5', code: 'Digit5', selector: 'h5' },
+  { label: 'level-six headings', key: '6', code: 'Digit6', selector: 'h6' },
+  { label: 'scroll containers', key: 's', code: 'KeyS', selector: '#scroll-container' },
 ];
 
 const dispatchKey = (target, key, code, modifiers = {}) => {
@@ -53,6 +55,7 @@ describe('keypress structural-mode arbitration', () => {
         <h5>Level five</h5>
         <h6>Level six</h6>
         <button id="current">Current target</button>
+        <button id="next">Next target</button>
         <div id="scroll-container">Scrollable content</div>
       </main>
     `;
@@ -64,8 +67,8 @@ describe('keypress structural-mode arbitration', () => {
   });
 
   it.each(LEGACY_FOCUS_COMMANDS)(
-    'consumes the legacy $label command without moving focus or changing context',
-    ({ key, code }) => {
+    'runs the $label command without leaving Structural Navigation',
+    ({ key, code, selector }) => {
       openKeyNav = createOpenKeyNav();
       const current = document.getElementById('current');
       const scrollContainer = document.getElementById('scroll-container');
@@ -73,7 +76,6 @@ describe('keypress structural-mode arbitration', () => {
       current.focus();
       openKeyNav.enterStructuralNavigation();
 
-      const contextBefore = openKeyNav.getStructuralNavigationState().activeContext.id;
       const focusSpy = vi.spyOn(openKeyNav, 'focus');
       let reachedPage = false;
       current.addEventListener('keydown', () => {
@@ -84,22 +86,250 @@ describe('keypress structural-mode arbitration', () => {
 
       expect(event.defaultPrevented).toBe(true);
       expect(reachedPage).toBe(false);
-      expect(document.activeElement).toBe(current);
-      expect(openKeyNav.getStructuralNavigationState().activeContext.id)
-        .toBe(contextBefore);
-      expect(focusSpy).not.toHaveBeenCalled();
-      expect(document.querySelector('[data-openkeynav-tabIndexed]')).toBeNull();
-      expect(document.querySelector('h1[tabindex], h2[tabindex], h3[tabindex], h4[tabindex], h5[tabindex], h6[tabindex]'))
-        .toBeNull();
-      expect(scrollContainer.hasAttribute('tabindex')).toBe(false);
+      expect(openKeyNav.config.modes.structuralNavigation.value).toBe(true);
+      expect(document.activeElement.matches(selector)).toBe(true);
+      expect(focusSpy).toHaveBeenCalledTimes(1);
+      expect(document.activeElement.getAttribute('tabindex')).toBe('-1');
+      expect(document.activeElement.getAttribute('data-openkeynav-tabIndexed')).toBe('true');
+
+      if (key === 's') {
+        expect(openKeyNav.config.scrollables.currentScrollableIndex).toBe(0);
+        expect(Object.hasOwn(openKeyNav.config, 'currentScrollableIndex')).toBe(false);
+      }
     }
   );
 
-  it('passes an explicitly delegated character command through to the page', () => {
+  it.each([
+    { label: 'Click Mode', key: 'k', code: 'KeyK', mode: 'clicking' },
+    { label: 'Move Mode', key: 'm', code: 'KeyM', mode: 'moving' },
+    { label: 'shortcut menu', key: 'o', code: 'KeyO', mode: 'menu' },
+  ])('opens $label over Structural Navigation', ({ key, code, mode }) => {
+    openKeyNav = createOpenKeyNav();
+    const current = document.getElementById('current');
+    current.focus();
+    openKeyNav.enterStructuralNavigation();
+
+    const event = dispatchKey(current, key, code);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(openKeyNav.config.modes.structuralNavigation.value).toBe(true);
+    expect(openKeyNav.config.modes[mode].value).toBe(true);
+    expect(document.activeElement).toBe(current);
+  });
+
+  it.each([
+    { mode: 'clicking', activationKey: 'k', activationCode: 'KeyK' },
+    { mode: 'moving', activationKey: 'm', activationCode: 'KeyM' },
+    { mode: 'menu', activationKey: 'o', activationCode: 'KeyO' },
+  ])('lets Escape dismiss $mode while Structural Navigation stays active', ({
+    mode,
+    activationKey,
+    activationCode,
+  }) => {
+    openKeyNav = createOpenKeyNav();
+    const current = document.getElementById('current');
+    current.focus();
+    openKeyNav.enterStructuralNavigation();
+    dispatchKey(current, activationKey, activationCode);
+
+    const event = dispatchKey(current, 'Escape', 'Escape');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(openKeyNav.config.modes[mode].value).toBe(false);
+    expect(openKeyNav.config.modes.structuralNavigation.value).toBe(true);
+    expect(document.activeElement).toBe(current);
+  });
+
+  it.each([
+    { mode: 'clicking', activationKey: 'k', activationCode: 'KeyK' },
+    { mode: 'moving', activationKey: 'm', activationCode: 'KeyM' },
+    { mode: 'menu', activationKey: 'o', activationCode: 'KeyO' },
+  ])('lets the configured q escape dismiss $mode while Structural Navigation stays active', ({
+    mode,
+    activationKey,
+    activationCode,
+  }) => {
+    openKeyNav = createOpenKeyNav();
+    const current = document.getElementById('current');
+    current.focus();
+    openKeyNav.enterStructuralNavigation();
+    dispatchKey(current, activationKey, activationCode);
+
+    const event = dispatchKey(current, 'q', 'KeyQ');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(openKeyNav.config.modes[mode].value).toBe(false);
+    expect(openKeyNav.config.modes.structuralNavigation.value).toBe(true);
+    expect(document.activeElement).toBe(current);
+  });
+
+  it.each([
+    { label: 'activation key', key: 'r', code: 'KeyR', options: {} },
+    {
+      label: 'configured Structural command key',
+      key: 'h',
+      code: 'KeyH',
+      options: {
+        modesConfig: {
+          structuralNavigation: {
+            commands: { nextTarget: { key: 'h' } },
+          },
+        },
+      },
+    },
+  ])('gives a Click Mode label its $label while preserving Structural Navigation', async ({
+    key,
+    code,
+    options,
+  }) => {
+    openKeyNav = createOpenKeyNav(options);
+    const current = document.getElementById('current');
+    const clicked = document.getElementById('next');
+    clicked.setAttribute('data-openkeynav-label', key);
+    current.focus();
+    openKeyNav.enterStructuralNavigation();
+    openKeyNav.config.modes.clicking.value = true;
+    // The modifier variant focuses the selected target without synthesizing a
+    // MouseEvent, which jsdom cannot construct with its document view here.
+    openKeyNav.config.modesConfig.click.modifier = true;
+
+    const event = dispatchKey(current, key, code);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(openKeyNav.config.modes.structuralNavigation.value).toBe(true);
+    expect(openKeyNav.config.modes.clicking.value).toBe(true);
+
+    await nextTask();
+
+    expect(document.activeElement).toBe(clicked);
+    expect(openKeyNav.config.modes.clicking.value).toBe(false);
+    expect(openKeyNav.config.modes.structuralNavigation.value).toBe(true);
+  });
+
+  it('gives an explicitly configured Structural command precedence over a heading command', () => {
     openKeyNav = createOpenKeyNav({
       modesConfig: {
         structuralNavigation: {
-          ownsKey: event => ({ character: event.key.toLowerCase() === 'h' }),
+          commands: {
+            nextTarget: { key: 'h' },
+          },
+        },
+      },
+    });
+    const current = document.getElementById('current');
+    current.focus();
+    openKeyNav.enterStructuralNavigation();
+
+    const event = dispatchKey(current, 'h', 'KeyH');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(openKeyNav.config.modes.structuralNavigation.value).toBe(true);
+    expect(document.activeElement).toBe(document.getElementById('next'));
+    expect(document.querySelector('h1[tabindex], h2[tabindex], h3[tabindex], h4[tabindex], h5[tabindex], h6[tabindex]'))
+      .toBeNull();
+  });
+
+  it.each([
+    { key: 'a', code: 'KeyA' },
+    { key: 'n', code: 'KeyN' },
+    { key: 'd', code: 'KeyD' },
+    { key: 'f', code: 'KeyF' },
+    { key: 'v', code: 'KeyV' },
+    { key: 'x', code: 'KeyX' },
+  ])('leaves the unrelated $key key available to the page', ({ key, code }) => {
+    openKeyNav = createOpenKeyNav();
+    const current = document.getElementById('current');
+    current.focus();
+    openKeyNav.enterStructuralNavigation();
+    let reachedPage = false;
+    current.addEventListener('keydown', () => {
+      reachedPage = true;
+    });
+
+    const event = dispatchKey(current, key, code);
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(reachedPage).toBe(true);
+    expect(openKeyNav.config.modes.structuralNavigation.value).toBe(true);
+    expect(document.activeElement).toBe(current);
+  });
+
+  it('uses the global toggle to disable Structural Navigation and every foreground mode', () => {
+    openKeyNav = createOpenKeyNav();
+    const current = document.getElementById('current');
+    const next = document.getElementById('next');
+    current.focus();
+    openKeyNav.enterStructuralNavigation();
+    openKeyNav.config.modes.clicking.value = true;
+    openKeyNav.config.modes.moving.value = true;
+    openKeyNav.config.modes.menu.value = true;
+    next.setAttribute('data-openkeynav-label', 'a');
+    const overlay = document.createElement('div');
+    overlay.className = 'openKeyNav-label';
+    overlay.setAttribute('data-openkeynav-label', 'a');
+    document.body.appendChild(overlay);
+
+    const event = dispatchKey(current, 'O', 'KeyO', { shiftKey: true });
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(openKeyNav.meta.enabled.value).toBe(false);
+    expect(openKeyNav.config.modes.structuralNavigation.value).toBe(false);
+    expect(openKeyNav.config.modes.clicking.value).toBe(false);
+    expect(openKeyNav.config.modes.moving.value).toBe(false);
+    expect(openKeyNav.config.modes.menu.value).toBe(false);
+    expect(document.querySelector('.openKeyNav-label')).toBeNull();
+    expect(next.hasAttribute('data-openkeynav-label')).toBe(false);
+    expect(document.activeElement).toBe(current);
+  });
+
+  it.each([
+    { label: 'plain activation key', key: 'r', code: 'KeyR', modifiers: {} },
+    { label: 'configured Alt exit', key: 'r', code: 'KeyR', modifiers: { altKey: true } },
+    { label: 'configured alternate escape', key: 'q', code: 'KeyQ', modifiers: {} },
+  ])('lets the $label explicitly exit Structural Navigation', ({
+    key,
+    code,
+    modifiers,
+  }) => {
+    openKeyNav = createOpenKeyNav();
+    const current = document.getElementById('current');
+    current.focus();
+    openKeyNav.enterStructuralNavigation();
+
+    const event = dispatchKey(current, key, code, modifiers);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(openKeyNav.config.modes.structuralNavigation.value).toBe(false);
+    expect(openKeyNav.getStructuralNavigationState().active).toBe(false);
+    expect(openKeyNav.getStructuralNavigationState().activeContext).toBeNull();
+    expect(document.activeElement).toBe(current);
+  });
+
+  it('keeps the configured Alt+R exit available over a foreground mode', () => {
+    openKeyNav = createOpenKeyNav();
+    const current = document.getElementById('current');
+    current.focus();
+    openKeyNav.enterStructuralNavigation();
+    dispatchKey(current, 'k', 'KeyK');
+
+    const event = dispatchKey(current, 'r', 'KeyR', { altKey: true });
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(openKeyNav.config.modes.structuralNavigation.value).toBe(false);
+    expect(openKeyNav.config.modes.clicking.value).toBe(true);
+    expect(document.activeElement).toBe(current);
+  });
+
+  it.each([
+    { key: 'h', code: 'KeyH', mode: null },
+    { key: 'k', code: 'KeyK', mode: 'clicking' },
+    { key: 'm', code: 'KeyM', mode: 'moving' },
+    { key: 'o', code: 'KeyO', mode: 'menu' },
+  ])('passes the explicitly delegated $key command through to the page', ({ key, code, mode }) => {
+    openKeyNav = createOpenKeyNav({
+      modesConfig: {
+        structuralNavigation: {
+          ownsKey: event => ({ character: event.key.toLowerCase() === key }),
         },
       },
     });
@@ -113,7 +343,7 @@ describe('keypress structural-mode arbitration', () => {
       reachedPage = true;
     });
 
-    const event = dispatchKey(current, 'h', 'KeyH');
+    const event = dispatchKey(current, key, code);
 
     expect(event.defaultPrevented).toBe(false);
     expect(reachedPage).toBe(true);
@@ -122,12 +352,17 @@ describe('keypress structural-mode arbitration', () => {
       .toBe(contextBefore);
     expect(focusSpy).not.toHaveBeenCalled();
     expect(document.querySelector('[data-openkeynav-tabIndexed]')).toBeNull();
+    if (mode) expect(openKeyNav.config.modes[mode].value).toBe(false);
   });
 
   it.each([
     { label: 'Control+H', key: 'h', code: 'KeyH', modifiers: { ctrlKey: true } },
     { label: 'Alt+S', key: 's', code: 'KeyS', modifiers: { altKey: true } },
     { label: 'Meta+1', key: '1', code: 'Digit1', modifiers: { metaKey: true } },
+    { label: 'Control+K', key: 'k', code: 'KeyK', modifiers: { ctrlKey: true } },
+    { label: 'Alt+M', key: 'm', code: 'KeyM', modifiers: { altKey: true } },
+    { label: 'Meta+O', key: 'o', code: 'KeyO', modifiers: { metaKey: true } },
+    { label: 'Control+Q', key: 'q', code: 'KeyQ', modifiers: { ctrlKey: true } },
   ])('passes the system shortcut $label through without invoking legacy navigation', ({ key, code, modifiers }) => {
     openKeyNav = createOpenKeyNav();
     const current = document.getElementById('current');
@@ -146,6 +381,10 @@ describe('keypress structural-mode arbitration', () => {
     expect(document.activeElement).toBe(current);
     expect(focusSpy).not.toHaveBeenCalled();
     expect(document.querySelector('[data-openkeynav-tabIndexed]')).toBeNull();
+    expect(openKeyNav.config.modes.structuralNavigation.value).toBe(true);
+    expect(openKeyNav.config.modes.clicking.value).toBe(false);
+    expect(openKeyNav.config.modes.moving.value).toBe(false);
+    expect(openKeyNav.config.modes.menu.value).toBe(false);
   });
 
   it.each([

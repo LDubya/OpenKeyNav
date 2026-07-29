@@ -156,14 +156,16 @@ Applications may declare ownership with `ownsKey` or the
 `data-openkeynav-key-owner` hook.
 
 An accepted structural command has precedence in OpenKeyNav's capture listener.
-Native-owned keys pass through untouched. While structural navigation is
-active, legacy `h`, configured `1`–`6`, and `s` commands are consumed without
-calling the heading or scrolling helpers, so they cannot create temporary focus
-stops. Application-owned character commands and system shortcuts using
-Alt/Ctrl/Meta pass through unchanged. Any other unaccepted key continues through
-OpenKeyNav's existing shortcut dispatcher and then to the page when no
-OpenKeyNav shortcut matches. Entering click, move, or menu mode exits structural
-navigation first.
+Native-owned keys, application-owned character commands, and unhandled system
+shortcuts using Alt/Ctrl/Meta pass through untouched. Structural Navigation
+remains active while the existing shortcut dispatcher runs heading,
+heading-level, and scroll-region commands. Click Mode, Move Mode, and the
+shortcut menu are temporary foreground layers: they own keystrokes until they
+finish or are dismissed, then Structural Navigation resumes. The configured
+Structural exit remains available while a foreground layer is active.
+Unrecognized keys continue to the page. When two OpenKeyNav commands are
+assigned the same chord, the explicitly configured Structural Navigation
+command has precedence when no foreground layer is active.
 
 ## Invalidation and cleanup
 

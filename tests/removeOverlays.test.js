@@ -12,6 +12,44 @@ const stubLayout = okn => {
 };
 
 describe('removeOverlays', () => {
+  it('clears foreground modes without ending persistent Structural Navigation', () => {
+    document.body.innerHTML = `
+      <main aria-label="Workspace">
+        <button id="current">Current</button>
+        <button id="labeled" data-openkeynav-label="a">Labeled</button>
+        <div class="openKeyNav-label" data-openkeynav-label="a">a</div>
+      </main>
+    `;
+    const okn = new OpenKeyNav();
+    stubLayout(okn);
+    okn.config.modesConfig.structuralNavigation.displayCheck = 'none';
+    okn.config.modesConfig.structuralNavigation.status.enabled = false;
+    okn.config.modesConfig.structuralNavigation.contextIndicator.enabled = false;
+    okn.meta.enabled.value = true;
+    document.getElementById('current').focus();
+    okn.enterStructuralNavigation();
+    okn.config.modes.clicking.value = true;
+    okn.config.modes.moving.value = true;
+    okn.config.modes.menu.value = true;
+    okn.config.typedLabel.value = 'a';
+
+    okn.removeOverlays(true);
+
+    expect(document.querySelector('.openKeyNav-label')).toBeNull();
+    expect(document.getElementById('labeled').hasAttribute('data-openkeynav-label'))
+      .toBe(false);
+    expect(okn.config.typedLabel.value).toBe('');
+    expect(okn.config.modes.clicking.value).toBe(false);
+    expect(okn.config.modes.moving.value).toBe(false);
+    expect(okn.config.modes.menu.value).toBe(false);
+    expect(okn.config.modes.structuralNavigation.value).toBe(true);
+    expect(okn.getStructuralNavigationState().active).toBe(true);
+
+    okn.destroy();
+    expect(okn.config.modes.structuralNavigation.value).toBe(false);
+    document.body.innerHTML = '';
+  });
+
   it('resets modes, typedLabel, and removes overlays when removeAll=true', () => {
     const okn = new OpenKeyNav();
     stubLayout(okn);

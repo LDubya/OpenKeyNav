@@ -134,7 +134,7 @@
 	      } else {
 	        openKeyNav.focus(target); // Ensure the target element is focused before dispatching the click event
 	        if (!openKeyNav.config.modesConfig.click.modifier) {
-	          var clickEvent = new MouseEvent('click', {
+	          var clickEvent = new win.MouseEvent('click', {
 	            bubbles: true,
 	            cancelable: true,
 	            view: win
@@ -543,7 +543,9 @@
 	  if (openKeyNav.config.modes.clicking.value || openKeyNav.config.modes.moving.value || openKeyNav.config.modes.menu.value) {
 	    e.preventDefault();
 	    e.stopPropagation();
-	    (0, _dragAndDrop.endDrag)(openKeyNav);
+	    if (openKeyNav.config.modes.moving.value && openKeyNav.config.modesConfig.move.selectedMoveable) {
+	      (0, _dragAndDrop.endDrag)(openKeyNav);
+	    }
 	    openKeyNav.removeOverlays();
 	    openKeyNav.clearMoveAttributes();
 	    returnFalse = true;
@@ -585,24 +587,34 @@
 	  if (openKeyNav.config.headings.list.length == 0) {
 	    return true;
 	  }
+	  var headingState = openKeyNav.config.headings;
+	  var lastIndex = headingState.list.length - 1;
+	  var focusedHeadingIndex = headingState.list.indexOf(document.activeElement);
+	  if (focusedHeadingIndex >= 0) {
+	    headingState.currentHeadingIndex = focusedHeadingIndex;
+	  } else {
+	    // The current focus is outside this particular heading route. Start at
+	    // its boundary instead of reusing an index from another heading level.
+	    headingState.currentHeadingIndex = -1;
+	  }
 
 	  // handle moving to the next / previous heading
 	  if (e.shiftKey) {
 	    // shift key is pressed, so move backwards. If at the beginning, go to the end.
-	    if (openKeyNav.config.headings.currentHeadingIndex > 0) {
-	      openKeyNav.config.headings.currentHeadingIndex--;
+	    if (headingState.currentHeadingIndex > 0) {
+	      headingState.currentHeadingIndex--;
 	    } else {
-	      openKeyNav.config.headings.currentHeadingIndex = openKeyNav.config.headings.list.length - 1;
+	      headingState.currentHeadingIndex = lastIndex;
 	    }
 	  } else {
 	    // Move to the next heading. If at the end, go to the beginning.
-	    if (openKeyNav.config.headings.currentHeadingIndex < openKeyNav.config.headings.list.length - 1) {
-	      openKeyNav.config.headings.currentHeadingIndex++;
+	    if (headingState.currentHeadingIndex < lastIndex) {
+	      headingState.currentHeadingIndex++;
 	    } else {
-	      openKeyNav.config.headings.currentHeadingIndex = 0;
+	      headingState.currentHeadingIndex = 0;
 	    }
 	  }
-	  var nextHeading = openKeyNav.config.headings.list[openKeyNav.config.headings.currentHeadingIndex];
+	  var nextHeading = headingState.list[headingState.currentHeadingIndex];
 	  if (!nextHeading.hasAttribute('tabindex')) {
 	    nextHeading.setAttribute('tabindex', '-1'); // Make the heading focusable
 	    nextHeading.setAttribute('data-openkeynav-tabIndexed', true);
@@ -623,22 +635,25 @@
 	  if (openKeyNav.config.scrollables.list.length == 0) {
 	    return; // If no scrollable elements, exit the function
 	  }
+	  var scrollables = openKeyNav.config.scrollables;
+	  var lastIndex = scrollables.list.length - 1;
+	  var focusedScrollableIndex = scrollables.list.indexOf(document.activeElement);
 
-	  // /*
-	  {
-	    // Navigate through scrollable elements
-	    if (e.shiftKey) {
-	      // Move backwards
-	      openKeyNav.config.currentScrollableIndex = openKeyNav.config.currentScrollableIndex > 0 ? openKeyNav.config.currentScrollableIndex - 1 : openKeyNav.config.scrollables.list.length - 1;
-	    } else {
-	      // Move forwards
-	      openKeyNav.config.currentScrollableIndex = openKeyNav.config.currentScrollableIndex < openKeyNav.config.scrollables.list.length - 1 ? openKeyNav.config.currentScrollableIndex + 1 : 0;
-	    }
+	  // Re-enter the route from its boundary when focus is elsewhere instead of
+	  // reusing an index from a different or stale scrollable list.
+	  if (focusedScrollableIndex >= 0) {
+	    scrollables.currentScrollableIndex = focusedScrollableIndex;
+	  } else {
+	    scrollables.currentScrollableIndex = -1;
 	  }
-	  //*/
+	  if (e.shiftKey) {
+	    scrollables.currentScrollableIndex = scrollables.currentScrollableIndex > 0 ? scrollables.currentScrollableIndex - 1 : lastIndex;
+	  } else {
+	    scrollables.currentScrollableIndex = scrollables.currentScrollableIndex < lastIndex ? scrollables.currentScrollableIndex + 1 : 0;
+	  }
 
 	  // Focus the current scrollable element
-	  var currentScrollable = openKeyNav.config.scrollables.list[openKeyNav.config.currentScrollableIndex];
+	  var currentScrollable = scrollables.list[scrollables.currentScrollableIndex];
 	  if (!currentScrollable.hasAttribute('tabindex')) {
 	    currentScrollable.setAttribute('tabindex', '-1'); // Make the element focusable
 	    currentScrollable.setAttribute('data-openkeynav-tabIndexed', true);
@@ -952,6 +967,8 @@
 	keylabels.showClickableOverlays = function showClickableOverlays(openKeyNav) {
 	  (0, _scrolling.disableScrolling)(openKeyNav);
 	  setTimeout(function () {
+	    // The user may dismiss Click Mode before this deferred discovery runs.
+	    if (!openKeyNav.config.modes.clicking.value) return;
 	    var allCandidates = _getAllCandidateElements(openKeyNav, document);
 
 	    // In debug mode, show all elements (audit mode)
@@ -3421,6 +3438,24 @@
 	  }
 	  return null;
 	};
+	var structuralContextForElement = function structuralContextForElement(model, element) {
+	  if (!model || !element) return null;
+	  var direct = directContextForTarget(model, element);
+	  if (direct) return direct;
+	  var contexts = modelStructuralContexts(model);
+	  var exact = contexts.filter(function (context) {
+	    return context.boundary === element || context.associatedHeading === element;
+	  });
+	  var containing = exact.length ? exact : contexts.filter(function (context) {
+	    var _context$visualElemen;
+	    if ((_context$visualElemen = context.visualElements) !== null && _context$visualElemen !== void 0 && _context$visualElemen.includes(element)) return true;
+	    var boundary = context.boundary;
+	    return ((0, _domUtilities$1.isDocument)(boundary) || (0, _domUtilities$1.isShadowRoot)(boundary) || (0, _domUtilities$1.isElement)(boundary)) && (0, _domUtilities$1.isComposedWithin)(boundary, element);
+	  });
+	  return containing.sort(function (left, right) {
+	    return contextHierarchyLevel(model, right) - contextHierarchyLevel(model, left) || contextTargets(left).length - contextTargets(right).length || contextOrder(left) - contextOrder(right);
+	  })[0] || model.rootContext || null;
+	};
 	var typedContextsForTarget = function typedContextsForTarget(model, target) {
 	  if (!model || !target) return [];
 	  var map = model.typedContextsByTarget || model.targetTypedContexts;
@@ -3776,8 +3811,21 @@
 	        altKey: true
 	      };
 	      var exitShortcut = (0, _keyboardEvents.normalizeShortcut)(this.config.exitCommand) || defaultExit;
-	      var plainToggle = matchesStructuralShortcut(event, activationShortcut);
 	      var configuredExit = matchesStructuralShortcut(event, exitShortcut);
+	      var foregroundModeActive = Boolean(this.openKeyNav.config.modes.clicking.value || this.openKeyNav.config.modes.moving.value || this.openKeyNav.config.modes.menu.value);
+
+	      // Click, Move, and menu are temporary layers over structural navigation.
+	      // Their keystrokes take priority until they finish. The deliberately
+	      // configured structural exit remains available (Alt+R by default).
+	      if (foregroundModeActive) {
+	        if (configuredExit) {
+	          (0, _keyboardEvents.preventAcceptedCommand)(event);
+	          this.deactivate();
+	          return true;
+	        }
+	        return false;
+	      }
+	      var plainToggle = matchesStructuralShortcut(event, activationShortcut);
 	      var openKeyNavExit = matchesStructuralShortcut(event, {
 	        key: this.openKeyNav.config.keys.escape
 	      });
@@ -3940,11 +3988,16 @@
 	      if (refresh) this.refresh();
 	      var focused = (0, _domUtilities$1.getDeepActiveElement)(this.root);
 	      if (!this.targetSet.has(focused)) {
+	        var _this$document6, _this$document7;
 	        this.currentTarget = null;
 	        this.activeTypedContext = null;
-	        if (!this.activeStructuralContext) {
+	        var ambientDocumentFocus = Boolean(focused === ((_this$document6 = this.document) === null || _this$document6 === void 0 ? void 0 : _this$document6.body) || focused === ((_this$document7 = this.document) === null || _this$document7 === void 0 ? void 0 : _this$document7.documentElement));
+	        if (!ambientDocumentFocus) {
 	          var _this$model;
-	          this.activeStructuralContext = ((_this$model = this.model) === null || _this$model === void 0 ? void 0 : _this$model.rootContext) || null;
+	          this.activeStructuralContext = structuralContextForElement(this.model, focused) || this.activeStructuralContext || ((_this$model = this.model) === null || _this$model === void 0 ? void 0 : _this$model.rootContext) || null;
+	        } else if (!this.activeStructuralContext) {
+	          var _this$model2;
+	          this.activeStructuralContext = ((_this$model2 = this.model) === null || _this$model2 === void 0 ? void 0 : _this$model2.rootContext) || null;
 	        }
 	        if (announce) this.updateStatus();
 	        return;
@@ -4181,16 +4234,16 @@
 	  }, {
 	    key: "connectContextIndicatorListeners",
 	    value: function connectContextIndicatorListeners() {
-	      var _this$document6;
-	      var view = (_this$document6 = this.document) === null || _this$document6 === void 0 ? void 0 : _this$document6.defaultView;
+	      var _this$document8;
+	      var view = (_this$document8 = this.document) === null || _this$document8 === void 0 ? void 0 : _this$document8.defaultView;
 	      view === null || view === void 0 || view.addEventListener('scroll', this.scheduleContextIndicatorUpdate, true);
 	      view === null || view === void 0 || view.addEventListener('resize', this.scheduleContextIndicatorUpdate);
 	    }
 	  }, {
 	    key: "disconnectContextIndicatorListeners",
 	    value: function disconnectContextIndicatorListeners() {
-	      var _this$document7, _this$contextIndicato;
-	      var view = (_this$document7 = this.document) === null || _this$document7 === void 0 ? void 0 : _this$document7.defaultView;
+	      var _this$document9, _this$contextIndicato;
+	      var view = (_this$document9 = this.document) === null || _this$document9 === void 0 ? void 0 : _this$document9.defaultView;
 	      view === null || view === void 0 || view.removeEventListener('scroll', this.scheduleContextIndicatorUpdate, true);
 	      view === null || view === void 0 || view.removeEventListener('resize', this.scheduleContextIndicatorUpdate);
 	      if (this.contextIndicatorFrame !== null && typeof (view === null || view === void 0 ? void 0 : view.cancelAnimationFrame) === 'function') {
@@ -4204,10 +4257,10 @@
 	  }, {
 	    key: "scheduleContextIndicatorUpdate",
 	    value: function scheduleContextIndicatorUpdate() {
-	      var _this$document8,
+	      var _this$document0,
 	        _this9 = this;
 	      if (!this.active) return;
-	      var view = (_this$document8 = this.document) === null || _this$document8 === void 0 ? void 0 : _this$document8.defaultView;
+	      var view = (_this$document0 = this.document) === null || _this$document0 === void 0 ? void 0 : _this$document0.defaultView;
 	      if (typeof (view === null || view === void 0 ? void 0 : view.requestAnimationFrame) !== 'function') {
 	        this.updateContextIndicator();
 	        return;
@@ -4221,10 +4274,10 @@
 	  }, {
 	    key: "contextIndicatorHost",
 	    value: function contextIndicatorHost() {
-	      var _this$document9, _this$document0;
+	      var _this$document1, _this$document10;
 	      var activeModal = topmostNativeModal(this.document);
 	      if (activeModal && this.root === activeModal) return activeModal;
-	      return ((_this$document9 = this.document) === null || _this$document9 === void 0 ? void 0 : _this$document9.body) || ((_this$document0 = this.document) === null || _this$document0 === void 0 ? void 0 : _this$document0.documentElement) || null;
+	      return ((_this$document1 = this.document) === null || _this$document1 === void 0 ? void 0 : _this$document1.body) || ((_this$document10 = this.document) === null || _this$document10 === void 0 ? void 0 : _this$document10.documentElement) || null;
 	    }
 	  }, {
 	    key: "ensureContextIndicator",
@@ -4256,10 +4309,10 @@
 	  }, {
 	    key: "contextIndicatorElements",
 	    value: function contextIndicatorElements(context) {
-	      var _context$visualElemen;
+	      var _context$visualElemen2;
 	      if (!context) return [];
 	      if (this.activeTypedContext) return contextTargets(context);
-	      if (context.source === 'heading' && (_context$visualElemen = context.visualElements) !== null && _context$visualElemen !== void 0 && _context$visualElemen.length) {
+	      if (context.source === 'heading' && (_context$visualElemen2 = context.visualElements) !== null && _context$visualElemen2 !== void 0 && _context$visualElemen2.length) {
 	        return context.visualElements;
 	      }
 	      if ((0, _domUtilities$1.isShadowRoot)(context.boundary)) return [context.boundary.host];
@@ -4269,9 +4322,9 @@
 	  }, {
 	    key: "observeContextIndicatorElements",
 	    value: function observeContextIndicatorElements(elements) {
-	      var _this$document1,
+	      var _this$document11,
 	        _this0 = this;
-	      var ResizeObserverClass = (_this$document1 = this.document) === null || _this$document1 === void 0 || (_this$document1 = _this$document1.defaultView) === null || _this$document1 === void 0 ? void 0 : _this$document1.ResizeObserver;
+	      var ResizeObserverClass = (_this$document11 = this.document) === null || _this$document11 === void 0 || (_this$document11 = _this$document11.defaultView) === null || _this$document11 === void 0 ? void 0 : _this$document11.ResizeObserver;
 	      if (typeof ResizeObserverClass !== 'function') return;
 	      var nextElements = new Set(elements.filter(_domUtilities$1.isElement));
 	      if (nextElements.size === this.contextIndicatorObservedElements.size && Array.from(nextElements).every(function (element) {
@@ -4444,7 +4497,7 @@
 	    Digit9: '9',
 	    Digit0: '0'
 	  });
-	  var legacyHeadingLevel = function legacyHeadingLevel(openKeyNav, event) {
+	  var configuredHeadingLevel = function configuredHeadingLevel(openKeyNav, event) {
 	    var numberPressed = NUMBER_KEY_BY_CODE[event.code];
 	    if (!numberPressed) return null;
 	    for (var level = 1; level <= 6; level += 1) {
@@ -4454,17 +4507,16 @@
 	    }
 	    return null;
 	  };
-	  var isLegacyFocusNavigationCommand = function isLegacyFocusNavigationCommand(openKeyNav, event) {
-	    var key = typeof event.key === 'string' ? event.key.toLowerCase() : '';
-	    return key === openKeyNav.config.keys.heading.toLowerCase() || key === openKeyNav.config.keys.scroll.toLowerCase() || legacyHeadingLevel(openKeyNav, event) !== null;
-	  };
-	  var pageOwnsLegacyFocusNavigationCommand = function pageOwnsLegacyFocusNavigationCommand(openKeyNav, event) {
+	  var pageOwnsCharacterCommand = function pageOwnsCharacterCommand(openKeyNav, event) {
 	    var config = openKeyNav.config.modesConfig.structuralNavigation;
 	    var ownership = (0, _structuralNavigation.classifyStructuralKeyOwnership)(event, config);
 	    return ownership.all || ownership.character;
 	  };
 	  var hasSystemShortcutModifier = function hasSystemShortcutModifier(event) {
 	    return Boolean(event.altKey) || Boolean(event.ctrlKey) || Boolean(event.metaKey);
+	  };
+	  var hasForegroundMode = function hasForegroundMode(openKeyNav) {
+	    return openKeyNav.config.modes.clicking.value || openKeyNav.config.modes.moving.value || openKeyNav.config.modes.menu.value;
 	  };
 	  function getMetaKeyName() {
 	    var userAgent = window.navigator.userAgent.toLowerCase();
@@ -4502,6 +4554,7 @@
 	          return true;
 	        }
 	      }
+	      (0, _keyboardEvents.preventAcceptedCommand)(e);
 	      if (!openKeyNav.meta.enabled.value) {
 	        // if openKeyNav disabled
 	        openKeyNav.enable();
@@ -4529,15 +4582,22 @@
 	      return true;
 	    }
 
-	    // Structural mode keeps real focus on its existing interactive target.
-	    // Do not let the legacy h/1-6/s shortcuts create temporary focus stops on
-	    // headings or scroll containers. Editing widgets and application-declared
-	    // key owners still receive their character keys unchanged.
-	    if (openKeyNav.config.modes.structuralNavigation.value && isLegacyFocusNavigationCommand(openKeyNav, e)) {
-	      if (pageOwnsLegacyFocusNavigationCommand(openKeyNav, e) || hasSystemShortcutModifier(e)) {
+	    // Structural navigation gets first refusal only on its own configured
+	    // commands. Outside a temporary Click, Move, or menu mode, page-owned
+	    // characters and system shortcuts pass through. Other OpenKeyNav commands
+	    // continue through the ordinary router without ending structural mode.
+	    if (openKeyNav.config.modes.structuralNavigation.value && !hasForegroundMode(openKeyNav)) {
+	      if (pageOwnsCharacterCommand(openKeyNav, e) || hasSystemShortcutModifier(e)) {
 	        return true;
 	      }
-	      return (0, _keyboardEvents.preventAcceptedCommand)(e);
+	    }
+
+	    // The configured alternate escape closes only the temporary foreground
+	    // mode. Structural navigation remains active underneath and resumes once
+	    // overlay cleanup finishes.
+	    if (hasForegroundMode(openKeyNav) && e.key === openKeyNav.config.keys.escape) {
+	      (0, _escape.handleEscape)(openKeyNav, e);
+	      return true;
 	    }
 
 	    // first check for modifier keys and escape
@@ -4599,9 +4659,6 @@
 	    switch (e.key) {
 	      case openKeyNav.config.keys.click: // possibly attempting to initiate click mode
 	      case openKeyNav.config.keys.click.toUpperCase():
-	        openKeyNav.exitStructuralNavigation({
-	          announce: false
-	        });
 	        e.preventDefault();
 	        openKeyNav.config.modes.clicking.value = true;
 	        if (e.key == openKeyNav.config.keys.click.toUpperCase()) {
@@ -4614,9 +4671,6 @@
 	      // possibly attempting to initiate moving mode
 	      case openKeyNav.config.keys.move:
 	      case openKeyNav.config.keys.move.toUpperCase():
-	        openKeyNav.exitStructuralNavigation({
-	          announce: false
-	        });
 	        // Toggle move mode
 	        e.preventDefault();
 	        openKeyNav.config.modes.moving.value = true; // Assuming you add a 'move' flag to your modes object
@@ -4628,9 +4682,6 @@
 	        return true;
 	      case openKeyNav.config.keys.menu:
 	      case openKeyNav.config.keys.menu.toUpperCase():
-	        openKeyNav.exitStructuralNavigation({
-	          announce: false
-	        });
 	        openKeyNav.config.modes.menu.value = true;
 	        if (e.key == openKeyNav.config.keys.menu.toUpperCase()) {
 	          openKeyNav.config.modesConfig.menu.modifier = true;
@@ -4673,7 +4724,7 @@
 	    }
 
 	    // handle keycodes, aka for specific headings
-	    var headingLevel = legacyHeadingLevel(openKeyNav, e);
+	    var headingLevel = configuredHeadingLevel(openKeyNav, e);
 	    if (headingLevel !== null) {
 	      (0, _keyboardEvents.preventAcceptedCommand)(e);
 	      (0, _focus.focusOnHeadings)(openKeyNav, "h".concat(headingLevel), e);
@@ -6516,13 +6567,13 @@
 	        log: [],
 	        typedLabel: (0, _signals.signal)(''),
 	        headings: {
-	          currentHeadingIndex: 0,
-	          // Keep track of the current heading
+	          currentHeadingIndex: -1,
+	          // Start before the first heading
 	          list: []
 	        },
 	        scrollables: {
-	          currentScrollableIndex: 0,
-	          // Keep track of the current scrollable
+	          currentScrollableIndex: -1,
+	          // Start before the first scrollable
 	          list: []
 	        },
 	        modes: {
@@ -6564,7 +6615,6 @@
 	        _this.exitStructuralNavigation({
 	          announce: false
 	        });
-	        _this.statusService.clearAll();
 	        _this.meta.enabled.value = false;
 	        _this.getSetCookie(_this.config.enabledCookie, false);
 	        // Remove audit panel if present when disabling
@@ -6580,6 +6630,9 @@
 	        } catch (e) {
 	          // ignore
 	        }
+	        _this.removeOverlays(true);
+	        _this.clearMoveAttributes();
+	        _this.statusService.clearAll();
 	        _this.removeStyles(); // maybe this should go in the destroy();, main concern is the toolbar.
 	        return _this;
 	      };
@@ -7104,13 +7157,11 @@
 	        var _this6 = this;
 	        var resetModes = function resetModes() {
 	          for (var key in _this6.config.modes) {
-	            if (key === 'structuralNavigation') {
-	              _this6.exitStructuralNavigation({
-	                announce: false
-	              });
-	            } else {
-	              _this6.config.modes[key].value = false;
-	            }
+	            // Structural navigation is a persistent base mode. Overlay cleanup
+	            // ends temporary foreground modes but leaves it active until an
+	            // explicit structural exit, global disable, or teardown.
+	            if (key === 'structuralNavigation') continue;
+	            _this6.config.modes[key].value = false;
 	          }
 
 	          // reset move mode config
@@ -7415,6 +7466,11 @@
 	            message = "In Click Mode. Press ".concat((0, _keyButton.keyButton)(["Esc"]), " to exit.");
 	          } else if (modes.moving.value) {
 	            message = "In Drag Mode. Press ".concat((0, _keyButton.keyButton)(["Esc"]), " to exit.");
+	          } else if (modes.structuralNavigation.value) {
+	            // Structural navigation owns a persistent polite status channel.
+	            // Avoid announcing "No mode active" when a temporary mode closes.
+	            lastMessage = "No mode active.";
+	            return;
 	          } else {
 	            message = "No mode active.";
 	          }
@@ -7619,6 +7675,7 @@
 	        this.statusService.clearAll();
 	        this.removeKeydownEventListener();
 	        this.removeOverlays(true);
+	        this.clearMoveAttributes();
 	        this.clearAuditFlags();
 	        (0, _auditPanel.hideAuditPanel)();
 	        this.removeStyles();

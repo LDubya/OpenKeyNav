@@ -259,13 +259,13 @@ var OpenKeyNav = /*#__PURE__*/function () {
       log: [],
       typedLabel: (0, _signals.signal)(''),
       headings: {
-        currentHeadingIndex: 0,
-        // Keep track of the current heading
+        currentHeadingIndex: -1,
+        // Start before the first heading
         list: []
       },
       scrollables: {
-        currentScrollableIndex: 0,
-        // Keep track of the current scrollable
+        currentScrollableIndex: -1,
+        // Start before the first scrollable
         list: []
       },
       modes: {
@@ -307,7 +307,6 @@ var OpenKeyNav = /*#__PURE__*/function () {
       _this.exitStructuralNavigation({
         announce: false
       });
-      _this.statusService.clearAll();
       _this.meta.enabled.value = false;
       _this.getSetCookie(_this.config.enabledCookie, false);
       // Remove audit panel if present when disabling
@@ -323,6 +322,9 @@ var OpenKeyNav = /*#__PURE__*/function () {
       } catch (e) {
         // ignore
       }
+      _this.removeOverlays(true);
+      _this.clearMoveAttributes();
+      _this.statusService.clearAll();
       _this.removeStyles(); // maybe this should go in the destroy();, main concern is the toolbar.
       return _this;
     };
@@ -853,13 +855,11 @@ var OpenKeyNav = /*#__PURE__*/function () {
       var _this6 = this;
       var resetModes = function resetModes() {
         for (var key in _this6.config.modes) {
-          if (key === 'structuralNavigation') {
-            _this6.exitStructuralNavigation({
-              announce: false
-            });
-          } else {
-            _this6.config.modes[key].value = false;
-          }
+          // Structural navigation is a persistent base mode. Overlay cleanup
+          // ends temporary foreground modes but leaves it active until an
+          // explicit structural exit, global disable, or teardown.
+          if (key === 'structuralNavigation') continue;
+          _this6.config.modes[key].value = false;
         }
 
         // reset move mode config
@@ -1166,6 +1166,11 @@ var OpenKeyNav = /*#__PURE__*/function () {
           message = "In Click Mode. Press ".concat((0, _keyButton.keyButton)(["Esc"]), " to exit.");
         } else if (modes.moving.value) {
           message = "In Drag Mode. Press ".concat((0, _keyButton.keyButton)(["Esc"]), " to exit.");
+        } else if (modes.structuralNavigation.value) {
+          // Structural navigation owns a persistent polite status channel.
+          // Avoid announcing "No mode active" when a temporary mode closes.
+          lastMessage = "No mode active.";
+          return;
         } else {
           message = "No mode active.";
         }
@@ -1370,6 +1375,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
       this.statusService.clearAll();
       this.removeKeydownEventListener();
       this.removeOverlays(true);
+      this.clearMoveAttributes();
       this.clearAuditFlags();
       (0, _auditPanel.hideAuditPanel)();
       this.removeStyles();

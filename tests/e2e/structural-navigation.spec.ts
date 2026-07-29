@@ -179,21 +179,140 @@ test.describe('structural navigation mode', () => {
     expect(blurEvents).toContain('in-stock');
   });
 
-  test('suspends legacy heading and scroll commands without stealing editable characters', async ({ page }) => {
+  test('keeps Structural Navigation active around heading and scroll commands without stealing editable characters', async ({ page }) => {
     await enableOpenKeyNav(page);
     await focusFixtureTarget(page, 'clear-filters');
     await enterStructuralNavigation(page);
+    const structuralStatus = page.locator('.openKeyNav-structural-status');
+    const indicator = page.locator('.openKeyNav-structural-context-outline');
 
-    for (const command of ['KeyH', 'Digit2', 'KeyS']) {
-      await page.keyboard.press(command);
-      await expectDeepFocus(page, 'clear-filters');
-      await expect(page.locator('[data-openkeynav-tabIndexed]')).toHaveCount(0);
-    }
+    await page.keyboard.press('KeyH');
+    await expectDeepFocus(page, 'site-title');
+    await expect.poll(() => page.evaluate(
+      () => (window as any).okn.config.modes.structuralNavigation.value
+    )).toBe(true);
+    await expect(page.locator('#site-title')).toHaveAttribute('tabindex', '-1');
+    await expect(structuralStatus).toContainText('Context: OpenKeyNav test shop');
+    await expect(indicator).toHaveAttribute('data-context-name', 'OpenKeyNav test shop');
+    await expect(page.locator('.openKeyNav-structural-exit-status')).toHaveCount(0);
+
+    await structuralNavigate(page, 'nextTarget');
+    await expectDeepFocus(page, 'search-input');
+    expect(await page.evaluate(() => {
+      const state = (window as any).okn.getStructuralNavigationState();
+      return state.activeContext.targets.includes(state.target);
+    })).toBe(true);
+
+    await focusFixtureTarget(page, 'clear-filters');
+    await page.keyboard.press('Digit2');
+    await expectDeepFocus(page, 'search-title');
+    await expect.poll(() => page.evaluate(
+      () => (window as any).okn.config.modes.structuralNavigation.value
+    )).toBe(true);
+    await expect(structuralStatus).toContainText('Context: Search');
+    await expect(indicator).toHaveAttribute('data-context-name', 'Search');
+
+    await page.evaluate(() => {
+      (window as any).okn.getScrollableElements = () => [
+        document.getElementById('scroll-region-a'),
+        document.getElementById('scroll-region-b'),
+      ];
+    });
+    await page.keyboard.press('KeyS');
+    await expectDeepFocus(page, 'scroll-region-a');
+    await expect.poll(() => page.evaluate(
+      () => (window as any).okn.config.modes.structuralNavigation.value
+    )).toBe(true);
+    await expect(structuralStatus).toContainText(
+      'Context: Native activation and sequential focus'
+    );
+    await expect(indicator).toHaveAttribute(
+      'data-context-name',
+      'Native activation and sequential focus'
+    );
+    expect(await page.evaluate(() => ({
+      nestedIndex: (window as any).okn.config.scrollables.currentScrollableIndex,
+      hasTopLevelIndex: Object.hasOwn(
+        (window as any).okn.config,
+        'currentScrollableIndex'
+      ),
+    }))).toEqual({ nestedIndex: 0, hasTopLevelIndex: false });
+
+    await structuralNavigate(page, 'nextTarget');
+    await expectDeepFocus(page, 'native-button');
 
     await page.locator('#search-input').focus();
     await page.keyboard.type('h');
     await expect(page.locator('#search-input')).toHaveValue('h');
     await expectDeepFocus(page, 'search-input');
+    await expect.poll(() => page.evaluate(
+      () => (window as any).okn.config.modes.structuralNavigation.value
+    )).toBe(true);
+  });
+
+  test('treats Click Mode as a temporary layer and restores Structural Navigation', async ({ page }) => {
+    await enableOpenKeyNav(page);
+    await focusFixtureTarget(page, 'clear-filters');
+    await enterStructuralNavigation(page);
+    const structuralStatus = page.locator('.openKeyNav-structural-status');
+
+    await page.keyboard.press('KeyK');
+    await expect.poll(() => page.evaluate(
+      () => (window as any).okn.config.modes.clicking.value
+    )).toBe(true);
+    await expect.poll(() => page.locator('.openKeyNav-label').count())
+      .toBeGreaterThan(0);
+    await page.keyboard.press('Escape');
+    await expect.poll(() => page.evaluate(() => ({
+      clicking: (window as any).okn.config.modes.clicking.value,
+      structural: (window as any).okn.config.modes.structuralNavigation.value,
+    }))).toEqual({ clicking: false, structural: true });
+    await expect(page.locator('.openKeyNav-label')).toHaveCount(0);
+    await expect(structuralStatus).toBeVisible();
+    await expectDeepFocus(page, 'clear-filters');
+
+    await page.keyboard.press('KeyK');
+    await expect.poll(() => page.evaluate(() => {
+      const target = document.querySelector(
+        '[data-openkeynav-label]:not(.openKeyNav-label)'
+      ) as HTMLElement | null;
+      return target ? {
+        id: target.id,
+        label: target.getAttribute('data-openkeynav-label'),
+      } : null;
+    })).not.toBeNull();
+    const selectedTarget = await page.evaluate(() => {
+      const target = document.querySelector(
+        '[data-openkeynav-label]:not(.openKeyNav-label)'
+      ) as HTMLElement;
+      return {
+        id: target.id,
+        label: target.getAttribute('data-openkeynav-label')!,
+      };
+    });
+    await page.keyboard.type(selectedTarget.label);
+    await expect.poll(() => page.evaluate(() => ({
+      clicking: (window as any).okn.config.modes.clicking.value,
+      structural: (window as any).okn.config.modes.structuralNavigation.value,
+    }))).toEqual({ clicking: false, structural: true });
+    await expectDeepFocus(page, selectedTarget.id);
+    expect(await page.evaluate(() => {
+      const state = (window as any).okn.getStructuralNavigationState();
+      return state.activeContext.targets.includes(state.target);
+    })).toBe(true);
+
+    await focusFixtureTarget(page, 'clear-filters');
+    await page.keyboard.press('KeyK');
+    await expect.poll(() => page.evaluate(
+      () => (window as any).okn.config.modes.clicking.value
+    )).toBe(true);
+    await page.keyboard.press('KeyQ');
+    await expect.poll(() => page.evaluate(() => ({
+      clicking: (window as any).okn.config.modes.clicking.value,
+      structural: (window as any).okn.config.modes.structuralNavigation.value,
+    }))).toEqual({ clicking: false, structural: true });
+    await expect(page.locator('.openKeyNav-label')).toHaveCount(0);
+    await expectDeepFocus(page, 'clear-filters');
   });
 
   test('moves between same-rank headings across different parent headings', async ({ page }) => {
@@ -1164,18 +1283,31 @@ test.describe('structural navigation mode', () => {
     expect(productFocusCount).toBe(1);
     expect(recommendationFocusCount).toBe(1);
 
-    // Disabling all of OpenKeyNav tears the structural mode down and preserves focus.
+    // Disabling all of OpenKeyNav tears down both the persistent structural
+    // layer and a temporary foreground mode while preserving focus.
     await page.keyboard.press('Shift+ArrowLeft');
     await expectDeepFocus(page, 'product-a');
     await page.keyboard.press('Shift+ArrowLeft');
     await expectDeepFocus(page, 'clear-filters');
+    await page.keyboard.press('KeyK');
+    await expect.poll(() => page.evaluate(
+      () => (window as any).okn.config.modes.clicking.value
+    )).toBe(true);
+    await expect.poll(() => page.locator('.openKeyNav-label').count())
+      .toBeGreaterThan(0);
     await page.keyboard.press('Shift+KeyO');
     await expect.poll(() => page.evaluate(() => (window as any).okn.meta.enabled.value)).toBe(false);
     await expect.poll(() => page.evaluate(
       () => (window as any).okn.config.modes.structuralNavigation.value
     )).toBe(false);
+    expect(await page.evaluate(() => ({
+      clicking: (window as any).okn.config.modes.clicking.value,
+      moving: (window as any).okn.config.modes.moving.value,
+      menu: (window as any).okn.config.modes.menu.value,
+    }))).toEqual({ clicking: false, moving: false, menu: false });
     await expectDeepFocus(page, 'clear-filters');
     await expect(page.locator('.openKeyNav-structural-status')).toHaveCount(0);
+    await expect(page.locator('.openKeyNav-label')).toHaveCount(0);
 
     await page.evaluate(() => (window as any).fixture.insertDynamicTarget());
     await page.keyboard.press('ArrowRight');

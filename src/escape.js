@@ -10,7 +10,12 @@ export const handleEscape = (openKeyNav, e) => {
       ) {
       e.preventDefault();
       e.stopPropagation();
-      endDrag(openKeyNav);
+      if (
+        openKeyNav.config.modes.moving.value &&
+        openKeyNav.config.modesConfig.move.selectedMoveable
+      ) {
+        endDrag(openKeyNav);
+      }
       openKeyNav.removeOverlays();
       openKeyNav.clearMoveAttributes();
       returnFalse = true;

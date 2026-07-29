@@ -223,6 +223,24 @@ var directContextForTarget = function directContextForTarget(model, target) {
   }
   return null;
 };
+var structuralContextForElement = function structuralContextForElement(model, element) {
+  if (!model || !element) return null;
+  var direct = directContextForTarget(model, element);
+  if (direct) return direct;
+  var contexts = modelStructuralContexts(model);
+  var exact = contexts.filter(function (context) {
+    return context.boundary === element || context.associatedHeading === element;
+  });
+  var containing = exact.length ? exact : contexts.filter(function (context) {
+    var _context$visualElemen;
+    if ((_context$visualElemen = context.visualElements) !== null && _context$visualElemen !== void 0 && _context$visualElemen.includes(element)) return true;
+    var boundary = context.boundary;
+    return ((0, _domUtilities.isDocument)(boundary) || (0, _domUtilities.isShadowRoot)(boundary) || (0, _domUtilities.isElement)(boundary)) && (0, _domUtilities.isComposedWithin)(boundary, element);
+  });
+  return containing.sort(function (left, right) {
+    return contextHierarchyLevel(model, right) - contextHierarchyLevel(model, left) || contextTargets(left).length - contextTargets(right).length || contextOrder(left) - contextOrder(right);
+  })[0] || model.rootContext || null;
+};
 var typedContextsForTarget = function typedContextsForTarget(model, target) {
   if (!model || !target) return [];
   var map = model.typedContextsByTarget || model.targetTypedContexts;
@@ -578,8 +596,21 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
         altKey: true
       };
       var exitShortcut = (0, _keyboardEvents.normalizeShortcut)(this.config.exitCommand) || defaultExit;
-      var plainToggle = matchesStructuralShortcut(event, activationShortcut);
       var configuredExit = matchesStructuralShortcut(event, exitShortcut);
+      var foregroundModeActive = Boolean(this.openKeyNav.config.modes.clicking.value || this.openKeyNav.config.modes.moving.value || this.openKeyNav.config.modes.menu.value);
+
+      // Click, Move, and menu are temporary layers over structural navigation.
+      // Their keystrokes take priority until they finish. The deliberately
+      // configured structural exit remains available (Alt+R by default).
+      if (foregroundModeActive) {
+        if (configuredExit) {
+          (0, _keyboardEvents.preventAcceptedCommand)(event);
+          this.deactivate();
+          return true;
+        }
+        return false;
+      }
+      var plainToggle = matchesStructuralShortcut(event, activationShortcut);
       var openKeyNavExit = matchesStructuralShortcut(event, {
         key: this.openKeyNav.config.keys.escape
       });
@@ -742,11 +773,16 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
       if (refresh) this.refresh();
       var focused = (0, _domUtilities.getDeepActiveElement)(this.root);
       if (!this.targetSet.has(focused)) {
+        var _this$document6, _this$document7;
         this.currentTarget = null;
         this.activeTypedContext = null;
-        if (!this.activeStructuralContext) {
+        var ambientDocumentFocus = Boolean(focused === ((_this$document6 = this.document) === null || _this$document6 === void 0 ? void 0 : _this$document6.body) || focused === ((_this$document7 = this.document) === null || _this$document7 === void 0 ? void 0 : _this$document7.documentElement));
+        if (!ambientDocumentFocus) {
           var _this$model;
-          this.activeStructuralContext = ((_this$model = this.model) === null || _this$model === void 0 ? void 0 : _this$model.rootContext) || null;
+          this.activeStructuralContext = structuralContextForElement(this.model, focused) || this.activeStructuralContext || ((_this$model = this.model) === null || _this$model === void 0 ? void 0 : _this$model.rootContext) || null;
+        } else if (!this.activeStructuralContext) {
+          var _this$model2;
+          this.activeStructuralContext = ((_this$model2 = this.model) === null || _this$model2 === void 0 ? void 0 : _this$model2.rootContext) || null;
         }
         if (announce) this.updateStatus();
         return;
@@ -983,16 +1019,16 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
   }, {
     key: "connectContextIndicatorListeners",
     value: function connectContextIndicatorListeners() {
-      var _this$document6;
-      var view = (_this$document6 = this.document) === null || _this$document6 === void 0 ? void 0 : _this$document6.defaultView;
+      var _this$document8;
+      var view = (_this$document8 = this.document) === null || _this$document8 === void 0 ? void 0 : _this$document8.defaultView;
       view === null || view === void 0 || view.addEventListener('scroll', this.scheduleContextIndicatorUpdate, true);
       view === null || view === void 0 || view.addEventListener('resize', this.scheduleContextIndicatorUpdate);
     }
   }, {
     key: "disconnectContextIndicatorListeners",
     value: function disconnectContextIndicatorListeners() {
-      var _this$document7, _this$contextIndicato;
-      var view = (_this$document7 = this.document) === null || _this$document7 === void 0 ? void 0 : _this$document7.defaultView;
+      var _this$document9, _this$contextIndicato;
+      var view = (_this$document9 = this.document) === null || _this$document9 === void 0 ? void 0 : _this$document9.defaultView;
       view === null || view === void 0 || view.removeEventListener('scroll', this.scheduleContextIndicatorUpdate, true);
       view === null || view === void 0 || view.removeEventListener('resize', this.scheduleContextIndicatorUpdate);
       if (this.contextIndicatorFrame !== null && typeof (view === null || view === void 0 ? void 0 : view.cancelAnimationFrame) === 'function') {
@@ -1006,10 +1042,10 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
   }, {
     key: "scheduleContextIndicatorUpdate",
     value: function scheduleContextIndicatorUpdate() {
-      var _this$document8,
+      var _this$document0,
         _this9 = this;
       if (!this.active) return;
-      var view = (_this$document8 = this.document) === null || _this$document8 === void 0 ? void 0 : _this$document8.defaultView;
+      var view = (_this$document0 = this.document) === null || _this$document0 === void 0 ? void 0 : _this$document0.defaultView;
       if (typeof (view === null || view === void 0 ? void 0 : view.requestAnimationFrame) !== 'function') {
         this.updateContextIndicator();
         return;
@@ -1023,10 +1059,10 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
   }, {
     key: "contextIndicatorHost",
     value: function contextIndicatorHost() {
-      var _this$document9, _this$document0;
+      var _this$document1, _this$document10;
       var activeModal = topmostNativeModal(this.document);
       if (activeModal && this.root === activeModal) return activeModal;
-      return ((_this$document9 = this.document) === null || _this$document9 === void 0 ? void 0 : _this$document9.body) || ((_this$document0 = this.document) === null || _this$document0 === void 0 ? void 0 : _this$document0.documentElement) || null;
+      return ((_this$document1 = this.document) === null || _this$document1 === void 0 ? void 0 : _this$document1.body) || ((_this$document10 = this.document) === null || _this$document10 === void 0 ? void 0 : _this$document10.documentElement) || null;
     }
   }, {
     key: "ensureContextIndicator",
@@ -1058,10 +1094,10 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
   }, {
     key: "contextIndicatorElements",
     value: function contextIndicatorElements(context) {
-      var _context$visualElemen;
+      var _context$visualElemen2;
       if (!context) return [];
       if (this.activeTypedContext) return contextTargets(context);
-      if (context.source === 'heading' && (_context$visualElemen = context.visualElements) !== null && _context$visualElemen !== void 0 && _context$visualElemen.length) {
+      if (context.source === 'heading' && (_context$visualElemen2 = context.visualElements) !== null && _context$visualElemen2 !== void 0 && _context$visualElemen2.length) {
         return context.visualElements;
       }
       if ((0, _domUtilities.isShadowRoot)(context.boundary)) return [context.boundary.host];
@@ -1071,9 +1107,9 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
   }, {
     key: "observeContextIndicatorElements",
     value: function observeContextIndicatorElements(elements) {
-      var _this$document1,
+      var _this$document11,
         _this0 = this;
-      var ResizeObserverClass = (_this$document1 = this.document) === null || _this$document1 === void 0 || (_this$document1 = _this$document1.defaultView) === null || _this$document1 === void 0 ? void 0 : _this$document1.ResizeObserver;
+      var ResizeObserverClass = (_this$document11 = this.document) === null || _this$document11 === void 0 || (_this$document11 = _this$document11.defaultView) === null || _this$document11 === void 0 ? void 0 : _this$document11.ResizeObserver;
       if (typeof ResizeObserverClass !== 'function') return;
       var nextElements = new Set(elements.filter(_domUtilities.isElement));
       if (nextElements.size === this.contextIndicatorObservedElements.size && Array.from(nextElements).every(function (element) {

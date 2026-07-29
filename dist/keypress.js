@@ -26,7 +26,7 @@ var NUMBER_KEY_BY_CODE = Object.freeze({
   Digit9: '9',
   Digit0: '0'
 });
-var legacyHeadingLevel = function legacyHeadingLevel(openKeyNav, event) {
+var configuredHeadingLevel = function configuredHeadingLevel(openKeyNav, event) {
   var numberPressed = NUMBER_KEY_BY_CODE[event.code];
   if (!numberPressed) return null;
   for (var level = 1; level <= 6; level += 1) {
@@ -36,17 +36,16 @@ var legacyHeadingLevel = function legacyHeadingLevel(openKeyNav, event) {
   }
   return null;
 };
-var isLegacyFocusNavigationCommand = function isLegacyFocusNavigationCommand(openKeyNav, event) {
-  var key = typeof event.key === 'string' ? event.key.toLowerCase() : '';
-  return key === openKeyNav.config.keys.heading.toLowerCase() || key === openKeyNav.config.keys.scroll.toLowerCase() || legacyHeadingLevel(openKeyNav, event) !== null;
-};
-var pageOwnsLegacyFocusNavigationCommand = function pageOwnsLegacyFocusNavigationCommand(openKeyNav, event) {
+var pageOwnsCharacterCommand = function pageOwnsCharacterCommand(openKeyNav, event) {
   var config = openKeyNav.config.modesConfig.structuralNavigation;
   var ownership = (0, _structuralNavigation.classifyStructuralKeyOwnership)(event, config);
   return ownership.all || ownership.character;
 };
 var hasSystemShortcutModifier = function hasSystemShortcutModifier(event) {
   return Boolean(event.altKey) || Boolean(event.ctrlKey) || Boolean(event.metaKey);
+};
+var hasForegroundMode = function hasForegroundMode(openKeyNav) {
+  return openKeyNav.config.modes.clicking.value || openKeyNav.config.modes.moving.value || openKeyNav.config.modes.menu.value;
 };
 function getMetaKeyName() {
   var userAgent = window.navigator.userAgent.toLowerCase();
@@ -84,6 +83,7 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
         return true;
       }
     }
+    (0, _keyboardEvents.preventAcceptedCommand)(e);
     if (!openKeyNav.meta.enabled.value) {
       // if openKeyNav disabled
       openKeyNav.enable();
@@ -111,15 +111,22 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
     return true;
   }
 
-  // Structural mode keeps real focus on its existing interactive target.
-  // Do not let the legacy h/1-6/s shortcuts create temporary focus stops on
-  // headings or scroll containers. Editing widgets and application-declared
-  // key owners still receive their character keys unchanged.
-  if (openKeyNav.config.modes.structuralNavigation.value && isLegacyFocusNavigationCommand(openKeyNav, e)) {
-    if (pageOwnsLegacyFocusNavigationCommand(openKeyNav, e) || hasSystemShortcutModifier(e)) {
+  // Structural navigation gets first refusal only on its own configured
+  // commands. Outside a temporary Click, Move, or menu mode, page-owned
+  // characters and system shortcuts pass through. Other OpenKeyNav commands
+  // continue through the ordinary router without ending structural mode.
+  if (openKeyNav.config.modes.structuralNavigation.value && !hasForegroundMode(openKeyNav)) {
+    if (pageOwnsCharacterCommand(openKeyNav, e) || hasSystemShortcutModifier(e)) {
       return true;
     }
-    return (0, _keyboardEvents.preventAcceptedCommand)(e);
+  }
+
+  // The configured alternate escape closes only the temporary foreground
+  // mode. Structural navigation remains active underneath and resumes once
+  // overlay cleanup finishes.
+  if (hasForegroundMode(openKeyNav) && e.key === openKeyNav.config.keys.escape) {
+    (0, _escape.handleEscape)(openKeyNav, e);
+    return true;
   }
 
   // first check for modifier keys and escape
@@ -183,9 +190,6 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
   switch (e.key) {
     case openKeyNav.config.keys.click: // possibly attempting to initiate click mode
     case openKeyNav.config.keys.click.toUpperCase():
-      openKeyNav.exitStructuralNavigation({
-        announce: false
-      });
       e.preventDefault();
       openKeyNav.config.modes.clicking.value = true;
       if (e.key == openKeyNav.config.keys.click.toUpperCase()) {
@@ -199,9 +203,6 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
     // possibly attempting to initiate moving mode
     case openKeyNav.config.keys.move:
     case openKeyNav.config.keys.move.toUpperCase():
-      openKeyNav.exitStructuralNavigation({
-        announce: false
-      });
       // Toggle move mode
       e.preventDefault();
       openKeyNav.config.modes.moving.value = true; // Assuming you add a 'move' flag to your modes object
@@ -213,9 +214,6 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
       return true;
     case openKeyNav.config.keys.menu:
     case openKeyNav.config.keys.menu.toUpperCase():
-      openKeyNav.exitStructuralNavigation({
-        announce: false
-      });
       openKeyNav.config.modes.menu.value = true;
       if (e.key == openKeyNav.config.keys.menu.toUpperCase()) {
         openKeyNav.config.modesConfig.menu.modifier = true;
@@ -265,7 +263,7 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
   }
 
   // handle keycodes, aka for specific headings
-  var headingLevel = legacyHeadingLevel(openKeyNav, e);
+  var headingLevel = configuredHeadingLevel(openKeyNav, e);
   if (headingLevel !== null) {
     (0, _keyboardEvents.preventAcceptedCommand)(e);
     (0, _focus.focusOnHeadings)(openKeyNav, "h".concat(headingLevel), e);

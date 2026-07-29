@@ -57,6 +57,9 @@ export const showClickableOverlays = (openKeyNav) => {
   
     disableScrolling(openKeyNav);
     setTimeout(() => {
+      // The user may dismiss Click Mode before this deferred discovery runs.
+      if (!openKeyNav.config.modes.clicking.value) return;
+
       const allCandidates = getAllCandidateElements(openKeyNav, document);
       
       // In debug mode, show all elements (audit mode)

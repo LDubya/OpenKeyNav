@@ -63,6 +63,8 @@ var generateLabels = exports.generateLabels = function generateLabels(openKeyNav
 var showClickableOverlays = exports.showClickableOverlays = function showClickableOverlays(openKeyNav) {
   (0, _scrolling.disableScrolling)(openKeyNav);
   setTimeout(function () {
+    // The user may dismiss Click Mode before this deferred discovery runs.
+    if (!openKeyNav.config.modes.clicking.value) return;
     var allCandidates = _getAllCandidateElements(openKeyNav, document);
 
     // In debug mode, show all elements (audit mode)

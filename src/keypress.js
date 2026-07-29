@@ -22,7 +22,7 @@ const NUMBER_KEY_BY_CODE = Object.freeze({
   Digit0: '0'
 });
 
-const legacyHeadingLevel = (openKeyNav, event) => {
+const configuredHeadingLevel = (openKeyNav, event) => {
   const numberPressed = NUMBER_KEY_BY_CODE[event.code];
   if (!numberPressed) return null;
 
@@ -35,14 +35,7 @@ const legacyHeadingLevel = (openKeyNav, event) => {
   return null;
 };
 
-const isLegacyFocusNavigationCommand = (openKeyNav, event) => {
-  const key = typeof event.key === 'string' ? event.key.toLowerCase() : '';
-  return key === openKeyNav.config.keys.heading.toLowerCase() ||
-    key === openKeyNav.config.keys.scroll.toLowerCase() ||
-    legacyHeadingLevel(openKeyNav, event) !== null;
-};
-
-const pageOwnsLegacyFocusNavigationCommand = (openKeyNav, event) => {
+const pageOwnsCharacterCommand = (openKeyNav, event) => {
   const config = openKeyNav.config.modesConfig.structuralNavigation;
   const ownership = classifyStructuralKeyOwnership(event, config);
   return ownership.all || ownership.character;
@@ -50,6 +43,12 @@ const pageOwnsLegacyFocusNavigationCommand = (openKeyNav, event) => {
 
 const hasSystemShortcutModifier = event => (
   Boolean(event.altKey) || Boolean(event.ctrlKey) || Boolean(event.metaKey)
+);
+
+const hasForegroundMode = openKeyNav => (
+  openKeyNav.config.modes.clicking.value ||
+  openKeyNav.config.modes.moving.value ||
+  openKeyNav.config.modes.menu.value
 );
 
 function getMetaKeyName() {
@@ -91,6 +90,8 @@ export const handleKeyPress = (openKeyNav, e) => {
           return true;
         }
       }
+
+      preventAcceptedCommand(e);
       
       if(!openKeyNav.meta.enabled.value){ // if openKeyNav disabled
         openKeyNav.enable();
@@ -130,21 +131,31 @@ export const handleKeyPress = (openKeyNav, e) => {
       return true;
     }
 
-    // Structural mode keeps real focus on its existing interactive target.
-    // Do not let the legacy h/1-6/s shortcuts create temporary focus stops on
-    // headings or scroll containers. Editing widgets and application-declared
-    // key owners still receive their character keys unchanged.
+    // Structural navigation gets first refusal only on its own configured
+    // commands. Outside a temporary Click, Move, or menu mode, page-owned
+    // characters and system shortcuts pass through. Other OpenKeyNav commands
+    // continue through the ordinary router without ending structural mode.
     if (
       openKeyNav.config.modes.structuralNavigation.value &&
-      isLegacyFocusNavigationCommand(openKeyNav, e)
+      !hasForegroundMode(openKeyNav)
     ) {
       if (
-        pageOwnsLegacyFocusNavigationCommand(openKeyNav, e) ||
+        pageOwnsCharacterCommand(openKeyNav, e) ||
         hasSystemShortcutModifier(e)
       ) {
         return true;
       }
-      return preventAcceptedCommand(e);
+    }
+
+    // The configured alternate escape closes only the temporary foreground
+    // mode. Structural navigation remains active underneath and resumes once
+    // overlay cleanup finishes.
+    if (
+      hasForegroundMode(openKeyNav) &&
+      e.key === openKeyNav.config.keys.escape
+    ) {
+      handleEscape(openKeyNav, e);
+      return true;
     }
 
     // first check for modifier keys and escape
@@ -211,7 +222,6 @@ export const handleKeyPress = (openKeyNav, e) => {
       switch (e.key) {
         case openKeyNav.config.keys.click: // possibly attempting to initiate click mode
         case openKeyNav.config.keys.click.toUpperCase():
-          openKeyNav.exitStructuralNavigation({ announce: false });
           e.preventDefault();
           openKeyNav.config.modes.clicking.value = true;
           if(e.key == openKeyNav.config.keys.click.toUpperCase()){
@@ -225,7 +235,6 @@ export const handleKeyPress = (openKeyNav, e) => {
         // possibly attempting to initiate moving mode
         case openKeyNav.config.keys.move:
         case openKeyNav.config.keys.move.toUpperCase():
-          openKeyNav.exitStructuralNavigation({ announce: false });
           // Toggle move mode
           e.preventDefault();
           openKeyNav.config.modes.moving.value = true; // Assuming you add a 'move' flag to your modes object
@@ -238,7 +247,6 @@ export const handleKeyPress = (openKeyNav, e) => {
   
         case openKeyNav.config.keys.menu:
         case openKeyNav.config.keys.menu.toUpperCase():
-          openKeyNav.exitStructuralNavigation({ announce: false });
           openKeyNav.config.modes.menu.value = true;
           if(e.key == openKeyNav.config.keys.menu.toUpperCase()){
             openKeyNav.config.modesConfig.menu.modifier = true;
@@ -291,7 +299,7 @@ export const handleKeyPress = (openKeyNav, e) => {
       }
   
       // handle keycodes, aka for specific headings
-      const headingLevel = legacyHeadingLevel(openKeyNav, e);
+      const headingLevel = configuredHeadingLevel(openKeyNav, e);
       if (headingLevel !== null) {
         preventAcceptedCommand(e);
         focusOnHeadings(openKeyNav, `h${headingLevel}`, e);
