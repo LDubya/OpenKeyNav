@@ -140,42 +140,6 @@ okn.init({
 
 The default is `true`. Set it to `false` when the diagnostic presentation is not appropriate for the deployment.
 
-## Using Vision-Capable AI (Claude Sonnet 4.5)
-
-Claude Sonnet 4.5 can view and analyze Playwright screenshots to verify visual correctness. This is useful for:
-- Validating overlay positioning
-- Checking for visual regressions
-- Confirming accessible color contrast
-- Verifying toolbar/notification appearance
-
-### To use Claude Sonnet in GitHub Copilot Chat:
-
-1. Open Copilot Chat in VS Code
-2. Switch model to **Claude Sonnet 4.5** (supports vision)
-3. Run E2E tests to generate screenshots:
-   ```bash
-   npm run test:e2e
-   ```
-4. Attach screenshots from `artifacts/` to your Copilot Chat
-5. Ask Claude to analyze specific aspects:
-   - "Are the overlays positioned correctly without overlapping elements?"
-   - "Is the click mode notification visible and readable?"
-   - "Do the keyboard shortcut labels have sufficient contrast?"
-
-### Example Chat Workflow:
-
-```
-User: [Attaches artifacts/03-click-mode.png]
-"Analyze this OpenKeyNav click mode screenshot. Are the overlays 
-positioned well? Any visual issues?"
-
-Claude Sonnet: "The overlays are positioned correctly to the left 
-of interactive elements with directional arrows pointing to their 
-targets. Labels are readable (black on light gray). No overlap 
-detected. The bottom notification clearly shows 'In Click Mode' 
-with escape instructions..."
-```
-
 ## Test File Organization
 
 ```
@@ -344,11 +308,6 @@ test('new interaction', async ({ page }) => {
 - Add `await page.waitForTimeout(500)` after keyboard events
 - Verify the UMD build is up to date: `npm run build`
 
-### Vision analysis not working
-- Confirm you're using Claude Sonnet 4.5 (not GPT models)
-- Attach images directly to chat (don't paste file paths)
-- Supported models with vision: Claude Sonnet 4, Claude Opus 4.1, GPT-5 mini, Gemini 2.5 Pro
-
 ## CI/CD Integration
 
 Add to your CI pipeline:
@@ -382,13 +341,12 @@ Add to your CI pipeline:
 
 1. **Run unit tests during development** - Fast feedback loop
 2. **Run E2E tests before commits** - Catch visual regressions
-3. **Use Claude Sonnet for visual review** - Attach screenshots when unsure
-4. **Keep tests focused** - One behavior per test
-5. **Mock layout in jsdom** - Stub `isAnyCornerVisible`, `getBoundingClientRect`
-6. **Screenshot key states** - Capture before/after for debugging
-7. **Use TDD for critical modules** - Write failing tests first, then implement
-8. **Test both debug and production modes** - Ensure features don't leak between modes
-9. **Document test count changes** - Update TESTING.md when adding new test suites
+3. **Keep tests focused** - One behavior per test
+4. **Mock layout in jsdom** - Stub `isAnyCornerVisible`, `getBoundingClientRect`
+5. **Screenshot key states** - Capture before/after for debugging
+6. **Use TDD for critical modules** - Write failing tests first, then implement
+7. **Test both diagnostics settings** - Ensure diagnostic presentation does not leak when disabled
+8. **Document test count changes** - Update TESTING.md when adding new test suites
 
 ## Test Coverage Summary
 
@@ -398,6 +356,4 @@ Run `npm run test:ci` and `npm run test:e2e` for the authoritative test totals. 
 
 - [Vitest Documentation](https://vitest.dev/)
 - [Playwright Documentation](https://playwright.dev/)
-- [GitHub Copilot Model Selection](https://docs.github.com/en/copilot/using-github-copilot/asking-github-copilot-questions-in-your-ide)
 - Main README: `../README.md`
-- AI Agent Instructions: `../.github/copilot-instructions.md`

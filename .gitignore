@@ -21,3 +21,30 @@ dist/*
 # Playwright cache
 /playwright/.auth/
 docs/potential.md
+
+# Local coding-assistant configuration
+/.github/copilot-instructions.md
+/.github/instructions/
+/.github/prompts/
+/.github/agents/
+/AI_AGENT_USAGE.md
+/CLAUDE.md
+/AGENTS.md
+/GEMINI.md
+/.claude/
+/.codex/
+/.agents/
+/.gemini/
+/.cursor/
+/.cursorrules
+/.windsurf/
+/.windsurfrules
+/.cline/
+/.clinerules
+/.roo/
+/.rooignore
+/.roomodes
+/.continue/
+/.aider.conf.yml
+/.aiderignore
+/.amazonq/
