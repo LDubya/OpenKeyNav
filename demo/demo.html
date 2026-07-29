@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenKeyNav E2E Demo</title>
+  
+  <!-- AI Engine Optimization: Declare OpenKeyNav availability for AI agents -->
+  <meta name="ai-navigation" content="openkeynav">
+  <meta name="openkeynav-version" content="0.1.232">
+  <meta name="openkeynav-mode" content="debug">
+  
+  <!-- Structured data for AI agent discovery -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "OpenKeyNav Demo",
+    "description": "Demonstration of OpenKeyNav keyboard navigation and AI agent interface",
+    "potentialAction": {
+      "@type": "ControlAction",
+      "name": "AI Navigation Interface",
+      "target": {
+        "@type": "EntryPoint",
+        "actionPlatform": "http://openkeynav.github.io"
+      },
+      "instrument": {
+        "@type": "SoftwareApplication",
+        "name": "OpenKeyNav",
+        "version": "0.1.232",
+        "applicationCategory": "Accessibility"
+      }
+    }
+  }
+  </script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 40px;
+      max-width: 1180px;
+      margin: 0 auto;
+      color: #17212b;
+      background: #f4f7f8;
+    }
+    .container {
+      display: flex;
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .column {
+      flex: 1;
+      padding: 20px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      margin: 10px 5px;
+      padding: 10px 20px;
+      font-size: 14px;
+    }
+    a {
+      display: inline-block;
+      margin: 10px 5px;
+      color: #0066cc;
+    }
+    .scrollable {
+      height: 150px;
+      overflow-y: scroll;
+      border: 1px solid #999;
+      padding: 10px;
+      margin: 10px 0;
+    }
+    h1, h2, h3 {
+      margin: 10px 0;
+    }
+    .error-corpus {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 6px solid #9f1d20;
+    }
+    .corpus-intro {
+      padding: 18px;
+      border: 1px solid #d8a13d;
+      background: #fff7df;
+      border-radius: 8px;
+    }
+    .error-family {
+      margin: 24px 0;
+      padding: 20px;
+      border: 1px solid #b7c4ca;
+      border-radius: 10px;
+      background: #fff;
+    }
+    .fixture-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .fixture {
+      min-width: 0;
+      padding: 14px;
+      border-left: 5px solid #9f1d20;
+      background: #f7f9fa;
+      box-shadow: 0 1px 3px rgba(23, 33, 43, 0.12);
+    }
+    .fixture h4 {
+      margin: 0 0 8px;
+    }
+    .fixture p {
+      margin: 8px 0;
+    }
+    .fixture-meta {
+      display: inline-block;
+      margin-bottom: 8px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      color: #fff;
+      background: #7b2527;
+      font: 700 11px/1.4 monospace;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .fixture-meta.manual {
+      background: #315d70;
+    }
+    .broken-control {
+      display: inline-block;
+      margin: 6px 0;
+      padding: 9px 12px;
+      border: 2px solid #9f1d20;
+      background: #fff0f0;
+      cursor: pointer;
+    }
+    .no-focus-indicator:focus {
+      outline: none;
+      box-shadow: none;
+    }
+    .nearly-invisible-focus {
+      opacity: 0.03;
+    }
+    .visual-order {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .visual-order button:nth-child(1) { order: 3; }
+    .visual-order button:nth-child(2) { order: 1; }
+    .visual-order button:nth-child(3) { order: 2; }
+    .hover-only-menu {
+      position: relative;
+      display: inline-block;
+    }
+    .hover-only-panel {
+      display: none;
+      position: absolute;
+      z-index: 3;
+      left: 0;
+      top: 100%;
+      width: 190px;
+      padding: 8px;
+      border: 1px solid #667;
+      background: #fff;
+    }
+    .hover-only-menu:hover .hover-only-panel {
+      display: block;
+    }
+    .mouse-drop-zone {
+      min-height: 60px;
+      padding: 12px;
+      border: 3px dashed #56737f;
+      background: #edf5f7;
+    }
+    .bad-modal {
+      position: fixed;
+      z-index: 100;
+      inset: 15% 20%;
+      overflow: auto;
+      padding: 24px;
+      border: 5px solid #9f1d20;
+      background: #fff;
+      box-shadow: 0 20px 70px rgba(0, 0, 0, 0.45);
+    }
+    .bad-modal[hidden] {
+      display: none;
+    }
+    .trap-zone {
+      padding: 12px;
+      border: 3px double #9f1d20;
+      background: #fff4f4;
+    }
+    .bad-widget {
+      padding: 10px;
+      border: 1px solid #48616c;
+      background: #eef4f6;
+    }
+    .bad-tab-list [role="tab"] {
+      display: inline-block;
+      margin: 4px;
+      padding: 7px;
+      border: 1px solid #48616c;
+      cursor: pointer;
+    }
+    #fixture-status {
+      min-height: 1.5em;
+      padding: 10px;
+      border: 1px solid #8da1aa;
+      background: #fff;
+    }
+    @media (max-width: 720px) {
+      body { padding: 18px; }
+      .container { display: block; }
+      .column { margin-bottom: 16px; }
+      .bad-modal { inset: 8%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="openKeyNav-toolBar"></div>
+  
+  <h1>OpenKeyNav E2E Test Page</h1>
+  
+  <p>This page demonstrates OpenKeyNav functionality. Press <kbd>Shift+o</kbd> to enable, then <kbd>k</kbd> for click mode or <kbd>m</kbd> for move mode.</p>
+
+  <div class="container">
+    <div class="column">
+      <h2>Interactive Elements</h2>
+      <button id="btn1">Button One</button>
+      <button id="btn2">Button Two</button>
+      <button id="btn3">Button Three</button>
+      <a href="#link1">Link One</a>
+      <a href="#link2">Link Two</a>
+      <input type="text" placeholder="Text input" id="input1">
+      
+      <!-- Inaccessible elements for debug mode testing -->
+      <h3>Keyboard Accessibility Errors</h3>
+      
+      <!-- Missing href -->
+      <a id="bad-link">Link without href (inaccessible)</a>
+      
+      <!-- Clickable div without proper ARIA -->
+      <div id="bad-div" onclick="console.log('clicked')" style="cursor: pointer; padding: 10px; background: #fcc; margin: 10px 0;">
+        Clickable div without role or tabindex
+      </div>
+      
+      <!-- Negative tabindex on button -->
+      <button id="bad-button" tabindex="-1">Button with tabindex -1</button>
+      
+      <!-- Span with onclick but no keyboard handler -->
+      <span id="bad-span" onclick="console.log('span clicked')" style="cursor: pointer; color: blue; text-decoration: underline;">
+        Clickable span (no role/tabindex)
+      </span>
+      
+      <!-- Image with onclick but missing alt and keyboard support -->
+      <img id="bad-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50'%3E%3Crect fill='%23f99' width='50' height='50'/%3E%3C/svg%3E" 
+           onclick="console.log('img clicked')" style="cursor: pointer; display: block; margin: 10px 0;">
+      
+      <!-- Div with role=button but no tabindex -->
+      <div id="bad-role-button" role="button" onclick="console.log('role button')" style="padding: 8px; background: #fcc; margin: 10px 0;">
+        Role=button without tabindex
+      </div>
+      
+      <!-- Hidden interactive element -->
+      <button id="hidden-button" style="display: none;">Hidden Button</button>
+      
+      <!-- Disabled button (should be accessible but not interactive) -->
+      <button id="disabled-button" disabled>Disabled Button</button>
+      
+      <!-- Link with href="#" only -->
+      <a id="hash-link" href="#">Link with only hash href</a>
+      
+      <!-- Custom element with onclick -->
+      <custom-element id="bad-custom" onclick="console.log('custom')" style="display: block; padding: 10px; background: #fcc; margin: 10px 0; cursor: pointer;">
+        Custom element with onclick
+      </custom-element>
+      
+      <!-- Area element without proper attributes -->
+      <map name="bad-map">
+        <area id="bad-area" onclick="console.log('area')" coords="0,0,50,50">
+      </map>
+      
+      <!-- Input with tabindex -1 -->
+      <input id="bad-input" type="text" tabindex="-1" placeholder="Input with tabindex -1">
+      
+      <!-- Select with tabindex -1 -->
+      <select id="bad-select" tabindex="-1">
+        <option>Option 1</option>
+      </select>
+      
+      <h3>Nested Interactive Elements</h3>
+      
+      <!-- Same-dimension nesting - div with role=button wrapping real button -->
+      <div id="nested-button-outer" role="button" tabindex="0" style="padding: 0; outline: 2px solid #999; margin: 10px 0; display: inline-block;">
+        <button id="nested-button-inner" style="margin: 0;">Nested Button (same size)</button>
+      </div>
+      
+      <!-- Div wrapping button (same dimensions) -->
+      <div id="nested-div-same" onclick="console.log('div clicked')" 
+           style="display: inline-block; padding: 0; cursor: pointer; outline: 2px solid #999; margin: 10px 0;">
+        <button id="nested-div-button-same" style="margin: 0;">Button in Div (same size)</button>
+      </div>
+      
+      <!-- Anchor wrapping button (same dimensions) -->
+      <a id="nested-anchor-same" href="#" 
+         style="display: inline-block; text-decoration: none; padding: 0; outline: 2px solid #999; margin: 10px 0;">
+        <button id="nested-anchor-button-same" style="margin: 0;">Button in Link (same size)</button>
+      </a>
+      
+      <!-- Large clickable div with small button - both should get labels -->
+      <div id="nested-div-large" onclick="console.log('large div clicked')" 
+           style="display: inline-block; padding: 30px; cursor: pointer; background: #e0f0ff; border: 2px solid #0066cc; margin: 10px 0;">
+        Large Clickable Area
+        <button id="nested-button-small" style="display: block; margin: 10px auto;">Small Button</button>
+        Click anywhere in blue area
+      </div>
+      
+      <!-- Large anchor with small button - both should get labels -->
+      <a id="nested-anchor-large" href="#large" 
+         style="display: inline-block; padding: 30px; background: #f0e0ff; border: 2px solid #9933cc; text-decoration: none; color: inherit; margin: 10px 0;">
+        Large Clickable Link
+        <button id="nested-anchor-button-small" style="display: block; margin: 10px auto;">Small Button</button>
+        Click anywhere in purple area
+      </a>
+    </div>
+
+    <div class="column">
+      <h2>Headings</h2>
+      <h3>Heading Level 3</h3>
+      <p>Some content under heading 3.</p>
+      <h4>Heading Level 4</h4>
+      <p>Some content under heading 4.</p>
+    </div>
+  </div>
+
+  <div class="scrollable">
+    <h3>Scrollable Region</h3>
+    <p>This is a scrollable area with enough content to require scrolling.</p>
+    <p>Line 1</p>
+    <p>Line 2</p>
+    <p>Line 3</p>
+    <p>Line 4</p>
+    <p>Line 5</p>
+    <p>Line 6</p>
+  </div>
+
+  <main class="error-corpus" id="keyboard-error-corpus">
+    <h2>Keyboard Accessibility Error Corpus</h2>
+    <div class="corpus-intro">
+      <p><strong>Intentional failures:</strong> The controls below are deliberately broken so OpenKeyNav, automated tools, and manual keyboard reviews can be compared on one page.</p>
+      <p><span class="fixture-meta">OpenKeyNav candidate</span> is expected to exercise the current audit heuristic. <span class="fixture-meta manual">Manual review</span> represents an important keyboard failure that a focusability-only audit may miss.</p>
+      <p id="fixture-status" role="status" aria-live="polite">Fixture activity will be reported here.</p>
+    </div>
+
+    <section class="error-family" aria-labelledby="focusability-heading">
+      <h3 id="focusability-heading">Focusability and semantics</h3>
+      <div class="fixture-grid">
+        <article class="fixture">
+          <span class="fixture-meta">OpenKeyNav candidate</span>
+          <h4>Listener-only clickable div</h4>
+          <div id="listener-only-control" class="broken-control" data-keyboard-error="focusability">Clickable only through a JavaScript click listener</div>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>ARIA link without focus</h4>
+          <div id="role-link-no-tabindex" class="broken-control" role="link" onclick="reportFixture('ARIA link clicked')" data-keyboard-error="focusability">role=link without tabindex</div>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Custom checkbox without focus</h4>
+          <div id="checkbox-no-tabindex" class="broken-control" role="checkbox" aria-checked="false" onclick="toggleBadCheckbox(this)" data-keyboard-error="focusability">Newsletter selected: false</div>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta">OpenKeyNav candidate</span>
+          <h4>Valid link removed from tab order</h4>
+          <a id="link-negative-tabindex" href="#focusability-heading" tabindex="-1" data-keyboard-error="focusability">Link with tabindex=-1</a>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Focusable content hidden from assistive technology</h4>
+          <button id="aria-hidden-button" aria-hidden="true" data-keyboard-error="semantics">Focusable button with aria-hidden=true</button>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Meaningless tab stop</h4>
+          <p id="static-tab-stop" tabindex="0" data-keyboard-error="focus-order">Static paragraph unnecessarily added to the tab order.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="error-family" aria-labelledby="focus-order-heading">
+      <h3 id="focus-order-heading">Focus order and focus visibility</h3>
+      <div class="fixture-grid">
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Positive tabindex rewrites navigation order</h4>
+          <div data-keyboard-error="focus-order">
+            <button tabindex="3">DOM first, tabindex 3</button>
+            <button tabindex="1">DOM second, tabindex 1</button>
+            <button tabindex="2">DOM third, tabindex 2</button>
+          </div>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Visual order differs from DOM order</h4>
+          <div class="visual-order" data-keyboard-error="focus-order">
+            <button>DOM 1 / Visual 3</button>
+            <button>DOM 2 / Visual 1</button>
+            <button>DOM 3 / Visual 2</button>
+          </div>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Focus indicator removed</h4>
+          <button class="no-focus-indicator" data-keyboard-error="focus-visibility">This button has no visible focus style</button>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Focusable control is visually absent</h4>
+          <p>The nearly blank area below contains a tabbable button.</p>
+          <button class="nearly-invisible-focus" data-keyboard-error="focus-visibility">Nearly invisible focused button</button>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Unexpected focus jump</h4>
+          <label for="focus-jump-input">Attempt to focus this field</label>
+          <input id="focus-jump-input" data-keyboard-error="focus-management">
+          <button id="focus-jump-target">Focus is redirected here</button>
+        </article>
+      </div>
+    </section>
+
+    <section class="error-family" aria-labelledby="activation-heading">
+      <h3 id="activation-heading">Keyboard activation parity</h3>
+      <div class="fixture-grid">
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Focusable button role responds only to click</h4>
+          <div id="click-only-role-button" class="broken-control" role="button" tabindex="0" data-keyboard-error="activation">Enter and Space do nothing</div>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Focusable checkbox responds only to click</h4>
+          <div id="click-only-checkbox" class="broken-control" role="checkbox" tabindex="0" aria-checked="false" data-keyboard-error="activation">Click-only checkbox: false</div>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Pointer-down-only control</h4>
+          <div id="pointerdown-only" class="broken-control" role="button" tabindex="0" data-keyboard-error="activation">Only pointerdown activates me</div>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Double-click-only control</h4>
+          <div id="double-click-only" class="broken-control" role="button" tabindex="0" data-keyboard-error="activation">Only double-click activates me</div>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Hover-only submenu</h4>
+          <div class="hover-only-menu" data-keyboard-error="hover-only">
+            <button type="button">Hover for submenu</button>
+            <div class="hover-only-panel">
+              <a href="#hover-item-one">Hidden item one</a>
+              <a href="#hover-item-two">Hidden item two</a>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="error-family" aria-labelledby="widgets-heading">
+      <h3 id="widgets-heading">Custom widget keyboard behavior</h3>
+      <div class="fixture-grid">
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Slider without Arrow key support</h4>
+          <div id="mouse-only-slider" class="bad-widget" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" data-keyboard-error="custom-widget">Mouse-only value: 50</div>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Tabs without roving focus or Arrow keys</h4>
+          <div class="bad-tab-list" role="tablist" data-keyboard-error="custom-widget">
+            <div role="tab" tabindex="0" aria-selected="true">Overview</div>
+            <div role="tab" tabindex="0" aria-selected="false">Details</div>
+            <div role="tab" tabindex="0" aria-selected="false">History</div>
+          </div>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Menu without expected Arrow key behavior</h4>
+          <div role="menu" class="bad-widget" data-keyboard-error="custom-widget">
+            <div role="menuitem" tabindex="0">Rename</div>
+            <div role="menuitem" tabindex="0">Duplicate</div>
+            <div role="menuitem" tabindex="0">Archive</div>
+          </div>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Combobox with no keyboard interaction model</h4>
+          <div role="combobox" tabindex="0" aria-expanded="false" aria-controls="fake-options" class="bad-widget" data-keyboard-error="custom-widget">Choose a department</div>
+          <div id="fake-options" role="listbox" hidden><div role="option">Engineering</div></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="error-family" aria-labelledby="focus-management-heading">
+      <h3 id="focus-management-heading">Focus management and traps</h3>
+      <div class="fixture-grid">
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Dialog opens without moving or containing focus</h4>
+          <button id="open-bad-modal" data-keyboard-error="focus-management">Open broken dialog</button>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Focused control removes itself</h4>
+          <button id="disappearing-control" data-keyboard-error="focus-management">Activate to remove me and lose focus</button>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Keyboard trap</h4>
+          <p>Tab cycles inside this region. Press Control+Escape to release it.</p>
+          <div id="keyboard-trap" class="trap-zone" data-keyboard-error="keyboard-trap">
+            <input aria-label="Trapped field one">
+            <button type="button">Trapped button two</button>
+          </div>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Dynamic content receives no focus or announcement</h4>
+          <button id="inject-control" data-keyboard-error="focus-management">Insert a new action before this button</button>
+          <div id="dynamic-controls"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="error-family" aria-labelledby="pointer-heading">
+      <h3 id="pointer-heading">Pointer-only and gesture-dependent operation</h3>
+      <div class="fixture-grid">
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Native drag and drop without keyboard alternative</h4>
+          <div id="mouse-drag-source" class="broken-control" draggable="true" data-keyboard-error="pointer-only">Drag this card with a mouse</div>
+          <div id="mouse-drop-target" class="mouse-drop-zone">Mouse-only drop target</div>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta">OpenKeyNav candidate</span>
+          <h4>Clickable canvas without semantics or focus</h4>
+          <canvas id="clickable-canvas" width="220" height="70" onclick="reportFixture('Canvas clicked')" data-keyboard-error="pointer-only"></canvas>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Scrollable panel omitted from tab order</h4>
+          <div style="height: 80px; overflow: auto; border: 1px solid #667;" data-keyboard-error="scrolling">
+            <div style="height: 240px; padding: 8px;">Keyboard users may not discover or operate this overflow region consistently.</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="error-family" aria-labelledby="shortcut-heading">
+      <h3 id="shortcut-heading">Character shortcuts and keyboard event misuse</h3>
+      <div class="fixture-grid">
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Unconfigurable single-character shortcut</h4>
+          <p data-keyboard-error="character-shortcut">Press <kbd>x</kbd> anywhere outside a text field. The action cannot be disabled or remapped.</p>
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Text field blocks standard editing keys</h4>
+          <label for="blocked-key-input">Backspace and Delete are suppressed</label>
+          <input id="blocked-key-input" value="Cannot delete this text" data-keyboard-error="keyboard-event">
+        </article>
+        <article class="fixture">
+          <span class="fixture-meta manual">Manual review</span>
+          <h4>Focusable iframe has no accessible title</h4>
+          <iframe srcdoc="<!doctype html><button>Inside unnamed frame</button>" data-keyboard-error="semantics"></iframe>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <div id="bad-modal" class="bad-modal" hidden data-keyboard-error="focus-management">
+    <h2>Broken dialog</h2>
+    <p>Focus was not moved here, the background remains interactive, Escape does not close this dialog, and focus is not restored when it closes.</p>
+    <label>Dialog field <input></label>
+    <button id="close-bad-modal">Close dialog</button>
+  </div>
+
+  <script src="../dist/openkeynav.umd.js"></script>
+  <script>
+    const okn = new OpenKeyNav();
+    okn.init();
+
+    const fixtureStatus = document.getElementById('fixture-status');
+
+    function reportFixture(message) {
+      fixtureStatus.textContent = message;
+    }
+
+    function toggleBadCheckbox(element) {
+      const nextValue = element.getAttribute('aria-checked') !== 'true';
+      element.setAttribute('aria-checked', String(nextValue));
+      element.textContent = `Newsletter selected: ${nextValue}`;
+      reportFixture('Mouse-only checkbox changed');
+    }
+
+    const listenerOnlyControl = document.getElementById('listener-only-control');
+    listenerOnlyControl.addEventListener('click', () => reportFixture('Listener-only div clicked'));
+
+    const clickOnlyRoleButton = document.getElementById('click-only-role-button');
+    clickOnlyRoleButton.addEventListener('click', () => reportFixture('Click-only role button activated'));
+
+    const clickOnlyCheckbox = document.getElementById('click-only-checkbox');
+    clickOnlyCheckbox.addEventListener('click', () => {
+      const nextValue = clickOnlyCheckbox.getAttribute('aria-checked') !== 'true';
+      clickOnlyCheckbox.setAttribute('aria-checked', String(nextValue));
+      clickOnlyCheckbox.textContent = `Click-only checkbox: ${nextValue}`;
+      reportFixture('Click-only checkbox changed');
+    });
+
+    document.getElementById('pointerdown-only').addEventListener('pointerdown', () => {
+      reportFixture('Pointer-down-only control activated');
+    });
+
+    document.getElementById('double-click-only').addEventListener('dblclick', () => {
+      reportFixture('Double-click-only control activated');
+    });
+
+    document.getElementById('focus-jump-input').addEventListener('focus', () => {
+      document.getElementById('focus-jump-target').focus();
+      reportFixture('Focus was unexpectedly redirected');
+    });
+
+    const mouseOnlySlider = document.getElementById('mouse-only-slider');
+    mouseOnlySlider.addEventListener('click', event => {
+      const rect = mouseOnlySlider.getBoundingClientRect();
+      const value = Math.max(0, Math.min(100, Math.round(((event.clientX - rect.left) / rect.width) * 100)));
+      mouseOnlySlider.setAttribute('aria-valuenow', String(value));
+      mouseOnlySlider.textContent = `Mouse-only value: ${value}`;
+      reportFixture('Slider changed with pointer input');
+    });
+
+    const badModal = document.getElementById('bad-modal');
+    document.getElementById('open-bad-modal').addEventListener('click', () => {
+      badModal.hidden = false;
+      reportFixture('Broken dialog opened without focus management');
+    });
+    document.getElementById('close-bad-modal').addEventListener('click', () => {
+      badModal.hidden = true;
+      document.body.focus();
+      reportFixture('Broken dialog closed without restoring focus');
+    });
+
+    document.getElementById('disappearing-control').addEventListener('click', event => {
+      event.currentTarget.remove();
+      reportFixture('Focused control was removed from the document');
+    });
+
+    const trapZone = document.getElementById('keyboard-trap');
+    let trapReleased = false;
+    trapZone.addEventListener('keydown', event => {
+      if (event.ctrlKey && event.key === 'Escape') {
+        trapReleased = true;
+        reportFixture('Keyboard trap released');
+        return;
+      }
+      if (!trapReleased && event.key === 'Tab') {
+        const controls = Array.from(trapZone.querySelectorAll('input, button'));
+        const currentIndex = controls.indexOf(document.activeElement);
+        const direction = event.shiftKey ? -1 : 1;
+        const nextIndex = (currentIndex + direction + controls.length) % controls.length;
+        event.preventDefault();
+        controls[nextIndex].focus();
+        reportFixture('Tab was trapped inside the fixture');
+      }
+    });
+
+    document.getElementById('inject-control').addEventListener('click', event => {
+      const insertedButton = document.createElement('button');
+      insertedButton.textContent = 'Dynamically inserted action';
+      insertedButton.dataset.keyboardError = 'focus-management';
+      event.currentTarget.before(insertedButton);
+      reportFixture('New control inserted without moving focus or announcing its location');
+    });
+
+    const dragSource = document.getElementById('mouse-drag-source');
+    const dropTarget = document.getElementById('mouse-drop-target');
+    dragSource.addEventListener('dragstart', event => event.dataTransfer.setData('text/plain', 'card'));
+    dropTarget.addEventListener('dragover', event => event.preventDefault());
+    dropTarget.addEventListener('drop', event => {
+      event.preventDefault();
+      dropTarget.textContent = 'Card dropped with a pointer';
+      reportFixture('Mouse-only drag and drop completed');
+    });
+
+    const canvas = document.getElementById('clickable-canvas');
+    const canvasContext = canvas.getContext('2d');
+    canvasContext.fillStyle = '#fff0f0';
+    canvasContext.fillRect(0, 0, canvas.width, canvas.height);
+    canvasContext.strokeStyle = '#9f1d20';
+    canvasContext.strokeRect(1, 1, canvas.width - 2, canvas.height - 2);
+    canvasContext.fillStyle = '#17212b';
+    canvasContext.font = '16px sans-serif';
+    canvasContext.fillText('Clickable canvas', 44, 40);
+
+    document.getElementById('blocked-key-input').addEventListener('keydown', event => {
+      if (event.key === 'Backspace' || event.key === 'Delete') {
+        event.preventDefault();
+        reportFixture(`${event.key} was blocked in the text field`);
+      }
+    });
+
+    document.addEventListener('keydown', event => {
+      const target = event.target;
+      const isTyping = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.isContentEditable;
+      if (!isTyping && event.key.toLowerCase() === 'x') {
+        reportFixture('Unconfigurable single-character shortcut fired');
+      }
+    });
+
+    console.log('OpenKeyNav initialized');
+  </script>
+</body>
+</html>

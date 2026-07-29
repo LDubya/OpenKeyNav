@@ -23,24 +23,34 @@ var focusOnHeadings = exports.focusOnHeadings = function focusOnHeadings(openKey
   if (openKeyNav.config.headings.list.length == 0) {
     return true;
   }
+  var headingState = openKeyNav.config.headings;
+  var lastIndex = headingState.list.length - 1;
+  var focusedHeadingIndex = headingState.list.indexOf(document.activeElement);
+  if (focusedHeadingIndex >= 0) {
+    headingState.currentHeadingIndex = focusedHeadingIndex;
+  } else {
+    // The current focus is outside this particular heading route. Start at
+    // its boundary instead of reusing an index from another heading level.
+    headingState.currentHeadingIndex = -1;
+  }
 
   // handle moving to the next / previous heading
   if (e.shiftKey) {
     // shift key is pressed, so move backwards. If at the beginning, go to the end.
-    if (openKeyNav.config.headings.currentHeadingIndex > 0) {
-      openKeyNav.config.headings.currentHeadingIndex--;
+    if (headingState.currentHeadingIndex > 0) {
+      headingState.currentHeadingIndex--;
     } else {
-      openKeyNav.config.headings.currentHeadingIndex = openKeyNav.config.headings.list.length - 1;
+      headingState.currentHeadingIndex = lastIndex;
     }
   } else {
     // Move to the next heading. If at the end, go to the beginning.
-    if (openKeyNav.config.headings.currentHeadingIndex < openKeyNav.config.headings.list.length - 1) {
-      openKeyNav.config.headings.currentHeadingIndex++;
+    if (headingState.currentHeadingIndex < lastIndex) {
+      headingState.currentHeadingIndex++;
     } else {
-      openKeyNav.config.headings.currentHeadingIndex = 0;
+      headingState.currentHeadingIndex = 0;
     }
   }
-  var nextHeading = openKeyNav.config.headings.list[openKeyNav.config.headings.currentHeadingIndex];
+  var nextHeading = headingState.list[headingState.currentHeadingIndex];
   if (!nextHeading.hasAttribute('tabindex')) {
     nextHeading.setAttribute('tabindex', '-1'); // Make the heading focusable
     nextHeading.setAttribute('data-openkeynav-tabIndexed', true);
@@ -61,22 +71,25 @@ var focusOnScrollables = exports.focusOnScrollables = function focusOnScrollable
   if (openKeyNav.config.scrollables.list.length == 0) {
     return; // If no scrollable elements, exit the function
   }
+  var scrollables = openKeyNav.config.scrollables;
+  var lastIndex = scrollables.list.length - 1;
+  var focusedScrollableIndex = scrollables.list.indexOf(document.activeElement);
 
-  // /*
-  {
-    // Navigate through scrollable elements
-    if (e.shiftKey) {
-      // Move backwards
-      openKeyNav.config.currentScrollableIndex = openKeyNav.config.currentScrollableIndex > 0 ? openKeyNav.config.currentScrollableIndex - 1 : openKeyNav.config.scrollables.list.length - 1;
-    } else {
-      // Move forwards
-      openKeyNav.config.currentScrollableIndex = openKeyNav.config.currentScrollableIndex < openKeyNav.config.scrollables.list.length - 1 ? openKeyNav.config.currentScrollableIndex + 1 : 0;
-    }
+  // Re-enter the route from its boundary when focus is elsewhere instead of
+  // reusing an index from a different or stale scrollable list.
+  if (focusedScrollableIndex >= 0) {
+    scrollables.currentScrollableIndex = focusedScrollableIndex;
+  } else {
+    scrollables.currentScrollableIndex = -1;
   }
-  //*/
+  if (e.shiftKey) {
+    scrollables.currentScrollableIndex = scrollables.currentScrollableIndex > 0 ? scrollables.currentScrollableIndex - 1 : lastIndex;
+  } else {
+    scrollables.currentScrollableIndex = scrollables.currentScrollableIndex < lastIndex ? scrollables.currentScrollableIndex + 1 : 0;
+  }
 
   // Focus the current scrollable element
-  var currentScrollable = openKeyNav.config.scrollables.list[openKeyNav.config.currentScrollableIndex];
+  var currentScrollable = scrollables.list[scrollables.currentScrollableIndex];
   if (!currentScrollable.hasAttribute('tabindex')) {
     currentScrollable.setAttribute('tabindex', '-1'); // Make the element focusable
     currentScrollable.setAttribute('data-openkeynav-tabIndexed', true);

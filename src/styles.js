@@ -31,6 +31,174 @@ const keyButtonStyles = `
   }
 `
 
+const logoStyles = `
+  .okn-logo-text {
+      font-size: 36px;
+      font-weight: 600;
+      color: #ffffff;
+      background-color: #333;
+      padding: .1em .2em;
+      border-radius: 1em;
+      box-sizing: border-box;
+      line-height: 1;
+      text-align: center;
+      position: relative;
+      display: inline-block;
+      min-width: 1rem;
+      border: max(.1em, 2px) solid #ffffff;
+      white-space: nowrap;
+  }
+
+  .okn-logo-text.small {
+      font-size: 18px;
+  }
+  .okn-logo-text.tiny {
+      font-size: 10px;
+      border: none;
+  }
+  .okn-logo-text.tiny .key {
+      font-weight: 700;
+  }
+
+  .okn-logo-text.light {
+      color: #333;
+      background-color: #fff;
+      border-color: #333;
+  }
+
+  .okn-logo-text .key {
+      display: inline;
+      padding: .1em .2em;
+      margin: 0 .1em;
+      background-color: #ffffff;
+      color: #333;
+      line-height: 1;
+      position: relative;
+      top: -.3em;
+  }
+
+  .okn-logo-text.light .key {
+      background-color: #333;
+      color: #ffffff;
+  }
+
+  .okn-logo-text .key::before,
+  .okn-logo-text .key::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+  }
+
+  .okn-logo-text .key::before {
+      --border-size: 0.5em;
+      --min-border-size: 5px;
+      border-top: max(var(--border-size), var(--min-border-size)) solid #333;
+      bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));
+      border-left: max(var(--border-size), var(--min-border-size)) solid transparent;
+      border-right: max(var(--border-size), var(--min-border-size)) solid transparent;
+  }
+  .okn-logo-text.light .key::before {
+      border-top-color: #fff;
+  }
+
+  .okn-logo-text .key::after {
+      --border-size: .4em;
+      --min-border-size: 4px;
+      border-top: max(calc(var(--border-size) + 2px), var(--min-border-size)) solid #fff;
+      bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));
+      border-left: max(var(--border-size), var(--min-border-size)) solid transparent;
+      border-right: max(var(--border-size), var(--min-border-size)) solid transparent;
+  }
+  .okn-logo-text.light .key::after {
+      border-top-color: #333;
+  }
+`;
+
+// Shared by the document stylesheet and StatusService-owned ShadowRoot/document
+// styles. Keeping this as one source ensures notifications remain styled after
+// OpenKeyNav is disabled and inside supported Shadow DOM roots.
+export const statusStyles = `
+  ${logoStyles}
+
+  .openKeyNav-status {
+      box-sizing: border-box;
+      position: fixed;
+      left: 12px;
+      bottom: 12px;
+      z-index: 2147483647;
+      max-width: min(34rem, calc(100vw - 24px));
+      padding: 8px 12px;
+      border: 1px solid #666;
+      border-radius: 4px;
+      color: #fff;
+      background: rgba(20, 24, 28, .94);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, .16);
+      font: 14px/1.35 sans-serif;
+      text-align: left;
+      pointer-events: none;
+  }
+
+  .openKeyNav-status--visually-hidden {
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      border: 0 !important;
+      overflow: hidden !important;
+      clip: rect(0 0 0 0) !important;
+      clip-path: inset(50%) !important;
+      white-space: nowrap !important;
+  }
+
+  .openKeyNav-notification-container {
+      position: fixed;
+      left: 50%;
+      bottom: 10px;
+      z-index: 2147483647;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      width: min(34rem, calc(100vw - 24px));
+      transform: translateX(-50%);
+      pointer-events: none;
+  }
+
+  .openKeyNav-notification-container .openKeyNav-notification {
+      position: relative;
+      left: auto;
+      bottom: auto;
+      display: inline-block;
+      max-width: 100%;
+      padding: 10px 20px;
+      text-align: center;
+      pointer-events: auto;
+  }
+
+  .openKeyNav-status__dismiss {
+      position: absolute;
+      top: 5px;
+      right: 8px;
+      border: 0;
+      padding: 0 2px;
+      color: inherit;
+      background: transparent;
+      font: 20px/1 sans-serif;
+      cursor: pointer;
+  }
+
+  .openKeyNav-status__hint {
+      margin-top: 4px;
+      font-size: .85em;
+      opacity: .8;
+  }
+
+  .openKeyNav-status--dismissible {
+      padding-right: 30px;
+  }
+`;
+
 export const injectStylesheet = (parent, replace) => {
     openKeyNav = parent;
 
@@ -203,6 +371,12 @@ export const injectStylesheet = (parent, replace) => {
         border-color: #f00;
         border-radius: 3px;
       }
+      .openKeyNav-label.debug-inaccessible{
+        background-color: #ff4444 !important;
+        border-color: #cc0000 !important;
+        color: #ffffff !important;
+        text-shadow: 0 1px 0 rgba(0,0,0,0.5) !important;
+      }
         //   +"span[data-openkeynav-label]{"
         //       +"display: inherit;"
         //   +"}"
@@ -229,100 +403,11 @@ export const injectStylesheet = (parent, replace) => {
       ;
       `
 
-      style.textContent += `
-      .okn-logo-text {
-          font-size: 36px;
-          font-weight: 600;
-          color: #ffffff;
-          background-color: #333;
-          padding: .1em .2em;
-          border-radius: 1em;
-          box-sizing: border-box;
-          line-height: 1;
-          text-align: center;
-          position: relative;
-          display: inline-block;
-          min-width: 1rem;
-          border: max(.1em, 2px) solid #ffffff;
-          white-space: nowrap;
-      }
-
-      .okn-logo-text.small {
-          font-size: 18px;
-      }
-      .okn-logo-text.tiny {
-          font-size: 10px;
-          /* border-width: 1px; */
-          border: none;
-      }
-      .okn-logo-text.tiny .key {
-          font-weight: 700;
-      }
-
-      .okn-logo-text.light {
-          color: #333; /* Dark text color */
-          background-color: #fff; /* Light background */
-          border-color: #333; /* Dark border */
-      }
-
-      .okn-logo-text .key {
-          display: inline;
-          padding: .1em .2em;
-          margin: 0 .1em;
-          background-color: #ffffff; /* Light background */
-          color: #333; /* Dark text */
-          line-height: 1;
-          /* font-size: 0.6em; */
-          position: relative;
-          top: -.3em;
-      }
-
-      .okn-logo-text.light .key {
-          background-color: #333; /* Dark background */
-          color: #ffffff; /* Light text */
-      }
-
-      .okn-logo-text .key::before,
-      .okn-logo-text .key::after {
-          content: "";
-          position: absolute;
-          left: 50%;
-          transform: translateX(-50%);
-      }
-
-      .okn-logo-text .key::before {
-          --border-size: 0.5em; /* Base border size */
-          --min-border-size: 5px; /* Minimum pixel size */
-
-          border-top: max(var(--border-size), var(--min-border-size)) solid #333;
-          bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));
-          border-left: max(var(--border-size), var(--min-border-size)) solid transparent;
-          border-right: max(var(--border-size), var(--min-border-size)) solid transparent;
-      }
-      .okn-logo-text.light .key::before {
-          border-top-color: #fff; /* Dark top triangle */
-      }
-
-      .okn-logo-text .key::after {
-          --border-size: .4em; /* Base border size */
-          --min-border-size: 4px; /* Minimum pixel size */
-
-          border-top: max( calc( var(--border-size) + 2px) , var(--min-border-size)) solid #fff;
-          bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));
-          border-left: max(var(--border-size), var(--min-border-size)) solid transparent;
-          border-right: max(var(--border-size), var(--min-border-size)) solid transparent;
-      }
-
-      .okn-logo-text.light .key::after {
-          border-top-color: #333; /* Light bottom triangle */
-      }
-      `;
+      style.textContent += statusStyles;
 
       style.textContent+= keyButtonStyles;
-
-      // style.textContent+=`
       // *:focus { // could be problematic to edit focus states throughout a website
-      //   outline: 2px ${openKeyNav.config.focus.outlineStyle} ${openKeyNav.config.focus.outlineColor} !important; 
+      //   outline: 2px ${openKeyNav.config.focus.outlineStyle} ${openKeyNav.config.focus.outlineColor} !important;
       //   outline-offset: -2px !important;
       // }
       // `;
@@ -338,6 +423,16 @@ export const injectStylesheet = (parent, replace) => {
         [data-openkeynav-focused]{
           outline: 2px ${openKeyNav.config.focus.outlineStyle} ${openKeyNav.config.focus.outlineColor} !important; 
           outline-offset: -2px !important;
+        }
+
+        .openKeyNav-structural-context-outline {
+          box-sizing: border-box;
+          position: fixed;
+          z-index: 2147483646;
+          display: none;
+          border-radius: 4px;
+          background: transparent;
+          pointer-events: none;
         }
       `;
 

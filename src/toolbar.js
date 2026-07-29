@@ -24,6 +24,7 @@ export const handleToolBar = (openKeyNav_obj) => {
         effect(() => {
             const modes = openKeyNav.config.modes;
             const typedLabel = openKeyNav.config.typedLabel.value;
+            const debugCount = openKeyNav.config.debug.inaccessibleCount.value;
             updateToolbar(toolBarElement, lastMessage);
         });
 
@@ -106,11 +107,22 @@ const toolbarTemplates = {
     },
 
     clickMode : () => {
+        const count = openKeyNav.config.debug.inaccessibleCount.value;
+        if (openKeyNav.config.debug.keyboardAccessible && count > 0) {
+            return `<p>${ keyButton(["Esc"], `Click Mode (Debug: ${count} inaccessible)`)}</p>`
+        }
         return `<p>${ keyButton(["Esc"], "Click Mode")}</p>`
     },
 
     dragMode : () => { 
         return `<p>${ keyButton(["Esc"], "Drag Mode")}</p>`
+    },
+
+    structuralNavigation : () => {
+        return `<p>${keyButton(
+            ['Alt', openKeyNav.config.keys.structuralNavigation],
+            'Structural Navigation'
+        )}</p>`;
     },
 
     menu : () => {
@@ -149,6 +161,9 @@ const updateToolbar = (toolBarElement, lastMessage) => {
     } 
     else if (openKeyNav.config.modes.menu.value) {
         message = toolbarTemplates.menu(typedLabel);
+    }
+    else if (openKeyNav.config.modes.structuralNavigation.value) {
+        message = toolbarTemplates.structuralNavigation();
     }
     else{
       message = toolbarTemplates.default(); // Default message

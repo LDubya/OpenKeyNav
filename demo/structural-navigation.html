@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenKeyNav structural navigation fixture</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: system-ui, sans-serif;
+    }
+
+    body {
+      margin: 0 auto;
+      max-width: 70rem;
+      padding: 1.5rem;
+    }
+
+    .fixture-guide {
+      border: 2px solid #0067c5;
+      border-radius: 0.4rem;
+      margin-block: 1rem;
+      padding: 0.75rem 1rem;
+    }
+
+    .fixture-guide-title {
+      display: block;
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-block: 0 0.5rem;
+    }
+
+    .fixture-guide ul {
+      display: grid;
+      gap: 0.35rem;
+      margin-block: 0;
+      padding-inline-start: 1.25rem;
+    }
+
+    kbd {
+      border: 1px solid #6f7780;
+      border-radius: 0.2rem;
+      box-shadow: 0 1px 0 #6f7780;
+      font: inherit;
+      padding: 0.05rem 0.3rem;
+    }
+
+    .scroll-fixture {
+      max-height: 3rem;
+      overflow: auto;
+      border: 1px solid #6f7780;
+      padding: 0.5rem;
+    }
+
+    .scroll-fixture > div {
+      min-height: 8rem;
+    }
+
+    header,
+    main,
+    body > section,
+    dialog section {
+      border: 1px solid #9aa7b2;
+      margin-block: 1rem;
+      padding: 1rem;
+    }
+
+    section,
+    form,
+    fieldset,
+    nav {
+      margin-block: 1rem;
+    }
+
+    button,
+    input,
+    select,
+    textarea,
+    a,
+    [tabindex="0"] {
+      margin: 0.35rem;
+    }
+
+    :focus-visible {
+      outline: 4px solid #6a3df0;
+      outline-offset: 3px;
+    }
+
+    #offscreen-target {
+      display: block;
+      margin-top: 120rem;
+    }
+
+    #structural-fixture-end {
+      min-height: 10rem;
+    }
+
+    [role="tab"] {
+      border: 1px solid #445;
+      padding: 0.4rem 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <div
+    id="structural-navigation-guide"
+    class="fixture-guide"
+    role="note"
+    aria-labelledby="structural-navigation-guide-title"
+  >
+    <strong id="structural-navigation-guide-title" class="fixture-guide-title">Structural navigation keys</strong>
+    <ul>
+      <li><kbd>Shift</kbd> + <kbd>O</kbd> enables OpenKeyNav; <kbd>r</kbd> enters structural navigation.</li>
+      <li><kbd>Tab</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd> moves sequentially using native browser focus.</li>
+      <li>Structural navigation stays active while other OpenKeyNav commands run. <kbd>h</kbd>, <kbd>1</kbd>–<kbd>6</kbd>, and <kbd>s</kbd> move focus without ending the mode; Click Mode, Move Mode, and the shortcut menu temporarily take keyboard priority and then return to structural navigation.</li>
+      <li><kbd>Shift</kbd> + <kbd>Up</kbd> moves to the parent without moving focus. <kbd>Shift</kbd> + <kbd>Down</kbd> follows the current target into a child; if none is on that path, H1–H5 advances to the next nonempty H(n+1) at the next hierarchy level and focuses its first stop. H6 is the fallback boundary.</li>
+      <li><kbd>Shift</kbd> + <kbd>Left</kbd> / <kbd>Right</kbd> moves to the previous / next horizontal peer at the same hierarchy depth and focuses its first stop. True structural siblings are always peers; heading-backed contexts may bridge different parents at the same depth regardless of authored heading rank.</li>
+      <li>Inside an arrow-owning control, add <kbd>Alt</kbd> to a structural <kbd>Shift</kbd> + arrow command to override the widget. You can keep holding <kbd>Alt</kbd> while continuing through sibling contexts.</li>
+      <li><kbd>Shift</kbd> + <kbd>Escape</kbd> closes the visual context status without exiting structural navigation. Escape-owning widgets retain the key.</li>
+      <li><kbd>Alt</kbd> + <kbd>R</kbd> exits while preserving focus.</li>
+    </ul>
+  </div>
+
+  <header aria-labelledby="site-title">
+    <h1 id="site-title">OpenKeyNav test shop</h1>
+    <form id="search-form" role="search" aria-labelledby="search-title">
+      <h2 id="search-title">Search</h2>
+      <label for="search-input">Product name</label>
+      <input id="search-input" name="query">
+      <button id="search-submit" type="button">Search</button>
+    </form>
+  </header>
+
+  <main aria-labelledby="catalog-title">
+    <h1 id="catalog-title">Catalog</h1>
+
+    <section id="filters" aria-labelledby="filters-title">
+      <h2 id="filters-title">Filters</h2>
+      <button id="clear-filters" type="button">Clear filters</button>
+      <fieldset id="availability">
+        <legend>Availability</legend>
+        <label><input id="in-stock" type="checkbox"> In stock</label>
+        <label><input id="preorder" type="checkbox"> Preorder</label>
+      </fieldset>
+    </section>
+
+    <section id="results" aria-labelledby="results-title">
+      <h2 id="results-title">Results</h2>
+      <a id="product-a" href="#product-a-detail">Product A</a>
+      <a id="product-b" href="#product-b-detail">Product B</a>
+    </section>
+
+    <section id="recommendations" aria-labelledby="recommendations-title">
+      <h2 id="recommendations-title">Recommendations</h2>
+      <ul id="recommendation-list">
+        <li><button id="recommendation-a" type="button">Save recommendation A</button></li>
+        <li><button id="recommendation-b" type="button">Save recommendation B</button></li>
+        <li>
+          <button id="recommendation-c" type="button">Preview recommendation C</button>
+          <a id="recommendation-c-details" href="#recommendation-c-detail">Recommendation C details</a>
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <section id="native-behavior" aria-labelledby="native-title">
+    <h2 id="native-title">Native activation and sequential focus</h2>
+    <button id="native-button" type="button">Run native action</button>
+    <label><input id="native-checkbox" type="checkbox"> Native checkbox</label>
+    <a id="native-link" href="#native-link-destination">Native link</a>
+    <p id="native-link-destination">Native link destination</p>
+    <div id="scroll-region-a" class="scroll-fixture"><div>Scrollable region A</div></div>
+    <div id="scroll-region-b" class="scroll-fixture"><div>Scrollable region B</div></div>
+  </section>
+
+  <section id="widgets" aria-labelledby="widgets-title">
+    <h2 id="widgets-title">Arrow-owning widgets</h2>
+    <label for="widget-text">Text field</label>
+    <input id="widget-text" value="ab">
+    <label for="widget-textarea">Textarea</label>
+    <textarea id="widget-textarea">alpha</textarea>
+    <label for="widget-select">Select</label>
+    <select id="widget-select">
+      <option>One</option>
+      <option>Two</option>
+    </select>
+    <label for="widget-range">Range</label>
+    <input id="widget-range" type="range" min="0" max="10" value="5">
+
+    <div id="fixture-tabs" role="tablist" aria-label="Fixture tabs">
+      <button id="tab-one" role="tab" aria-selected="true" tabindex="0">Tab one</button>
+      <button id="tab-two" role="tab" aria-selected="false" tabindex="-1">Tab two</button>
+    </div>
+
+    <fieldset id="radio-widget">
+      <legend>Radio group</legend>
+      <label><input id="radio-one" type="radio" name="fixture-radio" checked> Radio one</label>
+      <label><input id="radio-two" type="radio" name="fixture-radio"> Radio two</label>
+    </fieldset>
+
+    <div
+      id="fixture-combobox"
+      role="combobox"
+      tabindex="0"
+      aria-expanded="true"
+      aria-controls="fixture-listbox"
+    >Fixture combobox</div>
+    <div id="fixture-listbox" role="listbox">
+      <div id="fixture-option-one" role="option" aria-selected="true">Option one</div>
+      <div id="fixture-option-two" role="option">Option two</div>
+    </div>
+    <button id="after-widgets" type="button">After widgets</button>
+  </section>
+
+  <section id="modal-scope" aria-labelledby="modal-scope-title">
+    <h2 id="modal-scope-title">Modal scope</h2>
+    <button id="modal-opener" type="button">Open modal</button>
+    <button id="modal-background" type="button">Background action</button>
+  </section>
+
+  <dialog id="fixture-dialog" aria-labelledby="dialog-title">
+    <section>
+      <h2 id="dialog-title">Native modal</h2>
+      <button id="modal-first" type="button">Modal first</button>
+      <button id="modal-last" type="button">Modal last</button>
+    </section>
+  </dialog>
+
+  <section id="shadow-scope" aria-labelledby="shadow-title">
+    <h2 id="shadow-title">Shadow DOM</h2>
+    <open-shadow-fixture id="open-shadow-host"></open-shadow-fixture>
+    <closed-shadow-fixture id="closed-shadow-host"></closed-shadow-fixture>
+  </section>
+
+  <section id="frame-scope" aria-labelledby="frame-title">
+    <h2 id="frame-title">Atomic frames</h2>
+    <button id="before-frame" type="button">Before frame</button>
+    <iframe
+      id="atomic-frame"
+      title="Atomic same-origin frame"
+      tabindex="0"
+      srcdoc="<!doctype html><html lang='en'><body><button id='frame-inner'>Inner frame action</button></body></html>"
+    ></iframe>
+    <iframe
+      id="opaque-frame"
+      title="Atomic opaque-origin frame"
+      tabindex="0"
+      sandbox
+      srcdoc="<!doctype html><html lang='en'><body><button id='opaque-inner'>Opaque inner action</button></body></html>"
+    ></iframe>
+    <button id="after-frame" type="button">After frame</button>
+  </section>
+
+  <section id="dynamic-scope" aria-labelledby="dynamic-title">
+    <h2 id="dynamic-title">Dynamic targets</h2>
+    <button id="dynamic-a" type="button">Dynamic A</button>
+    <span id="dynamic-slot"></span>
+    <button id="dynamic-c" type="button">Dynamic C</button>
+  </section>
+
+  <section id="redirect-scope" aria-labelledby="redirect-title">
+    <h2 id="redirect-title">External focus redirect</h2>
+    <button id="redirect-source" type="button">Redirect source</button>
+    <button id="redirect-requested" type="button">Redirect requested</button>
+    <button id="redirect-final" type="button">Redirect final</button>
+  </section>
+
+  <section id="typed-workspace" aria-labelledby="typed-title">
+    <h2 id="typed-title">Typed workspace</h2>
+    <button id="row-before" type="button">Row before</button>
+    <button id="column-before" type="button">Column before</button>
+    <button id="typed-current" type="button">Typed current</button>
+    <button id="row-after" type="button">Row after</button>
+    <button id="column-after" type="button">Column after</button>
+  </section>
+
+  <section id="offscreen-scope" aria-labelledby="offscreen-title">
+    <h2 id="offscreen-title">Offscreen targets</h2>
+    <button id="offscreen-start" type="button">Offscreen start</button>
+    <button id="offscreen-target" type="button">Offscreen destination</button>
+  </section>
+
+  <div id="same-level-heading-route">
+    <h2>First heading family</h2>
+    <h3>Current level-three context</h3>
+    <button id="same-level-current-first" type="button">Current context first</button>
+    <button id="same-level-current-last" type="button">Current context last</button>
+
+    <h2>Second heading family</h2>
+    <h3>Next level-three context</h3>
+    <button id="same-level-next-first" type="button">Next context first</button>
+    <button id="same-level-next-last" type="button">Next context last</button>
+  </div>
+
+  <section id="invalid-semantics" aria-hidden="true">
+    <h2>Hidden accessibility semantics</h2>
+    <button id="aria-hidden-target" type="button">Focusable despite aria-hidden</button>
+  </section>
+
+  <div id="structural-fixture-end" aria-hidden="true"></div>
+
+  <script src="../dist/openkeynav.umd.js?v=20260725-peer-depth-v9"></script>
+  <script>
+    (() => {
+      const fixture = {
+        focusEvents: [],
+        blurEvents: [],
+        keyEvents: [],
+        counters: {
+          buttonActivations: 0,
+          linkActivations: 0,
+          checkboxChanges: 0,
+          comboboxEscapes: 0,
+          scrollIntoViewCalls: 0
+        }
+      };
+
+      const eventTargetId = event => {
+        const target = event.composedPath()[0];
+        return target && target.id ? target.id : target && target.tagName;
+      };
+
+      document.addEventListener('focus', event => {
+        fixture.focusEvents.push(eventTargetId(event));
+      }, true);
+      document.addEventListener('blur', event => {
+        fixture.blurEvents.push(eventTargetId(event));
+      }, true);
+      document.addEventListener('keydown', event => {
+        queueMicrotask(() => {
+          fixture.keyEvents.push({
+            key: event.key,
+            altKey: event.altKey,
+            shiftKey: event.shiftKey,
+            defaultPrevented: event.defaultPrevented,
+            target: eventTargetId(event)
+          });
+        });
+      });
+
+      const originalScrollIntoView = Element.prototype.scrollIntoView;
+      Element.prototype.scrollIntoView = function (...args) {
+        fixture.counters.scrollIntoViewCalls += 1;
+        if (originalScrollIntoView) {
+          return originalScrollIntoView.apply(this, args);
+        }
+      };
+
+      class OpenShadowFixture extends HTMLElement {
+        constructor() {
+          super();
+          const root = this.attachShadow({ mode: 'open' });
+          root.innerHTML = `
+            <style>:focus-visible { outline: 4px solid #6a3df0; }</style>
+            <button id="shadow-first" type="button">Shadow first</button>
+            <button id="shadow-last" type="button">Shadow last</button>
+          `;
+        }
+      }
+
+      class ClosedShadowFixture extends HTMLElement {
+        constructor() {
+          super();
+          const root = this.attachShadow({ mode: 'closed' });
+          root.innerHTML = '<button id="closed-shadow-button" type="button">Closed shadow button</button>';
+        }
+      }
+
+      customElements.define('open-shadow-fixture', OpenShadowFixture);
+      customElements.define('closed-shadow-fixture', ClosedShadowFixture);
+
+      const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+      tabs.forEach((tab, index) => {
+        tab.addEventListener('keydown', event => {
+          if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+          event.preventDefault();
+          const offset = event.key === 'ArrowRight' ? 1 : -1;
+          const next = tabs[(index + offset + tabs.length) % tabs.length];
+          tabs.forEach(candidate => {
+            const selected = candidate === next;
+            candidate.tabIndex = selected ? 0 : -1;
+            candidate.setAttribute('aria-selected', String(selected));
+          });
+          next.focus();
+        });
+      });
+
+      document.getElementById('fixture-combobox').addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+          fixture.counters.comboboxEscapes += 1;
+          event.currentTarget.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      document.getElementById('native-button').addEventListener('click', () => {
+        fixture.counters.buttonActivations += 1;
+      });
+      document.getElementById('native-link').addEventListener('click', () => {
+        fixture.counters.linkActivations += 1;
+      });
+      document.getElementById('native-checkbox').addEventListener('change', () => {
+        fixture.counters.checkboxChanges += 1;
+      });
+
+      document.getElementById('redirect-requested').addEventListener('focus', () => {
+        document.getElementById('redirect-final').focus();
+      });
+
+      fixture.deepActiveId = () => {
+        let active = document.activeElement;
+        while (active && active.shadowRoot && active.shadowRoot.activeElement) {
+          active = active.shadowRoot.activeElement;
+        }
+        return active && active.id;
+      };
+      fixture.focus = id => {
+        const target = document.getElementById(id);
+        target.focus();
+        return fixture.deepActiveId();
+      };
+      fixture.focusOpenShadow = id => {
+        document.getElementById('open-shadow-host').shadowRoot.getElementById(id).focus();
+        return fixture.deepActiveId();
+      };
+      fixture.openModal = () => {
+        const dialog = document.getElementById('fixture-dialog');
+        if (!dialog.open) dialog.showModal();
+        document.getElementById('modal-first').focus();
+      };
+      fixture.closeModal = () => {
+        const dialog = document.getElementById('fixture-dialog');
+        if (dialog.open) dialog.close();
+        document.getElementById('modal-opener').focus();
+      };
+      fixture.insertDynamicTarget = () => {
+        if (document.getElementById('dynamic-b')) return;
+        const target = document.createElement('button');
+        target.id = 'dynamic-b';
+        target.type = 'button';
+        target.textContent = 'Dynamic B';
+        document.getElementById('dynamic-slot').appendChild(target);
+      };
+      fixture.removeFocusedTarget = () => {
+        const target = document.activeElement;
+        if (target && target !== document.body) target.remove();
+      };
+      fixture.setDynamicADisabled = disabled => {
+        document.getElementById('dynamic-a').disabled = disabled;
+      };
+      fixture.resetLogs = () => {
+        fixture.focusEvents.length = 0;
+        fixture.blurEvents.length = 0;
+        fixture.keyEvents.length = 0;
+        fixture.counters.scrollIntoViewCalls = 0;
+      };
+
+      const rowTargets = () => [
+        document.getElementById('row-before'),
+        document.getElementById('typed-current'),
+        document.getElementById('row-after')
+      ];
+      const columnTargets = () => [
+        document.getElementById('column-before'),
+        document.getElementById('typed-current'),
+        document.getElementById('column-after')
+      ];
+
+      window.fixture = fixture;
+      window.okn = new OpenKeyNav();
+      window.okn.init({
+        debug: {
+          keyboardAccessible: false
+        },
+        modesConfig: {
+          structuralNavigation: {
+            displayCheck: 'full',
+            overrideModifier: 'altKey',
+            contextIndicator: {
+              enabled: true,
+              color: '#0088cc',
+              width: 3,
+              offset: 4
+            },
+            commands: {
+              previousTarget: null,
+              nextTarget: null,
+              previousSiblingContext: { key: 'ArrowLeft', shiftKey: true },
+              nextSiblingContext: { key: 'ArrowRight', shiftKey: true },
+              broadenContext: { key: 'ArrowUp', shiftKey: true },
+              narrowContext: { key: 'ArrowDown', shiftKey: true }
+            },
+            typedContexts: [
+              {
+                id: 'action-row',
+                name: 'Action row',
+                type: 'row',
+                priority: 1,
+                provenance: 'structural fixture configuration',
+                targets: rowTargets
+              },
+              {
+                id: 'review-column',
+                name: 'Review column',
+                type: 'column',
+                priority: 2,
+                provenance: 'structural fixture configuration',
+                targets: columnTargets
+              }
+            ]
+          }
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

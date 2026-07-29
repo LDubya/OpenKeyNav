@@ -6,6 +6,12 @@ import { keyButton } from './keyButton.js';
 import { injectStylesheet, deleteStylesheets } from './styles.js';
 import { handleKeyPress } from "./keypress.js";
 import { handleEscape } from "./escape";
+import { runAccessibilityAudit } from './audit.js';
+import { hideAuditPanel } from './auditPanel.js';
+import { StructuralNavigationController } from './structuralNavigation.js';
+import { StatusService } from './status.js';
+import { getDeepActiveElement } from './domUtilities.js';
+import { preventAcceptedCommand } from './keyboardEvents.js';
 
 /*
 OpenKeyNav.js
@@ -123,7 +129,9 @@ class OpenKeyNav {
           heading_4: '4', // focus on the next heading of level 4 // as seen in JAWS, NVDA // do not modify
           heading_5: '5', // focus on the next heading of level 5 // as seen in JAWS, NVDA // do not modify
           heading_6: '6', // focus on the next heading of level 6 // as seen in JAWS, NVDA // do not modify
+          structuralNavigation: 'r', // enter/exit structural focus navigation ("route" mode)
           menu: 'o',
+          audit: 'a', // enter audit mode to check keyboard accessibility
           inputEscape: 'ctrlKey', // for escaping input to trigger a command
           modifierKey: 'shiftKey' // one of: [altKey, shiftKey, metaKey] // useful for on/off switch. Avoid ctrlKey, which is used to escape input.
         },
@@ -155,58 +163,195 @@ class OpenKeyNav {
           },
           menu : {
             modifier: false,
+          },
+          structuralNavigation: {
+            enabled: true,
+            escapeExits: false,
+            exitCommand: null,
+            overrideModifier: 'altKey',
+            activeRoot: null,
+            includeProgrammatic: false,
+            targetFilter: null,
+            structuralContexts: [],
+            typedContexts: [],
+            ownsKey: null,
+            displayCheck: 'full',
+            status: {
+              enabled: true,
+              visible: true,
+              announcements: true,
+              dismissCommand: { key: 'Escape', shiftKey: true }
+            },
+            contextIndicator: {
+              enabled: true,
+              color: null,
+              width: 3,
+              offset: 4
+            },
+            commands: {
+              previousTarget: null,
+              nextTarget: null,
+              previousSiblingContext: { key: 'ArrowLeft', shiftKey: true },
+              nextSiblingContext: { key: 'ArrowRight', shiftKey: true },
+              broadenContext: { key: 'ArrowUp', shiftKey: true },
+              narrowContext: { key: 'ArrowDown', shiftKey: true },
+              previousPeerContext: null,
+              nextPeerContext: null
+            }
           }
         },
         log: [],
         typedLabel: signal(''),
         headings: {
-          currentHeadingIndex: 0, // Keep track of the current heading
+          currentHeadingIndex: -1, // Start before the first heading
           list: []
         },
         scrollables: {
-          currentScrollableIndex: 0, // Keep track of the current scrollable
+          currentScrollableIndex: -1, // Start before the first scrollable
           list: []
         },
         modes: {
           clicking: signal(false),
           moving: signal(false),
           menu: signal(false),
+          structuralNavigation: signal(false),
         },
         debug: {
           screenReaderVisible: false,
-          keyboardAccessible: true
+          keyboardAccessible: true,
+          inaccessibleCount: signal(0)
         },
         enabledCookie: 'openKeyNav_enabled'
       };
       this.meta = {
         enabled : signal(false),
       }
+      this.statusService = new StatusService({
+        document: typeof document === 'undefined' ? null : document,
+      });
+      this._notificationSequence = 0;
+      this.structuralNavigation = new StructuralNavigationController(this);
       this.enable = () => {
         this.meta.enabled.value = true;
         this.injectStyles();
         this.getSetCookie(this.config.enabledCookie, true);
+        
+        // Run accessibility audit after enabling (for debug mode)
+        if (this.config.debug.keyboardAccessible) {
+          // Use setTimeout to ensure DOM is ready and styles are injected
+          setTimeout(() => {
+            runAccessibilityAudit(this);
+          }, 0);
+        }
+        
         return this;
       };
       this.disable = () => {
+        this.exitStructuralNavigation({ announce: false });
         this.meta.enabled.value = false;
         this.getSetCookie(this.config.enabledCookie, false)
+        // Remove audit panel if present when disabling
+        try {
+          hideAuditPanel();
+        } catch (e) {
+          // ignore
+        }
+
+        // Clear any audit flags, tooltips, and listeners applied during audit
+        try {
+          this.clearAuditFlags();
+        } catch (e) {
+          // ignore
+        }
+
+        this.removeOverlays(true);
+        this.clearMoveAttributes();
+        this.statusService.clearAll();
+
         this.removeStyles(); // maybe this should go in the destroy();, main concern is the toolbar.
         return this;
       }
     }
 
-    focus(target){
-      target.focus();
-      target.setAttribute('data-openkeynav-focused', true);
-      target.addEventListener('blur', function handler() {
-        target.removeAttribute('data-openkeynav-focused');
-        target.removeEventListener('blur', handler); // Clean up the event listener
-      });
+    focus(target, options = {}){
+      if (!target || typeof target.focus !== 'function') return null;
+
+      const decorate = options.decorate !== false;
+      let receivedFocus = false;
+      const handleFocus = () => {
+        receivedFocus = true;
+      };
+      target.addEventListener('focus', handleFocus, { once: true });
+      try {
+        target.focus(options.focusOptions);
+      } finally {
+        target.removeEventListener('focus', handleFocus);
+      }
+
+      const ownerDocument = target.ownerDocument ||
+        (typeof document === 'undefined' ? null : document);
+      const settledTarget = getDeepActiveElement(ownerDocument);
+      if (
+        !decorate ||
+        !settledTarget ||
+        (!receivedFocus && settledTarget !== target)
+      ) {
+        return settledTarget;
+      }
+
+      settledTarget.setAttribute('data-openkeynav-focused', 'true');
+      settledTarget.addEventListener('blur', () => {
+        settledTarget.removeAttribute('data-openkeynav-focused');
+      }, { once: true });
+      return settledTarget;
+    }
+
+    setStatus(channel, message, options = {}) {
+      return this.statusService.set(channel, message, options);
+    }
+
+    getStatusElement(channel) {
+      return this.statusService.get(channel);
+    }
+
+    clearStatus(channel) {
+      return this.statusService.clear(channel);
+    }
+
+    clearAllStatuses() {
+      this.statusService.clearAll();
+      return this;
+    }
+
+    enterStructuralNavigation() {
+      if (!this.meta.enabled.value) {
+        return false;
+      }
+      return this.structuralNavigation.activate();
+    }
+
+    exitStructuralNavigation(options = {}) {
+      return this.structuralNavigation.deactivate(options);
+    }
+
+    structuralNavigate(command) {
+      if (!this.meta.enabled.value || !this.config.modes.structuralNavigation.value) {
+        return false;
+      }
+      return this.structuralNavigation.execute(command);
+    }
+
+    getStructuralNavigationState() {
+      return this.structuralNavigation.getState();
+    }
+
+    invalidateStructuralNavigation() {
+      this.structuralNavigation.invalidate();
+      return this;
     }
 
     preventpropagation(e){
-      e.preventDefault();
-      e.stopPropagation();
+      preventAcceptedCommand(e);
       return false;
     }
   
@@ -241,13 +386,31 @@ class OpenKeyNav {
   
     deepMerge(target, source) {
       Object.keys(source).forEach(key => {
-        if (source[key] && typeof source[key] === 'object') {
-          if (!target[key] || typeof target[key] !== 'object') {
+        const sourceValue = source[key];
+        const sourcePrototype = sourceValue && typeof sourceValue === 'object'
+          ? Object.getPrototypeOf(sourceValue)
+          : null;
+        const isPlainObject =
+          sourceValue !== null &&
+          typeof sourceValue === 'object' &&
+          (sourcePrototype === Object.prototype || sourcePrototype === null);
+
+        if (sourceValue && isPlainObject && !Array.isArray(sourceValue)) {
+          const targetValue = target[key];
+          const targetPrototype = targetValue && typeof targetValue === 'object'
+            ? Object.getPrototypeOf(targetValue)
+            : null;
+          const targetIsPlainObject =
+            targetValue !== null &&
+            typeof targetValue === 'object' &&
+            (targetPrototype === Object.prototype || targetPrototype === null);
+
+          if (!targetIsPlainObject || Array.isArray(targetValue)) {
             target[key] = {};
           }
-          this.deepMerge(target[key], source[key]);
+          this.deepMerge(target[key], sourceValue);
         } else {
-          target[key] = source[key];
+          target[key] = sourceValue;
         }
       });
       return target;
@@ -271,8 +434,12 @@ class OpenKeyNav {
     }
   
     isTextInputActive() {
-      const tagName = document.activeElement.tagName.toLowerCase();
-      const editable = document.activeElement.getAttribute('contenteditable');
+      const activeElement = getDeepActiveElement(document);
+      if (!activeElement || !activeElement.tagName) {
+        return false;
+      }
+      const tagName = activeElement.tagName.toLowerCase();
+      const editable = activeElement.getAttribute('contenteditable');
       const inputTypes = ['input', 'textarea'];
       const isEditable = editable === 'true' || editable === 'plaintext-only' || editable === '';
   
@@ -433,7 +600,7 @@ class OpenKeyNav {
       overlay.style.top = `${adjustedTop + window.scrollY}px`;
     }
   
-    createOverlay(element, label) {
+    createOverlay(element, label, cssClass = null) {
       function getScrollParent(element, includeHidden = false) {
         let style = getComputedStyle(element);
         let excludeStaticParent = style.position === 'absolute';
@@ -454,6 +621,9 @@ class OpenKeyNav {
       const overlay = document.createElement('div');
       overlay.textContent = label;
       overlay.classList.add('openKeyNav-label');
+      if (cssClass) {
+        overlay.classList.add(cssClass);
+      }
       overlay.setAttribute('data-openkeynav-label', label);
   
       // Add event listener to open the element in developer tools
@@ -619,6 +789,10 @@ class OpenKeyNav {
   
       const resetModes = () => {
         for (let key in this.config.modes) {
+          // Structural navigation is a persistent base mode. Overlay cleanup
+          // ends temporary foreground modes but leaves it active until an
+          // explicit structural exit, global disable, or teardown.
+          if (key === 'structuralNavigation') continue;
           this.config.modes[key].value = false;
         }
   
@@ -794,26 +968,58 @@ class OpenKeyNav {
   
       return true;
     }
-  
+
+    // Remove audit flags, tooltips, and event listeners added during audit
+    clearAuditFlags() {
+      try {
+        // Remove classes and attributes
+        document.querySelectorAll('.openKeyNav-inaccessible').forEach(el => {
+          el.classList.remove('openKeyNav-inaccessible');
+          el.removeAttribute('data-openkeynav-inaccessible-reason');
+        });
+
+        // Remove tooltip elements
+        document.querySelectorAll('.openKeyNav-mouseover-tooltip').forEach(t => {
+          t.remove();
+        });
+
+        // Remove event listeners stored in the map
+        try {
+          if (this.config && this.config.modesConfig && this.config.modesConfig.click && this.config.modesConfig.click.eventListenersMap) {
+            this.config.modesConfig.click.eventListenersMap.forEach((listeners, el) => {
+              try {
+                if (listeners && listeners.showTooltip) el.removeEventListener('mouseover', listeners.showTooltip);
+                if (listeners && listeners.hideTooltip) el.removeEventListener('mouseleave', listeners.hideTooltip);
+              } catch (e) {
+                // ignore
+              }
+            });
+            this.config.modesConfig.click.eventListenersMap.clear();
+          }
+        } catch (e) {
+          // ignore
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+
+
     addKeydownEventListener() {
-  
-      
-  
-      
-  
-      // Detect this.config.keys.click to enter label mode
-      // Using an arrow function to maintain 'this' context of class
-      document.addEventListener(
-        'keydown',
-        e => {
-          handleKeyPress(this, e);
-        },
-        true
-      );
-  
-      // Also for the iframes
-      window.addEventListener('message', e => {
-        if (e.data.type === 'keydown') {
+      if (this._keydownHandler) {
+        return;
+      }
+
+      this._keydownHandler = e => {
+        handleKeyPress(this, e);
+      };
+      document.addEventListener('keydown', this._keydownHandler, true);
+
+      // Existing click-label iframe support. Structural navigation deliberately
+      // treats each iframe as one atomic target and never uses this bridge.
+      this._messageHandler = e => {
+        if (e.data && e.data.type === 'keydown') {
           console.log('Key pressed in iframe:', e.data.key);
   
           // Create a new event
@@ -827,6 +1033,9 @@ class OpenKeyNav {
             bubbles: true, // This ensures the event bubbles up through the DOM
             cancelable: true // This lets it be cancelable
           });
+          Object.defineProperty(newEvent, 'openKeyNavIframeBridge', {
+            value: true
+          });
   
           if (newEvent.key === 'Escape') {
             // Execute escape logic
@@ -836,87 +1045,62 @@ class OpenKeyNav {
           // Dispatch it on the document or specific element that your existing handler is attached to
           document.dispatchEvent(newEvent);
         }
-      });
+      };
+      window.addEventListener('message', this._messageHandler);
     }
 
-    // Function to emit a temporary notification
-    emitNotification (message) {
-
-      // Function to create or select the notification container
-      const getSetNotificationContainer = () => {
-        // Create or select the notification container
-        let notificationContainer = document.getElementById('okn-notification-container');
-        if (!notificationContainer) {
-            notificationContainer = document.createElement('div');
-            notificationContainer.id = 'okn-notification-container';
-            notificationContainer.className = 'openKeyNav-ignore-overlap';
-            notificationContainer.style.position = 'fixed';
-            notificationContainer.style.bottom = '10px';
-            notificationContainer.style.left = '50%';
-            notificationContainer.style.transform = 'translateX(-50%)';
-            notificationContainer.style.display = 'flex';
-            notificationContainer.style.flexDirection = 'column';
-            notificationContainer.style.alignItems = 'center';
-            notificationContainer.style.gap = '10px';
-            notificationContainer.style.zIndex = '1000';
-            document.body.appendChild(notificationContainer);
-        }
-        return notificationContainer;
-      };
-
-      // Check if notifications are enabled
-      if (!this.config.notifications.enabled) {
-          return;
+    removeKeydownEventListener() {
+      if (this._keydownHandler) {
+        document.removeEventListener('keydown', this._keydownHandler, true);
+        this._keydownHandler = null;
       }
-
-      // Get the notification container
-      const notificationContainer = getSetNotificationContainer();
-
-      // Remove any existing notification before creating a new one
-      while (notificationContainer.firstChild) {
-          notificationContainer.firstChild.remove();
+      if (this._messageHandler) {
+        window.removeEventListener('message', this._messageHandler);
+        this._messageHandler = null;
       }
+    }
 
-      // Create the notification element
-      const notification = document.createElement('div');
-      notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-      notification.style.color = '#fff';
-      notification.style.padding = '10px 20px';
-      notification.style.borderRadius = '5px';
-      notification.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-      notification.style.maxWidth = '400px';
-      notification.style.textAlign = 'center';
-      notification.style.position = 'relative';
-      notification.style.display = 'inline-block';
-
-      // Add ARIA role for accessibility
-      notification.setAttribute('role', 'alert');
-      notification.setAttribute('aria-live', 'assertive');
-      notification.setAttribute('aria-atomic', 'true');
-
-      // Optionally display the tool name in the notification
-      if (this.config.notifications.displayToolName) {
-          const logo = document.createElement('div');
-          logo.className = 'okn-logo-text tiny';
-          logo.setAttribute('role', 'img'); // Assigning an image role
-          logo.setAttribute('aria-label', 'OpenKeyNav');
-          logo.innerHTML = 'Open<span class="key">Key</span>Nav';
-          notification.appendChild(logo);
+    // Emit an assertive notification through the shared status renderer.
+    // Messages are text by default; trusted OpenKeyNav markup must opt in.
+    emitNotification (message, duration = null, options = {}) {
+      if (
+        duration &&
+        typeof duration === 'object'
+      ) {
+        options = duration;
+        duration = null;
       }
+      if (!this.config.notifications.enabled) return null;
 
-      // Create the message element
-      const messageDiv = document.createElement('div');
-      messageDiv.innerHTML = message;
-      // Append the message to the notification
-      notification.appendChild(messageDiv);
+      const requestedDuration = duration !== null
+        ? duration
+        : this.config.notifications.duration;
+      const parsedDuration = Number(requestedDuration);
+      const notificationDuration = Number.isFinite(parsedDuration)
+        ? parsedDuration
+        : 3000;
+      const persistent = notificationDuration === 0;
+      const channel = persistent
+        ? `notification-${++this._notificationSequence}`
+        : 'notification';
+      if (persistent) this.clearStatus('notification');
 
-      // Append the notification to the notification container
-      notificationContainer.appendChild(notification);
-
-      // Automatically remove the notification after the specified duration
-      setTimeout(() => {
-          notification.remove();
-      }, this.config.notifications.duration);
+      return this.setStatus(channel, message, {
+        className: 'openKeyNav-notification',
+        containerClass:
+          'openKeyNav-notification-container openKeyNav-ignore-overlap',
+        containerKey: 'notifications',
+        containerId: 'okn-notification-container',
+        ui: 'notification',
+        role: 'alert',
+        politeness: 'assertive',
+        visible: true,
+        duration: notificationDuration,
+        dismissible: persistent,
+        toolName: this.config.notifications.displayToolName,
+        trustedHtml: options.trustedHtml === true,
+        host: options.host || 'modal',
+      });
     }
 
     initStatusBar() {
@@ -934,8 +1118,12 @@ class OpenKeyNav {
           message = `In Click Mode. Press ${ keyButton(["Esc"])} to exit.`;
         } else if (modes.moving.value) {
           message = `In Drag Mode. Press ${ keyButton(["Esc"])} to exit.`;
-        } 
-        else {
+        } else if (modes.structuralNavigation.value) {
+          // Structural navigation owns a persistent polite status channel.
+          // Avoid announcing "No mode active" when a temporary mode closes.
+          lastMessage = "No mode active.";
+          return;
+        } else {
           message = "No mode active.";
         }
     
@@ -946,7 +1134,7 @@ class OpenKeyNav {
     
         // Emit the notification with the current message
         // console.log(message);
-        this.emitNotification(message);
+        this.emitNotification(message, null, { trustedHtml: true });
         lastMessage = message;
       });
     
@@ -967,6 +1155,8 @@ class OpenKeyNav {
           statusBar.textContent = "In click mode. Press Esc to exit.";
         } else if (modes.moving.value) {
           statusBar.textContent = "In drag mode. Press Esc to exit.";
+        } else if (modes.structuralNavigation.value) {
+          statusBar.textContent = "Structural navigation active. Press Alt+R to exit.";
         } else {
           statusBar.textContent = "No mode active.";
         }
@@ -1108,11 +1298,31 @@ class OpenKeyNav {
     init(options = {}) {
       this.deepMerge(this.config, options);
       this.addKeydownEventListener();
-      this.initStatusBar();
-      this.initToolBar();
+      if (!this._statusBarInitialized) {
+        this.initStatusBar();
+        this._statusBarInitialized = true;
+      }
+      if (!this._toolBarInitialized) {
+        this.initToolBar();
+        this._toolBarInitialized = true;
+      }
       this.applicationSupport();
       this.checkEnabled();
+      
       console.log('Library initialized with config:', this.config);
+      return this;
+    }
+
+    destroy() {
+      this.exitStructuralNavigation({ announce: false });
+      this.statusService.clearAll();
+      this.removeKeydownEventListener();
+      this.removeOverlays(true);
+      this.clearMoveAttributes();
+      this.clearAuditFlags();
+      hideAuditPanel();
+      this.removeStyles();
+      this.meta.enabled.value = false;
       return this;
     }
 }

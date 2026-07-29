@@ -11,6 +11,12 @@ var _keyButton = require("./keyButton.js");
 var _styles = require("./styles.js");
 var _keypress = require("./keypress.js");
 var _escape = require("./escape");
+var _audit = require("./audit.js");
+var _auditPanel = require("./auditPanel.js");
+var _structuralNavigation = require("./structuralNavigation.js");
+var _status = require("./status.js");
+var _domUtilities = require("./domUtilities.js");
+var _keyboardEvents = require("./keyboardEvents.js");
 function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
 function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
 function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
@@ -161,7 +167,11 @@ var OpenKeyNav = /*#__PURE__*/function () {
         // focus on the next heading of level 5 // as seen in JAWS, NVDA // do not modify
         heading_6: '6',
         // focus on the next heading of level 6 // as seen in JAWS, NVDA // do not modify
+        structuralNavigation: 'r',
+        // enter/exit structural focus navigation ("route" mode)
         menu: 'o',
+        audit: 'a',
+        // enter audit mode to check keyboard accessibility
         inputEscape: 'ctrlKey',
         // for escaping input to trigger a command
         modifierKey: 'shiftKey' // one of: [altKey, shiftKey, metaKey] // useful for on/off switch. Avoid ctrlKey, which is used to escape input.
@@ -194,43 +204,127 @@ var OpenKeyNav = /*#__PURE__*/function () {
         },
         menu: {
           modifier: false
+        },
+        structuralNavigation: {
+          enabled: true,
+          escapeExits: false,
+          exitCommand: null,
+          overrideModifier: 'altKey',
+          activeRoot: null,
+          includeProgrammatic: false,
+          targetFilter: null,
+          structuralContexts: [],
+          typedContexts: [],
+          ownsKey: null,
+          displayCheck: 'full',
+          status: {
+            enabled: true,
+            visible: true,
+            announcements: true,
+            dismissCommand: {
+              key: 'Escape',
+              shiftKey: true
+            }
+          },
+          contextIndicator: {
+            enabled: true,
+            color: null,
+            width: 3,
+            offset: 4
+          },
+          commands: {
+            previousTarget: null,
+            nextTarget: null,
+            previousSiblingContext: {
+              key: 'ArrowLeft',
+              shiftKey: true
+            },
+            nextSiblingContext: {
+              key: 'ArrowRight',
+              shiftKey: true
+            },
+            broadenContext: {
+              key: 'ArrowUp',
+              shiftKey: true
+            },
+            narrowContext: {
+              key: 'ArrowDown',
+              shiftKey: true
+            },
+            previousPeerContext: null,
+            nextPeerContext: null
+          }
         }
       },
       log: [],
       typedLabel: (0, _signals.signal)(''),
       headings: {
-        currentHeadingIndex: 0,
-        // Keep track of the current heading
+        currentHeadingIndex: -1,
+        // Start before the first heading
         list: []
       },
       scrollables: {
-        currentScrollableIndex: 0,
-        // Keep track of the current scrollable
+        currentScrollableIndex: -1,
+        // Start before the first scrollable
         list: []
       },
       modes: {
         clicking: (0, _signals.signal)(false),
         moving: (0, _signals.signal)(false),
-        menu: (0, _signals.signal)(false)
+        menu: (0, _signals.signal)(false),
+        structuralNavigation: (0, _signals.signal)(false)
       },
       debug: {
         screenReaderVisible: false,
-        keyboardAccessible: true
+        keyboardAccessible: true,
+        inaccessibleCount: (0, _signals.signal)(0)
       },
       enabledCookie: 'openKeyNav_enabled'
     };
     this.meta = {
       enabled: (0, _signals.signal)(false)
     };
+    this.statusService = new _status.StatusService({
+      document: typeof document === 'undefined' ? null : document
+    });
+    this._notificationSequence = 0;
+    this.structuralNavigation = new _structuralNavigation.StructuralNavigationController(this);
     this.enable = function () {
       _this.meta.enabled.value = true;
       _this.injectStyles();
       _this.getSetCookie(_this.config.enabledCookie, true);
+
+      // Run accessibility audit after enabling (for debug mode)
+      if (_this.config.debug.keyboardAccessible) {
+        // Use setTimeout to ensure DOM is ready and styles are injected
+        setTimeout(function () {
+          (0, _audit.runAccessibilityAudit)(_this);
+        }, 0);
+      }
       return _this;
     };
     this.disable = function () {
+      _this.exitStructuralNavigation({
+        announce: false
+      });
       _this.meta.enabled.value = false;
       _this.getSetCookie(_this.config.enabledCookie, false);
+      // Remove audit panel if present when disabling
+      try {
+        (0, _auditPanel.hideAuditPanel)();
+      } catch (e) {
+        // ignore
+      }
+
+      // Clear any audit flags, tooltips, and listeners applied during audit
+      try {
+        _this.clearAuditFlags();
+      } catch (e) {
+        // ignore
+      }
+      _this.removeOverlays(true);
+      _this.clearMoveAttributes();
+      _this.statusService.clearAll();
       _this.removeStyles(); // maybe this should go in the destroy();, main concern is the toolbar.
       return _this;
     };
@@ -238,18 +332,93 @@ var OpenKeyNav = /*#__PURE__*/function () {
   return _createClass(OpenKeyNav, [{
     key: "focus",
     value: function focus(target) {
-      target.focus();
-      target.setAttribute('data-openkeynav-focused', true);
-      target.addEventListener('blur', function handler() {
-        target.removeAttribute('data-openkeynav-focused');
-        target.removeEventListener('blur', handler); // Clean up the event listener
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      if (!target || typeof target.focus !== 'function') return null;
+      var decorate = options.decorate !== false;
+      var receivedFocus = false;
+      var handleFocus = function handleFocus() {
+        receivedFocus = true;
+      };
+      target.addEventListener('focus', handleFocus, {
+        once: true
       });
+      try {
+        target.focus(options.focusOptions);
+      } finally {
+        target.removeEventListener('focus', handleFocus);
+      }
+      var ownerDocument = target.ownerDocument || (typeof document === 'undefined' ? null : document);
+      var settledTarget = (0, _domUtilities.getDeepActiveElement)(ownerDocument);
+      if (!decorate || !settledTarget || !receivedFocus && settledTarget !== target) {
+        return settledTarget;
+      }
+      settledTarget.setAttribute('data-openkeynav-focused', 'true');
+      settledTarget.addEventListener('blur', function () {
+        settledTarget.removeAttribute('data-openkeynav-focused');
+      }, {
+        once: true
+      });
+      return settledTarget;
+    }
+  }, {
+    key: "setStatus",
+    value: function setStatus(channel, message) {
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      return this.statusService.set(channel, message, options);
+    }
+  }, {
+    key: "getStatusElement",
+    value: function getStatusElement(channel) {
+      return this.statusService.get(channel);
+    }
+  }, {
+    key: "clearStatus",
+    value: function clearStatus(channel) {
+      return this.statusService.clear(channel);
+    }
+  }, {
+    key: "clearAllStatuses",
+    value: function clearAllStatuses() {
+      this.statusService.clearAll();
+      return this;
+    }
+  }, {
+    key: "enterStructuralNavigation",
+    value: function enterStructuralNavigation() {
+      if (!this.meta.enabled.value) {
+        return false;
+      }
+      return this.structuralNavigation.activate();
+    }
+  }, {
+    key: "exitStructuralNavigation",
+    value: function exitStructuralNavigation() {
+      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      return this.structuralNavigation.deactivate(options);
+    }
+  }, {
+    key: "structuralNavigate",
+    value: function structuralNavigate(command) {
+      if (!this.meta.enabled.value || !this.config.modes.structuralNavigation.value) {
+        return false;
+      }
+      return this.structuralNavigation.execute(command);
+    }
+  }, {
+    key: "getStructuralNavigationState",
+    value: function getStructuralNavigationState() {
+      return this.structuralNavigation.getState();
+    }
+  }, {
+    key: "invalidateStructuralNavigation",
+    value: function invalidateStructuralNavigation() {
+      this.structuralNavigation.invalidate();
+      return this;
     }
   }, {
     key: "preventpropagation",
     value: function preventpropagation(e) {
-      e.preventDefault();
-      e.stopPropagation();
+      (0, _keyboardEvents.preventAcceptedCommand)(e);
       return false;
     }
 
@@ -273,7 +442,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
         }
         _inherits(TouchEvent, _Event);
         return _createClass(TouchEvent);
-      }( /*#__PURE__*/_wrapNativeSuper(Event));
+      }(/*#__PURE__*/_wrapNativeSuper(Event));
       window.Touch = /*#__PURE__*/_createClass(function _class(_ref) {
         var identifier = _ref.identifier,
           target = _ref.target,
@@ -295,13 +464,19 @@ var OpenKeyNav = /*#__PURE__*/function () {
     value: function deepMerge(target, source) {
       var _this3 = this;
       Object.keys(source).forEach(function (key) {
-        if (source[key] && _typeof(source[key]) === 'object') {
-          if (!target[key] || _typeof(target[key]) !== 'object') {
+        var sourceValue = source[key];
+        var sourcePrototype = sourceValue && _typeof(sourceValue) === 'object' ? Object.getPrototypeOf(sourceValue) : null;
+        var isPlainObject = sourceValue !== null && _typeof(sourceValue) === 'object' && (sourcePrototype === Object.prototype || sourcePrototype === null);
+        if (sourceValue && isPlainObject && !Array.isArray(sourceValue)) {
+          var targetValue = target[key];
+          var targetPrototype = targetValue && _typeof(targetValue) === 'object' ? Object.getPrototypeOf(targetValue) : null;
+          var targetIsPlainObject = targetValue !== null && _typeof(targetValue) === 'object' && (targetPrototype === Object.prototype || targetPrototype === null);
+          if (!targetIsPlainObject || Array.isArray(targetValue)) {
             target[key] = {};
           }
-          _this3.deepMerge(target[key], source[key]);
+          _this3.deepMerge(target[key], sourceValue);
         } else {
-          target[key] = source[key];
+          target[key] = sourceValue;
         }
       });
       return target;
@@ -330,8 +505,12 @@ var OpenKeyNav = /*#__PURE__*/function () {
   }, {
     key: "isTextInputActive",
     value: function isTextInputActive() {
-      var tagName = document.activeElement.tagName.toLowerCase();
-      var editable = document.activeElement.getAttribute('contenteditable');
+      var activeElement = (0, _domUtilities.getDeepActiveElement)(document);
+      if (!activeElement || !activeElement.tagName) {
+        return false;
+      }
+      var tagName = activeElement.tagName.toLowerCase();
+      var editable = activeElement.getAttribute('contenteditable');
       var inputTypes = ['input', 'textarea'];
       var isEditable = editable === 'true' || editable === 'plaintext-only' || editable === '';
       return inputTypes.includes(tagName) || isEditable;
@@ -485,6 +664,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
     key: "createOverlay",
     value: function createOverlay(element, label) {
       var _this4 = this;
+      var cssClass = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
       function getScrollParent(element) {
         var includeHidden = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var style = getComputedStyle(element);
@@ -503,6 +683,9 @@ var OpenKeyNav = /*#__PURE__*/function () {
       var overlay = document.createElement('div');
       overlay.textContent = label;
       overlay.classList.add('openKeyNav-label');
+      if (cssClass) {
+        overlay.classList.add(cssClass);
+      }
       overlay.setAttribute('data-openkeynav-label', label);
 
       // Add event listener to open the element in developer tools
@@ -672,6 +855,10 @@ var OpenKeyNav = /*#__PURE__*/function () {
       var _this6 = this;
       var resetModes = function resetModes() {
         for (var key in _this6.config.modes) {
+          // Structural navigation is a persistent base mode. Overlay cleanup
+          // ends temporary foreground modes but leaves it active until an
+          // explicit structural exit, global disable, or teardown.
+          if (key === 'structuralNavigation') continue;
           _this6.config.modes[key].value = false;
         }
 
@@ -836,19 +1023,59 @@ var OpenKeyNav = /*#__PURE__*/function () {
       el.setAttribute('data-openkeynav-inaccessible-reason', reason);
       return true;
     }
+
+    // Remove audit flags, tooltips, and event listeners added during audit
+  }, {
+    key: "clearAuditFlags",
+    value: function clearAuditFlags() {
+      try {
+        // Remove classes and attributes
+        document.querySelectorAll('.openKeyNav-inaccessible').forEach(function (el) {
+          el.classList.remove('openKeyNav-inaccessible');
+          el.removeAttribute('data-openkeynav-inaccessible-reason');
+        });
+
+        // Remove tooltip elements
+        document.querySelectorAll('.openKeyNav-mouseover-tooltip').forEach(function (t) {
+          t.remove();
+        });
+
+        // Remove event listeners stored in the map
+        try {
+          if (this.config && this.config.modesConfig && this.config.modesConfig.click && this.config.modesConfig.click.eventListenersMap) {
+            this.config.modesConfig.click.eventListenersMap.forEach(function (listeners, el) {
+              try {
+                if (listeners && listeners.showTooltip) el.removeEventListener('mouseover', listeners.showTooltip);
+                if (listeners && listeners.hideTooltip) el.removeEventListener('mouseleave', listeners.hideTooltip);
+              } catch (e) {
+                // ignore
+              }
+            });
+            this.config.modesConfig.click.eventListenersMap.clear();
+          }
+        } catch (e) {
+          // ignore
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
   }, {
     key: "addKeydownEventListener",
     value: function addKeydownEventListener() {
       var _this7 = this;
-      // Detect this.config.keys.click to enter label mode
-      // Using an arrow function to maintain 'this' context of class
-      document.addEventListener('keydown', function (e) {
+      if (this._keydownHandler) {
+        return;
+      }
+      this._keydownHandler = function (e) {
         (0, _keypress.handleKeyPress)(_this7, e);
-      }, true);
+      };
+      document.addEventListener('keydown', this._keydownHandler, true);
 
-      // Also for the iframes
-      window.addEventListener('message', function (e) {
-        if (e.data.type === 'keydown') {
+      // Existing click-label iframe support. Structural navigation deliberately
+      // treats each iframe as one atomic target and never uses this bridge.
+      this._messageHandler = function (e) {
+        if (e.data && e.data.type === 'keydown') {
           console.log('Key pressed in iframe:', e.data.key);
 
           // Create a new event
@@ -863,6 +1090,9 @@ var OpenKeyNav = /*#__PURE__*/function () {
             // This ensures the event bubbles up through the DOM
             cancelable: true // This lets it be cancelable
           });
+          Object.defineProperty(newEvent, 'openKeyNavIframeBridge', {
+            value: true
+          });
           if (newEvent.key === 'Escape') {
             // Execute escape logic
             (0, _escape.handleEscape)(_this7, e);
@@ -871,88 +1101,55 @@ var OpenKeyNav = /*#__PURE__*/function () {
           // Dispatch it on the document or specific element that your existing handler is attached to
           document.dispatchEvent(newEvent);
         }
-      });
+      };
+      window.addEventListener('message', this._messageHandler);
+    }
+  }, {
+    key: "removeKeydownEventListener",
+    value: function removeKeydownEventListener() {
+      if (this._keydownHandler) {
+        document.removeEventListener('keydown', this._keydownHandler, true);
+        this._keydownHandler = null;
+      }
+      if (this._messageHandler) {
+        window.removeEventListener('message', this._messageHandler);
+        this._messageHandler = null;
+      }
     }
 
-    // Function to emit a temporary notification
+    // Emit an assertive notification through the shared status renderer.
+    // Messages are text by default; trusted OpenKeyNav markup must opt in.
   }, {
     key: "emitNotification",
     value: function emitNotification(message) {
-      // Function to create or select the notification container
-      var getSetNotificationContainer = function getSetNotificationContainer() {
-        // Create or select the notification container
-        var notificationContainer = document.getElementById('okn-notification-container');
-        if (!notificationContainer) {
-          notificationContainer = document.createElement('div');
-          notificationContainer.id = 'okn-notification-container';
-          notificationContainer.className = 'openKeyNav-ignore-overlap';
-          notificationContainer.style.position = 'fixed';
-          notificationContainer.style.bottom = '10px';
-          notificationContainer.style.left = '50%';
-          notificationContainer.style.transform = 'translateX(-50%)';
-          notificationContainer.style.display = 'flex';
-          notificationContainer.style.flexDirection = 'column';
-          notificationContainer.style.alignItems = 'center';
-          notificationContainer.style.gap = '10px';
-          notificationContainer.style.zIndex = '1000';
-          document.body.appendChild(notificationContainer);
-        }
-        return notificationContainer;
-      };
-
-      // Check if notifications are enabled
-      if (!this.config.notifications.enabled) {
-        return;
+      var duration = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      if (duration && _typeof(duration) === 'object') {
+        options = duration;
+        duration = null;
       }
-
-      // Get the notification container
-      var notificationContainer = getSetNotificationContainer();
-
-      // Remove any existing notification before creating a new one
-      while (notificationContainer.firstChild) {
-        notificationContainer.firstChild.remove();
-      }
-
-      // Create the notification element
-      var notification = document.createElement('div');
-      notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-      notification.style.color = '#fff';
-      notification.style.padding = '10px 20px';
-      notification.style.borderRadius = '5px';
-      notification.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-      notification.style.maxWidth = '400px';
-      notification.style.textAlign = 'center';
-      notification.style.position = 'relative';
-      notification.style.display = 'inline-block';
-
-      // Add ARIA role for accessibility
-      notification.setAttribute('role', 'alert');
-      notification.setAttribute('aria-live', 'assertive');
-      notification.setAttribute('aria-atomic', 'true');
-
-      // Optionally display the tool name in the notification
-      if (this.config.notifications.displayToolName) {
-        var logo = document.createElement('div');
-        logo.className = 'okn-logo-text tiny';
-        logo.setAttribute('role', 'img'); // Assigning an image role
-        logo.setAttribute('aria-label', 'OpenKeyNav');
-        logo.innerHTML = 'Open<span class="key">Key</span>Nav';
-        notification.appendChild(logo);
-      }
-
-      // Create the message element
-      var messageDiv = document.createElement('div');
-      messageDiv.innerHTML = message;
-      // Append the message to the notification
-      notification.appendChild(messageDiv);
-
-      // Append the notification to the notification container
-      notificationContainer.appendChild(notification);
-
-      // Automatically remove the notification after the specified duration
-      setTimeout(function () {
-        notification.remove();
-      }, this.config.notifications.duration);
+      if (!this.config.notifications.enabled) return null;
+      var requestedDuration = duration !== null ? duration : this.config.notifications.duration;
+      var parsedDuration = Number(requestedDuration);
+      var notificationDuration = Number.isFinite(parsedDuration) ? parsedDuration : 3000;
+      var persistent = notificationDuration === 0;
+      var channel = persistent ? "notification-".concat(++this._notificationSequence) : 'notification';
+      if (persistent) this.clearStatus('notification');
+      return this.setStatus(channel, message, {
+        className: 'openKeyNav-notification',
+        containerClass: 'openKeyNav-notification-container openKeyNav-ignore-overlap',
+        containerKey: 'notifications',
+        containerId: 'okn-notification-container',
+        ui: 'notification',
+        role: 'alert',
+        politeness: 'assertive',
+        visible: true,
+        duration: notificationDuration,
+        dismissible: persistent,
+        toolName: this.config.notifications.displayToolName,
+        trustedHtml: options.trustedHtml === true,
+        host: options.host || 'modal'
+      });
     }
   }, {
     key: "initStatusBar",
@@ -969,6 +1166,11 @@ var OpenKeyNav = /*#__PURE__*/function () {
           message = "In Click Mode. Press ".concat((0, _keyButton.keyButton)(["Esc"]), " to exit.");
         } else if (modes.moving.value) {
           message = "In Drag Mode. Press ".concat((0, _keyButton.keyButton)(["Esc"]), " to exit.");
+        } else if (modes.structuralNavigation.value) {
+          // Structural navigation owns a persistent polite status channel.
+          // Avoid announcing "No mode active" when a temporary mode closes.
+          lastMessage = "No mode active.";
+          return;
         } else {
           message = "No mode active.";
         }
@@ -980,7 +1182,9 @@ var OpenKeyNav = /*#__PURE__*/function () {
 
         // Emit the notification with the current message
         // console.log(message);
-        _this8.emitNotification(message);
+        _this8.emitNotification(message, null, {
+          trustedHtml: true
+        });
         lastMessage = message;
       });
 
@@ -1001,6 +1205,8 @@ var OpenKeyNav = /*#__PURE__*/function () {
           statusBar.textContent = "In click mode. Press Esc to exit.";
         } else if (modes.moving.value) {
           statusBar.textContent = "In drag mode. Press Esc to exit.";
+        } else if (modes.structuralNavigation.value) {
+          statusBar.textContent = "Structural navigation active. Press Alt+R to exit.";
         } else {
           statusBar.textContent = "No mode active.";
         }
@@ -1147,11 +1353,33 @@ var OpenKeyNav = /*#__PURE__*/function () {
       var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
       this.deepMerge(this.config, options);
       this.addKeydownEventListener();
-      this.initStatusBar();
-      this.initToolBar();
+      if (!this._statusBarInitialized) {
+        this.initStatusBar();
+        this._statusBarInitialized = true;
+      }
+      if (!this._toolBarInitialized) {
+        this.initToolBar();
+        this._toolBarInitialized = true;
+      }
       this.applicationSupport();
       this.checkEnabled();
       console.log('Library initialized with config:', this.config);
+      return this;
+    }
+  }, {
+    key: "destroy",
+    value: function destroy() {
+      this.exitStructuralNavigation({
+        announce: false
+      });
+      this.statusService.clearAll();
+      this.removeKeydownEventListener();
+      this.removeOverlays(true);
+      this.clearMoveAttributes();
+      this.clearAuditFlags();
+      (0, _auditPanel.hideAuditPanel)();
+      this.removeStyles();
+      this.meta.enabled.value = false;
       return this;
     }
   }]);

@@ -1,2 +1,23 @@
 node_modules
 openkeynav*.tgz
+
+# Test artifacts
+artifacts/
+test-results/
+playwright-report/
+.nyc_output/
+coverage/
+
+# Build outputs
+dist/*
+!dist/accessibilityName.js
+!dist/domUtilities.js
+!dist/keyboardEvents.js
+!dist/status.js
+!dist/structuralModel.js
+!dist/structuralNavigation.js
+!dist/tabbableTargets.js
+
+# Playwright cache
+/playwright/.auth/
+docs/potential.md

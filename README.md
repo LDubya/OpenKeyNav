@@ -1,224 +1,186 @@
 # OpenKeyNav
 
-OpenKeyNav is an open-source JavaScript library designed to enhance keyboard accessibility, navigation, and interaction on webpages. Originally developed to improve the keyboard accessibility of the best-selling [Columns](https://apps.apple.com/us/app/columns-two-column-notes/id1493839821) app, it generates keyboard shortcuts on the fly and presents them to users on-demand, supporting complex interactions like drag-and-drop entirely with the keyboard.
+[![npm version](https://img.shields.io/npm/v/openkeynav.svg)](https://www.npmjs.com/package/openkeynav)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-OpenKeyNav helps you enhance the accessibility of your website or web app by allowing users to interact with website elements using the keyboard. It features various modes, including click mode to simulate mouse clicks on clickable elements and move mode for keyboard-based drag and drop. OpenKeyNav creates visual labels for elements that can be interacted with using keyboard shortcuts. The library also includes features to focus on headings, scrollable regions, and form fields, ensuring users have a consistent and intuitive keyboard navigation experience.
+OpenKeyNav is an MIT-licensed JavaScript library for adding on-demand target labels, direct keyboard navigation, and application-configured keyboard drag-and-drop to websites and web apps.
 
-OpenKeyNav is available for developers to fork, modify, and use via its [GitHub repository](https://github.com/LDubya/OpenKeyNav) and [NPM](https://www.npmjs.com/package/openkeynav).
+[Live demo](https://openkeynav.com/#demo) · [Documentation](https://openkeynav.com/docs/getting_started/quick_start_guide) · [OpenKeyNav on npm](https://www.npmjs.com/package/openkeynav) · [GitHub](https://github.com/LDubya/OpenKeyNav)
 
-Featured by [Harvard Innovation Labs](https://www.youtube.com/watch?v=xIShByl7baE) and [Harvard Medical School](https://www.instagram.com/p/C_1Fl9GJSUq/). *[Watch the Harvard Innovation Labs video](https://img.youtube.com/vi/xIShByl7baE/0.jpg)*
+Featured in Harvard Innovation Labs' [*Harvard Startup Spotlight: OpenKeyNav*](https://www.youtube.com/watch?v=xIShByl7baE). OpenKeyNav is also the subject of [research presented at the AccessViz workshop at IEEE VIS 2024](https://osf.io/preprints/osf/3wjsa).
 
-## Features
+## Install and try OpenKeyNav
 
-- **Automatic Keyboard Shortcuts**: Generate and display keyboard shortcuts dynamically.
-- **Complex Interactions**: Support for keyboard-based drag-and-drop and other complex interactions.
-- **Customizable Activation Keys**: Configure different keys to trigger various behaviors.
-- **Accessibility Compliance**: Identify and highlight elements that are not keyboard accessible, helping you fix the elements that are not keyboard accessible.
-- **Empowerment**: Enable users to navigate and interact with web content using their keyboards.
-
-## Read the preprint
-
-The preprint 
-[*"Using OpenKeyNav to Enhance the Keyboard-Accessibility of Web-based Data Visualization Tools"* (OSF Preprint)](https://osf.io/preprints/osf/3wjsa) 
-was presented at the AccessViz workshop, part of IEEE VIS 2024 conference. [Watch the AccessViz presentation](https://img.youtube.com/vi/qWbKjQ_Behk/0.jpg). The research paper is funded by the National Institutes of Health through the HIDIVE lab at Harvard University*.
-
-## Installation
-
-Basic installation and setup instructions are below. For detailed documentation, guides, and tutorials, visit the [OpenKeyNav Documentation](https://openkeynav.github.io).
-
-
-To install OpenKeyNav, you can use npm:
+### npm
 
 ```bash
 npm install openkeynav
 ```
 
-## Usage
-
-### Basic Usage
-
-Here is a basic example of how to use OpenKeyNav in your project:
-
-
-
-#### Installing via NPM
-
-To install OpenKeyNav&trade; using npm, run the following command in your terminal:
-
-```bash
-npm install openkeynav
-```
-
-Then, you can import and use it in your JavaScript file:
+Import the package with a build tool, initialize it, and turn off development diagnostics for production:
 
 ```javascript
 import OpenKeyNav from 'openkeynav';
 
 const openKeyNav = new OpenKeyNav();
-// initialize with default settings
-openKeyNav.init();
+
+openKeyNav.init({
+  debug: {
+    keyboardAccessible: false,
+  },
+});
 ```
 
-#### Including the Script from a CDN
+CommonJS consumers can load the same package entry with:
 
-If you prefer not to use npm, you can include OpenKeyNav directly from a CDN. Add the following script tag to your HTML file:
-
-```html
-<script src="https://cdn.jsdelivr.net/npm/openkeynav/dist/openkeynav.umd.min.js"></script>
+```javascript
+const OpenKeyNav = require('openkeynav');
 ```
 
-After including the script, you can initialize OpenKeyNav like this:
+### CDN
+
+Load the pinned UMD browser build before the closing `</body>` tag:
 
 ```html
+<script src="https://cdn.jsdelivr.net/npm/openkeynav@0.1.233/dist/openkeynav.umd.min.js"></script>
 <script>
   const openKeyNav = new OpenKeyNav();
-  // initialize with default settings
-  openKeyNav.init();
+
+  openKeyNav.init({
+    debug: {
+      keyboardAccessible: false,
+    },
+  });
 </script>
 ```
-#### Initiating in a React app
 
-To use in a React app, initiate in the main component (e.g., App or its equivalent):
+The UMD build exposes `OpenKeyNav` as a browser global. Update the version pin deliberately when adopting a newer release.
 
-For functional components:
+### First interaction
 
-```jsx
-import { useEffect } from 'react';
-import OpenKeyNav from 'openkeynav';
+With focus outside an editable field:
 
-const App = () => {
-    useEffect(() => {
-        const openKeyNav = new OpenKeyNav();
-        openKeyNav.init();
-    }, []);
+1. If OpenKeyNav shortcuts are off, press `Shift+o` to turn them on.
+2. Press `k` without `Shift` to label detected interactive targets.
+3. Type the label shown beside a target. OpenKeyNav focuses or activates the selected target as appropriate.
+4. Press `Escape` to leave the current mode.
 
-    // ...
-};
+OpenKeyNav remembers the user's enabled or disabled choice in a cookie.
 
-export default App;
-```
+## What OpenKeyNav does
 
-For class components:
+- **Click Mode:** Displays typeable labels beside detected interactive targets so a user can choose one directly.
+- **Heading navigation:** Moves focus among headings with `h` or a specific heading level from `1` through `6`.
+- **Move Mode:** Provides a two-step keyboard path for application-configured draggable elements and destinations.
+- **Configurable shortcuts:** Lets applications remap the activation and mode keys to avoid conflicts.
+- **Development diagnostics:** Uses heuristics to flag likely mouse-clickable, unfocusable elements for manual review.
+- **Structural Navigation:** Routes real focus through page structure while preserving native `Tab` behavior.
 
-```jsx
-import React, { Component } from 'react';
-import OpenKeyNav from 'openkeynav';
+## Core commands in the current release
 
-class App extends Component {
-    componentDidMount() {
-        const openKeyNav = new OpenKeyNav();
-        openKeyNav.init();
-    }
+Letter commands are unmodified keys unless the table says otherwise.
 
-    // ...
-}
+| Action | Default command |
+| --- | --- |
+| Turn OpenKeyNav on or off | `Shift+o` |
+| Enter Click Mode | `k` |
+| Move through headings | `h` |
+| Move through headings of a specific level | `1`–`6` |
+| Move through scrollable regions | `s` |
+| Enter configured Move Mode | `m` |
+| Enter or toggle Structural Navigation | `r` |
+| Exit Structural Navigation reliably | `Alt+r` |
+| Leave an active mode | `Escape` or `q` |
 
-export default App;
-```
+OpenKeyNav keeps its single-character commands behind a user-controlled toggle. Applications can also remap them. These mechanisms can help an application address [WCAG 2.2 Success Criterion 2.1.4, Character Key Shortcuts](https://www.w3.org/WAI/WCAG22/Understanding/character-key-shortcuts.html); conformance still requires evaluation of the complete application.
 
-### Key Commands
-- **Turn OpenKeyNav on / off**: After the page loads, press `Shift + o` to turn OpenKeyNav on/off. To avoid accidental activation, OpenKeyNav's shortcuts are disabled by default, in compliance with [WCAG Success Criterion 2.1.4 character key shortcuts](https://www.w3.org/TR/WCAG21/#character-key-shortcuts).
-- **Click Mode**: Press `k` to enter click mode, which labels clickable elements with keyboard shortcuts. Press the key combinations on the labels to "click" their respective buttons.
-- **Heading Navigation**: Press `h` to navigate through headers within the viewport. Press `1`,`2`,`3`,`4`,`5`, or `6` to navigate through headers of the respective level.
-- **Scroll Navigation**: Press `s` to cycle through different scrollable regions within the viewport.
-- **Drag-and-Drop Mode**: Press `m` to enter drag mode, which enables keyboard-accessible drag-and-drop by labeling pre-configured draggable elements with keyboard shortcuts, and then the selected draggable element's applicable drop zones. See [To customize drag-and-drop](#to-customize-draganddrop).
+## Development diagnostics
 
-### Disabling Debug Mode for Production
-
-By default, OpenKeyNav initiates in debug mode, which adds red labels to inaccessible elements (that are mouse-clickable but not tab-focusable). These elements are not WCAG-compliant, since they are not keyboard accessible. The elements with black labels are keyboard accessible. This enables you to identify the elements that need remediation.
-
-It is recommended to keep debug mode turned on while developing and to remediate any keyboard access barriers that you find in this mode.
-
-However, you should not present debug mode to your end users. Therefore, when you are ready to go into production, make sure to disable the debug mode:
+`debug.keyboardAccessible` is currently `true` by default. When OpenKeyNav is enabled, it runs a heuristic check over likely interactive elements and highlights candidates for review.
 
 ```javascript
-openKeyNav.init({
-    ...
-    debug: {
-        keyboardAccessible: false // set this to false when done debugging inaccessible keyboard elements.
-    }
-});
-```
-
-### To Customize Drag-and-Drop:
-
-```javascript
-// Example drag-and-drop configuration
-const moveConfig = [
-  {
-    fromContainer: ".containerOfMoveables",
-    toElements: ".dropZoneTargetType1, .dropZoneTargetType2",
-    callback: (elMoveable, elDropZoneTarget) => {
-      // Your callback logic
-    }
-  },
-  {
-    fromContainer: ".classFrom2",
-    toElements: ".classToB"
-  },
-  {
-    fromContainer: ".classFrom3",
-    toElements: ".classToC"
-  }
-];
-
-// Initialize with configuration
-openKeyNav.init({
-    modesConfig: {
-        move: {
-            config: moveConfig
-        }
-    }
-});
-```
-
-### Customization
-
-You can override these default settings to suit your needs:
-
-```javascript
-const config = {
-    enabled: false; // by default, openKeyNav is disabled. Users must press "shift" + keys.menu to enable.
-    spot: {
-        fontColor: 'white',
-        backgroundColor: '#333',
-        insetColor: '#000',
-        fontSize: 'inherit',
-        arrowSize_px: 4
-    },
-    focus: {
-        outlineColor: '#0088cc',
-        outlineStyle: 'solid'
-    },
-    keys: {
-        escape: 'q', // alternative escape key, for when escape key is too far or not available. // q works great because top left of letters, plus removes confusion with g, p
-        click: 'k', // enter click mode, to click on clickable elements, such as links. Was g, now k, for kanga. Plus NVDA uses k to focus on link elements, which prevents conflicting modes as it's either openkeynav or NVDA.
-        scroll: 's', // focus on the next scrollable region
-        move: 'm', // enter move mode, to move elements from and to, aka keyboard drag and drop
-        heading: 'h', // focus on the next heading // as seen in JAWS, NVDA
-        menu: 'o' // for enabling/disabling OpenKeyNav when pressed with shift key.
-    }
-};
-
 const openKeyNav = new OpenKeyNav();
-openKeyNav.init(config);
+
+openKeyNav.init({
+  debug: {
+    keyboardAccessible: true,
+  },
+});
 ```
 
-## Documentation
+Treat the results as development guidance. The heuristic can produce false positives and false negatives; verify semantics, accessible names, focus order, keyboard behavior, state communication, and visible focus manually. Set `keyboardAccessible` to `false` for the production experience after completing that review.
 
-For detailed documentation, guides, and tutorials, visit the [OpenKeyNav Documentation](https://openkeynav.github.io).
+OpenKeyNav adds optional keyboard interaction paths. Continue to use semantic HTML and native controls, and test the complete application with keyboard-only workflows, accessibility inspection tools, supported assistive technologies, and disabled users.
 
-## Local build and install
+## Configure keyboard drag-and-drop
 
-Build: npm run patch_build_pack
-Intall: npm install /path/to/openkeynav-version.tgz
+Move Mode needs an application-supplied mapping between sources and destinations. Source and destination elements must also be visible, eligible keyboard targets.
+
+```javascript
+const openKeyNav = new OpenKeyNav();
+
+openKeyNav.init({
+  debug: {
+    keyboardAccessible: false,
+  },
+  modesConfig: {
+    move: {
+      config: [
+        {
+          fromContainer: '.moveable-items',
+          toElements: '.drop-zone',
+          callback: (source, destination) => {
+            destination.append(source);
+          },
+        },
+      ],
+    },
+  },
+});
+```
+
+See the [Move Mode documentation](https://openkeynav.com/docs/usage/drag_mode) for source selectors, exclusions, dynamic source resolvers, and native drag-event behavior.
+
+## Structural Navigation
+
+Structural Navigation moves real focus among existing keyboard targets through page contexts such as landmarks, sections, headings, forms, fieldsets, and lists, while leaving native `Tab` behavior intact.
+
+After enabling OpenKeyNav with `Shift+o`, press `r` to enter Structural Navigation.
+
+| Action | Default command |
+| --- | --- |
+| Enter Structural Navigation | `r` |
+| Move to the previous or next lateral structural context | `Shift+Left` / `Shift+Right` |
+| Broaden or narrow the active context | `Shift+Up` / `Shift+Down` |
+| Hide the visible status without leaving the mode | `Shift+Escape` |
+| Exit Structural Navigation | `Alt+r` |
+
+Previous and next target commands and application-supplied typed-route commands are configurable but unbound by default. Read the [Structural Navigation documentation](https://openkeynav.com/docs/usage/structural_navigation) for configuration, APIs, focus-scope behavior, keyboard ownership, and current limitations.
+
+Structural Navigation remains active until the user exits it. Its configured commands get first refusal; heading, heading-level, and scroll-region navigation run normally without ending the mode. Click Mode, Move Mode, and the shortcut menu temporarily take keyboard priority, then Structural Navigation resumes when that temporary mode finishes or is dismissed.
+
+## Version support ping
+
+On non-localhost pages, `init()` sends a support event to `applicationsupport.openkeynav.com`. Its JSON body contains only the OpenKeyNav version and event name. The current API does not provide an opt-out.
+
+## Research and recognition
+
+- Harvard Innovation Labs featured the project in [*Harvard Startup Spotlight: OpenKeyNav*](https://www.youtube.com/watch?v=xIShByl7baE) and an [OpenKeyNav creator profile](https://www.instagram.com/p/C_1Fl9GJSUq/).
+- The preprint [*Using OpenKeyNav to Enhance the Keyboard-Accessibility of Web-based Data Visualization Tools*](https://osf.io/preprints/osf/3wjsa) was presented at the AccessViz workshop at IEEE VIS 2024. [Watch the AccessViz presentation](https://www.youtube.com/watch?v=qWbKjQ_Behk).
+- The preprint describes research funded by the National Institutes of Health through Harvard University's HIDIVE Lab.
+
+## Development
+
+```bash
+npm install
+npm test
+npm run build
+```
+
+The build produces the browser UMD bundle in `dist/openkeynav.umd.js` and its minified counterpart in `dist/openkeynav.umd.min.js`.
 
 ## License
 
-OpenKeyNav is licensed under the MIT License. See the LICENSE file for more details.
+OpenKeyNav is available under the [MIT License](./LICENSE).
 
 © 2014 Lawrence Weru, Aster Enterprises LLC.
-
-## (*) Disclaimer
-
-Any references to organizations or institutions are for informational purposes only and do not imply endorsement or an affiliation beyond the stated context.
