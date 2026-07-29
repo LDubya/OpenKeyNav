@@ -6,8 +6,6 @@ import { keyButton } from './keyButton.js';
 import { injectStylesheet, deleteStylesheets } from './styles.js';
 import { handleKeyPress } from "./keypress.js";
 import { handleEscape } from "./escape";
-import { runAccessibilityAudit } from './audit.js';
-import { hideAuditPanel } from './auditPanel.js';
 import { StructuralNavigationController } from './structuralNavigation.js';
 import { StatusService } from './status.js';
 import { getDeepActiveElement } from './domUtilities.js';
@@ -235,29 +233,13 @@ class OpenKeyNav {
         this.meta.enabled.value = true;
         this.injectStyles();
         this.getSetCookie(this.config.enabledCookie, true);
-        
-        // Run accessibility audit after enabling (for debug mode)
-        if (this.config.debug.keyboardAccessible) {
-          // Use setTimeout to ensure DOM is ready and styles are injected
-          setTimeout(() => {
-            runAccessibilityAudit(this);
-          }, 0);
-        }
-        
         return this;
       };
       this.disable = () => {
         this.exitStructuralNavigation({ announce: false });
         this.meta.enabled.value = false;
         this.getSetCookie(this.config.enabledCookie, false)
-        // Remove audit panel if present when disabling
-        try {
-          hideAuditPanel();
-        } catch (e) {
-          // ignore
-        }
-
-        // Clear any audit flags, tooltips, and listeners applied during audit
+        // Clear Click Mode diagnostic flags, tooltips, and listeners.
         try {
           this.clearAuditFlags();
         } catch (e) {
@@ -1320,7 +1302,6 @@ class OpenKeyNav {
       this.removeOverlays(true);
       this.clearMoveAttributes();
       this.clearAuditFlags();
-      hideAuditPanel();
       this.removeStyles();
       this.meta.enabled.value = false;
       return this;

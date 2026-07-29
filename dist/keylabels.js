@@ -66,88 +66,27 @@ var showClickableOverlays = exports.showClickableOverlays = function showClickab
     // The user may dismiss Click Mode before this deferred discovery runs.
     if (!openKeyNav.config.modes.clicking.value) return;
     var allCandidates = _getAllCandidateElements(openKeyNav, document);
+    var clickables = allCandidates.filter(function (el) {
+      return (0, _isTabbable.isTabbable)(el, openKeyNav);
+    });
 
-    // In debug mode, show all elements (audit mode)
-    if (openKeyNav.config.debug.keyboardAccessible) {
-      var accessible = [];
-      var inaccessible = [];
-      allCandidates.forEach(function (el) {
-        // Call isTabbable to run accessibility checks and flag elements
-        (0, _isTabbable.isTabbable)(el, openKeyNav);
-
-        // Check if element was flagged as inaccessible
-        if (el.classList.contains('openKeyNav-inaccessible')) {
-          inaccessible.push(el);
-        } else {
-          accessible.push(el);
-        }
+    // Prefer the innermost target when nested candidates occupy the same area.
+    clickables = clickables.filter(function (element) {
+      var hasClickableDescendant = clickables.some(function (other) {
+        if (other === element || !element.contains(other)) return false;
+        var parentRect = element.getBoundingClientRect();
+        var childRect = other.getBoundingClientRect();
+        return Math.abs(parentRect.top - childRect.top) < 2 && Math.abs(parentRect.left - childRect.left) < 2 && Math.abs(parentRect.right - childRect.right) < 2 && Math.abs(parentRect.bottom - childRect.bottom) < 2;
       });
-
-      // Update debug inaccessible count
-      openKeyNav.config.debug.inaccessibleCount.value = inaccessible.length;
-
-      // Log inaccessible elements to console
-      if (inaccessible.length > 0) {
-        console.warn("OpenKeyNav Debug: Found ".concat(inaccessible.length, " keyboard-inaccessible interactive elements:"), inaccessible);
-      }
-      var allElements = [].concat(accessible, inaccessible);
-
-      // Filter out parent elements when child interactive elements exist
-      // Only filter if parent and child occupy the same space (same bounding rect)
-      allElements = allElements.filter(function (element) {
-        var hasDescendant = allElements.some(function (other) {
-          if (other === element || !element.contains(other)) return false;
-
-          // Check if they occupy the same physical space
-          var parentRect = element.getBoundingClientRect();
-          var childRect = other.getBoundingClientRect();
-
-          // Only filter out parent if child completely fills it
-          var sameDimensions = Math.abs(parentRect.top - childRect.top) < 2 && Math.abs(parentRect.left - childRect.left) < 2 && Math.abs(parentRect.right - childRect.right) < 2 && Math.abs(parentRect.bottom - childRect.bottom) < 2;
-          return sameDimensions;
-        });
-        return !hasDescendant;
-      });
-      var labels = generateLabels(openKeyNav, allElements.length);
-      allElements.forEach(function (element, index) {
-        element.setAttribute('data-openkeynav-label', labels[index]);
-        var isInaccessible = inaccessible.includes(element);
-        var cssClass = isInaccessible ? 'debug-inaccessible' : null;
-        openKeyNav.createOverlay(element, labels[index], cssClass);
-      });
-    } else {
-      // Production mode: only show accessible elements
-      var clickables = allCandidates.filter(function (el) {
-        return (0, _isTabbable.isTabbable)(el, openKeyNav);
-      });
-
-      // Filter out parent elements when child interactive elements exist
-      // This ensures only the innermost interactive element gets a label
-      // Only filter if parent and child occupy the same space (same bounding rect)
-      clickables = clickables.filter(function (element) {
-        // Check if any other clickable is a descendant of this element
-        var hasClickableDescendant = clickables.some(function (other) {
-          if (other === element || !element.contains(other)) return false;
-
-          // Check if they occupy the same physical space
-          var parentRect = element.getBoundingClientRect();
-          var childRect = other.getBoundingClientRect();
-
-          // Only filter out parent if child completely fills it
-          var sameDimensions = Math.abs(parentRect.top - childRect.top) < 2 && Math.abs(parentRect.left - childRect.left) < 2 && Math.abs(parentRect.right - childRect.right) < 2 && Math.abs(parentRect.bottom - childRect.bottom) < 2;
-          return sameDimensions;
-        });
-        // Only keep this element if it has no clickable descendants in same space
-        return !hasClickableDescendant;
-      });
-      var _labels = generateLabels(openKeyNav, clickables.length);
-      clickables.forEach(function (element, index) {
-        element.setAttribute('data-openkeynav-label', _labels[index]);
-      });
-      clickables.forEach(function (element, index) {
-        openKeyNav.createOverlay(element, _labels[index]);
-      });
-    }
+      return !hasClickableDescendant;
+    });
+    var labels = generateLabels(openKeyNav, clickables.length);
+    clickables.forEach(function (element, index) {
+      element.setAttribute('data-openkeynav-label', labels[index]);
+    });
+    clickables.forEach(function (element, index) {
+      openKeyNav.createOverlay(element, labels[index]);
+    });
   }, 0); // Use timeout to ensure the operation completes
 };
 var showMoveableFromOverlays = exports.showMoveableFromOverlays = function showMoveableFromOverlays(openKeyNav) {

@@ -11,8 +11,6 @@ var _keyButton = require("./keyButton.js");
 var _styles = require("./styles.js");
 var _keypress = require("./keypress.js");
 var _escape = require("./escape");
-var _audit = require("./audit.js");
-var _auditPanel = require("./auditPanel.js");
 var _structuralNavigation = require("./structuralNavigation.js");
 var _status = require("./status.js");
 var _domUtilities = require("./domUtilities.js");
@@ -293,14 +291,6 @@ var OpenKeyNav = /*#__PURE__*/function () {
       _this.meta.enabled.value = true;
       _this.injectStyles();
       _this.getSetCookie(_this.config.enabledCookie, true);
-
-      // Run accessibility audit after enabling (for debug mode)
-      if (_this.config.debug.keyboardAccessible) {
-        // Use setTimeout to ensure DOM is ready and styles are injected
-        setTimeout(function () {
-          (0, _audit.runAccessibilityAudit)(_this);
-        }, 0);
-      }
       return _this;
     };
     this.disable = function () {
@@ -309,14 +299,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
       });
       _this.meta.enabled.value = false;
       _this.getSetCookie(_this.config.enabledCookie, false);
-      // Remove audit panel if present when disabling
-      try {
-        (0, _auditPanel.hideAuditPanel)();
-      } catch (e) {
-        // ignore
-      }
-
-      // Clear any audit flags, tooltips, and listeners applied during audit
+      // Clear Click Mode diagnostic flags, tooltips, and listeners.
       try {
         _this.clearAuditFlags();
       } catch (e) {
@@ -1377,7 +1360,6 @@ var OpenKeyNav = /*#__PURE__*/function () {
       this.removeOverlays(true);
       this.clearMoveAttributes();
       this.clearAuditFlags();
-      (0, _auditPanel.hideAuditPanel)();
       this.removeStyles();
       this.meta.enabled.value = false;
       return this;

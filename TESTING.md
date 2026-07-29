@@ -86,45 +86,14 @@ npm run test:e2e:headed
 
 **What's tested:**
 
-**Debug Mode Tests (6 tests)** - Uses `demo/demo.html` with `debug.keyboardAccessible: true` (default):
-- Real overlay positioning in Chromium
-- Click mode activation and label visibility
-- Debug mode showing ALL interactive elements with red overlays for inaccessible ones
-- Toolbar rendering and state updates with debug count
-- Heading navigation focus behavior
-- Accessibility audit panel on enable showing flagged elements
-- Keyboard event handling (Shift+o, k, h, Esc)
+- Real overlay positioning and keyboard commands in Chromium
+- Click Mode labels, nested targets, cleanup, and the published diagnostic behavior
+- The enable-time release guard for the dormant page-wide audit UI
+- Heading, scrolling, Move Mode, menu, and lifecycle behavior
+- Structural Navigation commands, focus routing, context changes, and interaction with other modes
+- `debug.keyboardAccessible: false`, which keeps regular Click Mode labels while suppressing diagnostic warning styling and tooltips
 
-**Production Mode Tests (3 tests)** - Uses `demo/productiondemo.html` with `debug.keyboardAccessible: false`:
-- No audit panel on enable
-- No red outlines on inaccessible elements
-- Click mode shows only accessible elements (no red overlays)
-- Toolbar does not show debug count
-- Inaccessible elements are not flagged with data attributes or classes
-
-**Total E2E Tests: 9**
-
-**Artifacts:**
-Screenshots are saved to `artifacts/` after each run:
-
-**Debug Mode Artifacts (`demo/demo.html`):**
-- `01-initial.png` - Page before enabling OpenKeyNav
-- `02-enabled.png` - After Shift+o (toolbar visible)
-- `03-click-mode.png` - Overlays shown in click mode
-- `04-after-escape.png` - Clean state after pressing Esc
-- `05-toolbar.png` - Toolbar appearance
-- `06-heading-focus.png` - Heading focused via h key
-- `07-debug-mode.png` - Click mode in debug mode with red overlays for inaccessible elements
-- `08-debug-toolbar.png` - Toolbar showing debug info with inaccessible count
-- `09-audit-initial.png` - Page after enabling with audit panel
-- `10-audit-panel.png` - Audit panel showing accessibility issues
-- `11-audit-red-outlines.png` - Red outlines on inaccessible elements
-- `12-audit-click-mode.png` - Click mode working alongside audit
-
-**Production Mode Artifacts (`demo/productiondemo.html`):**
-- `13-production-no-audit.png` - No audit panel on enable
-- `14-production-click-mode.png` - Click mode with only accessible elements
-- `15-production-no-flagging.png` - Inaccessible elements not flagged
+Screenshots and other artifacts are saved to `artifacts/`. The Playwright specs are the source of truth for current artifact names and test coverage.
 
 ### Run All Tests
 
@@ -133,47 +102,21 @@ Screenshots are saved to `artifacts/` after each run:
 npm run test:ci && npm run test:e2e
 ```
 
-## Debug Mode vs Production Mode
+## Click Mode diagnostics
 
-OpenKeyNav has two operational modes controlled by `config.debug.keyboardAccessible`:
+`config.debug.keyboardAccessible` controls the diagnostic treatment applied while Click Mode discovers targets.
 
-### Debug Mode (Default for Development)
+### Diagnostics enabled (default)
 **Configuration:** `debug.keyboardAccessible: true`
 **Demo:** `demo/demo.html`
 
-**Features:**
-- Automatic accessibility audit on enable
-- Audit panel shows all inaccessible elements with click-to-scroll
-- Red outlines (`box-shadow`) on inaccessible elements (always visible)
-- Click mode shows ALL interactive elements (accessible + inaccessible)
-- Red labels for inaccessible elements with tooltips
-- Toolbar shows debug count: "Debug: X inaccessible"
-- Console warnings with element details
-- `flagAsInaccessible()` adds classes and data attributes
+When Click Mode's heuristic identifies a likely mouse-clickable target that cannot receive focus, `flagAsInaccessible()` adds the `.openKeyNav-inaccessible` class, a reason attribute, warning outline styling, and hover details to the target and its regular label. These results are development guidance and still require manual accessibility testing.
 
-**Use Cases:**
-- Development and debugging
-- Accessibility auditing
-- Finding keyboard navigation issues
-- QA testing
-
-### Production Mode (Recommended for End Users)
+### Diagnostics disabled
 **Configuration:** `debug.keyboardAccessible: false`
 **Demo:** `demo/productiondemo.html`
 
-**Features:**
-- NO audit panel
-- NO red outlines or flagging
-- Click mode shows ONLY accessible elements
-- Clean toolbar without debug info
-- NO console warnings about accessibility
-- `flagAsInaccessible()` is not called
-
-**Use Cases:**
-- Production websites
-- End-user deployment
-- Clean, distraction-free UX
-- Performance optimization (fewer checks)
+Click Mode uses the same candidate and label flow while suppressing the diagnostic classes, reason attributes, outlines, and tooltips.
 
 ### Switching Modes
 
@@ -195,7 +138,7 @@ okn.init({
 });
 ```
 
-**Important:** The default is `true` (debug mode) for development convenience. Set to `false` for production deployments.
+The default is `true`. Set it to `false` when the diagnostic presentation is not appropriate for the deployment.
 
 ## Using Vision-Capable AI (Claude Sonnet 4.5)
 
@@ -254,19 +197,12 @@ demo/
 artifacts/                 # Screenshots from E2E runs (gitignored)
 ```
 
-## Modular Architecture
+## Diagnostic architecture
 
-OpenKeyNav's audit functionality is modular:
-
-- **`src/audit.js`** - Core audit logic (queries elements, runs checks, manages console output)
-- **`src/auditPanel.js`** - UI presentation layer (creates panel, renders issues, handles interactions)
-- **`src/isTabbable.js`** - Accessibility detection (visibility, tabindex, ARIA, inert, etc.)
-- **`src/OpenKeyNav.js`** - Orchestrator (imports `runAccessibilityAudit`, calls it on enable)
-
-This separation allows:
-- Easy testing of each component
-- Independent enhancement (e.g., add panel themes, export reports)
-- Clear separation of concerns (logic vs UI vs detection)
+- **`src/isTabbable.js`** evaluates Click Mode candidates and applies the current diagnostic heuristic.
+- **`src/OpenKeyNav.js`** owns diagnostic flagging and cleanup.
+- **`src/keylabels.js`** discovers candidates and creates the regular Click Mode labels.
+- **`src/audit.js`** and **`src/auditPanel.js`** contain future page-wide audit work. The current runtime entry does not import or activate them; Babel still emits their standalone `dist/` modules for continued development.
 
 ## Build Process Isolation
 
@@ -456,15 +392,7 @@ Add to your CI pipeline:
 
 ## Test Coverage Summary
 
-| Module | Unit Tests | E2E Tests | Notes |
-|--------|-----------|-----------|-------|
-| `isTabbable.js` | 48 | 3 | Comprehensive coverage of visibility, tabindex, ARIA, inert |
-| Audit system | 0 | 3 | Tested via E2E (audit.js, auditPanel.js) |
-| Click mode | 2 | 3 | Label generation + E2E positioning |
-| Toolbar | 2 | 2 | KeyButton rendering + E2E visibility |
-| Signals | 1 | 0 | Reactivity logic |
-| Overlays | 5 | 2 | Positioning + cleanup |
-| **Total** | **59** | **9** | **68 tests** |
+Run `npm run test:ci` and `npm run test:e2e` for the authoritative test totals. The release gate covers unit-level DOM, focus, label, event, status, and Structural Navigation behavior plus browser-level interaction and lifecycle scenarios.
 
 ## Related Documentation
 

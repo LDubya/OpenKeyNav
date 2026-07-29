@@ -96,7 +96,7 @@ OpenKeyNav keeps its single-character commands behind a user-controlled toggle. 
 
 ## Development diagnostics
 
-`debug.keyboardAccessible` is currently `true` by default. When OpenKeyNav is enabled, it runs a heuristic check over likely interactive elements and highlights candidates for review.
+`debug.keyboardAccessible` is currently `true` by default. In Click Mode, OpenKeyNav outlines likely mouse-clickable targets that cannot receive focus and provides diagnostic details on hover for manual review.
 
 ```javascript
 const openKeyNav = new OpenKeyNav();

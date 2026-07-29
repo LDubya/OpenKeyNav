@@ -61,104 +61,36 @@ export const showClickableOverlays = (openKeyNav) => {
       if (!openKeyNav.config.modes.clicking.value) return;
 
       const allCandidates = getAllCandidateElements(openKeyNav, document);
-      
-      // In debug mode, show all elements (audit mode)
-      if (openKeyNav.config.debug.keyboardAccessible) {
-        const accessible = [];
-        const inaccessible = [];
-        
-        allCandidates.forEach(el => {
-          // Call isTabbable to run accessibility checks and flag elements
-          isTabbable(el, openKeyNav);
-          
-          // Check if element was flagged as inaccessible
-          if (el.classList.contains('openKeyNav-inaccessible')) {
-            inaccessible.push(el);
-          } else {
-            accessible.push(el);
-          }
-        });
-        
-        // Update debug inaccessible count
-        openKeyNav.config.debug.inaccessibleCount.value = inaccessible.length;
-        
-        // Log inaccessible elements to console
-        if (inaccessible.length > 0) {
-          console.warn(`OpenKeyNav Debug: Found ${inaccessible.length} keyboard-inaccessible interactive elements:`, inaccessible);
-        }
-        
-        let allElements = [...accessible, ...inaccessible];
-        
-        // Filter out parent elements when child interactive elements exist
-        // Only filter if parent and child occupy the same space (same bounding rect)
-        allElements = allElements.filter(element => {
-          const hasDescendant = allElements.some(other => {
-            if (other === element || !element.contains(other)) return false;
-            
-            // Check if they occupy the same physical space
-            const parentRect = element.getBoundingClientRect();
-            const childRect = other.getBoundingClientRect();
-            
-            // Only filter out parent if child completely fills it
-            const sameDimensions = 
-              Math.abs(parentRect.top - childRect.top) < 2 &&
-              Math.abs(parentRect.left - childRect.left) < 2 &&
-              Math.abs(parentRect.right - childRect.right) < 2 &&
-              Math.abs(parentRect.bottom - childRect.bottom) < 2;
-            
-            return sameDimensions;
-          });
-          return !hasDescendant;
-        });
-        
-        const labels = generateLabels(openKeyNav, allElements.length);
-        
-        allElements.forEach((element, index) => {
-          element.setAttribute('data-openkeynav-label', labels[index]);
-          const isInaccessible = inaccessible.includes(element);
-          const cssClass = isInaccessible ? 'debug-inaccessible' : null;
-          openKeyNav.createOverlay(element, labels[index], cssClass);
-        });
-      } else {
-        // Production mode: only show accessible elements
-        let clickables = allCandidates.filter(el => {
-          return isTabbable(el, openKeyNav);
-        });
 
-        // Filter out parent elements when child interactive elements exist
-        // This ensures only the innermost interactive element gets a label
-        // Only filter if parent and child occupy the same space (same bounding rect)
-        clickables = clickables.filter(element => {
-          // Check if any other clickable is a descendant of this element
-          const hasClickableDescendant = clickables.some(other => {
-            if (other === element || !element.contains(other)) return false;
-            
-            // Check if they occupy the same physical space
-            const parentRect = element.getBoundingClientRect();
-            const childRect = other.getBoundingClientRect();
-            
-            // Only filter out parent if child completely fills it
-            const sameDimensions = 
-              Math.abs(parentRect.top - childRect.top) < 2 &&
-              Math.abs(parentRect.left - childRect.left) < 2 &&
-              Math.abs(parentRect.right - childRect.right) < 2 &&
-              Math.abs(parentRect.bottom - childRect.bottom) < 2;
-            
-            return sameDimensions;
-          });
-          // Only keep this element if it has no clickable descendants in same space
-          return !hasClickableDescendant;
-        });
+      let clickables = allCandidates.filter(el => {
+        return isTabbable(el, openKeyNav);
+      });
 
-        const labels = generateLabels(openKeyNav, clickables.length);
+      // Prefer the innermost target when nested candidates occupy the same area.
+      clickables = clickables.filter(element => {
+        const hasClickableDescendant = clickables.some(other => {
+          if (other === element || !element.contains(other)) return false;
 
-        clickables.forEach((element, index) => {
-          element.setAttribute('data-openkeynav-label', labels[index]);
+          const parentRect = element.getBoundingClientRect();
+          const childRect = other.getBoundingClientRect();
+          return (
+            Math.abs(parentRect.top - childRect.top) < 2 &&
+            Math.abs(parentRect.left - childRect.left) < 2 &&
+            Math.abs(parentRect.right - childRect.right) < 2 &&
+            Math.abs(parentRect.bottom - childRect.bottom) < 2
+          );
         });
-        clickables.forEach((element, index) => {
-          openKeyNav.createOverlay(element, labels[index]);
-        });
-      }
+        return !hasClickableDescendant;
+      });
+
+      const labels = generateLabels(openKeyNav, clickables.length);
+
+      clickables.forEach((element, index) => {
+        element.setAttribute('data-openkeynav-label', labels[index]);
+      });
+      clickables.forEach((element, index) => {
+        openKeyNav.createOverlay(element, labels[index]);
+      });
     }, 0); // Use timeout to ensure the operation completes
 };
 

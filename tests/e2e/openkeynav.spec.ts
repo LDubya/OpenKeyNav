@@ -114,7 +114,7 @@ test.describe('OpenKeyNav E2E', () => {
     await page.screenshot({ path: path.join(artifactsDir, '06-heading-focus.png'), fullPage: true });
   });
 
-  test('debug mode in click mode shows inaccessible elements with red labels', async ({ page }) => {
+  test('debug mode preserves the published Click Mode diagnostics', async ({ page }) => {
     await page.goto(`file://${path.join(__dirname, '../../demo/demo.html')}`);
     await page.waitForFunction(() => window.OpenKeyNav !== undefined);
     
@@ -122,7 +122,7 @@ test.describe('OpenKeyNav E2E', () => {
     await page.keyboard.press('Shift+KeyO');
     await page.waitForTimeout(300);
     
-    // Enter click mode (k) - in debug mode this shows all elements
+    // Enter click mode (k).
     await page.keyboard.press('KeyK');
     await page.waitForTimeout(1000);
     
@@ -132,16 +132,22 @@ test.describe('OpenKeyNav E2E', () => {
     
     await page.screenshot({ path: path.join(artifactsDir, '07-debug-mode.png'), fullPage: true });
     
-    // Check for red (inaccessible) overlays
+    // The published debug behavior adds warning outlines and hover details to
+    // suspected candidates while retaining the regular Click Mode labels.
+    const inaccessibleCandidates = await page.locator('.openKeyNav-inaccessible').count();
+    expect(inaccessibleCandidates).toBeGreaterThan(0);
+
+    const outlinedLabels = await page.locator('.openKeyNav-label.openKeyNav-inaccessible').count();
+    expect(outlinedLabels).toBeGreaterThan(0);
+
     const inaccessibleOverlays = await page.locator('.openKeyNav-label.debug-inaccessible').count();
-    expect(inaccessibleOverlays).toBeGreaterThan(0);
-    
-    // Check toolbar shows debug info
+    expect(inaccessibleOverlays).toBe(0);
+
     const toolbar = await page.locator('.openKeyNav-toolBar').textContent();
     expect(toolbar).toContain('Click Mode');
-    expect(toolbar).toMatch(/Debug: \d+ inaccessible/);
-    
-    await page.screenshot({ path: path.join(artifactsDir, '08-debug-toolbar.png'), fullPage: true });
+    expect(toolbar).not.toMatch(/Debug: \d+ inaccessible/);
+
+    await page.screenshot({ path: path.join(artifactsDir, '08-debug-candidates.png'), fullPage: true });
     
     // Press Escape to exit
     await page.keyboard.press('Escape');
@@ -151,76 +157,26 @@ test.describe('OpenKeyNav E2E', () => {
     expect(overlaysAfter).toBe(0);
   });
 
-  test('debug mode shows persistent red outlines and audit panel on page load', async ({ page }) => {
+  test('debug configuration keeps page-wide audit UI inactive on enable', async ({ page }) => {
     await page.goto(`file://${path.join(__dirname, '../../demo/demo.html')}`);
     await page.waitForFunction(() => window.OpenKeyNav !== undefined);
-    
-    // Enable OpenKeyNav (this triggers the audit in debug mode)
-    await page.keyboard.press('Shift+KeyO');
-    await page.waitForTimeout(500); // Wait for audit to complete
-    
-    await page.screenshot({ path: path.join(artifactsDir, '09-audit-initial.png'), fullPage: true });
-    
-    // Check for audit panel
-    const panel = await page.locator('#okn-audit-panel');
-    await expect(panel).toBeVisible();
-    
-    const headerText = await panel.locator('div').first().textContent();
-    expect(headerText).toContain('Accessibility Audit');
-    expect(headerText).toMatch(/\d+\s+(Issue|Issues)/); // Should show count like "5 Issues Found"
-    
-    // Check for close button (now in separate toolbar)
-    const closeButton = await page.locator('button[aria-label="Close audit panel"]');
-    await expect(closeButton).toBeVisible();
-    
-    await page.screenshot({ path: path.join(artifactsDir, '10-audit-panel.png'), fullPage: true });
-    
-    // Check that inaccessible elements have red outlines (not in click mode)
-    const inaccessibleElements = await page.locator('.openKeyNav-inaccessible').count();
-    expect(inaccessibleElements).toBeGreaterThan(0);
-    
-    // Verify elements have red styling (check computed styles)
-    const firstInaccessible = page.locator('.openKeyNav-inaccessible').first();
-    const boxShadow = await firstInaccessible.evaluate(el => window.getComputedStyle(el).boxShadow);
-    expect(boxShadow).toContain('rgb(255, 0, 0)'); // Red color in box-shadow
-    
-    await page.screenshot({ path: path.join(artifactsDir, '11-audit-red-outlines.png'), fullPage: true });
-    
-    // Now enter click mode - should still work normally (already enabled from line 134)
-    await page.keyboard.press('KeyK');
-    await page.waitForTimeout(500);
-    
-    // Should see overlays
-    const overlays = await page.locator('.openKeyNav-label').count();
-    expect(overlays).toBeGreaterThan(0);
-    
-    await page.screenshot({ path: path.join(artifactsDir, '12-audit-click-mode.png'), fullPage: true });
-    
-    // Press Escape to exit
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
-  });
 
-  test('production mode - no audit panel or red outlines on enable', async ({ page }) => {
-    await page.goto(`file://${path.join(__dirname, '../../demo/productiondemo.html')}`);
-    await page.waitForFunction(() => window.OpenKeyNav !== undefined);
-    
-    // Enable OpenKeyNav
     await page.keyboard.press('Shift+KeyO');
     await page.waitForTimeout(500);
-    
-    // Audit panel should NOT appear
-    const panel = page.locator('#okn-audit-panel');
-    await expect(panel).not.toBeVisible();
-    
-    // Red outlines should NOT appear
-    const inaccessibleElements = await page.locator('.openKeyNav-inaccessible').count();
-    expect(inaccessibleElements).toBe(0);
-    
-    await page.screenshot({ path: path.join(artifactsDir, '13-production-no-audit.png'), fullPage: true });
+
+    await expect(page.locator('#okn-audit-panel')).toHaveCount(0);
+    await expect(page.locator('.openKeyNav-inaccessible')).toHaveCount(0);
+    await expect(page.locator('[data-openkeynav-inaccessible-reason]')).toHaveCount(0);
+
+    const bodyMarginLeft = await page.locator('body').evaluate(
+      element => window.getComputedStyle(element).marginLeft
+    );
+    expect(bodyMarginLeft).not.toBe('320px');
+
+    await page.screenshot({ path: path.join(artifactsDir, '09-debug-enable.png'), fullPage: true });
   });
 
-  test('production mode - click mode shows only accessible elements', async ({ page }) => {
+  test('keyboard diagnostics disabled - click mode uses standard labels', async ({ page }) => {
     await page.goto(`file://${path.join(__dirname, '../../demo/productiondemo.html')}`);
     await page.waitForFunction(() => window.OpenKeyNav !== undefined);
     
@@ -230,11 +186,13 @@ test.describe('OpenKeyNav E2E', () => {
     await page.keyboard.press('KeyK');
     await page.waitForTimeout(500);
     
-    // Should see overlays (accessible elements only)
+    // The same Click Mode candidates receive regular labels.
     const overlays = await page.locator('.openKeyNav-label').count();
     expect(overlays).toBeGreaterThan(0);
     
-    // Should NOT see red debug overlays
+    await expect(page.locator('.openKeyNav-label.openKeyNav-inaccessible')).toHaveCount(0);
+    await expect(page.locator('.openKeyNav-mouseover-tooltip')).toHaveCount(0);
+
     const redOverlays = await page.locator('.openKeyNav-label.debug-inaccessible').count();
     expect(redOverlays).toBe(0);
     
@@ -250,7 +208,9 @@ test.describe('OpenKeyNav E2E', () => {
   test('nested interactive elements - same dimensions show only innermost', async ({ page }) => {
     await page.goto(`file://${path.join(__dirname, '../../demo/demo.html')}`);
     await page.waitForFunction(() => window.OpenKeyNav !== undefined);
-    
+
+    await page.locator('#nested-button-outer').scrollIntoViewIfNeeded();
+
     // Enable OpenKeyNav
     await page.keyboard.press('Shift+KeyO');
     await page.waitForTimeout(300);
@@ -310,7 +270,9 @@ test.describe('OpenKeyNav E2E', () => {
   test('nested interactive elements - different dimensions show both', async ({ page }) => {
     await page.goto(`file://${path.join(__dirname, '../../demo/demo.html')}`);
     await page.waitForFunction(() => window.OpenKeyNav !== undefined);
-    
+
+    await page.locator('#nested-div-large').scrollIntoViewIfNeeded();
+
     // Enable OpenKeyNav
     await page.keyboard.press('Shift+KeyO');
     await page.waitForTimeout(300);
@@ -342,12 +304,14 @@ test.describe('OpenKeyNav E2E', () => {
     await page.screenshot({ path: path.join(artifactsDir, '17-nested-different-size.png'), fullPage: true });
   });
 
-  test('production mode - inaccessible elements are not flagged', async ({ page }) => {
+  test('keyboard diagnostics disabled - candidates are not flagged', async ({ page }) => {
     await page.goto(`file://${path.join(__dirname, '../../demo/productiondemo.html')}`);
     await page.waitForFunction(() => window.OpenKeyNav !== undefined);
     
-    // Enable OpenKeyNav
+    // Enable OpenKeyNav and enter Click Mode so candidate discovery runs.
     await page.keyboard.press('Shift+KeyO');
+    await page.waitForTimeout(300);
+    await page.keyboard.press('KeyK');
     await page.waitForTimeout(500);
     
     // Check that known inaccessible elements (bad-link, bad-button) are NOT flagged
@@ -361,6 +325,11 @@ test.describe('OpenKeyNav E2E', () => {
       el.hasAttribute('data-openkeynav-inaccessible-reason')
     );
     expect(hasInaccessibleAttr).toBe(false);
+
+    const hasClickModeLabel = await badLink.evaluate(el =>
+      el.hasAttribute('data-openkeynav-label')
+    );
+    expect(hasClickModeLabel).toBe(true);
     
     await page.screenshot({ path: path.join(artifactsDir, '15-production-no-flagging.png'), fullPage: true });
   });

@@ -25,7 +25,6 @@ var handleToolBar = exports.handleToolBar = function handleToolBar(openKeyNav_ob
     (0, _signals.effect)(function () {
       var modes = openKeyNav.config.modes;
       var typedLabel = openKeyNav.config.typedLabel.value;
-      var debugCount = openKeyNav.config.debug.inaccessibleCount.value;
       updateToolbar(toolBarElement, lastMessage);
     });
     (0, _signals.effect)(function () {
@@ -100,10 +99,6 @@ var toolbarTemplates = {
     return "<p>\n                    ".concat(menuButton, "\n                    ").concat(dragButton, "\n                    ").concat(clickButton, " \n                </p>\n            ");
   },
   clickMode: function clickMode() {
-    var count = openKeyNav.config.debug.inaccessibleCount.value;
-    if (openKeyNav.config.debug.keyboardAccessible && count > 0) {
-      return "<p>".concat((0, _keyButton.keyButton)(["Esc"], "Click Mode (Debug: ".concat(count, " inaccessible)")), "</p>");
-    }
     return "<p>".concat((0, _keyButton.keyButton)(["Esc"], "Click Mode"), "</p>");
   },
   dragMode: function dragMode() {
