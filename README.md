@@ -9,7 +9,7 @@ OpenKeyNav is an MIT-licensed JavaScript library for adding on-demand target lab
 
 [Live demo](https://openkeynav.com/#demo) · [Documentation](https://openkeynav.com/docs/getting_started/quick_start_guide) · [OpenKeyNav on npm](https://www.npmjs.com/package/openkeynav) · [GitHub](https://github.com/LDubya/OpenKeyNav)
 
-Featured in Harvard Innovation Labs' [*Harvard Startup Spotlight: OpenKeyNav*](https://www.youtube.com/watch?v=xIShByl7baE). OpenKeyNav is also the subject of [research presented at the AccessViz workshop at IEEE VIS 2024](https://osf.io/preprints/osf/3wjsa).
+Harvard Innovation Labs featured OpenKeyNav in a [video profile](https://www.youtube.com/watch?v=xIShByl7baE). OpenKeyNav is also the subject of [research presented at the AccessViz workshop at IEEE VIS 2024](https://osf.io/preprints/osf/3wjsa).
 
 ## Install and try OpenKeyNav
 
@@ -167,7 +167,7 @@ On non-localhost pages, `init()` sends a support event to `applicationsupport.op
 
 ## Research and recognition
 
-- Harvard Innovation Labs featured the project in [*Harvard Startup Spotlight: OpenKeyNav*](https://www.youtube.com/watch?v=xIShByl7baE) and an [OpenKeyNav creator profile](https://www.instagram.com/p/C_1Fl9GJSUq/).
+- Harvard Innovation Labs featured the project in an [OpenKeyNav video profile](https://www.youtube.com/watch?v=xIShByl7baE) and an [OpenKeyNav creator profile](https://www.instagram.com/p/C_1Fl9GJSUq/).
 - The preprint [*Using OpenKeyNav to Enhance the Keyboard-Accessibility of Web-based Data Visualization Tools*](https://osf.io/preprints/osf/3wjsa) was presented at the AccessViz workshop at IEEE VIS 2024. [Watch the AccessViz presentation](https://www.youtube.com/watch?v=qWbKjQ_Behk).
 - The preprint describes research funded by the National Institutes of Health through Harvard University's HIDIVE Lab.
 
