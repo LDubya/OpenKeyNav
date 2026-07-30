@@ -118,6 +118,31 @@ describe('keypress structural-mode arbitration', () => {
   });
 
   it.each([
+    {
+      label: 'k',
+      key: 'k',
+      modifiers: {},
+      expectedModifier: false,
+    },
+    {
+      label: 'Shift+K',
+      key: 'K',
+      modifiers: { shiftKey: true },
+      expectedModifier: true,
+    },
+  ])('opens Click Mode with $label', ({ key, modifiers, expectedModifier }) => {
+    openKeyNav = createOpenKeyNav();
+    const current = document.getElementById('current');
+    current.focus();
+
+    const event = dispatchKey(current, key, 'KeyK', modifiers);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(openKeyNav.config.modes.clicking.value).toBe(true);
+    expect(openKeyNav.config.modesConfig.click.modifier).toBe(expectedModifier);
+  });
+
+  it.each([
     { mode: 'clicking', activationKey: 'k', activationCode: 'KeyK' },
     { mode: 'moving', activationKey: 'm', activationCode: 'KeyM' },
     { mode: 'menu', activationKey: 'o', activationCode: 'KeyO' },

@@ -5,7 +5,7 @@
 
 OpenKeyNav is an MIT-licensed JavaScript library for adding on-demand target labels, direct keyboard navigation, and application-configured keyboard drag-and-drop to websites and web apps.
 
-[![Three-step Click Mode demonstration: enable OpenKeyNav shortcuts with Shift+O, press K to show labels beside four detected targets, then type d to select Juniper.](https://raw.githubusercontent.com/LDubya/OpenKeyNav/main/media/openkeynav-click-mode-steps.jpg)](https://openkeynav.com/#demo)
+[![Three-step Click Mode demonstration: enable OpenKeyNav shortcuts with Shift+O, press K to enter Click Mode and show labels beside four detected targets, then type d to select Juniper.](https://raw.githubusercontent.com/LDubya/OpenKeyNav/main/media/openkeynav-click-mode-steps.jpg)](https://openkeynav.com/#demo)
 
 [Live demo](https://openkeynav.com/#demo) · [Documentation](https://openkeynav.com/docs/getting_started/quick_start_guide) · [OpenKeyNav on npm](https://www.npmjs.com/package/openkeynav) · [GitHub](https://github.com/LDubya/OpenKeyNav)
 
@@ -63,7 +63,7 @@ The UMD build exposes `OpenKeyNav` as a browser global. Update the version pin d
 With focus outside an editable field:
 
 1. If OpenKeyNav shortcuts are off, press `Shift+o` to turn them on.
-2. Press `k` without `Shift` to label detected interactive targets.
+2. Press `k` to enter Click Mode.
 3. Type the label shown beside a target. OpenKeyNav focuses or activates the selected target as appropriate.
 4. Press `Escape` to leave the current mode.
 
