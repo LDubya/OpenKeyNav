@@ -5,6 +5,8 @@
 
 OpenKeyNav is an MIT-licensed JavaScript library for adding on-demand target labels, direct keyboard navigation, and application-configured keyboard drag-and-drop to websites and web apps.
 
+[![Three-step Click Mode demonstration: enable OpenKeyNav shortcuts with Shift+O, press K to show labels beside four detected targets, then type d to select Juniper.](https://raw.githubusercontent.com/LDubya/OpenKeyNav/main/media/openkeynav-click-mode-steps.jpg)](https://openkeynav.com/#demo)
+
 [Live demo](https://openkeynav.com/#demo) · [Documentation](https://openkeynav.com/docs/getting_started/quick_start_guide) · [OpenKeyNav on npm](https://www.npmjs.com/package/openkeynav) · [GitHub](https://github.com/LDubya/OpenKeyNav)
 
 Featured in Harvard Innovation Labs' [*Harvard Startup Spotlight: OpenKeyNav*](https://www.youtube.com/watch?v=xIShByl7baE). OpenKeyNav is also the subject of [research presented at the AccessViz workshop at IEEE VIS 2024](https://osf.io/preprints/osf/3wjsa).
