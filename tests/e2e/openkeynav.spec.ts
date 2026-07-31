@@ -133,7 +133,7 @@ test.describe('OpenKeyNav E2E', () => {
     await page.screenshot({ path: path.join(artifactsDir, '07-debug-mode.png'), fullPage: true });
     
     // The published debug behavior adds warning outlines and hover details to
-    // suspected candidates while retaining the regular Click Mode labels.
+    // focusability-review candidates while retaining the regular Click Mode labels.
     const inaccessibleCandidates = await page.locator('.openKeyNav-inaccessible').count();
     expect(inaccessibleCandidates).toBeGreaterThan(0);
 
@@ -314,7 +314,7 @@ test.describe('OpenKeyNav E2E', () => {
     await page.keyboard.press('KeyK');
     await page.waitForTimeout(500);
     
-    // Check that known inaccessible elements (bad-link, bad-button) are NOT flagged
+    // Check that known diagnostic candidates receive labels without warning markers.
     const badLink = page.locator('#bad-link');
     const hasInaccessibleClass = await badLink.evaluate(el => 
       el.classList.contains('openKeyNav-inaccessible')

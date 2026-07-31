@@ -73,12 +73,12 @@
       <a href="#link2">Link Two</a>
       <input type="text" placeholder="Text input" id="input1">
       
-      <!-- Inaccessible elements - should NOT be flagged in production -->
-      <a id="bad-link" style="background: #eee; padding: 5px; margin: 10px 0;">Link without href (inaccessible - not flagged)</a>
+      <!-- Diagnostic candidates - warning presentation is suppressed in production -->
+      <a id="bad-link" style="background: #eee; padding: 5px; margin: 10px 0;">Link without href (diagnostic warning suppressed)</a>
       <div id="bad-div" onclick="console.log('clicked')" style="cursor: pointer; padding: 10px; background: #eee; margin: 10px 0;">
-        Clickable div without role or tabindex (inaccessible - not flagged)
+        Clickable div without role or tabindex (diagnostic warning suppressed)
       </div>
-      <button id="bad-button" tabindex="-1">Button with tabindex -1 (inaccessible - not flagged)</button>
+      <button id="bad-button" tabindex="-1">Button with tabindex -1 (diagnostic warning suppressed)</button>
     </div>
 
     <div class="column">

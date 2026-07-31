@@ -1,7 +1,7 @@
 {
   "name": "openkeynav",
   "version": "0.1.234",
-  "description": "OpenKeyNav: A JavaScript plugin for enhancing keyboard navigation and accessibility on web pages.",
+  "description": "Add direct keyboard operation, navigation, and configured drag-and-drop to websites and web apps.",
   "main": "openkeynav.cjs",
   "repository": {
     "type": "git",
@@ -32,6 +32,10 @@
     "a11y",
     "plugin",
     "WCAG",
+    "ADA",
+    "keyboard-interface",
+    "keyboard-operability",
+    "keyboard-accessibility",
     "web",
     "JavaScript",
     "interaction",

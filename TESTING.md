@@ -110,7 +110,7 @@ npm run test:ci && npm run test:e2e
 **Configuration:** `debug.keyboardAccessible: true`
 **Demo:** `demo/demo.html`
 
-When Click Mode's heuristic identifies a likely mouse-clickable target that cannot receive focus, `flagAsInaccessible()` adds the `.openKeyNav-inaccessible` class, a reason attribute, warning outline styling, and hover details to the target and its regular label. These results are development guidance and still require manual accessibility testing.
+When Click Mode's heuristic identifies a likely pointer action without a conventional keyboard focus stop, `flagAsInaccessible()` adds the legacy `.openKeyNav-inaccessible` class, a reason attribute, warning outline styling, and hover details to the target and its regular label. Click Mode retains the target for direct selection. These results are focused development guidance and still require manual accessibility testing.
 
 ### Diagnostics disabled
 **Configuration:** `debug.keyboardAccessible: false`
@@ -152,7 +152,7 @@ tests/
 ├── isTabbable.test.js      # Unit: element filtering
 ├── overlayPosition.test.js # Unit: positioning logic
 ├── removeOverlays.test.js  # Unit: cleanup
-└── flagAsInaccessible.test.js # Unit: a11y warnings
+└── flagAsInaccessible.test.js # Unit: focusability review markers
 
 demo/
 ├── demo.html              # Debug mode demo (debug.keyboardAccessible: true)

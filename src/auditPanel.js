@@ -1,5 +1,5 @@
 /**
- * Creates and manages the accessibility audit panel UI with Figma-style design
+ * Creates and manages the focused keyboard-review panel UI.
  */
 export function showAuditPanel(inaccessibleElements) {
   // Remove existing panel if present
@@ -53,14 +53,14 @@ export function showAuditPanel(inaccessibleElements) {
   headerTitle.style.textTransform = 'uppercase';
   headerTitle.style.letterSpacing = '0.5px';
   headerTitle.style.marginBottom = '4px';
-  headerTitle.textContent = 'Accessibility Audit';
+  headerTitle.textContent = 'Keyboard Focus Review';
   
   const issueCount = document.createElement('div');
   issueCount.style.fontSize = '18px';
   issueCount.style.fontWeight = '600';
   issueCount.style.color = '#ef4444';
   issueCount.style.marginBottom = '12px';
-  issueCount.textContent = `${inaccessibleElements.length} ${inaccessibleElements.length === 1 ? 'Issue' : 'Issues'} Found`;
+  issueCount.textContent = `${inaccessibleElements.length} ${inaccessibleElements.length === 1 ? 'Item' : 'Items'} to Review`;
   
   // Development mode notice
   const devNotice = document.createElement('div');
@@ -79,7 +79,7 @@ export function showAuditPanel(inaccessibleElements) {
   devNotice.style.borderRadius = '4px';
   devNotice.style.marginTop = '8px';
   devNotice.style.lineHeight = '1.5';
-  devNotice.innerHTML = '💡 <strong>Development Mode</strong><br>OpenKeyNav is running in debug mode with keyboard accessibility audit enabled.';
+  devNotice.innerHTML = '💡 <strong>Development Mode</strong><br>This heuristic review identifies likely pointer actions without a conventional keyboard focus stop.';
   
   // Close button in header
   const closeBtn = document.createElement('button');
@@ -95,7 +95,7 @@ export function showAuditPanel(inaccessibleElements) {
   closeBtn.style.padding = '4px 8px';
   closeBtn.style.borderRadius = '4px';
   closeBtn.style.transition = 'background-color 0.2s';
-  closeBtn.setAttribute('aria-label', 'Close audit panel');
+  closeBtn.setAttribute('aria-label', 'Close keyboard focus review');
   closeBtn.onmouseenter = () => closeBtn.style.backgroundColor = '#e5e7eb';
   closeBtn.onmouseleave = () => closeBtn.style.backgroundColor = 'transparent';
   closeBtn.addEventListener('click', () => {
@@ -132,7 +132,7 @@ export function showAuditPanel(inaccessibleElements) {
   infoContent.style.lineHeight = '1.6';
   infoContent.style.marginTop = '8px';
   infoContent.innerHTML = `
-    <p style="margin: 0 0 8px 0;"><strong>OpenKeyNav</strong> adds keyboard shortcuts to navigate web pages efficiently.</p>
+    <p style="margin: 0 0 8px 0;"><strong>OpenKeyNav</strong> adds on-demand keyboard operation and navigation modes to websites and web apps.</p>
     <p style="margin: 0 0 8px 0;"><strong>Common shortcuts:</strong></p>
     <ul style="margin: 0; padding-left: 16px;">
       <li><kbd style="background: #fff; padding: 2px 4px; border-radius: 2px; font-family: monospace;">Shift+O</kbd> Enable/disable</li>
@@ -154,7 +154,7 @@ export function showAuditPanel(inaccessibleElements) {
   issuesLabel.style.color = '#9ca3af';
   issuesLabel.style.textTransform = 'uppercase';
   issuesLabel.style.letterSpacing = '0.5px';
-  issuesLabel.textContent = 'Issues';
+  issuesLabel.textContent = 'Review items';
   
   const sidebarContent = document.createElement('div');
   sidebarContent.style.flex = '1';
@@ -207,7 +207,7 @@ export function showAuditPanel(inaccessibleElements) {
     description.style.fontSize = '12px';
     description.style.color = '#6b7280';
     description.style.marginLeft = '28px';
-    description.textContent = 'Not keyboard accessible';
+    description.textContent = 'Review conventional keyboard access';
 
     // Details panel (hidden by default) to show why it matters and how to fix
     const details = document.createElement('div');
@@ -222,9 +222,9 @@ export function showAuditPanel(inaccessibleElements) {
 
     const reason = el.getAttribute('data-openkeynav-inaccessible-reason') || 'No details available.';
     details.innerHTML = `
-      <div style="font-weight:600; color:#ef4444; margin-bottom:6px;">Why it matters</div>
+      <div style="font-weight:600; color:#ef4444; margin-bottom:6px;">What OpenKeyNav detected</div>
       <div style="margin-bottom:10px;">${reason}</div>
-      <div style="font-weight:600; color:#3b82f6; margin-bottom:6px;">How to fix</div>
+      <div style="font-weight:600; color:#3b82f6; margin-bottom:6px;">Suggested review</div>
       <div>${getFixSuggestion(el)}</div>
     `;
 

@@ -2,8 +2,8 @@ import { isTabbable } from './isTabbable.js';
 import { showAuditPanel } from './auditPanel.js';
 
 /**
- * Runs accessibility audit on the page
- * Checks all interactive elements for keyboard accessibility
+ * Runs a focused keyboard review on the page.
+ * Uses heuristics to find likely pointer actions without a conventional focus stop.
  * @param {Object} openKeyNav - The OpenKeyNav instance
  */
 export function runAccessibilityAudit(openKeyNav) {
@@ -47,7 +47,7 @@ export function runAccessibilityAudit(openKeyNav) {
     openKeyNav.config.debug.screenReaderVisible = true;
     try {
       elements.forEach((el) => {
-        // Call isTabbable which will flag inaccessible elements as a side effect
+        // Call isTabbable, which records focused-review candidates as a side effect.
         isTabbable(el, openKeyNav);
 
         // After calling isTabbable, check if it was flagged as inaccessible
@@ -56,7 +56,7 @@ export function runAccessibilityAudit(openKeyNav) {
         }
       });
     } catch (error) {
-      console.error('[OpenKeyNav Audit] Error during element check:', error);
+      console.error('[OpenKeyNav Keyboard Review] Error during element check:', error);
     } finally {
       openKeyNav._auditIncludeOffscreen = prevAuditFlag;
       openKeyNav.config.debug.screenReaderVisible = prevScreenReaderVisible;
@@ -68,11 +68,11 @@ export function runAccessibilityAudit(openKeyNav) {
     // Log to console
     if (inaccessibleElements.length > 0) {
       console.warn(
-        `[OpenKeyNav Audit] Found ${inaccessibleElements.length} inaccessible interactive elements:`,
+        `[OpenKeyNav Keyboard Review] Found ${inaccessibleElements.length} likely pointer actions without a conventional keyboard focus stop:`,
         inaccessibleElements
       );
     } else {
-      console.log('[OpenKeyNav Audit] All interactive elements are keyboard accessible!');
+      console.log('[OpenKeyNav Keyboard Review] No likely pointer actions without a conventional keyboard focus stop were detected. Continue manual workflow testing.');
     }
     
     // Show audit panel if issues found

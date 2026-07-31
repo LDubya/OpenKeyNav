@@ -95,7 +95,7 @@ describe('isTabbable', () => {
       expect(isTabbable(el, openKeyNav)).toBe(true);
     });
 
-    it('flags button with tabindex=-1 as inaccessible', () => {
+    it('flags button with tabindex=-1 for keyboard focus review', () => {
       const el = document.createElement('button');
       el.setAttribute('tabindex', '-1');
       document.body.appendChild(el);
@@ -104,12 +104,12 @@ describe('isTabbable', () => {
       
       expect(openKeyNav.flagAsInaccessible).toHaveBeenCalledWith(
         el,
-        expect.stringContaining('not keyboard-focusable'),
+        expect.stringContaining('sequential keyboard navigation does not reach it'),
         'keyboard'
       );
     });
 
-    it('flags anchor with tabindex=-1 as inaccessible', () => {
+    it('flags anchor with tabindex=-1 for keyboard focus review', () => {
       const el = document.createElement('a');
       el.setAttribute('href', '#test');
       el.setAttribute('tabindex', '-1');
@@ -129,7 +129,7 @@ describe('isTabbable', () => {
       expect(isTabbable(el, openKeyNav)).toBe(true);
     });
 
-    it('flags anchor without href as inaccessible', () => {
+    it('flags anchor without href for interaction review', () => {
       const el = document.createElement('a');
       document.body.appendChild(el);
       
@@ -137,12 +137,12 @@ describe('isTabbable', () => {
       
       expect(openKeyNav.flagAsInaccessible).toHaveBeenCalledWith(
         el,
-        expect.stringContaining('Inaccessible Button'),
+        expect.stringContaining('Anchor Interaction Review'),
         'keyboard'
       );
     });
 
-    it('flags anchor with empty href as inaccessible', () => {
+    it('flags anchor with empty href for interaction review', () => {
       const el = document.createElement('a');
       el.setAttribute('href', '');
       document.body.appendChild(el);
@@ -253,7 +253,7 @@ describe('isTabbable', () => {
   });
 
   describe('click event detection', () => {
-    it('flags div with non-interactive role and click event as inaccessible', () => {
+    it('flags div with non-interactive role and click event for pointer-action review', () => {
       const el = document.createElement('div');
       el.setAttribute('role', 'group'); // non-interactive role
       document.body.appendChild(el);
@@ -265,7 +265,7 @@ describe('isTabbable', () => {
       
       expect(mockOKN.flagAsInaccessible).toHaveBeenCalledWith(
         el,
-        expect.stringContaining('Possibly Inaccessible Clickable Element'),
+        expect.stringContaining('Pointer Action Review'),
         'keyboard'
       );
     });

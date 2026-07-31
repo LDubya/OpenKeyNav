@@ -139,12 +139,13 @@ var isTabbable = exports.isTabbable = function isTabbable(el, openKeyNav) {
     }
   }
 
-  // lastly, elements that are inaccessible due to not being tabbable
+  // Lastly, flag likely pointer actions that do not have a conventional Tab stop.
+  // Keep them in Click Mode so OpenKeyNav can still provide direct keyboard operation.
 
   if (tabIndex && parseInt(tabIndex, 10) == -1) {
     if (isTypicallyClickableElement(el)) {
       // if (openKeyNav.config.modes.clicking.value) {
-      openKeyNav.flagAsInaccessible(el, "\n            <h2>Inaccessible Element</h2>\n            <h3>Problem: </h3>\n            <p>This element is not keyboard-focusable.</p>\n            <h3>Solution: </h3>\n            <p>Since this element has a tabindex attribute set to -1, it cannot be keyboard focusable.</p>\n            <p>It must have a tabindex set to a value &gt; -1, ideally 0.</p>\n            <p>You can ignore this warning if this element is not meant to be clickable.</p>\n            ", "keyboard");
+      openKeyNav.flagAsInaccessible(el, "\n            <h2>Keyboard Focus Review</h2>\n            <h3>Detected</h3>\n            <p>This action uses <code>tabindex=\"-1\"</code>, so sequential keyboard navigation does not reach it.</p>\n            <p>OpenKeyNav Click Mode can still label and activate this target directly.</p>\n            <h3>Review</h3>\n            <p>Confirm the target's semantics, accessible name, focus behavior, and every keyboard path through the complete workflow.</p>\n            <p>When this action should participate in sequential focus navigation, use the appropriate native control or a <code>tabindex</code> value of <code>0</code>.</p>\n            ", "keyboard");
       // }
     }
 
@@ -159,7 +160,7 @@ var isTabbable = exports.isTabbable = function isTabbable(el, openKeyNav) {
       if (!el.hasAttribute('href') || el.getAttribute('href') === '') {
         if (!interactiveRoles.includes(role)) {
           // if (openKeyNav.config.modes.clicking.value) {
-          openKeyNav.flagAsInaccessible(el, "\n                <h2>Inaccessible Button</h2>\n                <h3>Problem: </h3>\n                <p>This clickable button is not keyboard-focusable.</p>\n                <p>As a result, only mouse users can click on it.</p>\n                <p>This usability disparity can create an accessibility barrier.</p>\n                <h3>Solution: </h3>\n                <p>Since it is an anchor tag (&lt;a&gt;), it needs a non-empty <em>href</em> attribute.</p>\n                <p>Alternatively, it needs an ARIA <em>role</em> attribute set to something like 'button' or 'link' AND a tabindex attribute set to a value &gt; -1, ideally 0.</p>\n                ", "keyboard");
+          openKeyNav.flagAsInaccessible(el, "\n                <h2>Anchor Interaction Review</h2>\n                <h3>Detected</h3>\n                <p>This anchor has no link destination or interactive role, so browsers do not expose it as a conventional keyboard control.</p>\n                <p>OpenKeyNav Click Mode can still label and activate this target directly.</p>\n                <h3>Review</h3>\n                <p>Use an anchor with a non-empty <code>href</code> for navigation. Use a native <code>&lt;button&gt;</code> for an action, or implement the complete semantics and keyboard behavior of the intended control.</p>\n                ", "keyboard");
           // return false;
           // }
         }
@@ -180,7 +181,7 @@ var isTabbable = exports.isTabbable = function isTabbable(el, openKeyNav) {
         var fromClickEvents = "";
         if (openKeyNav.config.modesConfig.click.clickEventElements.has(el)) {
           fromClickEvents = "fromClickEvents";
-          openKeyNav.flagAsInaccessible(el, "\n              <!--\n                !el(a,button,textarea,select,input,iframe,summary)\n                !el[role('button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio')]\n                fromClickEvents\n              -->\n              <h2>Possibly Inaccessible Clickable Element</h2>\n              <h3>Problem: </h3>\n              <p>This element has a mouse click event handler attached to it, but it is not keyboard-focusable.</p>\n              <p>As a result, only mouse users can click on it.</p>\n              <p>This usability disparity can create an accessibility barrier.</p>\n              <h3>Solution Options: </h3>\n              <ol>\n                <li>\n                  <p>If clicking this element takes the user to a different location, convert this element to an anchor link (&lt;a&gt;) with a non-empty <em>href</em> attribute.</p>\n                </li>\n                <li>\n                  <p>Otherwise if clicking this element triggers an action on the page, convert this element to a &lt;button&gt; without a <em>disabled</em> attribute.</p>\n                  <p>Alternatively, it needs an ARIA <em>role</em> attribute set to something like 'button' or 'link' AND a tabindex attribute set to a value &gt; -1, ideally 0.</p>\n                </li>\n                <li>\n                  <p>Otherwise, if clicking this element does not do anything, then consider removing the click event handler attached to this element.</p>\n                </li>\n              </ol>\n              ", "keyboard");
+          openKeyNav.flagAsInaccessible(el, "\n              <!--\n                !el(a,button,textarea,select,input,iframe,summary)\n                !el[role('button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio')]\n                fromClickEvents\n              -->\n              <h2>Pointer Action Review</h2>\n              <h3>Detected</h3>\n              <p>This element has a click handler without a conventional keyboard focus stop.</p>\n              <p>OpenKeyNav Click Mode can provide direct keyboard selection when it detects the target.</p>\n              <h3>Review options</h3>\n              <ol>\n                <li>\n                  <p>For navigation, use an anchor link (&lt;a&gt;) with a non-empty <em>href</em> attribute.</p>\n                </li>\n                <li>\n                  <p>For an action, use a native &lt;button&gt; or implement the complete semantics, focus behavior, and keyboard commands of the intended control.</p>\n                </li>\n                <li>\n                  <p>Remove click handlers that do not provide user-facing functionality.</p>\n                </li>\n              </ol>\n              ", "keyboard");
         }
         // return false;
         // }

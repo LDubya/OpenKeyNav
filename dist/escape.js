@@ -11,7 +11,7 @@ var handleEscape = exports.handleEscape = function handleEscape(openKeyNav, e) {
     e.preventDefault();
     e.stopPropagation();
     if (openKeyNav.config.modes.moving.value && openKeyNav.config.modesConfig.move.selectedMoveable) {
-      (0, _dragAndDrop.endDrag)(openKeyNav);
+      (0, _dragAndDrop.cancelDrag)(openKeyNav);
     }
     openKeyNav.removeOverlays();
     openKeyNav.clearMoveAttributes();

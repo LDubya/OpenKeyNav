@@ -230,6 +230,44 @@ export const endDrag = (openKeyNav, targetElement) => {
     targetElement.dispatchEvent(touchEndEvent);
 };
 
+/**
+ * End an in-progress simulated drag without choosing a destination.
+ *
+ * Escape must not reuse endDrag(): its default destination is document.body,
+ * which dispatches a drop and can turn a cancellation command into a move.
+ * A dragend event gives integrations a cleanup signal while preserving the
+ * user's decision not to complete the operation.
+ */
+export const cancelDrag = openKeyNav => {
+    const sourceElement = openKeyNav.config.modesConfig.move.selectedMoveable;
+    if (!sourceElement) return false;
+
+    const dataTransfer = typeof DataTransfer === 'undefined'
+      ? null
+      : new DataTransfer();
+    const eventOptions = {
+      bubbles: true,
+      cancelable: false
+    };
+
+    let dragEndEvent;
+    if (typeof DragEvent === 'undefined') {
+      dragEndEvent = new Event('dragend', eventOptions);
+    } else {
+      dragEndEvent = new DragEvent('dragend', {
+        ...eventOptions,
+        dataTransfer
+      });
+    }
+
+    if (dataTransfer) {
+      Object.defineProperty(dragEndEvent, 'dataTransfer', { value: dataTransfer });
+    }
+
+    sourceElement.dispatchEvent(dragEndEvent);
+    return true;
+};
+
 export const beginDrag = (openKeyNav) => {
     const sourceElement = openKeyNav.config.modesConfig.move.selectedMoveable;
     const rectSource = sourceElement.getBoundingClientRect();

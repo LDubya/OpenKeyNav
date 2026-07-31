@@ -36,12 +36,12 @@ import OpenKeyNav from '/path/to/openKeyNav';
 
 OpenKeyNav.init();
 
-# then press g when you are not in a text input mode
-# to label the tab-accessible elements that have indicated they are buttons.
-# Press the key combinations on the labels to "click" their respective buttons
+# then press k when you are not in a text input mode
+# to label detected targets for direct keyboard selection.
+# Press the key combinations on the labels to focus or activate their targets.
 
-# you can press h to navigate through headers within the viewport
-# You can also press or 1,2,3,4,5,6 to navigate through headers of the respective level
+# you can press h to navigate through headings within the viewport
+# You can also press 1,2,3,4,5,6 to navigate through headings of the respective level
 
 
 OpenKeyNav.init({
@@ -60,14 +60,14 @@ OpenKeyNav.init({
         escape : 'q', // alternative escape key, for when escape key is too far or not available. // q works great because top left of letters, plus removes confusion with g, p
         click : 'k', // enter click mode, to click on clickable elements
         mouseOver : 'v', // toggle a mouseover event for an applicable element. In many cases this should trigger opening mouseover menus, etc // not yet wired
-        move : 'm', // enter move mode, to move elements from and to, aka keyboard drag and drop // not yet fully wired
+        move : 'm', // enter move mode for configured keyboard movement and drag-and-drop workflows
         scroll : 's', // focus on the next scrollable region
         heading : 'h', // focus on the next heading // as seen in JAWS, NVDA
         textBlock : 'n', // focus on the next block of text // as seen in JAWS, NVDA // not yet fully wired
         landmarkRegion : 'd', // focus on the next landmark region // as seen in NVDA // not yet fully wired
         formField : 'f', // move to the next form field // as seen in NVDA // not yet fully wired
     },
-    move: { // not yet fully wired, but would facilitate drag and drop
+    move: { // configuration for keyboard movement and drag-and-drop workflows
         config : [
             {
                 fromContainer: ".classContainerFrom1",
@@ -115,7 +115,7 @@ class OpenKeyNav {
           escape: 'q', // alternative escape key, for when escape key is too far or not available. // q works great because top left of letters, plus removes confusion with g, p
           click: 'k', // enter click mode, to click on clickable elements, such as links. Was g, now k, for kanga. Plus NVDA uses k to focus on link elements, which prevents conflicting modes as it's either openkeynav or NVDA.
           scroll: 's', // focus on the next scrollable region
-          move: 'm', // enter move mode, to move elements from and to, aka keyboard drag and drop // not yet fully wired
+          move: 'm', // enter move mode for configured keyboard movement and drag-and-drop workflows
           heading: 'h', // focus on the next heading // as seen in JAWS, NVDA
           textBlock: 'n', // focus on the next block of text // as seen in JAWS, NVDA // not yet fully wired
           landmarkRegion: 'd', // focus on the next landmark region // as seen in NVDA // not yet fully wired
@@ -129,7 +129,7 @@ class OpenKeyNav {
           heading_6: '6', // focus on the next heading of level 6 // as seen in JAWS, NVDA // do not modify
           structuralNavigation: 'r', // enter/exit structural focus navigation ("route" mode)
           menu: 'o',
-          audit: 'a', // enter audit mode to check keyboard accessibility
+          audit: 'a', // run the focused keyboard review heuristic
           inputEscape: 'ctrlKey', // for escaping input to trigger a command
           modifierKey: 'shiftKey' // one of: [altKey, shiftKey, metaKey] // useful for on/off switch. Avoid ctrlKey, which is used to escape input.
         },

@@ -165,6 +165,33 @@ describe('keypress structural-mode arbitration', () => {
     expect(document.activeElement).toBe(current);
   });
 
+  it('cancels a selected Move Mode source without dispatching a drop', () => {
+    openKeyNav = createOpenKeyNav();
+    const current = document.getElementById('current');
+    const selectedMoveable = document.getElementById('next');
+    current.focus();
+
+    openKeyNav.config.modes.moving.value = true;
+    openKeyNav.config.modesConfig.move.selectedMoveable = selectedMoveable;
+    selectedMoveable.setAttribute('data-openkeynav-moveconfig', '0');
+    selectedMoveable.setAttribute('data-openkeynav-draggable', 'true');
+
+    const dragEndListener = vi.fn();
+    const dropListener = vi.fn();
+    selectedMoveable.addEventListener('dragend', dragEndListener);
+    document.body.addEventListener('drop', dropListener);
+
+    const event = dispatchKey(current, 'Escape', 'Escape');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(dragEndListener).toHaveBeenCalledTimes(1);
+    expect(dropListener).not.toHaveBeenCalled();
+    expect(openKeyNav.config.modes.moving.value).toBe(false);
+    expect(openKeyNav.config.modesConfig.move.selectedMoveable).toBe(false);
+    expect(selectedMoveable.hasAttribute('data-openkeynav-moveconfig')).toBe(false);
+    expect(selectedMoveable.hasAttribute('data-openkeynav-draggable')).toBe(false);
+  });
+
   it.each([
     { mode: 'clicking', activationKey: 'k', activationCode: 'KeyK' },
     { mode: 'moving', activationKey: 'm', activationCode: 'KeyM' },

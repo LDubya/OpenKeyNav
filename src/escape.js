@@ -1,4 +1,4 @@
-import { endDrag } from "./dragAndDrop";
+import { cancelDrag } from "./dragAndDrop";
 
 export const handleEscape = (openKeyNav, e) => {
 
@@ -14,7 +14,7 @@ export const handleEscape = (openKeyNav, e) => {
         openKeyNav.config.modes.moving.value &&
         openKeyNav.config.modesConfig.move.selectedMoveable
       ) {
-        endDrag(openKeyNav);
+        cancelDrag(openKeyNav);
       }
       openKeyNav.removeOverlays();
       openKeyNav.clearMoveAttributes();

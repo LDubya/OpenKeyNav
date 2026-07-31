@@ -189,10 +189,62 @@
 
 	var dragAndDrop = {};
 
+	function _typeof$3(o) {
+	  "@babel/helpers - typeof";
+
+	  return _typeof$3 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+	    return typeof o;
+	  } : function (o) {
+	    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+	  }, _typeof$3(o);
+	}
 	Object.defineProperty(dragAndDrop, "__esModule", {
 	  value: true
 	});
-	dragAndDrop.simulateDragAndDrop = dragAndDrop.endDrag = dragAndDrop.beginDrag = void 0;
+	dragAndDrop.simulateDragAndDrop = dragAndDrop.endDrag = dragAndDrop.cancelDrag = dragAndDrop.beginDrag = void 0;
+	function ownKeys(e, r) {
+	  var t = Object.keys(e);
+	  if (Object.getOwnPropertySymbols) {
+	    var o = Object.getOwnPropertySymbols(e);
+	    r && (o = o.filter(function (r) {
+	      return Object.getOwnPropertyDescriptor(e, r).enumerable;
+	    })), t.push.apply(t, o);
+	  }
+	  return t;
+	}
+	function _objectSpread(e) {
+	  for (var r = 1; r < arguments.length; r++) {
+	    var t = null != arguments[r] ? arguments[r] : {};
+	    r % 2 ? ownKeys(Object(t), true).forEach(function (r) {
+	      _defineProperty(e, r, t[r]);
+	    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) {
+	      Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+	    });
+	  }
+	  return e;
+	}
+	function _defineProperty(e, r, t) {
+	  return (r = _toPropertyKey$2(r)) in e ? Object.defineProperty(e, r, {
+	    value: t,
+	    enumerable: true,
+	    configurable: true,
+	    writable: true
+	  }) : e[r] = t, e;
+	}
+	function _toPropertyKey$2(t) {
+	  var i = _toPrimitive$2(t, "string");
+	  return "symbol" == _typeof$3(i) ? i : i + "";
+	}
+	function _toPrimitive$2(t, r) {
+	  if ("object" != _typeof$3(t) || !t) return t;
+	  var e = t[Symbol.toPrimitive];
+	  if (void 0 !== e) {
+	    var i = e.call(t, r);
+	    if ("object" != _typeof$3(i)) return i;
+	    throw new TypeError("@@toPrimitive must return a primitive value.");
+	  }
+	  return ("string" === r ? String : Number)(t);
+	}
 	function _createForOfIteratorHelper$2(r, e) {
 	  var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
 	  if (!t) {
@@ -475,6 +527,39 @@
 	  targetElement.dispatchEvent(mouseUpEvent);
 	  targetElement.dispatchEvent(touchEndEvent);
 	};
+
+	/**
+	 * End an in-progress simulated drag without choosing a destination.
+	 *
+	 * Escape must not reuse endDrag(): its default destination is document.body,
+	 * which dispatches a drop and can turn a cancellation command into a move.
+	 * A dragend event gives integrations a cleanup signal while preserving the
+	 * user's decision not to complete the operation.
+	 */
+	dragAndDrop.cancelDrag = function cancelDrag(openKeyNav) {
+	  var sourceElement = openKeyNav.config.modesConfig.move.selectedMoveable;
+	  if (!sourceElement) return false;
+	  var dataTransfer = typeof DataTransfer === 'undefined' ? null : new DataTransfer();
+	  var eventOptions = {
+	    bubbles: true,
+	    cancelable: false
+	  };
+	  var dragEndEvent;
+	  if (typeof DragEvent === 'undefined') {
+	    dragEndEvent = new Event('dragend', eventOptions);
+	  } else {
+	    dragEndEvent = new DragEvent('dragend', _objectSpread(_objectSpread({}, eventOptions), {}, {
+	      dataTransfer: dataTransfer
+	    }));
+	  }
+	  if (dataTransfer) {
+	    Object.defineProperty(dragEndEvent, 'dataTransfer', {
+	      value: dataTransfer
+	    });
+	  }
+	  sourceElement.dispatchEvent(dragEndEvent);
+	  return true;
+	};
 	var beginDrag = dragAndDrop.beginDrag = function beginDrag(openKeyNav) {
 	  var sourceElement = openKeyNav.config.modesConfig.move.selectedMoveable;
 	  var rectSource = sourceElement.getBoundingClientRect();
@@ -544,7 +629,7 @@
 	    e.preventDefault();
 	    e.stopPropagation();
 	    if (openKeyNav.config.modes.moving.value && openKeyNav.config.modesConfig.move.selectedMoveable) {
-	      (0, _dragAndDrop.endDrag)(openKeyNav);
+	      (0, _dragAndDrop.cancelDrag)(openKeyNav);
 	    }
 	    openKeyNav.removeOverlays();
 	    openKeyNav.clearMoveAttributes();
@@ -811,12 +896,13 @@
 	    }
 	  }
 
-	  // lastly, elements that are inaccessible due to not being tabbable
+	  // Lastly, flag likely pointer actions that do not have a conventional Tab stop.
+	  // Keep them in Click Mode so OpenKeyNav can still provide direct keyboard operation.
 
 	  if (tabIndex && parseInt(tabIndex, 10) == -1) {
 	    if (isTypicallyClickableElement(el)) {
 	      // if (openKeyNav.config.modes.clicking.value) {
-	      openKeyNav.flagAsInaccessible(el, "\n            <h2>Inaccessible Element</h2>\n            <h3>Problem: </h3>\n            <p>This element is not keyboard-focusable.</p>\n            <h3>Solution: </h3>\n            <p>Since this element has a tabindex attribute set to -1, it cannot be keyboard focusable.</p>\n            <p>It must have a tabindex set to a value &gt; -1, ideally 0.</p>\n            <p>You can ignore this warning if this element is not meant to be clickable.</p>\n            ", "keyboard");
+	      openKeyNav.flagAsInaccessible(el, "\n            <h2>Keyboard Focus Review</h2>\n            <h3>Detected</h3>\n            <p>This action uses <code>tabindex=\"-1\"</code>, so sequential keyboard navigation does not reach it.</p>\n            <p>OpenKeyNav Click Mode can still label and activate this target directly.</p>\n            <h3>Review</h3>\n            <p>Confirm the target's semantics, accessible name, focus behavior, and every keyboard path through the complete workflow.</p>\n            <p>When this action should participate in sequential focus navigation, use the appropriate native control or a <code>tabindex</code> value of <code>0</code>.</p>\n            ", "keyboard");
 	      // }
 	    }
 
@@ -831,7 +917,7 @@
 	      if (!el.hasAttribute('href') || el.getAttribute('href') === '') {
 	        if (!interactiveRoles.includes(role)) {
 	          // if (openKeyNav.config.modes.clicking.value) {
-	          openKeyNav.flagAsInaccessible(el, "\n                <h2>Inaccessible Button</h2>\n                <h3>Problem: </h3>\n                <p>This clickable button is not keyboard-focusable.</p>\n                <p>As a result, only mouse users can click on it.</p>\n                <p>This usability disparity can create an accessibility barrier.</p>\n                <h3>Solution: </h3>\n                <p>Since it is an anchor tag (&lt;a&gt;), it needs a non-empty <em>href</em> attribute.</p>\n                <p>Alternatively, it needs an ARIA <em>role</em> attribute set to something like 'button' or 'link' AND a tabindex attribute set to a value &gt; -1, ideally 0.</p>\n                ", "keyboard");
+	          openKeyNav.flagAsInaccessible(el, "\n                <h2>Anchor Interaction Review</h2>\n                <h3>Detected</h3>\n                <p>This anchor has no link destination or interactive role, so browsers do not expose it as a conventional keyboard control.</p>\n                <p>OpenKeyNav Click Mode can still label and activate this target directly.</p>\n                <h3>Review</h3>\n                <p>Use an anchor with a non-empty <code>href</code> for navigation. Use a native <code>&lt;button&gt;</code> for an action, or implement the complete semantics and keyboard behavior of the intended control.</p>\n                ", "keyboard");
 	          // return false;
 	          // }
 	        }
@@ -847,7 +933,7 @@
 	    default:
 	      if (!!role && !interactiveRoles.includes(role)) {
 	        if (openKeyNav.config.modesConfig.click.clickEventElements.has(el)) {
-	          openKeyNav.flagAsInaccessible(el, "\n              <!--\n                !el(a,button,textarea,select,input,iframe,summary)\n                !el[role('button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio')]\n                fromClickEvents\n              -->\n              <h2>Possibly Inaccessible Clickable Element</h2>\n              <h3>Problem: </h3>\n              <p>This element has a mouse click event handler attached to it, but it is not keyboard-focusable.</p>\n              <p>As a result, only mouse users can click on it.</p>\n              <p>This usability disparity can create an accessibility barrier.</p>\n              <h3>Solution Options: </h3>\n              <ol>\n                <li>\n                  <p>If clicking this element takes the user to a different location, convert this element to an anchor link (&lt;a&gt;) with a non-empty <em>href</em> attribute.</p>\n                </li>\n                <li>\n                  <p>Otherwise if clicking this element triggers an action on the page, convert this element to a &lt;button&gt; without a <em>disabled</em> attribute.</p>\n                  <p>Alternatively, it needs an ARIA <em>role</em> attribute set to something like 'button' or 'link' AND a tabindex attribute set to a value &gt; -1, ideally 0.</p>\n                </li>\n                <li>\n                  <p>Otherwise, if clicking this element does not do anything, then consider removing the click event handler attached to this element.</p>\n                </li>\n              </ol>\n              ", "keyboard");
+	          openKeyNav.flagAsInaccessible(el, "\n              <!--\n                !el(a,button,textarea,select,input,iframe,summary)\n                !el[role('button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio')]\n                fromClickEvents\n              -->\n              <h2>Pointer Action Review</h2>\n              <h3>Detected</h3>\n              <p>This element has a click handler without a conventional keyboard focus stop.</p>\n              <p>OpenKeyNav Click Mode can provide direct keyboard selection when it detects the target.</p>\n              <h3>Review options</h3>\n              <ol>\n                <li>\n                  <p>For navigation, use an anchor link (&lt;a&gt;) with a non-empty <em>href</em> attribute.</p>\n                </li>\n                <li>\n                  <p>For an action, use a native &lt;button&gt; or implement the complete semantics, focus behavior, and keyboard commands of the intended control.</p>\n                </li>\n                <li>\n                  <p>Remove click handlers that do not provide user-facing functionality.</p>\n                </li>\n              </ol>\n              ", "keyboard");
 	        }
 	        // return false;
 	        // }
@@ -5878,20 +5964,20 @@
 	  	NPM:
 	  	// Import the unminified version (for development)
 	  import OpenKeyNav from 'openkeynav';
-	  	// Or import the minified version (for production)
+	  // Or import the minified version (for production)
 	  import OpenKeyNav from 'openkeynav/dist/openkeynav.min.js';
-	  	Importing from souce:
+	  Importing from souce:
 	  import OpenKeyNav from '/path/to/openKeyNav';
-	  	# init:
-	  	OpenKeyNav.init();
-	  	# then press g when you are not in a text input mode
-	  # to label the tab-accessible elements that have indicated they are buttons.
-	  # Press the key combinations on the labels to "click" their respective buttons
-	  	# you can press h to navigate through headers within the viewport
-	  # You can also press or 1,2,3,4,5,6 to navigate through headers of the respective level
+	  # init:
+	  OpenKeyNav.init();
+	  # then press k when you are not in a text input mode
+	  # to label detected targets for direct keyboard selection.
+	  # Press the key combinations on the labels to focus or activate their targets.
+	  # you can press h to navigate through headings within the viewport
+	  # You can also press 1,2,3,4,5,6 to navigate through headings of the respective level
 	  
 	  OpenKeyNav.init({
-	  	    spot : {
+	      spot : {
 	          backgroundColor : 'rgba(236, 255, 128, 1)',
 	          fontColor: 'black',
 	          outlineColor : 'rgb(134 148 53)',
@@ -5905,14 +5991,14 @@
 	          escape : 'q', // alternative escape key, for when escape key is too far or not available. // q works great because top left of letters, plus removes confusion with g, p
 	          click : 'k', // enter click mode, to click on clickable elements
 	          mouseOver : 'v', // toggle a mouseover event for an applicable element. In many cases this should trigger opening mouseover menus, etc // not yet wired
-	          move : 'm', // enter move mode, to move elements from and to, aka keyboard drag and drop // not yet fully wired
+	          move : 'm', // enter move mode for configured keyboard movement and drag-and-drop workflows
 	          scroll : 's', // focus on the next scrollable region
 	          heading : 'h', // focus on the next heading // as seen in JAWS, NVDA
 	          textBlock : 'n', // focus on the next block of text // as seen in JAWS, NVDA // not yet fully wired
 	          landmarkRegion : 'd', // focus on the next landmark region // as seen in NVDA // not yet fully wired
 	          formField : 'f', // move to the next form field // as seen in NVDA // not yet fully wired
 	      },
-	      move: { // not yet fully wired, but would facilitate drag and drop
+	      move: { // configuration for keyboard movement and drag-and-drop workflows
 	          config : [
 	              {
 	                  fromContainer: ".classContainerFrom1",
@@ -5964,7 +6050,7 @@
 	          scroll: 's',
 	          // focus on the next scrollable region
 	          move: 'm',
-	          // enter move mode, to move elements from and to, aka keyboard drag and drop // not yet fully wired
+	          // enter move mode for configured keyboard movement and drag-and-drop workflows
 	          heading: 'h',
 	          // focus on the next heading // as seen in JAWS, NVDA
 	          textBlock: 'n',
@@ -5991,7 +6077,7 @@
 	          // enter/exit structural focus navigation ("route" mode)
 	          menu: 'o',
 	          audit: 'a',
-	          // enter audit mode to check keyboard accessibility
+	          // run the focused keyboard review heuristic
 	          inputEscape: 'ctrlKey',
 	          // for escaping input to trigger a command
 	          modifierKey: 'shiftKey' // one of: [altKey, shiftKey, metaKey] // useful for on/off switch. Avoid ctrlKey, which is used to escape input.
