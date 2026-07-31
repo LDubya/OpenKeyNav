@@ -41,7 +41,7 @@
 	  value: true
 	});
 	version.version = void 0;
-	version.version = "0.1.234";
+	version.version = "0.1.235";
 
 	var signals = {};
 
@@ -5964,20 +5964,20 @@
 	  	NPM:
 	  	// Import the unminified version (for development)
 	  import OpenKeyNav from 'openkeynav';
-	  // Or import the minified version (for production)
+	  	// Or import the minified version (for production)
 	  import OpenKeyNav from 'openkeynav/dist/openkeynav.min.js';
-	  Importing from souce:
+	  	Importing from souce:
 	  import OpenKeyNav from '/path/to/openKeyNav';
-	  # init:
-	  OpenKeyNav.init();
-	  # then press k when you are not in a text input mode
+	  	# init:
+	  	OpenKeyNav.init();
+	  	# then press k when you are not in a text input mode
 	  # to label detected targets for direct keyboard selection.
 	  # Press the key combinations on the labels to focus or activate their targets.
-	  # you can press h to navigate through headings within the viewport
+	  	# you can press h to navigate through headings within the viewport
 	  # You can also press 1,2,3,4,5,6 to navigate through headings of the respective level
 	  
 	  OpenKeyNav.init({
-	      spot : {
+	  	    spot : {
 	          backgroundColor : 'rgba(236, 255, 128, 1)',
 	          fontColor: 'black',
 	          outlineColor : 'rgb(134 148 53)',

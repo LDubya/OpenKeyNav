@@ -1,6 +1,6 @@
 {
   "name": "openkeynav",
-  "version": "0.1.234",
+  "version": "0.1.235",
   "description": "Add direct keyboard operation, navigation, and configured drag-and-drop to websites and web apps.",
   "main": "openkeynav.cjs",
   "repository": {
