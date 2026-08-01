@@ -134,6 +134,9 @@ var OpenKeyNav = /*#__PURE__*/function () {
         displayToolName: true,
         duration: 3000
       },
+      telemetry: {
+        enabled: true
+      },
       keys: {
         escape: 'q',
         // alternative escape key, for when escape key is too far or not available. // q works great because top left of letters, plus removes confusion with g, p
@@ -1229,10 +1232,14 @@ var OpenKeyNav = /*#__PURE__*/function () {
     key: "applicationSupport",
     value: function applicationSupport() {
       // Version Ping (POST https://applicationsupport.openkeynav.com/capture/)
-      // This is anonymous and minimal, only sending the library version. No PII.
-      // Necessary to know which versions are being used in the wild in order to provide proper support and plan roadmaps
+      // The JSON body is minimal and contains the library version. The receiving
+      // infrastructure can still observe ordinary network-request metadata.
 
-      // no need to run app support on local develompent
+      if (!this.config.telemetry.enabled) {
+        return;
+      }
+
+      // No need to run application support telemetry during local development.
       if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '::1') {
         return;
       }

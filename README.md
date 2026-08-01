@@ -184,9 +184,19 @@ Previous and next target commands and application-supplied typed-route commands 
 
 Structural Navigation remains active until the user exits it. Its configured commands get first refusal; heading, heading-level, and scroll-region navigation run normally without ending the mode. Click Mode, Move Mode, and the shortcut menu temporarily take keyboard priority, then Structural Navigation resumes when that temporary mode finishes or is dismissed.
 
-## Version support ping
+## Version support telemetry
 
-On non-localhost pages, `init()` sends a support event to `applicationsupport.openkeynav.com`. Its JSON body contains only the OpenKeyNav version and event name. The current API does not provide an opt-out.
+By default, on non-localhost pages, init() attempts to send a version-support event to applicationsupport.openkeynav.com. The JSON body’s only changing value is the OpenKeyNav version; it also contains a fixed event name. To prevent that request, disable telemetry during initialization:
+
+```javascript
+const openKeyNav = new OpenKeyNav();
+
+openKeyNav.init({
+  telemetry: {
+    enabled: false,
+  },
+});
+```
 
 ## Research and recognition
 
