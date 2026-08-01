@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/openkeynav.svg)](https://www.npmjs.com/package/openkeynav)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-OpenKeyNav is an MIT-licensed JavaScript library for adding direct keyboard operation to websites and web apps. Click Mode labels detected targets for direct selection, navigation commands provide faster routes through a page, and Move Mode gives developers one way to map keyboard drag-and-drop.
+OpenKeyNav is an MIT-licensed JavaScript library for adding direct keyboard operation to websites and web apps. Click Mode labels detected targets for direct selection, navigation commands create faster routes through a page, and Move Mode maps application-defined sources and destinations into keyboard drag-and-drop workflows.
 
 ## As seen in
 
@@ -16,7 +16,7 @@ OpenKeyNav is an MIT-licensed JavaScript library for adding direct keyboard oper
   <a href="https://www.ihdconference.org/2025/sessions/moving-away-from-mouse-dependency-empowering-productive-web-experiences-with-keyboard-accessibility/"><img src="https://raw.githubusercontent.com/LDubya/OpenKeyNav/main/media/as-seen-in/ihd-evidence-for-success-2025.png" alt="IHD Evidence for Success Disability Conference 2025" height="38"></a>
 </p>
 
-[WCAG 2.1 Success Criterion 2.1.1](https://www.w3.org/WAI/WCAG21/Understanding/keyboard.html) requires content functionality to be operable through a keyboard interface. OpenKeyNav helps teams put that requirement into practice with reusable keyboard paths for the targets it detects and the workflows an application configures. Teams verify those paths across every required action, state change, and outcome in each complete task.
+[WCAG 2.1 Success Criterion 2.1.1](https://www.w3.org/WAI/WCAG21/Understanding/keyboard.html) requires content functionality to be operable through a keyboard interface. OpenKeyNav provides reusable keyboard paths for detected targets and application-configured workflows. Teams verify every required action, state change, and outcome across the complete task.
 
 [![Three-step Click Mode demonstration: enable OpenKeyNav shortcuts with Shift+O, press K to enter Click Mode and show labels beside four detected targets, then type d to select Juniper.](https://raw.githubusercontent.com/LDubya/OpenKeyNav/main/media/openkeynav-click-mode-steps.jpg)](https://openkeynav.com/#demo)
 
@@ -117,7 +117,7 @@ Letter commands are unmodified keys unless the table says otherwise.
 | Exit Structural Navigation reliably | `Alt+r` |
 | Leave an active mode | `Escape` or `q` |
 
-OpenKeyNav keeps its single-character commands behind a user-controlled toggle. Applications can also configure them. The final integration should make the on/off control discoverable and test its shortcuts with speech input, assistive technologies, browser commands, and application commands.
+OpenKeyNav keeps its single-character commands behind a user-controlled toggle, and applications configure the final command map. Make the on/off control discoverable and test its shortcuts with speech input, assistive technologies, browser commands, and application commands.
 
 ## Development diagnostics
 
@@ -133,7 +133,7 @@ openKeyNav.init({
 });
 ```
 
-Treat the results as development guidance. The heuristic can produce false positives and false negatives; verify action coverage, semantics, accessible names, focus order, keyboard behavior, state communication, and visible focus manually. Set `keyboardAccessible` to `false` for the production experience after completing that review.
+The focused heuristic can produce false positives and false negatives. Use its results to guide manual verification of action coverage, semantics, accessible names, focus order, keyboard behavior, state communication, and visible focus. Set `keyboardAccessible` to `false` for the production experience after completing that review.
 
 OpenKeyNav's operation layer works with the page's semantic HTML, accessible names, roles, states, and focus behavior. Test each complete application workflow with a keyboard, accessibility inspection tools, supported assistive technologies, and disabled users.
 
@@ -168,7 +168,7 @@ See the [Move Mode documentation](https://openkeynav.com/docs/usage/drag_mode) f
 
 ## Structural Navigation
 
-Structural Navigation moves real focus among existing keyboard targets through page contexts such as landmarks, sections, headings, forms, fieldsets, and lists, while leaving native `Tab` behavior intact.
+Structural Navigation moves real focus among existing keyboard targets through page contexts such as landmarks, sections, headings, forms, fieldsets, and lists, and preserves native `Tab`/`Shift+Tab` for sequential focus.
 
 After enabling OpenKeyNav with `Shift+o`, press `r` to enter Structural Navigation.
 
@@ -180,7 +180,7 @@ After enabling OpenKeyNav with `Shift+o`, press `r` to enter Structural Navigati
 | Hide the visible status without leaving the mode | `Shift+Escape` |
 | Exit Structural Navigation | `Alt+r` |
 
-Previous and next target commands and application-supplied typed-route commands are configurable but unbound by default. Read the [Structural Navigation documentation](https://openkeynav.com/docs/usage/structural_navigation) for configuration, APIs, focus-scope behavior, keyboard ownership, and current limitations.
+Previous/next target and typed-route commands begin with empty key bindings so applications can assign shortcuts that fit the host interface; each command is also available programmatically. Read the [Structural Navigation documentation](https://openkeynav.com/docs/usage/structural_navigation) for configuration, APIs, focus-scope behavior, and keyboard ownership.
 
 Structural Navigation remains active until the user exits it. Its configured commands get first refusal; heading, heading-level, and scroll-region navigation run normally without ending the mode. Click Mode, Move Mode, and the shortcut menu temporarily take keyboard priority, then Structural Navigation resumes when that temporary mode finishes or is dismissed.
 

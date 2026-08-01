@@ -133,16 +133,15 @@ does not pull focus back.
 
 ## Keyboard ownership and precedence
 
-Native Tab/Shift+Tab provide sequential focus. Previous/next target commands
-remain configurable and programmatic but are unbound by default. The defaults
-are Shift+Left/Right for true siblings plus heading-backed peers at equal
-hierarchy depth regardless of authored rank, and Shift+Up/Down for
-broaden/narrow; all bare arrows and typed-context cycling are unbound. `r`
-enters or toggles the mode outside an editing/widget context.
-`Alt+r` is the reliable default exit from any supported target. Bare Escape is
-not an exit alias by default. `Shift+Escape` closes the visible status without
-exiting structural navigation; it passes through when the focused widget or
-application owns Escape.
+Native Tab/Shift+Tab provide sequential focus. Applications assign bindings to
+previous/next target commands or invoke them programmatically. The default
+mapping uses Shift+Left/Right for true siblings plus heading-backed peers at
+equal hierarchy depth regardless of authored rank, Shift+Up/Down for
+broaden/narrow, `r` for entry or toggle when character commands are available,
+`Alt+r` for reliable exit, and `Shift+Escape` to dismiss the visible status when
+Escape is available to the mode. Previous/next target and typed-context cycling
+begin with empty bindings; bare arrows remain native. Applications declare
+custom ownership with `ownsKey` or `data-openkeynav-key-owner`.
 
 Tab, Shift+Tab, Enter, Space, bare arrows, and unconfigured modifier
 combinations always pass through. Shift+Arrow context commands also pass
@@ -190,12 +189,12 @@ repeated activation/teardown, and status output. The repository currently
 configures Chromium; additional engines require their Playwright browser
 packages to be installed.
 
-The mode is a page JavaScript focus-navigation feature. A screen reader may
-consume arrows in browse/virtual-cursor mode before the page receives them. The
-implementation moves real DOM focus whenever its configured events reach the
-page, but it does not claim to replace screen-reader browse navigation.
+Structural Navigation moves real DOM focus when its configured events reach the
+page. Test its commands alongside screen-reader browse and virtual-cursor modes,
+which may consume arrow keys before page JavaScript receives them.
 
-The peer-routing idea is inspired by Mei et al., *Benthic: Perceptually
-Congruent Structures for Accessible Charts and Diagrams* (ASSETS 2025). That
-work motivates the design; it is not evidence that inferred webpage structures
-are equivalent to Benthic's explicitly authored graphical structures.
+The peer-routing design takes inspiration from Mei et al., *Benthic:
+Perceptually Congruent Structures for Accessible Charts and Diagrams* (ASSETS
+2025). OpenKeyNav applies the idea to webpages through a canonical hierarchy
+built from page semantics and overlapping routes supplied by testable
+application relationships. Evaluate the webpage adaptation independently.

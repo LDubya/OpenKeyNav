@@ -1,6 +1,6 @@
 # Browser automation and discovery
 
-OpenKeyNav's keyboard interface can also be exercised by browser automation. An integration can load the library, initialize and enable it, send the same commands a keyboard user would send, and inspect the temporary target labels created by the active mode.
+OpenKeyNav's keyboard interface supports browser automation. An integration loads the library, initializes and enables it, sends the same commands a keyboard user would send, and inspects the temporary target labels created by the active mode.
 
 ## Discovering current Click Mode targets
 

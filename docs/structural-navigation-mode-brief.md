@@ -31,7 +31,7 @@ Changing only the active routing context may leave focus on the current target. 
 4. **Typed overlap is exceptional.** Multiple peer contexts are used only when page semantics or application configuration credibly express them.
 5. **Native widgets keep their interaction model.** OpenKeyNav must not compete with controls that already own arrow keys, Escape, Enter, or Space.
 6. **No autonomous interaction occurs.** The mode moves only in response to an accepted user command.
-7. **The implementation degrades honestly.** Unsupported Shadow DOM, iframe, platform, or assistive-technology cases are documented rather than guessed.
+7. **Supported scope is explicit.** Document Shadow DOM, iframe, platform, and assistive-technology coverage and describe behavior or integration paths for cases outside it.
 
 ## Scope
 
@@ -188,7 +188,7 @@ This feature is informed by:
 
 Benthic demonstrates traversal through ordered adjacent groups, child relationships, and multiple available parent contexts. OpenKeyNav adapts those ideas to existing webpage focus targets.
 
-The transfer is a design hypothesis, not established evidence that arbitrary webpages should be inferred as hypergraphs. Benthic uses explicitly authored graphical structures and a dedicated traversal interface. OpenKeyNav must therefore:
+Treat the transfer as a design hypothesis. Benthic evaluates explicitly authored graphical structures and a dedicated traversal interface; validate OpenKeyNav's webpage adaptation independently. OpenKeyNav must therefore:
 
 - Prefer the simpler structural tree when semantic containment is hierarchical.
 - Use multiple peer contexts only when their provenance is credible.
@@ -292,7 +292,7 @@ For the required core behavior, an iframe is an atomic page target when the brow
 - Structural navigation outside the frame treats the iframe as one target.
 - Same-origin recursive traversal may be added later but requires a separate focus identity, event, lifecycle, and coordinate policy.
 
-The acceptance criterion that `document.activeElement` equals the target applies to the active document scope. It must not pretend that a top-level document exposes a cross-document inner target.
+Evaluate `document.activeElement` within the active document scope and represent an iframe as its outer-document atomic target.
 
 ## Structural context derivation
 
@@ -498,7 +498,7 @@ Integrate with OpenKeyNav's configurable shortcut system. A reasonable initial m
 
 Bare `Escape` may be a convenient exit alias only where it does not override a page or widget interaction described below.
 
-These defaults are product proposals, not permission to bypass existing public key configuration. Conflicts with established OpenKeyNav shortcuts must be resolved deliberately and documented.
+Route these proposed defaults through the existing public key configuration. Resolve conflicts with established OpenKeyNav shortcuts deliberately and document the resulting mapping.
 
 ## Exact command semantics
 
@@ -957,8 +957,8 @@ Include a sequentially focusable control inside `aria-hidden="true"`.
 Demonstrate that:
 
 - Target inventory remains compatible with native focus.
-- OpenKeyNav does not pretend the hidden accessibility semantics are valid.
-- Any audit warning is separate from navigation.
+- A hidden-semantics audit warning, when present, travels through the audit channel.
+- Structural Navigation continues to use the live focus target.
 
 ## Typed-context scenarios
 
@@ -1054,7 +1054,7 @@ Do not report completion until:
 - The configured mode-exit command is always reachable.
 - Modal and other supported scope boundaries are respected.
 - Deep focus is synchronized within the documented scope.
-- Unsupported Shadow DOM and iframe cases are documented honestly.
+- Shadow DOM and iframe behavior matches the documented support scope.
 - Dynamic changes do not produce stale targets or contexts.
 - Rapid input does not produce duplicate moves or runaway scrolling.
 - Relevant unit tests pass.
@@ -1062,7 +1062,7 @@ Do not report completion until:
 - The production build succeeds.
 - Generated distribution artifacts, if committed, come from the build rather than hand editing.
 - Public documentation explains activation, commands, key ownership, context behavior, target-discovery dependency, supported scopes, extension points, and limitations.
-- Benthic is attributed as inspiration without claiming that its study validates this webpage adaptation.
+- Benthic is attributed as inspiration, and verification evaluates the webpage adaptation independently.
 
 ## Implementation freedom
 
