@@ -315,7 +315,7 @@ var handleMoveMode = function handleMoveMode(openKeyNav, e) {
 
     // Find the corresponding move configuration
     var moveConfig = openKeyNav.config.modesConfig.move.config[configKeyForSelectedMoveable];
-    if (!moveConfig) return;
+    if (!moveConfig) return null;
 
     // Get all target elements for the selectedMoveable
     // let targetElements = document.querySelectorAll(moveConfig.toElements);
@@ -341,6 +341,7 @@ var handleMoveMode = function handleMoveMode(openKeyNav, e) {
       openKeyNav.createOverlay(element, labels[index]);
       element.setAttribute('data-openkeynav-dropzone', 'true');
     });
+    return moveConfig;
   };
   function findMatchingElements(queryString) {
     return Array.from(document.querySelectorAll(queryString));
@@ -429,8 +430,14 @@ var handleMoveMode = function handleMoveMode(openKeyNav, e) {
     // new selected target.
     // setting selectedTarget as selectedMoveable
     console.log("Selected element to move:", selectedTarget);
-    showMoveableToOverlays(selectedTarget);
-    (0, _dragAndDrop.beginDrag)(openKeyNav);
+    var moveConfig = showMoveableToOverlays(selectedTarget);
+
+    // A callback is an application-level move path. Do not also emit the
+    // synthetic pointer and native drag events used by event-based integrations,
+    // because those events can wake the host drag-and-drop library's sensors.
+    if (typeof (moveConfig === null || moveConfig === void 0 ? void 0 : moveConfig.callback) !== 'function') {
+      (0, _dragAndDrop.beginDrag)(openKeyNav);
+    }
     return true;
   }
 
@@ -445,12 +452,13 @@ var moveSelectedMoveableToTarget = function moveSelectedMoveableToTarget(openKey
   // const modifier = true; // for whether move is sticky or not (sticky mode?)
   console.log("Selected move target:", selectedTarget);
   openKeyNav.config.modesConfig.move.selectedDropZone = selectedTarget;
-  var callback = openKeyNav.config.modesConfig.move.config[openKeyNav.config.modesConfig.move.selectedConfig].callback;
-  if (!callback) {
+  var moveConfig = openKeyNav.config.modesConfig.move.config[openKeyNav.config.modesConfig.move.selectedConfig];
+  var callback = moveConfig === null || moveConfig === void 0 ? void 0 : moveConfig.callback;
+  if (typeof callback !== 'function') {
     //   console.error("No callback function has been set to execute this move operation");
     (0, _dragAndDrop.simulateDragAndDrop)(openKeyNav, openKeyNav.config.modesConfig.move.selectedMoveable, openKeyNav.config.modesConfig.move.selectedDropZone);
   } else {
-    openKeyNav.config.modesConfig.move.config[openKeyNav.config.modesConfig.move.selectedConfig].callback(openKeyNav.config.modesConfig.move.selectedMoveable, openKeyNav.config.modesConfig.move.selectedDropZone);
+    callback(openKeyNav.config.modesConfig.move.selectedMoveable, openKeyNav.config.modesConfig.move.selectedDropZone);
   }
   if (!openKeyNav.config.modesConfig.move.modifier) {
     openKeyNav.removeOverlays(true);

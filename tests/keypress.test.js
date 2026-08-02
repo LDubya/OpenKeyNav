@@ -192,6 +192,93 @@ describe('keypress structural-mode arbitration', () => {
     expect(selectedMoveable.hasAttribute('data-openkeynav-draggable')).toBe(false);
   });
 
+  it('keeps callback-driven Move Mode separate from synthetic drag events', () => {
+    const callback = vi.fn();
+    openKeyNav = createOpenKeyNav({
+      modesConfig: {
+        move: {
+          config: [
+            {
+              fromElements: '#current',
+              toElements: '#next',
+              callback,
+            },
+          ],
+        },
+      },
+    });
+    openKeyNav.isNonzeroSize = () => true;
+    openKeyNav.isAnyCornerVisible = () => true;
+
+    const source = document.getElementById('current');
+    const destination = document.getElementById('next');
+    const syntheticEventListener = vi.fn();
+    const visibleRect = {
+      top: 10,
+      right: 110,
+      bottom: 50,
+      left: 10,
+      width: 100,
+      height: 40,
+      x: 10,
+      y: 10,
+      toJSON: () => ({}),
+    };
+
+    source.getBoundingClientRect = () => visibleRect;
+    destination.getBoundingClientRect = () => visibleRect;
+
+    ['mousedown', 'touchstart', 'dragstart', 'dragend'].forEach((eventName) => {
+      source.addEventListener(eventName, syntheticEventListener);
+    });
+
+    source.setAttribute('data-openkeynav-label', 'a');
+    source.setAttribute('data-openkeynav-moveconfig', '0');
+    openKeyNav.config.modes.moving.value = true;
+
+    dispatchKey(source, 'a', 'KeyA');
+
+    expect(openKeyNav.config.modesConfig.move.selectedMoveable).toBe(source);
+    expect(destination.getAttribute('data-openkeynav-label')).toBe('a');
+    expect(syntheticEventListener).not.toHaveBeenCalled();
+
+    dispatchKey(source, 'a', 'KeyA');
+
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(callback).toHaveBeenCalledWith(source, destination);
+    expect(syntheticEventListener).not.toHaveBeenCalled();
+  });
+
+  it('cancels callback-driven Move Mode without manufacturing dragend', () => {
+    openKeyNav = createOpenKeyNav({
+      modesConfig: {
+        move: {
+          config: [
+            {
+              fromElements: '#next',
+              toElements: '#current',
+              callback: vi.fn(),
+            },
+          ],
+        },
+      },
+    });
+    const current = document.getElementById('current');
+    const selectedMoveable = document.getElementById('next');
+    const dragEndListener = vi.fn();
+
+    openKeyNav.config.modes.moving.value = true;
+    openKeyNav.config.modesConfig.move.selectedConfig = 0;
+    openKeyNav.config.modesConfig.move.selectedMoveable = selectedMoveable;
+    selectedMoveable.addEventListener('dragend', dragEndListener);
+
+    const event = dispatchKey(current, 'Escape', 'Escape');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(dragEndListener).not.toHaveBeenCalled();
+    expect(openKeyNav.config.modesConfig.move.selectedMoveable).toBe(false);
+  });
+
   it.each([
     { mode: 'clicking', activationKey: 'k', activationCode: 'KeyK' },
     { mode: 'moving', activationKey: 'm', activationCode: 'KeyM' },

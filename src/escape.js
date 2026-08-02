@@ -14,7 +14,16 @@ export const handleEscape = (openKeyNav, e) => {
         openKeyNav.config.modes.moving.value &&
         openKeyNav.config.modesConfig.move.selectedMoveable
       ) {
-        cancelDrag(openKeyNav);
+        const selectedConfig =
+          openKeyNav.config.modesConfig.move.config[
+            openKeyNav.config.modesConfig.move.selectedConfig
+          ];
+
+        // Callback-driven moves never start a synthetic drag, so cancellation
+        // should not manufacture a dragend event for the host library either.
+        if (typeof selectedConfig?.callback !== 'function') {
+          cancelDrag(openKeyNav);
+        }
       }
       openKeyNav.removeOverlays();
       openKeyNav.clearMoveAttributes();

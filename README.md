@@ -80,6 +80,8 @@ With focus outside an editable field:
 
 OpenKeyNav remembers the user's enabled or disabled choice in a cookie.
 
+Production integrations should not require users to discover these commands by chance. Add the [built-in keyboard-command strip](#make-keyboard-commands-discoverable) or provide an equally discoverable, accessibly presented explanation of the commands the application enables.
+
 ## Keyboard operation modes and tools
 
 - **Click Mode:** Displays typeable labels beside detected targets so a user can focus or activate one directly.
@@ -108,16 +110,34 @@ Letter commands are unmodified keys unless the table says otherwise.
 | Action | Default command |
 | --- | --- |
 | Turn OpenKeyNav on or off | `Shift+o` |
+| Open the shortcut guide | `o` |
 | Enter Click Mode | `k` |
 | Move through headings | `h` |
 | Move through headings of a specific level | `1`–`6` |
 | Move through scrollable regions | `s` |
+| Move backward through headings or scrollable regions | Hold `Shift` with `h`, `1`–`6`, or `s` |
 | Enter configured Move Mode | `m` |
 | Enter or toggle Structural Navigation | `r` |
 | Exit Structural Navigation reliably | `Alt+r` |
-| Leave an active mode | `Escape` or `q` |
+| Leave Click Mode, Move Mode, or the shortcut guide | `Escape` or `q` |
 
-OpenKeyNav keeps its single-character commands behind a user-controlled toggle, and applications configure the final command map. Make the on/off control discoverable and test its shortcuts with speech input, assistive technologies, browser commands, and application commands.
+When shortcuts are on and no OpenKeyNav mode is active, hold `Ctrl` with an ordinary character command to route it intentionally from an editable field; for example, use `Ctrl+k` for Click Mode. The default global toggle becomes `Ctrl+Shift+o` in an editable field. OpenKeyNav keeps its single-character commands behind a user-controlled toggle, and applications can configure its principal activation and mode keys. Make the on/off control discoverable and test the final shortcuts with speech input, assistive technologies, browser commands, and application commands.
+
+### Make keyboard commands discoverable
+
+Tell users that the optional OpenKeyNav command layer is available, how to turn it on and off, which commands the application has enabled, and how to leave each mode. Advertise only the modes and commands that the application has configured and tested. Keep the instructions available without requiring a user to know an undisclosed shortcut first.
+
+OpenKeyNav includes a compact, persistent keyboard-command strip so applications do not have to recreate its state-aware hints. Place one empty strip element in a stable part of the application, such as its page or application navigation, and initialize OpenKeyNav normally:
+
+```html
+<aside aria-label="OpenKeyNav keyboard commands">
+  <div class="openKeyNav-toolBar"></div>
+</aside>
+```
+
+The strip can be present before `init()` or added later by a client-side framework. With the default configuration, it shows `Shift+o` while shortcuts are off. Once they are on, it shows `o` as the command for opening its shortcut guide; the expanded guide lists `k` for Click Mode and `m` when Move Mode is configured. While a mode is active, the strip changes to the relevant exit hint. This is persistent, contextual guidance rather than a complete command catalog or live announcement, so pair it with the command table above or an application-specific help page for heading, scroll-region, Structural Navigation, and custom commands.
+
+The current release provides the compact strip layout. Sidebar and settings-page block variants are candidates for a later release. Enable, disable, Click Mode, and Move Mode notification alerts are a separate OpenKeyNav surface and do not replace persistent command discovery. They are transient by default; a zero duration makes them persistent and dismissible. Structural Navigation uses its own persistent status.
 
 ## Development diagnostics
 
@@ -155,6 +175,7 @@ openKeyNav.init({
           fromContainer: '.moveable-items',
           toElements: '.drop-zone',
           callback: (source, destination) => {
+            // Call the same application operation used by your pointer library.
             destination.append(source);
           },
         },
@@ -164,7 +185,9 @@ openKeyNav.init({
 });
 ```
 
-See the [Move Mode documentation](https://openkeynav.com/docs/usage/drag_mode) for source selectors, exclusions, dynamic source resolvers, and native drag-event behavior.
+When a move configuration provides a `callback`, OpenKeyNav calls it directly and does not emit synthetic pointer or native drag events. This lets the callback invoke the same application operation as an existing drag-and-drop library without activating that library's sensors. When `callback` is omitted, OpenKeyNav uses its native drag-event simulation path instead.
+
+See the [Move Mode documentation](https://openkeynav.com/docs/usage/drag_mode) for source selectors, exclusions, dynamic source resolvers, and both integration paths.
 
 ## Structural Navigation
 

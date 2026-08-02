@@ -358,7 +358,7 @@ const handleMoveMode = (openKeyNav, e) => {
 
       // Find the corresponding move configuration
       const moveConfig = openKeyNav.config.modesConfig.move.config[configKeyForSelectedMoveable];
-      if (!moveConfig) return;
+      if (!moveConfig) return null;
 
       // Get all target elements for the selectedMoveable
       // let targetElements = document.querySelectorAll(moveConfig.toElements);
@@ -390,6 +390,8 @@ const handleMoveMode = (openKeyNav, e) => {
         openKeyNav.createOverlay(element, labels[index]);
         element.setAttribute('data-openkeynav-dropzone', 'true');
       });
+
+      return moveConfig;
     };
 
     function findMatchingElements(queryString) {
@@ -497,8 +499,14 @@ const handleMoveMode = (openKeyNav, e) => {
       // new selected target.
       // setting selectedTarget as selectedMoveable
       console.log(`Selected element to move:`, selectedTarget);
-      showMoveableToOverlays(selectedTarget);
-      beginDrag(openKeyNav);
+      const moveConfig = showMoveableToOverlays(selectedTarget);
+
+      // A callback is an application-level move path. Do not also emit the
+      // synthetic pointer and native drag events used by event-based integrations,
+      // because those events can wake the host drag-and-drop library's sensors.
+      if (typeof moveConfig?.callback !== 'function') {
+        beginDrag(openKeyNav);
+      }
       return true;
     }
 
@@ -517,12 +525,13 @@ const moveSelectedMoveableToTarget = (openKeyNav, selectedTarget) => {
     // const modifier = true; // for whether move is sticky or not (sticky mode?)
     console.log(`Selected move target:`, selectedTarget);
     openKeyNav.config.modesConfig.move.selectedDropZone = selectedTarget;
-    let callback = openKeyNav.config.modesConfig.move.config[openKeyNav.config.modesConfig.move.selectedConfig].callback;
-    if (!callback) {
+    const moveConfig = openKeyNav.config.modesConfig.move.config[openKeyNav.config.modesConfig.move.selectedConfig];
+    const callback = moveConfig?.callback;
+    if (typeof callback !== 'function') {
       //   console.error("No callback function has been set to execute this move operation");
       simulateDragAndDrop(openKeyNav, openKeyNav.config.modesConfig.move.selectedMoveable, openKeyNav.config.modesConfig.move.selectedDropZone);      
     } else {
-      openKeyNav.config.modesConfig.move.config[openKeyNav.config.modesConfig.move.selectedConfig].callback(
+      callback(
         openKeyNav.config.modesConfig.move.selectedMoveable,
         openKeyNav.config.modesConfig.move.selectedDropZone
       );
