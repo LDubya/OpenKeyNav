@@ -41,7 +41,7 @@
 	  value: true
 	});
 	version.version = void 0;
-	version.version = "0.1.238";
+	version.version = "0.1.239";
 
 	var signals = {};
 
@@ -3529,21 +3529,18 @@
 	};
 
 	/**
-	 * True structural siblings are always horizontal peers. A heading-backed
-	 * context may also bridge to any other heading-backed context at the same
-	 * canonical hierarchy depth, regardless of authored H1-H6 rank. Authored rank
-	 * must not split one structural level into separate horizontal lanes.
+	 * Heading-backed contexts use the authored heading level as their horizontal
+	 * lane, regardless of inferred container ancestry. Contexts without a heading
+	 * level use ordinary structural siblings.
 	 */
 	var horizontalContextPeers = function horizontalContextPeers(model, context) {
 	  var headingLevel = contextHeadingLevel(context);
-	  var hierarchyLevel = contextHierarchyLevel(model, context);
 	  var structuralParent = parentContext(model, context);
 	  var contexts = headingLevel === null ? normalizeContextChildren(model, structuralParent) : modelStructuralContexts(model).filter(function (candidate) {
-	    return parentContext(model, candidate) === structuralParent || contextHeadingLevel(candidate) !== null && contextHierarchyLevel(model, candidate) === hierarchyLevel;
+	    return contextHeadingLevel(candidate) === headingLevel;
 	  });
 	  return {
 	    headingLevel: headingLevel,
-	    hierarchyLevel: hierarchyLevel,
 	    contexts: contexts.filter(function (candidate) {
 	      return contextTargets(candidate).length > 0;
 	    }).sort(function (left, right) {
@@ -3553,15 +3550,13 @@
 	};
 
 	/**
-	 * Finds the next page-forward context one canonical level deeper. Heading
-	 * contexts also advance exactly one authored rank so an H2 fallback reaches
-	 * the next nonempty H3 rather than an unrelated unheaded level-three context.
+	 * Finds the next page-forward context. A heading-backed context advances by
+	 * authored heading level; an unheaded context advances by inferred structural
+	 * depth.
 	 */
 	var nextNarrowFallbackContext = function nextNarrowFallbackContext(model, context) {
 	  var headingLevel = contextHeadingLevel(context);
 	  if (headingLevel !== null && headingLevel >= 6) return null;
-	  var hierarchyLevel = contextHierarchyLevel(model, context);
-	  var nextHeadingLevel = headingLevel === null ? null : headingLevel + 1;
 	  var orderedContexts = modelStructuralContexts(model).filter(function (candidate) {
 	    return contextTargets(candidate).length > 0;
 	  }).sort(function (left, right) {
@@ -3569,8 +3564,14 @@
 	  });
 	  var currentIndex = orderedContexts.indexOf(context);
 	  var followingContexts = currentIndex >= 0 ? orderedContexts.slice(currentIndex + 1) : orderedContexts;
+	  if (headingLevel !== null) {
+	    return followingContexts.find(function (candidate) {
+	      return contextHeadingLevel(candidate) === headingLevel + 1;
+	    }) || null;
+	  }
+	  var hierarchyLevel = contextHierarchyLevel(model, context);
 	  return followingContexts.find(function (candidate) {
-	    return contextHierarchyLevel(model, candidate) === hierarchyLevel + 1 && (nextHeadingLevel === null || contextHeadingLevel(candidate) === nextHeadingLevel);
+	    return contextHeadingLevel(candidate) === null && contextHierarchyLevel(model, candidate) === hierarchyLevel + 1;
 	  }) || null;
 	};
 	var targetName = function targetName(target) {
@@ -4169,12 +4170,11 @@
 	      this.useStructuralRoute();
 	      var _horizontalContextPee = horizontalContextPeers(this.model, this.activeStructuralContext),
 	        peers = _horizontalContextPee.contexts,
-	        headingLevel = _horizontalContextPee.headingLevel,
-	        hierarchyLevel = _horizontalContextPee.hierarchyLevel;
+	        headingLevel = _horizontalContextPee.headingLevel;
 	      var currentIndex = peers.indexOf(this.activeStructuralContext);
 	      var nextIndex = currentIndex + direction;
 	      if (currentIndex < 0 || nextIndex < 0 || nextIndex >= peers.length) {
-	        var relation = headingLevel === null ? 'sibling context' : "peer context at hierarchy level ".concat(hierarchyLevel);
+	        var relation = headingLevel === null ? 'sibling context' : "peer context at heading level ".concat(headingLevel);
 	        this.updateStatus(direction > 0 ? "No next ".concat(relation, ".") : "No previous ".concat(relation, "."));
 	        return;
 	      }
@@ -4217,8 +4217,7 @@
 	      }
 	      var fallback = nextNarrowFallbackContext(this.model, activeContext);
 	      if (!fallback) {
-	        var nextHierarchyLevel = contextHierarchyLevel(this.model, activeContext) + 1;
-	        this.updateStatus(headingLevel === null ? "No next context at hierarchy level ".concat(nextHierarchyLevel, ".") : "No next H".concat(headingLevel + 1, " context at hierarchy level ").concat(nextHierarchyLevel, "."));
+	        this.updateStatus(headingLevel === null ? "No next context at hierarchy level ".concat(contextHierarchyLevel(this.model, activeContext) + 1, ".") : "No next H".concat(headingLevel + 1, " context."));
 	        return;
 	      }
 	      this.activeStructuralContext = fallback;
@@ -4453,8 +4452,9 @@
 	      var contextName = (route === null || route === void 0 ? void 0 : route.name) || 'Document';
 	      var targetDescription = this.currentTarget ? "".concat(targetName(this.currentTarget), ", ").concat(index >= 0 ? index + 1 : '?', " of ").concat(sequence.length) : "".concat(sequence.length, " available ").concat(sequence.length === 1 ? 'target' : 'targets');
 	      var hierarchyContext = this.activeTypedContext ? directContextForTarget(this.model, this.currentTarget) || this.activeStructuralContext || this.model.rootContext : this.activeStructuralContext || this.model.rootContext;
-	      var hierarchyLevel = contextHierarchyLevel(this.model, hierarchyContext);
-	      var hierarchyDescription = this.activeTypedContext ? "Underlying hierarchy level: ".concat(hierarchyLevel, ".") : "Hierarchy level: ".concat(hierarchyLevel, ".");
+	      var headingLevel = contextHeadingLevel(hierarchyContext);
+	      var reportedLevel = headingLevel !== null && headingLevel !== void 0 ? headingLevel : contextHierarchyLevel(this.model, hierarchyContext);
+	      var hierarchyDescription = this.activeTypedContext ? headingLevel === null ? "Underlying hierarchy level: ".concat(reportedLevel, ".") : "Underlying heading level: ".concat(reportedLevel, ".") : headingLevel === null ? "Hierarchy level: ".concat(reportedLevel, ".") : "Heading level: ".concat(reportedLevel, ".");
 	      var typedContexts = typedContextsForTarget(this.model, this.currentTarget);
 	      var typedDescription = typedContexts.length ? "".concat(typedContexts.length, " alternate ").concat(typedContexts.length === 1 ? 'route' : 'routes', " available.") : '';
 	      var dismissLabel = shortcutLabel((_this$config$status2 = this.config.status) === null || _this$config$status2 === void 0 ? void 0 : _this$config$status2.dismissCommand);

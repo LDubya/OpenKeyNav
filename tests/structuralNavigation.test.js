@@ -541,7 +541,7 @@ describe('StructuralNavigationController', () => {
       '.openKeyNav-structural-status .openKeyNav-status__content'
     ).textContent).toBe(
       'Structural navigation active. Context: Current level-three context. ' +
-      'Hierarchy level: 3. Current last, 2 of 2.'
+      'Heading level: 3. Current last, 2 of 2.'
     );
     expect(document.querySelector(
       '.openKeyNav-structural-status .openKeyNav-status__hint'
@@ -562,7 +562,7 @@ describe('StructuralNavigationController', () => {
     expect(document.querySelector(
       '.openKeyNav-structural-status .openKeyNav-status__content'
     ).textContent).toBe(
-      'Context: Next level-three context. Hierarchy level: 3. ' +
+      'Context: Next level-three context. Heading level: 3. ' +
       'Next first, 1 of 2.'
     );
 
@@ -584,14 +584,14 @@ describe('StructuralNavigationController', () => {
     expect(boundary.defaultPrevented).toBe(true);
     expect(document.activeElement.id).toBe('current-first');
     expect(document.querySelector('.openKeyNav-structural-status').textContent)
-      .toContain('No previous peer context at hierarchy level 3');
+      .toContain('No previous peer context at heading level 3');
 
     openKeyNav.structuralNavigate('broadenContext');
     expect(openKeyNav.getStructuralNavigationState().activeContext.name)
       .toBe('First family');
     expect(document.querySelector(
       '.openKeyNav-structural-status .openKeyNav-status__content'
-    ).textContent).toContain('Hierarchy level: 2.');
+    ).textContent).toContain('Heading level: 2.');
     openKeyNav.structuralNavigate('broadenContext');
     expect(openKeyNav.getStructuralNavigationState().activeContext.name)
       .toBe('Document');
@@ -600,40 +600,43 @@ describe('StructuralNavigationController', () => {
     ).textContent).toContain('Hierarchy level: 1.');
   });
 
-  it('treats differently ranked contexts as peers when they share a parent', () => {
+  it('keeps differently ranked headings in separate horizontal lanes', () => {
     document.body.innerHTML = `
       <h1>Parent context</h1>
       <button id="parent-target">Parent target</button>
-      <h3>Malformed level-three sibling</h3>
-      <button id="level-three-target">Level three target</button>
+      <h3>Current level-three context</h3>
+      <button id="current-level-three-target">Current level three target</button>
       <h2>Level-two sibling</h2>
       <button id="level-two-target">Level two target</button>
+      <h3>Next level-three context</h3>
+      <button id="next-level-three-target">Next level three target</button>
     `;
     openKeyNav = createOpenKeyNav();
     openKeyNav.addKeydownEventListener();
-    document.getElementById('level-three-target').focus();
+    document.getElementById('current-level-three-target').focus();
     openKeyNav.enterStructuralNavigation();
 
-    const levelThree = openKeyNav.getStructuralNavigationState().activeContext;
-    expect(levelThree.name).toBe('Malformed level-three sibling');
-    expect(levelThree.headingLevel).toBe(3);
-    expect(levelThree.parent.name).toBe('Parent context');
+    const currentLevelThree = openKeyNav.getStructuralNavigationState()
+      .activeContext;
+    expect(currentLevelThree.name).toBe('Current level-three context');
+    expect(currentLevelThree.headingLevel).toBe(3);
 
-    const nextSibling = dispatchKey(
-      document.getElementById('level-three-target'),
+    const nextPeer = dispatchKey(
+      document.getElementById('current-level-three-target'),
       'ArrowRight',
       { shiftKey: true }
     );
-    const levelTwo = openKeyNav.getStructuralNavigationState().activeContext;
+    const nextLevelThree = openKeyNav.getStructuralNavigationState()
+      .activeContext;
 
-    expect(nextSibling.defaultPrevented).toBe(true);
-    expect(document.activeElement.id).toBe('level-two-target');
-    expect(levelTwo.name).toBe('Level-two sibling');
-    expect(levelTwo.headingLevel).toBe(2);
-    expect(levelTwo.parent).toBe(levelThree.parent);
+    expect(nextPeer.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('next-level-three-target');
+    expect(nextLevelThree.name).toBe('Next level-three context');
+    expect(nextLevelThree.headingLevel).toBe(3);
+    expect(nextLevelThree.parent).not.toBe(currentLevelThree.parent);
   });
 
-  it('bridges different authored heading ranks at the same hierarchy level', () => {
+  it('bridges the same authored heading rank across hierarchy depths', () => {
     document.body.innerHTML = `
       <main aria-labelledby="catalog-title">
         <h1 id="catalog-title">Catalog</h1>
@@ -667,23 +670,33 @@ describe('StructuralNavigationController', () => {
     expect(recommendations.headingLevel).toBe(2);
     expect(document.querySelector(
       '.openKeyNav-structural-status .openKeyNav-status__content'
-    ).textContent).toContain('Hierarchy level: 3.');
+    ).textContent).toContain('Heading level: 2.');
 
     const nextPeer = dispatchKey(
       document.getElementById('recommendation-a'),
       'ArrowRight',
       { shiftKey: true }
     );
-    const currentLevelThree = openKeyNav.getStructuralNavigationState()
+    const intervening = openKeyNav.getStructuralNavigationState()
       .activeContext;
 
     expect(nextPeer.defaultPrevented).toBe(true);
-    expect(document.activeElement.id).toBe('current-first');
-    expect(currentLevelThree.name).toBe('Current level-three context');
-    expect(currentLevelThree.headingLevel).toBe(3);
+    expect(document.activeElement.id).toBe('unheaded-target');
+    expect(intervening.name).toBe('Intervening family');
+    expect(intervening.headingLevel).toBe(2);
     expect(document.querySelector(
       '.openKeyNav-structural-status .openKeyNav-status__content'
-    ).textContent).toContain('Hierarchy level: 3.');
+    ).textContent).toContain('Heading level: 2.');
+
+    const nextSameRank = dispatchKey(
+      document.getElementById('unheaded-target'),
+      'ArrowRight',
+      { shiftKey: true }
+    );
+    expect(nextSameRank.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('current-first');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('First heading family');
 
     const previousPeer = dispatchKey(
       document.getElementById('current-first'),
@@ -691,12 +704,82 @@ describe('StructuralNavigationController', () => {
       { shiftKey: true }
     );
     expect(previousPeer.defaultPrevented).toBe(true);
-    expect(document.activeElement.id).toBe('recommendation-a');
+    expect(document.activeElement.id).toBe('unheaded-target');
     expect(openKeyNav.getStructuralNavigationState().activeContext)
-      .toBe(recommendations);
+      .toBe(intervening);
   });
 
-  it('narrows from an H2 to the next nonempty H3 at the next hierarchy level', () => {
+  it('uses authored H3 lanes across the card and people structures from vis.mit.edu', () => {
+    document.body.innerHTML = `
+      <div class="research-card">
+        <div>
+          <a id="accessible-theme" href="#accessible-theme">
+            <h2>Accessible Data Representations</h2>
+          </a>
+        </div>
+        <div>
+          <h3>Latest &amp; Greatest</h3>
+          <a id="benthic" href="#benthic">Benthic</a>
+        </div>
+      </div>
+      <div class="research-card">
+        <div>
+          <a id="cognition-theme" href="#cognition-theme">
+            <h2>Cognition and Visualization</h2>
+          </a>
+        </div>
+        <div>
+          <h3>Recent Publications</h3>
+          <a id="cognition-paper" href="#cognition-paper">Cognition paper</a>
+        </div>
+      </div>
+      <section aria-labelledby="people-title">
+        <h2 id="people-title">People</h2>
+        <div>
+          <h3>Alumni</h3>
+          <a id="zoe" href="#zoe">Zoe De Simone</a>
+        </div>
+      </section>
+    `;
+    openKeyNav = createOpenKeyNav();
+    openKeyNav.addKeydownEventListener();
+    document.getElementById('benthic').focus();
+    openKeyNav.enterStructuralNavigation();
+
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Latest & Greatest');
+    expect(document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    ).textContent).toContain('Heading level: 3.');
+
+    const nextH3 = dispatchKey(
+      document.getElementById('benthic'),
+      'ArrowRight',
+      { shiftKey: true }
+    );
+    expect(nextH3.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('cognition-paper');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Recent Publications');
+
+    openKeyNav.exitStructuralNavigation({ announce: false });
+    document.getElementById('zoe').focus();
+    openKeyNav.enterStructuralNavigation();
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Alumni');
+
+    const previousH3 = dispatchKey(
+      document.getElementById('zoe'),
+      'ArrowLeft',
+      { shiftKey: true }
+    );
+    expect(previousH3.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('cognition-paper');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Recent Publications');
+  });
+
+  it('narrows from an H2 to the next nonempty H3 by authored level', () => {
     document.body.innerHTML = `
       <section aria-labelledby="source-title">
         <h2 id="source-title">Source level two</h2>
@@ -734,7 +817,7 @@ describe('StructuralNavigationController', () => {
     expect(destination.headingLevel).toBe(3);
     expect(document.querySelector(
       '.openKeyNav-structural-status .openKeyNav-status__content'
-    ).textContent).toContain('Hierarchy level: 3.');
+    ).textContent).toContain('Heading level: 3.');
   });
 
   it('treats H6 as the boundary for page-forward narrow fallback', () => {
@@ -969,7 +1052,7 @@ describe('StructuralNavigationController', () => {
     expect(indicator.style.height).toBe('398px');
     expect(document.querySelector(
       '.openKeyNav-structural-status .openKeyNav-status__content'
-    ).textContent).toContain('Hierarchy level: 2.');
+    ).textContent).toContain('Heading level: 1.');
 
     document.getElementById('result').focus();
     await nextTask();

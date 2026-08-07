@@ -350,28 +350,21 @@ const contextOrder = context => {
 };
 
 /**
- * True structural siblings are always horizontal peers. A heading-backed
- * context may also bridge to any other heading-backed context at the same
- * canonical hierarchy depth, regardless of authored H1-H6 rank. Authored rank
- * must not split one structural level into separate horizontal lanes.
+ * Heading-backed contexts use the authored heading level as their horizontal
+ * lane, regardless of inferred container ancestry. Contexts without a heading
+ * level use ordinary structural siblings.
  */
 const horizontalContextPeers = (model, context) => {
   const headingLevel = contextHeadingLevel(context);
-  const hierarchyLevel = contextHierarchyLevel(model, context);
   const structuralParent = parentContext(model, context);
   const contexts = headingLevel === null
     ? normalizeContextChildren(model, structuralParent)
     : modelStructuralContexts(model).filter(candidate => (
-      parentContext(model, candidate) === structuralParent ||
-      (
-        contextHeadingLevel(candidate) !== null &&
-        contextHierarchyLevel(model, candidate) === hierarchyLevel
-      )
+      contextHeadingLevel(candidate) === headingLevel
     ));
 
   return {
     headingLevel,
-    hierarchyLevel,
     contexts: contexts
       .filter(candidate => contextTargets(candidate).length > 0)
       .sort((left, right) => (
@@ -382,16 +375,14 @@ const horizontalContextPeers = (model, context) => {
 };
 
 /**
- * Finds the next page-forward context one canonical level deeper. Heading
- * contexts also advance exactly one authored rank so an H2 fallback reaches
- * the next nonempty H3 rather than an unrelated unheaded level-three context.
+ * Finds the next page-forward context. A heading-backed context advances by
+ * authored heading level; an unheaded context advances by inferred structural
+ * depth.
  */
 const nextNarrowFallbackContext = (model, context) => {
   const headingLevel = contextHeadingLevel(context);
   if (headingLevel !== null && headingLevel >= 6) return null;
 
-  const hierarchyLevel = contextHierarchyLevel(model, context);
-  const nextHeadingLevel = headingLevel === null ? null : headingLevel + 1;
   const orderedContexts = modelStructuralContexts(model)
     .filter(candidate => contextTargets(candidate).length > 0)
     .sort((left, right) => (
@@ -403,12 +394,16 @@ const nextNarrowFallbackContext = (model, context) => {
     ? orderedContexts.slice(currentIndex + 1)
     : orderedContexts;
 
+  if (headingLevel !== null) {
+    return followingContexts.find(candidate => (
+      contextHeadingLevel(candidate) === headingLevel + 1
+    )) || null;
+  }
+
+  const hierarchyLevel = contextHierarchyLevel(model, context);
   return followingContexts.find(candidate => (
-    contextHierarchyLevel(model, candidate) === hierarchyLevel + 1 &&
-    (
-      nextHeadingLevel === null ||
-      contextHeadingLevel(candidate) === nextHeadingLevel
-    )
+    contextHeadingLevel(candidate) === null &&
+    contextHierarchyLevel(model, candidate) === hierarchyLevel + 1
   )) || null;
 };
 
@@ -1185,7 +1180,6 @@ export class StructuralNavigationController {
     const {
       contexts: peers,
       headingLevel,
-      hierarchyLevel,
     } = horizontalContextPeers(
       this.model,
       this.activeStructuralContext
@@ -1195,7 +1189,7 @@ export class StructuralNavigationController {
     if (currentIndex < 0 || nextIndex < 0 || nextIndex >= peers.length) {
       const relation = headingLevel === null
         ? 'sibling context'
-        : `peer context at hierarchy level ${hierarchyLevel}`;
+        : `peer context at heading level ${headingLevel}`;
       this.updateStatus(
         direction > 0
           ? `No next ${relation}.`
@@ -1245,13 +1239,12 @@ export class StructuralNavigationController {
 
     const fallback = nextNarrowFallbackContext(this.model, activeContext);
     if (!fallback) {
-      const nextHierarchyLevel = contextHierarchyLevel(
-        this.model,
-        activeContext
-      ) + 1;
       this.updateStatus(headingLevel === null
-        ? `No next context at hierarchy level ${nextHierarchyLevel}.`
-        : `No next H${headingLevel + 1} context at hierarchy level ${nextHierarchyLevel}.`);
+        ? `No next context at hierarchy level ${contextHierarchyLevel(
+          this.model,
+          activeContext
+        ) + 1}.`
+        : `No next H${headingLevel + 1} context.`);
       return;
     }
 
@@ -1497,13 +1490,22 @@ export class StructuralNavigationController {
         this.model.rootContext
       )
       : (this.activeStructuralContext || this.model.rootContext);
-    const hierarchyLevel = contextHierarchyLevel(
+    const headingLevel = contextHeadingLevel(hierarchyContext);
+    const reportedLevel = headingLevel ?? contextHierarchyLevel(
       this.model,
       hierarchyContext
     );
     const hierarchyDescription = this.activeTypedContext
-      ? `Underlying hierarchy level: ${hierarchyLevel}.`
-      : `Hierarchy level: ${hierarchyLevel}.`;
+      ? (
+        headingLevel === null
+          ? `Underlying hierarchy level: ${reportedLevel}.`
+          : `Underlying heading level: ${reportedLevel}.`
+      )
+      : (
+        headingLevel === null
+          ? `Hierarchy level: ${reportedLevel}.`
+          : `Heading level: ${reportedLevel}.`
+      );
     const typedContexts = typedContextsForTarget(this.model, this.currentTarget);
     const typedDescription = typedContexts.length
       ? `${typedContexts.length} alternate ${typedContexts.length === 1

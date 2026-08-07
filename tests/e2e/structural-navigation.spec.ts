@@ -121,7 +121,7 @@ test.describe('structural navigation mode', () => {
     await page.keyboard.press('Shift+ArrowUp');
     await expectDeepFocus(page, 'preorder');
     await expect(page.locator('.openKeyNav-structural-status')).toContainText('Filters');
-    await expect(structuralStatusContent).toContainText('Hierarchy level: 3.');
+    await expect(structuralStatusContent).toContainText('Heading level: 2.');
     await expect(activeIndicator).toHaveAttribute('data-context-name', 'Filters');
 
     await page.keyboard.press('Shift+ArrowDown');
@@ -130,8 +130,8 @@ test.describe('structural navigation mode', () => {
     await expect(structuralStatusContent).toContainText('Hierarchy level: 4.');
     await expect(activeIndicator).toHaveAttribute('data-context-name', 'Availability');
 
-    // Shift+Left/Right traverses true siblings and heading-backed contexts at
-    // the same hierarchy depth, always entering the destination's first stop.
+    // Shift+Left/Right traverses the authored H2 lane, always entering the
+    // destination's first stop.
     await page.keyboard.press('Shift+ArrowUp');
     await page.keyboard.press('Shift+ArrowRight');
     await expectDeepFocus(page, 'product-a');
@@ -157,7 +157,7 @@ test.describe('structural navigation mode', () => {
     await page.keyboard.press('Shift+ArrowUp');
     await page.keyboard.press('Shift+ArrowUp');
     await expect(page.locator('.openKeyNav-structural-status')).toContainText('Catalog');
-    await expect(structuralStatusContent).toContainText('Hierarchy level: 2.');
+    await expect(structuralStatusContent).toContainText('Heading level: 1.');
     await expect(activeIndicator).toHaveAttribute('data-context-name', 'Catalog');
     const catalogBox = await page.locator('main').boundingBox();
     const catalogIndicatorBox = await activeIndicator.boundingBox();
@@ -169,7 +169,7 @@ test.describe('structural navigation mode', () => {
     await page.keyboard.press('Tab');
     await expectDeepFocus(page, 'product-a');
     await expect(page.locator('.openKeyNav-structural-status')).toContainText('Catalog');
-    await expect(structuralStatusContent).toContainText('Hierarchy level: 2.');
+    await expect(structuralStatusContent).toContainText('Heading level: 1.');
     await expect(activeIndicator).toHaveAttribute('data-context-name', 'Catalog');
 
     const focusEvents = await page.evaluate(() => (window as any).fixture.focusEvents);
@@ -324,7 +324,7 @@ test.describe('structural navigation mode', () => {
       .toContainText('Context: Current level-three context');
     await expect(page.locator(
       '.openKeyNav-structural-status .openKeyNav-status__content'
-    )).toContainText('Hierarchy level: 3.');
+    )).toContainText('Heading level: 3.');
     await expect(page.locator(
       '.openKeyNav-structural-status .openKeyNav-status__content'
     )).not.toContainText('Previous context:');
@@ -340,7 +340,7 @@ test.describe('structural navigation mode', () => {
       .toContainText('Context: Next level-three context');
     await expect(page.locator(
       '.openKeyNav-structural-status .openKeyNav-status__content'
-    )).toContainText('Hierarchy level: 3.');
+    )).toContainText('Heading level: 3.');
     await expect(page.locator(
       '.openKeyNav-structural-status .openKeyNav-status__content'
     )).not.toContainText('Previous context:');
@@ -359,7 +359,7 @@ test.describe('structural navigation mode', () => {
       .toContainText('Context: Second heading family');
     await expect(page.locator(
       '.openKeyNav-structural-status .openKeyNav-status__content'
-    )).toContainText('Hierarchy level: 2.');
+    )).toContainText('Heading level: 2.');
     const familyIndicator = page.locator(
       '.openKeyNav-structural-context-outline'
     );
@@ -390,25 +390,12 @@ test.describe('structural navigation mode', () => {
       .toContainText('Context: Current level-three context');
 
     await page.keyboard.press('Shift+ArrowLeft');
-    await expectDeepFocus(page, 'recommendation-a');
+    await expectDeepFocus(page, 'same-level-current-first');
     await expect(page.locator('.openKeyNav-structural-status'))
-      .toContainText('Context: Recommendations');
-
-    await page.keyboard.press('Shift+ArrowLeft');
-    await expectDeepFocus(page, 'product-a');
-    await page.keyboard.press('Shift+ArrowLeft');
-    await expectDeepFocus(page, 'clear-filters');
-    await page.keyboard.press('Shift+ArrowLeft');
-    await expectDeepFocus(page, 'search-input');
-    // Search enters through its text field, so use the configured ownership
-    // override for the boundary command.
-    await page.keyboard.press('Alt+Shift+ArrowLeft');
-    await expectDeepFocus(page, 'search-input');
-    await expect(page.locator('.openKeyNav-structural-status'))
-      .toContainText('No previous peer context at hierarchy level 3');
+      .toContainText('No previous peer context at heading level 3');
   });
 
-  test('moves from Recommendations to the next heading-backed level-three context', async ({ page }) => {
+  test('keeps Recommendations in the authored H2 horizontal lane', async ({ page }) => {
     await enableOpenKeyNav(page);
     await focusFixtureTarget(page, 'product-a');
     await enterStructuralNavigation(page);
@@ -421,16 +408,18 @@ test.describe('structural navigation mode', () => {
     await page.keyboard.press('Shift+ArrowRight');
     await expectDeepFocus(page, 'recommendation-a');
     await expect(status).toContainText('Context: Recommendations.');
-    await expect(status).toContainText('Hierarchy level: 3.');
+    await expect(status).toContainText('Heading level: 2.');
     await expect(indicator).toHaveAttribute('data-context-name', 'Recommendations');
 
     await page.keyboard.press('Shift+ArrowRight');
-    await expectDeepFocus(page, 'same-level-current-first');
-    await expect(status).toContainText('Context: Current level-three context.');
-    await expect(status).toContainText('Hierarchy level: 3.');
+    await expectDeepFocus(page, 'native-button');
+    await expect(status).toContainText(
+      'Context: Native activation and sequential focus.'
+    );
+    await expect(status).toContainText('Heading level: 2.');
     await expect(indicator).toHaveAttribute(
       'data-context-name',
-      'Current level-three context'
+      'Native activation and sequential focus'
     );
 
     await page.keyboard.press('Shift+ArrowLeft');
@@ -439,7 +428,7 @@ test.describe('structural navigation mode', () => {
     await expect(indicator).toHaveAttribute('data-context-name', 'Recommendations');
   });
 
-  test('does not cross hierarchy depth merely because headings share a rank', async ({ page }) => {
+  test('crosses inferred hierarchy depth when headings share an authored level', async ({ page }) => {
     await enableOpenKeyNav(page);
     await focusFixtureTarget(page, 'native-button');
     await enterStructuralNavigation(page);
@@ -451,14 +440,13 @@ test.describe('structural navigation mode', () => {
     await expect(status).toContainText(
       'Context: Native activation and sequential focus.'
     );
-    await expect(status).toContainText('Hierarchy level: 2.');
+    await expect(status).toContainText('Heading level: 2.');
 
     await page.keyboard.press('Shift+ArrowLeft');
-    await expectDeepFocus(page, 'clear-filters');
-    await expect(status).toContainText('Context: Catalog.');
-    await expect(status).toContainText('Hierarchy level: 2.');
-    await expect(status).not.toContainText('Context: Recommendations.');
-    await expect(indicator).toHaveAttribute('data-context-name', 'Catalog');
+    await expectDeepFocus(page, 'recommendation-a');
+    await expect(status).toContainText('Context: Recommendations.');
+    await expect(status).toContainText('Heading level: 2.');
+    await expect(indicator).toHaveAttribute('data-context-name', 'Recommendations');
 
     await page.keyboard.press('Shift+ArrowRight');
     await expectDeepFocus(page, 'native-button');
@@ -483,13 +471,13 @@ test.describe('structural navigation mode', () => {
     await expect(status).toContainText(
       'Context: Native activation and sequential focus.'
     );
-    await expect(status).toContainText('Hierarchy level: 2.');
+    await expect(status).toContainText('Heading level: 2.');
 
     await page.keyboard.press('Shift+ArrowDown');
 
     await expectDeepFocus(page, 'same-level-current-first');
     await expect(status).toContainText('Context: Current level-three context.');
-    await expect(status).toContainText('Hierarchy level: 3.');
+    await expect(status).toContainText('Heading level: 3.');
     await expect(indicator).toHaveAttribute(
       'data-context-name',
       'Current level-three context'
@@ -498,16 +486,16 @@ test.describe('structural navigation mode', () => {
 
   test('outlines the active context and follows the screenshot horizontal route', async ({ page }) => {
     await expect(page.locator('#structural-navigation-guide')).toContainText(
-      'moves to the previous / next horizontal peer at the same hierarchy depth'
+      'moves to the previous / next context at the same authored heading level'
     );
     await expect(page.locator('#structural-navigation-guide')).toContainText(
       'moves sequentially using native browser focus'
     );
     await expect(page.locator('#structural-navigation-guide')).toContainText(
-      'H1–H5 advances to the next nonempty H(n+1) at the next hierarchy level'
+      'H1–H5 advances to the next nonempty H(n+1) in document order'
     );
     await expect(page.locator('#structural-navigation-guide')).toContainText(
-      'regardless of authored heading rank'
+      'even across different structural parents'
     );
     expect(await page.evaluate(() => {
       const structural = (window as any).okn.config.modesConfig.structuralNavigation;
@@ -547,7 +535,7 @@ test.describe('structural navigation mode', () => {
     const filtersStatusContent = page.locator(
       '.openKeyNav-structural-status .openKeyNav-status__content'
     );
-    await expect(filtersStatusContent).toContainText('Hierarchy level: 3.');
+    await expect(filtersStatusContent).toContainText('Heading level: 2.');
     await expect(filtersStatusContent).not.toContainText('Previous context:');
     await expect(filtersStatusContent).not.toContainText('Next context:');
     await expect(filtersStatusContent).not.toContainText('Recommendations');
@@ -574,7 +562,7 @@ test.describe('structural navigation mode', () => {
     await page.keyboard.press('Shift+ArrowRight');
     await expectDeepFocus(page, 'product-a');
     await expect(page.locator('.openKeyNav-structural-status')).toContainText('Results');
-    await expect(filtersStatusContent).toContainText('Hierarchy level: 3.');
+    await expect(filtersStatusContent).toContainText('Heading level: 2.');
     await expect(filtersStatusContent).not.toContainText('Previous context:');
     await expect(filtersStatusContent).not.toContainText('Next context:');
     await expect(indicator).toHaveAttribute('data-context-name', 'Results');
@@ -594,7 +582,7 @@ test.describe('structural navigation mode', () => {
 
     await expect(content).toHaveText(
       'Context: Native activation and sequential focus. ' +
-      'Hierarchy level: 2. Run native action, 1 of 3.'
+      'Heading level: 2. Run native action, 1 of 3.'
     );
     await expect(content).not.toContainText('Previous context:');
     await expect(content).not.toContainText('Next context:');
@@ -1188,14 +1176,14 @@ test.describe('structural navigation mode', () => {
       '.openKeyNav-structural-status .openKeyNav-status__content'
     );
     await expect(typedStatusContent).toContainText('Context: Typed workspace.');
-    await expect(typedStatusContent).toContainText('Hierarchy level: 2.');
-    await expect(typedStatusContent).not.toContainText('Underlying hierarchy level:');
+    await expect(typedStatusContent).toContainText('Heading level: 2.');
+    await expect(typedStatusContent).not.toContainText('Underlying heading level:');
     await expect(typedStatusContent).toContainText('2 alternate routes available.');
     await expect(typedStatusContent).not.toContainText('Typed contexts:');
     await nextTypedContext();
     await expectDeepFocus(page, 'typed-current');
     await expect(typedStatusContent).toContainText('Typed context: Action row.');
-    await expect(typedStatusContent).toContainText('Underlying hierarchy level: 2.');
+    await expect(typedStatusContent).toContainText('Underlying heading level: 2.');
 
     await structuralNavigate(page, 'previousTarget');
     await expectDeepFocus(page, 'row-before');
@@ -1205,7 +1193,7 @@ test.describe('structural navigation mode', () => {
     await nextTypedContext();
     await expectDeepFocus(page, 'typed-current');
     await expect(typedStatusContent).toContainText('Typed context: Review column.');
-    await expect(typedStatusContent).toContainText('Underlying hierarchy level: 2.');
+    await expect(typedStatusContent).toContainText('Underlying heading level: 2.');
     await structuralNavigate(page, 'nextTarget');
     await expectDeepFocus(page, 'column-after');
     await structuralNavigate(page, 'previousTarget');
@@ -1215,8 +1203,8 @@ test.describe('structural navigation mode', () => {
     await nextTypedContext();
     await expectDeepFocus(page, 'typed-current');
     await expect(typedStatusContent).toContainText('Context: Typed workspace.');
-    await expect(typedStatusContent).toContainText('Hierarchy level: 2.');
-    await expect(typedStatusContent).not.toContainText('Underlying hierarchy level:');
+    await expect(typedStatusContent).toContainText('Heading level: 2.');
+    await expect(typedStatusContent).not.toContainText('Underlying heading level:');
     expect(await page.evaluate(() => (
       (window as any).typedTargetIdentity === document.getElementById('typed-current')
     ))).toBe(true);
@@ -1226,7 +1214,7 @@ test.describe('structural navigation mode', () => {
     // focus; the remaining applicable peer becomes the next ring entry.
     await nextTypedContext();
     await expect(typedStatusContent).toContainText('Typed context: Action row.');
-    await expect(typedStatusContent).toContainText('Underlying hierarchy level: 2.');
+    await expect(typedStatusContent).toContainText('Underlying heading level: 2.');
     await page.evaluate(() => {
       const structural = (window as any).okn.config.modesConfig.structuralNavigation;
       structural.typedContexts[0].targets = () => [
@@ -1239,7 +1227,7 @@ test.describe('structural navigation mode', () => {
     await nextTypedContext();
     await expectDeepFocus(page, 'typed-current');
     await expect(typedStatusContent).toContainText('Typed context: Review column.');
-    await expect(typedStatusContent).toContainText('Underlying hierarchy level: 2.');
+    await expect(typedStatusContent).toContainText('Underlying heading level: 2.');
     await expect(typedStatusContent).toContainText('1 alternate route available.');
 
     // The default Shift+Right command always traverses the structural tree,

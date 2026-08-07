@@ -203,6 +203,11 @@ After enabling OpenKeyNav with `Shift+o`, press `r` to enter Structural Navigati
 | Hide the visible status without leaving the mode | `Shift+Escape` |
 | Exit Structural Navigation | `Alt+r` |
 
+For a heading-backed context, `Shift+Left` and `Shift+Right` follow the authored
+heading level (H1 through H6) across the page and enter the first target in the
+previous or next matching context. Unheaded contexts move among structural
+siblings instead.
+
 Previous/next target and typed-route commands begin with empty key bindings so applications can assign shortcuts that fit the host interface; each command is also available programmatically. Read the [Structural Navigation documentation](https://openkeynav.com/docs/usage/structural_navigation) for configuration, APIs, focus-scope behavior, and keyboard ownership.
 
 Structural Navigation remains active until the user exits it. Its configured commands get first refusal; heading, heading-level, and scroll-region navigation run normally without ending the mode. Click Mode, Move Mode, and the shortcut menu temporarily take keyboard priority, then Structural Navigation resumes when that temporary mode finishes or is dismissed.

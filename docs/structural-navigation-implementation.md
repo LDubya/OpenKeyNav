@@ -20,16 +20,17 @@ navigation mode described in `structural-navigation-mode-brief.md`.
   the same optional OpenKeyNav branding as notifications, controlled by
   `notifications.displayToolName`.
 - Structural status identifies the active structural, document/root, or typed
-  context, reports the target's position, and gives the active canonical
-  hierarchy level as a one-based number. The document or scoped root is level
-  1. Typed contexts are overlapping routes rather than tree nodes, so their
-  status reports the underlying structural level that Shift+Up/Down returns
-  to. The persistent status does not name previous or next horizontal contexts;
-  attempted boundary commands still report unavailable relationships. It
-  reports applicable typed routes as a bounded count. `Shift+Escape` closes the
-  visual surface without moving focus or disabling its visually hidden polite
-  live updates. Escape-owning widgets keep that chord, and true mode re-entry
-  restores the visible surface.
+  context and reports the target's position. A heading-backed context reports
+  its authored H1–H6 level; an unheaded context reports its one-based canonical
+  hierarchy level, with the document or scoped root at level 1. Typed contexts
+  are overlapping routes rather than tree nodes, so their status reports the
+  corresponding level of the underlying structural context that Shift+Up/Down
+  returns to. The persistent status does not name previous or next horizontal
+  contexts; attempted boundary commands still report unavailable relationships.
+  It reports applicable typed routes as a bounded count. `Shift+Escape` closes
+  the visual surface without moving focus or disabling its visually hidden
+  polite live updates. Escape-owning widgets keep that chord, and true mode
+  re-entry restores the visible surface.
 - Status messages are inserted as text by default. Only OpenKeyNav-owned markup
   explicitly passed with `trustedHtml: true` is interpreted as HTML.
 - Composed-tree traversal, deep active-element lookup, generated-interface
@@ -97,20 +98,19 @@ static-table row/column inference is intentionally deferred.
 - Explicit previous/next target commands use the active structural flattened
   sequence or active typed sequence. They do not wrap. With no current target,
   next enters at the first item and previous enters at the last.
-- Horizontal movement does not wrap. True structural siblings are always
-  peers, including siblings with mismatched authored heading ranks. A
-  heading-backed context may additionally traverse any heading-backed context
-  under a different parent when both contexts have the same canonical
-  hierarchy depth, regardless of authored H1–H6 rank. An unheaded context uses
-  only its structural siblings. Movement always enters the destination's first
-  target.
+- Horizontal movement does not wrap. A heading-backed context traverses every
+  nonempty heading-backed context with the same authored H1–H6 level in the
+  active root, in document order, regardless of structural parent or inferred
+  tree depth. An unheaded context uses only its structural siblings. Movement
+  always enters the destination's first target.
 - Broaden selects the immediate structural parent. Narrow first selects the child
   on the current target's direct-context path; both transitions retain focus.
-  When no such child exists, narrow scans forward without wrapping for the first
-  nonempty context exactly one canonical level deeper. From a heading-backed
-  H1–H5 it additionally requires authored rank H(n+1), activates that context,
-  and focuses its first target. H6 blocks only this forward fallback, not a real
-  child containing the current target.
+  When no such child exists, narrow scans forward without wrapping. From a
+  heading-backed H1–H5 it finds the first nonempty H(n+1), regardless of
+  inferred tree depth; from an unheaded context it finds the first nonempty
+  unheaded context exactly one canonical structural level deeper. It activates
+  that context and focuses its first target. H6 blocks only this forward
+  fallback, not a real child containing the current target.
 - Explicit peer-context commands cycle through structural routing and the
   applicable typed contexts. That typed ring wraps and changing typed peers
   retains focus. Typed cycling has no default keyboard binding; applications
@@ -135,9 +135,9 @@ does not pull focus back.
 
 Native Tab/Shift+Tab provide sequential focus. Applications assign bindings to
 previous/next target commands or invoke them programmatically. The default
-mapping uses Shift+Left/Right for true siblings plus heading-backed peers at
-equal hierarchy depth regardless of authored rank, Shift+Up/Down for
-broaden/narrow, `r` for entry or toggle when character commands are available,
+mapping uses Shift+Left/Right for same-level heading-backed contexts or true
+siblings of unheaded contexts, Shift+Up/Down for broaden/narrow, `r` for entry
+or toggle when character commands are available,
 `Alt+r` for reliable exit, and `Shift+Escape` to dismiss the visible status when
 Escape is available to the mode. Previous/next target and typed-context cycling
 begin with empty bindings; bare arrows remain native. Applications declare
@@ -197,4 +197,5 @@ The peer-routing design takes inspiration from Mei et al., *Benthic:
 Perceptually Congruent Structures for Accessible Charts and Diagrams* (ASSETS
 2025). OpenKeyNav applies the idea to webpages through a canonical hierarchy
 built from page semantics and overlapping routes supplied by testable
-application relationships. Evaluate the webpage adaptation independently.
+application relationships. Heading-backed horizontal routes follow authored
+heading levels; evaluate the webpage adaptation independently.
