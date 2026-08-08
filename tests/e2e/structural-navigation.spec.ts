@@ -230,6 +230,29 @@ test.describe('structural navigation mode', () => {
       .toHaveCount(0);
     await expect(structuralLabel('narrowContext', 'same-level-current-first'))
       .toHaveText('⇧↓');
+    const shiftSymbols = page.locator(
+      '.openKeyNav-structural-keylabel ' +
+      '[data-openkeynav-keylabel-modifier="shift"]'
+    );
+    expect(await shiftSymbols.count()).toBeGreaterThan(0);
+    expect(await shiftSymbols.evaluateAll(symbols => symbols.every(symbol => (
+      !symbol.hasAttribute('data-openkeynav-keylabel-pressed')
+    )))).toBe(true);
+    await page.keyboard.down('Shift');
+    await expect.poll(() => shiftSymbols.evaluateAll(symbols => symbols.every(
+      symbol => symbol.getAttribute('data-openkeynav-keylabel-pressed') === 'true'
+    ))).toBe(true);
+    expect(await shiftSymbols.first().evaluate(element => {
+      const style = getComputedStyle(element);
+      return { background: style.backgroundColor, color: style.color };
+    })).toEqual({
+      background: 'rgb(255, 255, 255)',
+      color: 'rgb(17, 17, 17)',
+    });
+    await page.keyboard.up('Shift');
+    await expect.poll(() => shiftSymbols.evaluateAll(symbols => symbols.every(
+      symbol => !symbol.hasAttribute('data-openkeynav-keylabel-pressed')
+    ))).toBe(true);
     await expect(structuralLabel('activateEnter', 'product-a'))
       .toHaveText('↵');
     await expect(structuralLabel('activateEnter', 'product-a'))
@@ -1035,6 +1058,34 @@ test.describe('structural navigation mode', () => {
     const structuralStatus = page.locator('.openKeyNav-structural-status');
     const structuralHint = structuralStatus.locator('.openKeyNav-status__hint');
     await expect(structuralStatus).toBeVisible();
+    await expect(page.locator(
+      '.openKeyNav-structural-keylabel' +
+      '[data-openkeynav-keylabel-command="previousSiblingContext"]'
+    )).toHaveText('⌥⇧←');
+    await expect(page.locator(
+      '.openKeyNav-structural-keylabel' +
+      '[data-openkeynav-keylabel-command="nextSiblingContext"]'
+    )).toHaveText('⌥⇧→');
+    const overrideSymbols = page.locator(
+      '.openKeyNav-structural-keylabel ' +
+      '[data-openkeynav-keylabel-modifier="alt"]'
+    );
+    await expect.poll(() => overrideSymbols.count()).toBeGreaterThan(0);
+    expect(await overrideSymbols.evaluateAll(symbols => symbols.every(
+      symbol => !symbol.hasAttribute('data-openkeynav-keylabel-pressed')
+    ))).toBe(true);
+    await page.keyboard.down('Alt');
+    await expect.poll(() => overrideSymbols.evaluateAll(symbols => (
+      symbols.length > 0 && symbols.every(symbol => (
+        symbol.getAttribute('data-openkeynav-keylabel-pressed') === 'true'
+      ))
+    ))).toBe(true);
+    await page.keyboard.up('Alt');
+    await expect.poll(() => overrideSymbols.evaluateAll(symbols => (
+      symbols.length > 0 && symbols.every(symbol => (
+        !symbol.hasAttribute('data-openkeynav-keylabel-pressed')
+      ))
+    ))).toBe(true);
     await page.evaluate(() => (window as any).fixture.resetLogs());
     const inputStatusText = await structuralStatus.locator(
       '.openKeyNav-status__content'

@@ -205,6 +205,38 @@ describe('StructuralNavigationController', () => {
       .hasAttribute('data-openkeynav-keylabel-target-active')).toBe(true);
   });
 
+  it('includes the configured ownership override in input-owned arrow routes', async () => {
+    document.body.innerHTML = `
+      <a id="parent-heading-target" href="#parent"><h2>Parent</h2></a>
+      <a id="parent-detail" href="#detail">Parent detail</a>
+      <h3>Current</h3>
+      <input id="editor" value="abc">
+      <h4>Child</h4>
+      <button id="child-target">Child target</button>
+      <h3>Peer</h3>
+      <button id="peer-target">Peer target</button>
+    `;
+    openKeyNav = createOpenKeyNav();
+    document.getElementById('editor').focus();
+
+    openKeyNav.enterStructuralNavigation();
+    await new Promise(resolve => setTimeout(resolve, 25));
+
+    const labelFor = command => document.querySelector(
+      `.openKeyNav-structural-keylabel` +
+      `[data-openkeynav-keylabel-command="${command}"]`
+    )?.textContent;
+
+    expect(labelFor('nextSiblingContext')).toBe('⌥⇧→');
+    expect(labelFor('broadenContext')).toBe('⌥⇧↑');
+    expect(labelFor('narrowContext')).toBe('⌥⇧↓');
+    expect(Array.from(document.querySelectorAll(
+      '.openKeyNav-structural-keylabel'
+    )).filter(label => label.textContent.startsWith('⌥')).every(label => (
+      Array.from(label.textContent).length === 3
+    ))).toBe(true);
+  });
+
   it('labels the targets left focused by vertical heading navigation', async () => {
     document.body.innerHTML = `
       <a id="parent-heading-target" href="#parent">

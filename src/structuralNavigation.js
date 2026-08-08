@@ -82,6 +82,13 @@ const SHORTCUT_MODIFIER_LABELS = Object.freeze({
   metaKey: 'Meta',
 });
 
+const KEYLABEL_MODIFIER_SYMBOLS = Object.freeze({
+  altKey: KEYLABEL_SYMBOLS.alt,
+  ctrlKey: KEYLABEL_SYMBOLS.control,
+  metaKey: KEYLABEL_SYMBOLS.meta,
+  shiftKey: KEYLABEL_SYMBOLS.shift,
+});
+
 const shortcutLabel = shortcut => {
   const normalized = normalizeShortcut(shortcut);
   if (!normalized) return '';
@@ -95,16 +102,9 @@ const shortcutLabel = shortcut => {
   return [...modifiers, key].join('+');
 };
 
-const shortcutSymbols = shortcut => {
+const shortcutSymbols = (shortcut, { extraModifiers = [] } = {}) => {
   const normalized = normalizeShortcut(shortcut);
-  if (
-    !normalized ||
-    normalized.altKey ||
-    normalized.ctrlKey ||
-    normalized.metaKey
-  ) {
-    return '';
-  }
+  if (!normalized) return '';
 
   const keySymbol = {
     Tab: KEYLABEL_SYMBOLS.tab,
@@ -117,7 +117,13 @@ const shortcutSymbols = shortcut => {
     Spacebar: KEYLABEL_SYMBOLS.space,
   }[normalized.key];
   if (!keySymbol) return '';
-  return `${normalized.shiftKey ? KEYLABEL_SYMBOLS.shift : ''}${keySymbol}`;
+  const modifierSymbols = [
+    ...extraModifiers,
+    ...MODIFIER_KEYS.filter(modifier => normalized[modifier]),
+  ].filter((modifier, index, modifiers) => (
+    MODIFIER_KEYS.includes(modifier) && modifiers.indexOf(modifier) === index
+  )).map(modifier => KEYLABEL_MODIFIER_SYMBOLS[modifier]);
+  return `${modifierSymbols.join('')}${keySymbol}`;
 };
 
 /**
@@ -270,17 +276,44 @@ const shortcutEventForTarget = (target, shortcut) => {
   };
 };
 
-const targetAcceptsStructuralArrow = (target, shortcut, config) => {
+const structuralArrowSymbols = (target, shortcut, config) => {
   const event = shortcutEventForTarget(target, shortcut);
-  if (!event || !event.key.startsWith('Arrow')) return false;
+  if (!event || !event.key.startsWith('Arrow')) return '';
   const ownership = classifyStructuralKeyOwnership(event, config);
-  if (ownership.all) return false;
-  if (!ownership.arrows) return true;
+  if (ownership.all) return '';
+  if (!ownership.arrows) return shortcutSymbols(shortcut);
 
   const overrideModifier = MODIFIER_KEYS.includes(config.overrideModifier)
     ? config.overrideModifier
     : null;
-  return Boolean(overrideModifier && event[overrideModifier]);
+  if (!overrideModifier) return '';
+
+  const normalized = normalizeShortcut(shortcut);
+  if (
+    Object.prototype.hasOwnProperty.call(normalized, overrideModifier) &&
+    !normalized[overrideModifier]
+  ) {
+    return '';
+  }
+
+  const extraModifiers = normalized[overrideModifier]
+    ? []
+    : [overrideModifier];
+  const overriddenEvent = {
+    ...event,
+    [overrideModifier]: true,
+  };
+  const overriddenOwnership = classifyStructuralKeyOwnership(
+    overriddenEvent,
+    config
+  );
+  if (overriddenOwnership.all) return '';
+  if (!matchesStructuralShortcut(overriddenEvent, shortcut, {
+    allowedExtraModifiers: extraModifiers,
+  })) {
+    return '';
+  }
+  return shortcutSymbols(shortcut, { extraModifiers });
 };
 
 const nativeActivationSymbols = target => {
@@ -1620,9 +1653,9 @@ export class StructuralNavigationController {
         ? directContextForTarget(this.model, this.currentTarget)
         : this.activeStructuralContext
     ) || this.model?.rootContext;
-    const add = (target, symbols, command) => {
+    const add = (target, symbols, command, options = {}) => {
       if (!target || !symbols || !this.targetSet.has(target)) return;
-      assignments.push({ target, symbols, command });
+      assignments.push({ target, symbols, command, ...options });
     };
     const addNativeFocusRoute = assignment => {
       const target = assignment?.target;
@@ -1650,20 +1683,21 @@ export class StructuralNavigationController {
         [1, 'nextSiblingContext'],
       ].forEach(([direction, command]) => {
         const shortcut = this.config.commands?.[command];
-        const symbols = shortcutSymbols(shortcut);
+        const symbols = structuralArrowSymbols(
+          this.currentTarget,
+          shortcut,
+          this.config
+        );
         if (
           currentIndex < 0 ||
-          !symbols ||
-          !targetAcceptsStructuralArrow(
-            this.currentTarget,
-            shortcut,
-            this.config
-          )
+          !symbols
         ) {
           return;
         }
         const peer = peers[currentIndex + direction];
-        add(contextTargets(peer)[0], symbols, command);
+        add(contextTargets(peer)[0], symbols, command, {
+          maxSymbols: Array.from(symbols).length,
+        });
       });
     }
 
@@ -1671,19 +1705,20 @@ export class StructuralNavigationController {
       const commandSource = getDeepActiveElement(this.root);
       const addVertical = (command, target) => {
         const shortcut = this.config.commands?.[command];
-        const symbols = shortcutSymbols(shortcut);
+        const symbols = structuralArrowSymbols(
+          commandSource,
+          shortcut,
+          this.config
+        );
         if (
           target === this.currentTarget ||
-          !symbols ||
-          !targetAcceptsStructuralArrow(
-            commandSource,
-            shortcut,
-            this.config
-          )
+          !symbols
         ) {
           return;
         }
-        add(target, symbols, command);
+        add(target, symbols, command, {
+          maxSymbols: Array.from(symbols).length,
+        });
       };
 
       const headingParent = previousBroaderHeadingContext(

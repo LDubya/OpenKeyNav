@@ -111,12 +111,112 @@ describe('keylabels', () => {
       .toBe(false);
 
     repositionAssignedKeylabels(assignedOpenKeyNav, owner);
-    expect(updateOverlayPosition).toHaveBeenCalledTimes(4);
+    expect(updateOverlayPosition).toHaveBeenCalledTimes(6);
 
     clearAssignedKeylabels(assignedOpenKeyNav, owner);
     expect(document.querySelectorAll('.openKeyNav-structural-keylabel'))
       .toHaveLength(0);
     expect(document.querySelectorAll('[data-openkeynav-keylabel-target-active]'))
       .toHaveLength(0);
+  });
+
+  it('highlights assigned modifier symbols only while each key is held', () => {
+    document.body.innerHTML = '<button id="destination">Destination</button>';
+    const createOverlay = (target, label, cssClass) => {
+      const overlay = document.createElement('div');
+      overlay.className = `openKeyNav-label ${cssClass}`;
+      overlay.textContent = label;
+      document.body.appendChild(overlay);
+      return overlay;
+    };
+    const assignedOpenKeyNav = {
+      createOverlay,
+      updateOverlayPosition: vi.fn(),
+      statusService: { document },
+    };
+    const assignment = [{
+      target: document.getElementById('destination'),
+      symbols: `${KEYLABEL_SYMBOLS.alt}${KEYLABEL_SYMBOLS.shift}` +
+        KEYLABEL_SYMBOLS.right,
+      command: 'nextSiblingContext',
+      maxSymbols: 3,
+    }];
+    const render = () => showAssignedKeylabels(
+      assignedOpenKeyNav,
+      assignment,
+      { owner: 'structural-navigation' }
+    );
+
+    render();
+    let altSymbol = document.querySelector(
+      '[data-openkeynav-keylabel-modifier="alt"]'
+    );
+    let shiftSymbol = document.querySelector(
+      '[data-openkeynav-keylabel-modifier="shift"]'
+    );
+    expect(altSymbol?.textContent).toBe(KEYLABEL_SYMBOLS.alt);
+    expect(shiftSymbol?.textContent).toBe(KEYLABEL_SYMBOLS.shift);
+    expect(altSymbol?.hasAttribute('data-openkeynav-keylabel-pressed'))
+      .toBe(false);
+    expect(shiftSymbol?.hasAttribute('data-openkeynav-keylabel-pressed'))
+      .toBe(false);
+
+    document.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Alt',
+      code: 'AltLeft',
+      altKey: true,
+      bubbles: true,
+    }));
+    expect(altSymbol?.dataset.openkeynavKeylabelPressed).toBe('true');
+
+    document.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Shift',
+      code: 'ShiftLeft',
+      altKey: true,
+      shiftKey: true,
+      bubbles: true,
+    }));
+    expect(shiftSymbol?.dataset.openkeynavKeylabelPressed).toBe('true');
+
+    render();
+    altSymbol = document.querySelector(
+      '[data-openkeynav-keylabel-modifier="alt"]'
+    );
+    shiftSymbol = document.querySelector(
+      '[data-openkeynav-keylabel-modifier="shift"]'
+    );
+    expect(altSymbol?.dataset.openkeynavKeylabelPressed).toBe('true');
+    expect(shiftSymbol?.dataset.openkeynavKeylabelPressed).toBe('true');
+
+    document.dispatchEvent(new KeyboardEvent('keyup', {
+      key: 'Shift',
+      code: 'ShiftLeft',
+      altKey: true,
+      shiftKey: false,
+      bubbles: true,
+    }));
+    expect(altSymbol?.dataset.openkeynavKeylabelPressed).toBe('true');
+    expect(shiftSymbol?.hasAttribute('data-openkeynav-keylabel-pressed'))
+      .toBe(false);
+
+    document.dispatchEvent(new KeyboardEvent('keyup', {
+      key: 'Alt',
+      code: 'AltLeft',
+      altKey: false,
+      bubbles: true,
+    }));
+    expect(altSymbol?.hasAttribute('data-openkeynav-keylabel-pressed'))
+      .toBe(false);
+
+    document.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Alt',
+      altKey: true,
+      bubbles: true,
+    }));
+    window.dispatchEvent(new Event('blur'));
+    expect(altSymbol?.hasAttribute('data-openkeynav-keylabel-pressed'))
+      .toBe(false);
+
+    clearAssignedKeylabels(assignedOpenKeyNav, 'structural-navigation');
   });
 });

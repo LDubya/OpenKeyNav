@@ -3,6 +3,9 @@ import { isTabbable } from "./isTabbable";
 import { disableScrolling } from "./scrolling";
 
 export const KEYLABEL_SYMBOLS = Object.freeze({
+  alt: '⌥',
+  control: '⌃',
+  meta: '⌘',
   shift: '⇧',
   tab: '⇥',
   left: '←',
@@ -17,13 +20,159 @@ export const KEYLABEL_SYMBOLS = Object.freeze({
 
 const assignedTargetByOverlay = new WeakMap();
 const assignedTargetsByOwner = new WeakMap();
+const assignedModifierFeedbackByOpenKeyNav = new WeakMap();
 const ASSIGNED_KEYLABEL_TARGET_ATTRIBUTE =
   'data-openkeynav-keylabel-target-active';
+const ASSIGNED_MODIFIER_BY_SYMBOL = Object.freeze({
+  [KEYLABEL_SYMBOLS.alt]: 'alt',
+  [KEYLABEL_SYMBOLS.control]: 'control',
+  [KEYLABEL_SYMBOLS.meta]: 'meta',
+  [KEYLABEL_SYMBOLS.shift]: 'shift',
+});
+const ASSIGNED_MODIFIER_EVENT_PROPERTIES = Object.freeze({
+  alt: 'altKey',
+  control: 'ctrlKey',
+  meta: 'metaKey',
+  shift: 'shiftKey',
+});
+const ASSIGNED_MODIFIER_BY_EVENT_KEY = Object.freeze({
+  Alt: 'alt',
+  Control: 'control',
+  Meta: 'meta',
+  Shift: 'shift',
+});
 
 const ownerDocument = openKeyNav => (
   openKeyNav?.statusService?.document ||
   (typeof document === 'undefined' ? null : document)
 );
+
+const assignedModifierSymbols = (openKeyNav, modifier = null) => {
+  const documentObject = ownerDocument(openKeyNav);
+  if (!documentObject?.querySelectorAll) return [];
+  const symbols = Array.from(documentObject.querySelectorAll(
+    '.openKeyNav-label[data-openkeynav-keylabel-owner] ' +
+    '[data-openkeynav-keylabel-modifier]'
+  ));
+  return modifier
+    ? symbols.filter(symbol => (
+      symbol.dataset.openkeynavKeylabelModifier === modifier
+    ))
+    : symbols;
+};
+
+const updateAssignedModifierFeedback = (openKeyNav, modifier, pressed) => {
+  const feedback = assignedModifierFeedbackByOpenKeyNav.get(openKeyNav);
+  if (!feedback) return;
+  if (pressed) {
+    feedback.pressedModifiers.add(modifier);
+  } else {
+    feedback.pressedModifiers.delete(modifier);
+  }
+  assignedModifierSymbols(openKeyNav, modifier).forEach(symbol => {
+    if (pressed) {
+      symbol.dataset.openkeynavKeylabelPressed = 'true';
+    } else {
+      delete symbol.dataset.openkeynavKeylabelPressed;
+    }
+  });
+};
+
+const ensureAssignedModifierFeedback = openKeyNav => {
+  const existing = assignedModifierFeedbackByOpenKeyNav.get(openKeyNav);
+  if (existing) return existing;
+
+  const documentObject = ownerDocument(openKeyNav);
+  if (!documentObject?.addEventListener) {
+    return { pressedModifiers: new Set() };
+  }
+  const view = documentObject.defaultView;
+  const feedback = { pressedModifiers: new Set() };
+  const updateFromEvent = (event, isKeyDown) => {
+    Object.entries(ASSIGNED_MODIFIER_EVENT_PROPERTIES)
+      .forEach(([modifier, property]) => {
+        const isEventModifier = ASSIGNED_MODIFIER_BY_EVENT_KEY[event.key] ===
+          modifier;
+        updateAssignedModifierFeedback(
+          openKeyNav,
+          modifier,
+          isEventModifier ? isKeyDown : Boolean(event[property])
+        );
+      });
+  };
+  const handleKeyDown = event => {
+    updateFromEvent(event, true);
+  };
+  const handleKeyUp = event => {
+    updateFromEvent(event, false);
+  };
+  const reset = () => Object.keys(ASSIGNED_MODIFIER_EVENT_PROPERTIES)
+    .forEach(modifier => (
+      updateAssignedModifierFeedback(openKeyNav, modifier, false)
+    ));
+  const handleVisibilityChange = () => {
+    if (documentObject.visibilityState === 'hidden') reset();
+  };
+  Object.assign(feedback, {
+    documentObject,
+    view,
+    handleKeyDown,
+    handleKeyUp,
+    handleVisibilityChange,
+    reset,
+  });
+  assignedModifierFeedbackByOpenKeyNav.set(openKeyNav, feedback);
+  documentObject.addEventListener('keydown', handleKeyDown, true);
+  documentObject.addEventListener('keyup', handleKeyUp, true);
+  documentObject.addEventListener(
+    'visibilitychange',
+    handleVisibilityChange,
+    true
+  );
+  view?.addEventListener('blur', reset);
+  return feedback;
+};
+
+const releaseAssignedModifierFeedback = openKeyNav => {
+  if (assignedModifierSymbols(openKeyNav).length) return;
+  const feedback = assignedModifierFeedbackByOpenKeyNav.get(openKeyNav);
+  if (!feedback) return;
+  feedback.documentObject.removeEventListener(
+    'keydown',
+    feedback.handleKeyDown,
+    true
+  );
+  feedback.documentObject.removeEventListener(
+    'keyup',
+    feedback.handleKeyUp,
+    true
+  );
+  feedback.documentObject.removeEventListener(
+    'visibilitychange',
+    feedback.handleVisibilityChange,
+    true
+  );
+  feedback.view?.removeEventListener('blur', feedback.reset);
+  assignedModifierFeedbackByOpenKeyNav.delete(openKeyNav);
+};
+
+const appendAssignedKeylabelSymbols = (element, symbols, feedback) => {
+  Array.from(symbols).forEach(symbol => {
+    const modifierName = ASSIGNED_MODIFIER_BY_SYMBOL[symbol];
+    if (!modifierName) {
+      element.append(symbol);
+      return;
+    }
+    const modifier = element.ownerDocument.createElement('span');
+    modifier.className = 'openKeyNav-keylabel-modifier';
+    modifier.dataset.openkeynavKeylabelModifier = modifierName;
+    if (feedback?.pressedModifiers.has(modifierName)) {
+      modifier.dataset.openkeynavKeylabelPressed = 'true';
+    }
+    modifier.textContent = symbol;
+    element.appendChild(modifier);
+  });
+};
 
 const ownedAssignedKeylabels = (openKeyNav, owner) => {
   const documentObject = ownerDocument(openKeyNav);
@@ -69,9 +218,14 @@ const markAssignedTarget = (openKeyNav, owner, target) => {
  * Mode labels. Callers own only the assignment data; this module owns the
  * overlay lifecycle.
  */
-export const clearAssignedKeylabels = (openKeyNav, owner) => {
+export const clearAssignedKeylabels = (
+  openKeyNav,
+  owner,
+  { preserveModifierFeedback = false } = {}
+) => {
   ownedAssignedKeylabels(openKeyNav, owner).forEach(overlay => overlay.remove());
   releaseAssignedTargets(openKeyNav, owner);
+  if (!preserveModifierFeedback) releaseAssignedModifierFeedback(openKeyNav);
 };
 
 /**
@@ -109,13 +263,19 @@ export const showAssignedKeylabels = (
     throw new TypeError('Assigned keylabels require an owner.');
   }
 
-  clearAssignedKeylabels(openKeyNav, owner);
+  clearAssignedKeylabels(openKeyNav, owner, {
+    preserveModifierFeedback: true,
+  });
   const overlays = [];
   const assignmentsByTarget = new Map();
   Array.from(assignments || []).forEach(assignment => {
     const target = assignment?.target;
+    const maxSymbols = Number.isInteger(assignment?.maxSymbols) &&
+      assignment.maxSymbols > 0
+      ? assignment.maxSymbols
+      : 2;
     const symbols = Array.from(String(assignment?.symbols || ''))
-      .slice(0, 2)
+      .slice(0, maxSymbols)
       .join('');
     if (!target?.isConnected || !symbols) return;
 
@@ -124,18 +284,27 @@ export const showAssignedKeylabels = (
       assignmentsByTarget.set(target, {
         target,
         symbols,
+        maxSymbols,
         segments: [symbols],
         commands: assignment.command ? [String(assignment.command)] : [],
       });
       return;
     }
 
-    const availableSymbols = 2 - Array.from(existing.symbols).length;
+    const availableSymbols = existing.maxSymbols -
+      Array.from(existing.symbols).length;
     if (Array.from(symbols).length > availableSymbols) return;
     existing.symbols += symbols;
     existing.segments.push(symbols);
     if (assignment.command) existing.commands.push(String(assignment.command));
   });
+
+  const hasModifierSymbols = Array.from(assignmentsByTarget.values())
+    .some(assignment => Array.from(assignment.symbols)
+      .some(symbol => ASSIGNED_MODIFIER_BY_SYMBOL[symbol]));
+  const modifierFeedback = hasModifierSymbols
+    ? ensureAssignedModifierFeedback(openKeyNav)
+    : null;
 
   assignmentsByTarget.forEach(({ target, symbols, segments, commands }) => {
     const overlay = openKeyNav.createOverlay(target, symbols, cssClass);
@@ -154,16 +323,22 @@ export const showAssignedKeylabels = (
       const segmentElements = segments.map(segment => {
         const element = overlay.ownerDocument.createElement('span');
         element.className = 'openKeyNav-keylabel-alternative';
-        element.textContent = segment;
+        appendAssignedKeylabelSymbols(element, segment, modifierFeedback);
         return element;
       });
       overlay.replaceChildren(...segmentElements);
+      openKeyNav.updateOverlayPosition(target, overlay);
+    } else if (Array.from(symbols)
+      .some(symbol => ASSIGNED_MODIFIER_BY_SYMBOL[symbol])) {
+      overlay.replaceChildren();
+      appendAssignedKeylabelSymbols(overlay, symbols, modifierFeedback);
       openKeyNav.updateOverlayPosition(target, overlay);
     }
     assignedTargetByOverlay.set(overlay, target);
     markAssignedTarget(openKeyNav, owner, target);
     overlays.push(overlay);
   });
+  if (!hasModifierSymbols) releaseAssignedModifierFeedback(openKeyNav);
   return overlays;
 };
 

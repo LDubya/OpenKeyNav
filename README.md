@@ -229,6 +229,13 @@ Set
 `modesConfig.structuralNavigation.keylabels.enabled` to `false` to hide them,
 or independently disable its `tab`, `horizontal`, `vertical`, or `activation`
 groups. Set `keylabels.tab` to `false` to hide Tab and Shift+Tab hints.
+While Shift is held, the `⇧` symbol in every Shift-based label highlights as a
+pressed key and returns to its normal treatment on release.
+When the focused control owns its arrow keys, structural destinations remain
+visible and prepend the configured ownership override to the chord—for example,
+`⌥⇧→` with the default Alt override. This full three-symbol chord is the sole
+exception to the ordinary two-symbol label limit. Holding the override also
+highlights its modifier glyph until the key is released.
 Native radio groups additionally label the browser's bare-arrow focus routes:
 `←↑` for the previous radio and `→↓` for the next. In a two-radio group, the
 single peer uses `↔↕`. OpenKeyNav describes these routes without handling the

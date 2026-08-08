@@ -668,18 +668,23 @@ keylabel renderer and placement logic to show compact destination hints:
   next radio because those bare arrows move DOM focus. When a two-radio group
   has one peer in both directions, use `↔↕`. Do not intercept the native keys.
 
-Each target receives at most one keylabel of at most two symbols. Combine
+Each target receives at most one keylabel of at most two symbols, except that a
+structural arrow route requiring the configured ownership override uses the
+truthful three-symbol chord (for example `⌥⇧→`). Combine
 one-symbol actions when they fit, such as `↵⎵`, with a visible divider that
 communicates “or.” Keep two-symbol chords joined and atomic, and retain the
 first applicable structural route when routes converge. The
 labels describe the current route without intercepting Tab, Shift+Tab, Enter,
-or Space. Keep labeled targets out of type-to-select matching, but apply the
+or Space. While a displayed modifier is held, highlight its symbol in every
+relevant visible label—including both Shift and the configured ownership
+override—and clear that pressed treatment on release, focus loss, or document
+hiding. Keep labeled targets out of type-to-select matching, but apply the
 shared keylabel target treatment for as long as their owner-managed labels are
 visible. Use the configured focus-ring color for the label whose target is
 actively focused, darkening its background only as much as needed for at least
 4.5:1 contrast with white text while retaining the existing thin white keylabel
-outline. Omit a
-horizontal label when the focused widget owns that arrow chord. Hide
+outline. When the focused widget owns a structural arrow chord, keep its
+destination label visible and prepend the configured ownership override. Hide
 structural labels while Click, Move, or menu is the foreground layer, restore
 them when structural navigation resumes, and remove them on exit.
 

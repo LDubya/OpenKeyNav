@@ -18,6 +18,9 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
 function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
 function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
 function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
@@ -50,6 +53,12 @@ var SHORTCUT_MODIFIER_LABELS = Object.freeze({
   shiftKey: 'Shift',
   metaKey: 'Meta'
 });
+var KEYLABEL_MODIFIER_SYMBOLS = Object.freeze({
+  altKey: _keylabels.KEYLABEL_SYMBOLS.alt,
+  ctrlKey: _keylabels.KEYLABEL_SYMBOLS.control,
+  metaKey: _keylabels.KEYLABEL_SYMBOLS.meta,
+  shiftKey: _keylabels.KEYLABEL_SYMBOLS.shift
+});
 var shortcutLabel = function shortcutLabel(shortcut) {
   var normalized = (0, _keyboardEvents.normalizeShortcut)(shortcut);
   if (!normalized) return '';
@@ -62,10 +71,11 @@ var shortcutLabel = function shortcutLabel(shortcut) {
   return [].concat(_toConsumableArray(modifiers), [key]).join('+');
 };
 var shortcutSymbols = function shortcutSymbols(shortcut) {
+  var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+    _ref$extraModifiers = _ref.extraModifiers,
+    extraModifiers = _ref$extraModifiers === void 0 ? [] : _ref$extraModifiers;
   var normalized = (0, _keyboardEvents.normalizeShortcut)(shortcut);
-  if (!normalized || normalized.altKey || normalized.ctrlKey || normalized.metaKey) {
-    return '';
-  }
+  if (!normalized) return '';
   var keySymbol = {
     Tab: _keylabels.KEYLABEL_SYMBOLS.tab,
     ArrowLeft: _keylabels.KEYLABEL_SYMBOLS.left,
@@ -77,7 +87,14 @@ var shortcutSymbols = function shortcutSymbols(shortcut) {
     Spacebar: _keylabels.KEYLABEL_SYMBOLS.space
   }[normalized.key];
   if (!keySymbol) return '';
-  return "".concat(normalized.shiftKey ? _keylabels.KEYLABEL_SYMBOLS.shift : '').concat(keySymbol);
+  var modifierSymbols = [].concat(_toConsumableArray(extraModifiers), _toConsumableArray(_keyboardEvents.MODIFIER_KEYS.filter(function (modifier) {
+    return normalized[modifier];
+  }))).filter(function (modifier, index, modifiers) {
+    return _keyboardEvents.MODIFIER_KEYS.includes(modifier) && modifiers.indexOf(modifier) === index;
+  }).map(function (modifier) {
+    return KEYLABEL_MODIFIER_SYMBOLS[modifier];
+  });
+  return "".concat(modifierSymbols.join('')).concat(keySymbol);
 };
 
 /**
@@ -218,14 +235,30 @@ var shortcutEventForTarget = function shortcutEventForTarget(target, shortcut) {
     }
   };
 };
-var targetAcceptsStructuralArrow = function targetAcceptsStructuralArrow(target, shortcut, config) {
+var structuralArrowSymbols = function structuralArrowSymbols(target, shortcut, config) {
   var event = shortcutEventForTarget(target, shortcut);
-  if (!event || !event.key.startsWith('Arrow')) return false;
+  if (!event || !event.key.startsWith('Arrow')) return '';
   var ownership = classifyStructuralKeyOwnership(event, config);
-  if (ownership.all) return false;
-  if (!ownership.arrows) return true;
+  if (ownership.all) return '';
+  if (!ownership.arrows) return shortcutSymbols(shortcut);
   var overrideModifier = _keyboardEvents.MODIFIER_KEYS.includes(config.overrideModifier) ? config.overrideModifier : null;
-  return Boolean(overrideModifier && event[overrideModifier]);
+  if (!overrideModifier) return '';
+  var normalized = (0, _keyboardEvents.normalizeShortcut)(shortcut);
+  if (Object.prototype.hasOwnProperty.call(normalized, overrideModifier) && !normalized[overrideModifier]) {
+    return '';
+  }
+  var extraModifiers = normalized[overrideModifier] ? [] : [overrideModifier];
+  var overriddenEvent = _objectSpread(_objectSpread({}, event), {}, _defineProperty({}, overrideModifier, true));
+  var overriddenOwnership = classifyStructuralKeyOwnership(overriddenEvent, config);
+  if (overriddenOwnership.all) return '';
+  if (!matchesStructuralShortcut(overriddenEvent, shortcut, {
+    allowedExtraModifiers: extraModifiers
+  })) {
+    return '';
+  }
+  return shortcutSymbols(shortcut, {
+    extraModifiers: extraModifiers
+  });
 };
 var nativeActivationSymbols = function nativeActivationSymbols(target) {
   if (!(0, _domUtilities.isElement)(target) || target.hasAttribute('disabled')) return [];
@@ -724,9 +757,9 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
     key: "deactivate",
     value: function deactivate() {
       var _this$document, _this$document2, _this$document3, _this$document4, _this$document5;
-      var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-        _ref$announce = _ref.announce,
-        announce = _ref$announce === void 0 ? true : _ref$announce;
+      var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+        _ref2$announce = _ref2.announce,
+        announce = _ref2$announce === void 0 ? true : _ref2$announce;
       if (!this.active && !this.model && !this.observer && !this.openKeyNav.getStatusElement(STRUCTURAL_STATUS_CHANNEL) && !this.contextIndicatorElement) {
         return false;
       }
@@ -846,17 +879,17 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
         return false;
       }
       var commandEntries = Object.entries(this.config.commands || {});
-      var exactMatch = commandEntries.find(function (_ref2) {
-        var _ref3 = _slicedToArray(_ref2, 2),
-          shortcut = _ref3[1];
+      var exactMatch = commandEntries.find(function (_ref3) {
+        var _ref4 = _slicedToArray(_ref3, 2),
+          shortcut = _ref4[1];
         return matchesStructuralShortcut(event, shortcut);
       });
       // Option/Alt is an ownership override, not part of the structural arrow
       // chord. Once held, it may stay held as focus leaves a widget. Exact
       // bindings still win, and explicit modifier requirements remain exact.
-      var matched = exactMatch || (isArrowKey && overridePressed ? commandEntries.find(function (_ref4) {
-        var _ref5 = _slicedToArray(_ref4, 2),
-          shortcut = _ref5[1];
+      var matched = exactMatch || (isArrowKey && overridePressed ? commandEntries.find(function (_ref5) {
+        var _ref6 = _slicedToArray(_ref5, 2),
+          shortcut = _ref6[1];
         return matchesStructuralShortcut(event, shortcut, {
           allowedExtraModifiers: [overrideModifier]
         });
@@ -963,13 +996,13 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
   }, {
     key: "synchronizeFocus",
     value: function synchronizeFocus() {
-      var _ref6 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-        _ref6$preserveRoute = _ref6.preserveRoute,
-        preserveRoute = _ref6$preserveRoute === void 0 ? true : _ref6$preserveRoute,
-        _ref6$announce = _ref6.announce,
-        announce = _ref6$announce === void 0 ? true : _ref6$announce,
-        _ref6$refresh = _ref6.refresh,
-        refresh = _ref6$refresh === void 0 ? true : _ref6$refresh;
+      var _ref7 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+        _ref7$preserveRoute = _ref7.preserveRoute,
+        preserveRoute = _ref7$preserveRoute === void 0 ? true : _ref7$preserveRoute,
+        _ref7$announce = _ref7.announce,
+        announce = _ref7$announce === void 0 ? true : _ref7$announce,
+        _ref7$refresh = _ref7.refresh,
+        refresh = _ref7$refresh === void 0 ? true : _ref7$refresh;
       if (!this.active) return;
       if (refresh) this.refresh();
       var focused = (0, _domUtilities.getDeepActiveElement)(this.root);
@@ -1276,12 +1309,13 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
       var keylabelConfig = this.config.keylabels || {};
       var structuralRoute = (this.activeTypedContext && this.currentTarget ? directContextForTarget(this.model, this.currentTarget) : this.activeStructuralContext) || ((_this$model3 = this.model) === null || _this$model3 === void 0 ? void 0 : _this$model3.rootContext);
       var add = function add(target, symbols, command) {
+        var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
         if (!target || !symbols || !_this0.targetSet.has(target)) return;
-        assignments.push({
+        assignments.push(_objectSpread({
           target: target,
           symbols: symbols,
           command: command
-        });
+        }, options));
       };
       var addNativeFocusRoute = function addNativeFocusRoute(assignment) {
         var target = assignment === null || assignment === void 0 ? void 0 : assignment.target;
@@ -1295,18 +1329,20 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
         var _horizontalContextPee2 = horizontalContextPeers(this.model, structuralRoute),
           peers = _horizontalContextPee2.contexts;
         var currentIndex = peers.indexOf(structuralRoute);
-        [[-1, 'previousSiblingContext'], [1, 'nextSiblingContext']].forEach(function (_ref7) {
+        [[-1, 'previousSiblingContext'], [1, 'nextSiblingContext']].forEach(function (_ref8) {
           var _this0$config$command;
-          var _ref8 = _slicedToArray(_ref7, 2),
-            direction = _ref8[0],
-            command = _ref8[1];
+          var _ref9 = _slicedToArray(_ref8, 2),
+            direction = _ref9[0],
+            command = _ref9[1];
           var shortcut = (_this0$config$command = _this0.config.commands) === null || _this0$config$command === void 0 ? void 0 : _this0$config$command[command];
-          var symbols = shortcutSymbols(shortcut);
-          if (currentIndex < 0 || !symbols || !targetAcceptsStructuralArrow(_this0.currentTarget, shortcut, _this0.config)) {
+          var symbols = structuralArrowSymbols(_this0.currentTarget, shortcut, _this0.config);
+          if (currentIndex < 0 || !symbols) {
             return;
           }
           var peer = peers[currentIndex + direction];
-          add(contextTargets(peer)[0], symbols, command);
+          add(contextTargets(peer)[0], symbols, command, {
+            maxSymbols: Array.from(symbols).length
+          });
         });
       }
       if (keylabelConfig.vertical !== false && structuralRoute) {
@@ -1314,11 +1350,13 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
         var addVertical = function addVertical(command, target) {
           var _this0$config$command2;
           var shortcut = (_this0$config$command2 = _this0.config.commands) === null || _this0$config$command2 === void 0 ? void 0 : _this0$config$command2[command];
-          var symbols = shortcutSymbols(shortcut);
-          if (target === _this0.currentTarget || !symbols || !targetAcceptsStructuralArrow(commandSource, shortcut, _this0.config)) {
+          var symbols = structuralArrowSymbols(commandSource, shortcut, _this0.config);
+          if (target === _this0.currentTarget || !symbols) {
             return;
           }
-          add(target, symbols, command);
+          add(target, symbols, command, {
+            maxSymbols: Array.from(symbols).length
+          });
         };
         var headingParent = previousBroaderHeadingContext(this.model, structuralRoute);
         if (headingParent) {
@@ -1562,9 +1600,9 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
     value: function updateStatus() {
       var _this$config$status, _this$config$status2, _this$config$status3;
       var prefix = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-      var _ref9 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
-        _ref9$force = _ref9.force,
-        force = _ref9$force === void 0 ? false : _ref9$force;
+      var _ref0 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+        _ref0$force = _ref0.force,
+        force = _ref0$force === void 0 ? false : _ref0$force;
       if (!this.active && !force) return;
       if (this.active) {
         this.scheduleContextIndicatorUpdate();

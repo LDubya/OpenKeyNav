@@ -174,9 +174,10 @@ Applications may declare ownership with `ownsKey` or the
 The default visual hints are `⇧←` / `⇧→` for previous / next horizontal
 context and `⇧↑` / `⇧↓` for broaden / narrow. Each structural
 label is attached only to a different target the command will focus. A
-context-only broaden or narrow operation has no destination label. An arrow
-hint is also omitted when the current widget owns the chord. The focused target
-gets `↵` and/or `⎵` only for stable native activation semantics: links use
+context-only broaden or narrow operation has no destination label. When the
+current widget owns the arrow chord, the destination remains labeled with the
+configured ownership override prepended, such as `⌥⇧→` for the default Alt
+override. The focused target gets `↵` and/or `⎵` only for stable native activation semantics: links use
 Enter, buttons and summaries use Enter and Space, and checkboxes/radios use
 Space.
 When focus is on a native HTML radio, the browser's own focus destinations get
@@ -185,8 +186,10 @@ two-radio group uses `↔↕` on its single peer. Select, range, and number cont
 do not receive destination hints because their arrows change internal state
 without moving DOM focus. Native arrow events remain unhandled.
 
-Every hint is at most two Unicode symbols, and each target receives at most one
-hint. One-symbol activation hints combine when both fit (for example `↵⎵`);
+Every ordinary hint is at most two Unicode symbols, and each target receives at
+most one hint. A structural arrow route that requires the ownership override
+uses the truthful three-symbol chord as the sole exception. One-symbol
+activation hints combine when both fit (for example `↵⎵`);
 the shared renderer places a visual divider between them to mean “or.”
 Two-symbol structural chords remain joined and atomic. Assigned structural
 hints are visual, `aria-hidden`, and never add `data-openkeynav-label` to page
@@ -196,6 +199,12 @@ attribute and removes it with the overlays. Click, Move, and menu layers remove
 the structural hints while they are in front; the mode signal restores them
 through the imported keylabel renderer when the temporary layer closes. Exit
 and teardown remove the owner-scoped overlays.
+The shared renderer wraps each displayed modifier symbol as a modifier key.
+Document-level keydown and keyup feedback highlights every matching visible
+modifier while its key is held, including both Shift and the configured
+ownership override. It resets pressed treatments on release, window blur, or
+document hiding, and removes those listeners when no assigned modifier labels
+remain.
 The renderer marks the label whose target is actively focused and colors it from
 the configured focus-ring color. Its background is darkened only when necessary
 to maintain at least 4.5:1 contrast with white text, while the existing thin

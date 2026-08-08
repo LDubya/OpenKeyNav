@@ -356,6 +356,18 @@ export const injectStylesheet = (parent, replace) => {
         margin-left: .3em;
         padding-left: .3em;
       }
+      .openKeyNav-keylabel-modifier {
+        border-radius: 2px;
+        display: inline-block;
+        margin: -1px 0;
+        padding: 1px;
+      }
+      .openKeyNav-keylabel-modifier[data-openkeynav-keylabel-pressed="true"] {
+        background-color: #fff;
+        box-shadow: inset 0 0 0 1px #111;
+        color: #111;
+        text-shadow: none;
+      }
       .openKeyNav-keylabel-focused {
         background-color: ${focusLabelBackground};
         color: #fff;

@@ -41,7 +41,7 @@
 	  value: true
 	});
 	version.version = void 0;
-	version.version = "0.1.242";
+	version.version = "0.1.243";
 
 	var signals = {};
 
@@ -189,20 +189,20 @@
 
 	var dragAndDrop = {};
 
-	function _typeof$3(o) {
+	function _typeof$4(o) {
 	  "@babel/helpers - typeof";
 
-	  return _typeof$3 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+	  return _typeof$4 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
 	    return typeof o;
 	  } : function (o) {
 	    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
-	  }, _typeof$3(o);
+	  }, _typeof$4(o);
 	}
 	Object.defineProperty(dragAndDrop, "__esModule", {
 	  value: true
 	});
 	dragAndDrop.simulateDragAndDrop = dragAndDrop.endDrag = dragAndDrop.cancelDrag = dragAndDrop.beginDrag = void 0;
-	function ownKeys(e, r) {
+	function ownKeys$1(e, r) {
 	  var t = Object.keys(e);
 	  if (Object.getOwnPropertySymbols) {
 	    var o = Object.getOwnPropertySymbols(e);
@@ -212,35 +212,35 @@
 	  }
 	  return t;
 	}
-	function _objectSpread(e) {
+	function _objectSpread$1(e) {
 	  for (var r = 1; r < arguments.length; r++) {
 	    var t = null != arguments[r] ? arguments[r] : {};
-	    r % 2 ? ownKeys(Object(t), true).forEach(function (r) {
-	      _defineProperty(e, r, t[r]);
-	    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) {
+	    r % 2 ? ownKeys$1(Object(t), true).forEach(function (r) {
+	      _defineProperty$2(e, r, t[r]);
+	    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$1(Object(t)).forEach(function (r) {
 	      Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 	    });
 	  }
 	  return e;
 	}
-	function _defineProperty(e, r, t) {
-	  return (r = _toPropertyKey$2(r)) in e ? Object.defineProperty(e, r, {
+	function _defineProperty$2(e, r, t) {
+	  return (r = _toPropertyKey$3(r)) in e ? Object.defineProperty(e, r, {
 	    value: t,
 	    enumerable: true,
 	    configurable: true,
 	    writable: true
 	  }) : e[r] = t, e;
 	}
-	function _toPropertyKey$2(t) {
-	  var i = _toPrimitive$2(t, "string");
-	  return "symbol" == _typeof$3(i) ? i : i + "";
+	function _toPropertyKey$3(t) {
+	  var i = _toPrimitive$3(t, "string");
+	  return "symbol" == _typeof$4(i) ? i : i + "";
 	}
-	function _toPrimitive$2(t, r) {
-	  if ("object" != _typeof$3(t) || !t) return t;
+	function _toPrimitive$3(t, r) {
+	  if ("object" != _typeof$4(t) || !t) return t;
 	  var e = t[Symbol.toPrimitive];
 	  if (void 0 !== e) {
 	    var i = e.call(t, r);
-	    if ("object" != _typeof$3(i)) return i;
+	    if ("object" != _typeof$4(i)) return i;
 	    throw new TypeError("@@toPrimitive must return a primitive value.");
 	  }
 	  return ("string" === r ? String : Number)(t);
@@ -548,7 +548,7 @@
 	  if (typeof DragEvent === 'undefined') {
 	    dragEndEvent = new Event('dragend', eventOptions);
 	  } else {
-	    dragEndEvent = new DragEvent('dragend', _objectSpread(_objectSpread({}, eventOptions), {}, {
+	    dragEndEvent = new DragEvent('dragend', _objectSpread$1(_objectSpread$1({}, eventOptions), {}, {
 	      dataTransfer: dataTransfer
 	    }));
 	  }
@@ -989,11 +989,32 @@
 	var _escape = _escape$1;
 	var _isTabbable = isTabbable$1;
 	var _scrolling = scrolling;
+	function _typeof$3(o) {
+	  "@babel/helpers - typeof";
+
+	  return _typeof$3 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+	    return typeof o;
+	  } : function (o) {
+	    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+	  }, _typeof$3(o);
+	}
 	function _toConsumableArray$2(r) {
 	  return _arrayWithoutHoles$2(r) || _iterableToArray$2(r) || _unsupportedIterableToArray$3(r) || _nonIterableSpread$2();
 	}
 	function _nonIterableSpread$2() {
 	  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	}
+	function _iterableToArray$2(r) {
+	  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
+	}
+	function _arrayWithoutHoles$2(r) {
+	  if (Array.isArray(r)) return _arrayLikeToArray$3(r);
+	}
+	function _slicedToArray$2(r, e) {
+	  return _arrayWithHoles$2(r) || _iterableToArrayLimit$2(r, e) || _unsupportedIterableToArray$3(r, e) || _nonIterableRest$2();
+	}
+	function _nonIterableRest$2() {
+	  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 	}
 	function _unsupportedIterableToArray$3(r, a) {
 	  if (r) {
@@ -1002,18 +1023,64 @@
 	    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$3(r, a) : void 0;
 	  }
 	}
-	function _iterableToArray$2(r) {
-	  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
-	}
-	function _arrayWithoutHoles$2(r) {
-	  if (Array.isArray(r)) return _arrayLikeToArray$3(r);
-	}
 	function _arrayLikeToArray$3(r, a) {
 	  (null == a || a > r.length) && (a = r.length);
 	  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
 	  return n;
 	}
-	keylabels.KEYLABEL_SYMBOLS = Object.freeze({
+	function _iterableToArrayLimit$2(r, l) {
+	  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+	  if (null != t) {
+	    var e,
+	      n,
+	      i,
+	      u,
+	      a = [],
+	      f = true,
+	      o = false;
+	    try {
+	      if (i = (t = t.call(r)).next, 0 === l) ; else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+	    } catch (r) {
+	      o = true, n = r;
+	    } finally {
+	      try {
+	        if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return;
+	      } finally {
+	        if (o) throw n;
+	      }
+	    }
+	    return a;
+	  }
+	}
+	function _arrayWithHoles$2(r) {
+	  if (Array.isArray(r)) return r;
+	}
+	function _defineProperty$1(e, r, t) {
+	  return (r = _toPropertyKey$2(r)) in e ? Object.defineProperty(e, r, {
+	    value: t,
+	    enumerable: true,
+	    configurable: true,
+	    writable: true
+	  }) : e[r] = t, e;
+	}
+	function _toPropertyKey$2(t) {
+	  var i = _toPrimitive$2(t, "string");
+	  return "symbol" == _typeof$3(i) ? i : i + "";
+	}
+	function _toPrimitive$2(t, r) {
+	  if ("object" != _typeof$3(t) || !t) return t;
+	  var e = t[Symbol.toPrimitive];
+	  if (void 0 !== e) {
+	    var i = e.call(t, r);
+	    if ("object" != _typeof$3(i)) return i;
+	    throw new TypeError("@@toPrimitive must return a primitive value.");
+	  }
+	  return ("string" === r ? String : Number)(t);
+	}
+	var KEYLABEL_SYMBOLS = keylabels.KEYLABEL_SYMBOLS = Object.freeze({
+	  alt: '⌥',
+	  control: '⌃',
+	  meta: '⌘',
 	  shift: '⇧',
 	  tab: '⇥',
 	  left: '←',
@@ -1027,10 +1094,128 @@
 	});
 	var assignedTargetByOverlay = new WeakMap();
 	var assignedTargetsByOwner = new WeakMap();
+	var assignedModifierFeedbackByOpenKeyNav = new WeakMap();
 	var ASSIGNED_KEYLABEL_TARGET_ATTRIBUTE = 'data-openkeynav-keylabel-target-active';
+	var ASSIGNED_MODIFIER_BY_SYMBOL = Object.freeze(_defineProperty$1(_defineProperty$1(_defineProperty$1(_defineProperty$1({}, KEYLABEL_SYMBOLS.alt, 'alt'), KEYLABEL_SYMBOLS.control, 'control'), KEYLABEL_SYMBOLS.meta, 'meta'), KEYLABEL_SYMBOLS.shift, 'shift'));
+	var ASSIGNED_MODIFIER_EVENT_PROPERTIES = Object.freeze({
+	  alt: 'altKey',
+	  control: 'ctrlKey',
+	  meta: 'metaKey',
+	  shift: 'shiftKey'
+	});
+	var ASSIGNED_MODIFIER_BY_EVENT_KEY = Object.freeze({
+	  Alt: 'alt',
+	  Control: 'control',
+	  Meta: 'meta',
+	  Shift: 'shift'
+	});
 	var ownerDocument = function ownerDocument(openKeyNav) {
 	  var _openKeyNav$statusSer;
 	  return (openKeyNav === null || openKeyNav === void 0 || (_openKeyNav$statusSer = openKeyNav.statusService) === null || _openKeyNav$statusSer === void 0 ? void 0 : _openKeyNav$statusSer.document) || (typeof document === 'undefined' ? null : document);
+	};
+	var assignedModifierSymbols = function assignedModifierSymbols(openKeyNav) {
+	  var modifier = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+	  var documentObject = ownerDocument(openKeyNav);
+	  if (!(documentObject !== null && documentObject !== void 0 && documentObject.querySelectorAll)) return [];
+	  var symbols = Array.from(documentObject.querySelectorAll('.openKeyNav-label[data-openkeynav-keylabel-owner] ' + '[data-openkeynav-keylabel-modifier]'));
+	  return modifier ? symbols.filter(function (symbol) {
+	    return symbol.dataset.openkeynavKeylabelModifier === modifier;
+	  }) : symbols;
+	};
+	var updateAssignedModifierFeedback = function updateAssignedModifierFeedback(openKeyNav, modifier, pressed) {
+	  var feedback = assignedModifierFeedbackByOpenKeyNav.get(openKeyNav);
+	  if (!feedback) return;
+	  if (pressed) {
+	    feedback.pressedModifiers.add(modifier);
+	  } else {
+	    feedback.pressedModifiers.delete(modifier);
+	  }
+	  assignedModifierSymbols(openKeyNav, modifier).forEach(function (symbol) {
+	    if (pressed) {
+	      symbol.dataset.openkeynavKeylabelPressed = 'true';
+	    } else {
+	      delete symbol.dataset.openkeynavKeylabelPressed;
+	    }
+	  });
+	};
+	var ensureAssignedModifierFeedback = function ensureAssignedModifierFeedback(openKeyNav) {
+	  var existing = assignedModifierFeedbackByOpenKeyNav.get(openKeyNav);
+	  if (existing) return existing;
+	  var documentObject = ownerDocument(openKeyNav);
+	  if (!(documentObject !== null && documentObject !== void 0 && documentObject.addEventListener)) {
+	    return {
+	      pressedModifiers: new Set()
+	    };
+	  }
+	  var view = documentObject.defaultView;
+	  var feedback = {
+	    pressedModifiers: new Set()
+	  };
+	  var updateFromEvent = function updateFromEvent(event, isKeyDown) {
+	    Object.entries(ASSIGNED_MODIFIER_EVENT_PROPERTIES).forEach(function (_ref) {
+	      var _ref2 = _slicedToArray$2(_ref, 2),
+	        modifier = _ref2[0],
+	        property = _ref2[1];
+	      var isEventModifier = ASSIGNED_MODIFIER_BY_EVENT_KEY[event.key] === modifier;
+	      updateAssignedModifierFeedback(openKeyNav, modifier, isEventModifier ? isKeyDown : Boolean(event[property]));
+	    });
+	  };
+	  var handleKeyDown = function handleKeyDown(event) {
+	    updateFromEvent(event, true);
+	  };
+	  var handleKeyUp = function handleKeyUp(event) {
+	    updateFromEvent(event, false);
+	  };
+	  var reset = function reset() {
+	    return Object.keys(ASSIGNED_MODIFIER_EVENT_PROPERTIES).forEach(function (modifier) {
+	      return updateAssignedModifierFeedback(openKeyNav, modifier, false);
+	    });
+	  };
+	  var handleVisibilityChange = function handleVisibilityChange() {
+	    if (documentObject.visibilityState === 'hidden') reset();
+	  };
+	  Object.assign(feedback, {
+	    documentObject: documentObject,
+	    view: view,
+	    handleKeyDown: handleKeyDown,
+	    handleKeyUp: handleKeyUp,
+	    handleVisibilityChange: handleVisibilityChange,
+	    reset: reset
+	  });
+	  assignedModifierFeedbackByOpenKeyNav.set(openKeyNav, feedback);
+	  documentObject.addEventListener('keydown', handleKeyDown, true);
+	  documentObject.addEventListener('keyup', handleKeyUp, true);
+	  documentObject.addEventListener('visibilitychange', handleVisibilityChange, true);
+	  view === null || view === void 0 || view.addEventListener('blur', reset);
+	  return feedback;
+	};
+	var releaseAssignedModifierFeedback = function releaseAssignedModifierFeedback(openKeyNav) {
+	  var _feedback$view;
+	  if (assignedModifierSymbols(openKeyNav).length) return;
+	  var feedback = assignedModifierFeedbackByOpenKeyNav.get(openKeyNav);
+	  if (!feedback) return;
+	  feedback.documentObject.removeEventListener('keydown', feedback.handleKeyDown, true);
+	  feedback.documentObject.removeEventListener('keyup', feedback.handleKeyUp, true);
+	  feedback.documentObject.removeEventListener('visibilitychange', feedback.handleVisibilityChange, true);
+	  (_feedback$view = feedback.view) === null || _feedback$view === void 0 || _feedback$view.removeEventListener('blur', feedback.reset);
+	  assignedModifierFeedbackByOpenKeyNav.delete(openKeyNav);
+	};
+	var appendAssignedKeylabelSymbols = function appendAssignedKeylabelSymbols(element, symbols, feedback) {
+	  Array.from(symbols).forEach(function (symbol) {
+	    var modifierName = ASSIGNED_MODIFIER_BY_SYMBOL[symbol];
+	    if (!modifierName) {
+	      element.append(symbol);
+	      return;
+	    }
+	    var modifier = element.ownerDocument.createElement('span');
+	    modifier.className = 'openKeyNav-keylabel-modifier';
+	    modifier.dataset.openkeynavKeylabelModifier = modifierName;
+	    if (feedback !== null && feedback !== void 0 && feedback.pressedModifiers.has(modifierName)) {
+	      modifier.dataset.openkeynavKeylabelPressed = 'true';
+	    }
+	    modifier.textContent = symbol;
+	    element.appendChild(modifier);
+	  });
 	};
 	var ownedAssignedKeylabels = function ownedAssignedKeylabels(openKeyNav, owner) {
 	  var documentObject = ownerDocument(openKeyNav);
@@ -1077,10 +1262,14 @@
 	 * overlay lifecycle.
 	 */
 	var clearAssignedKeylabels = keylabels.clearAssignedKeylabels = function clearAssignedKeylabels(openKeyNav, owner) {
+	  var _ref3 = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
+	    _ref3$preserveModifie = _ref3.preserveModifierFeedback,
+	    preserveModifierFeedback = _ref3$preserveModifie === void 0 ? false : _ref3$preserveModifie;
 	  ownedAssignedKeylabels(openKeyNav, owner).forEach(function (overlay) {
 	    return overlay.remove();
 	  });
 	  releaseAssignedTargets(openKeyNav, owner);
+	  if (!preserveModifierFeedback) releaseAssignedModifierFeedback(openKeyNav);
 	};
 
 	/**
@@ -1106,43 +1295,53 @@
 	 * target treatment through a non-selectable, owner-managed attribute instead.
 	 */
 	keylabels.showAssignedKeylabels = function showAssignedKeylabels(openKeyNav, assignments) {
-	  var _ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
-	    owner = _ref.owner,
-	    _ref$cssClass = _ref.cssClass,
-	    cssClass = _ref$cssClass === void 0 ? null : _ref$cssClass,
-	    _ref$focusedTarget = _ref.focusedTarget,
-	    focusedTarget = _ref$focusedTarget === void 0 ? null : _ref$focusedTarget;
+	  var _ref4 = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
+	    owner = _ref4.owner,
+	    _ref4$cssClass = _ref4.cssClass,
+	    cssClass = _ref4$cssClass === void 0 ? null : _ref4$cssClass,
+	    _ref4$focusedTarget = _ref4.focusedTarget,
+	    focusedTarget = _ref4$focusedTarget === void 0 ? null : _ref4$focusedTarget;
 	  if (!owner) {
 	    throw new TypeError('Assigned keylabels require an owner.');
 	  }
-	  clearAssignedKeylabels(openKeyNav, owner);
+	  clearAssignedKeylabels(openKeyNav, owner, {
+	    preserveModifierFeedback: true
+	  });
 	  var overlays = [];
 	  var assignmentsByTarget = new Map();
 	  Array.from(assignments || []).forEach(function (assignment) {
 	    var target = assignment === null || assignment === void 0 ? void 0 : assignment.target;
-	    var symbols = Array.from(String((assignment === null || assignment === void 0 ? void 0 : assignment.symbols) || '')).slice(0, 2).join('');
+	    var maxSymbols = Number.isInteger(assignment === null || assignment === void 0 ? void 0 : assignment.maxSymbols) && assignment.maxSymbols > 0 ? assignment.maxSymbols : 2;
+	    var symbols = Array.from(String((assignment === null || assignment === void 0 ? void 0 : assignment.symbols) || '')).slice(0, maxSymbols).join('');
 	    if (!(target !== null && target !== void 0 && target.isConnected) || !symbols) return;
 	    var existing = assignmentsByTarget.get(target);
 	    if (!existing) {
 	      assignmentsByTarget.set(target, {
 	        target: target,
 	        symbols: symbols,
+	        maxSymbols: maxSymbols,
 	        segments: [symbols],
 	        commands: assignment.command ? [String(assignment.command)] : []
 	      });
 	      return;
 	    }
-	    var availableSymbols = 2 - Array.from(existing.symbols).length;
+	    var availableSymbols = existing.maxSymbols - Array.from(existing.symbols).length;
 	    if (Array.from(symbols).length > availableSymbols) return;
 	    existing.symbols += symbols;
 	    existing.segments.push(symbols);
 	    if (assignment.command) existing.commands.push(String(assignment.command));
 	  });
-	  assignmentsByTarget.forEach(function (_ref2) {
-	    var target = _ref2.target,
-	      symbols = _ref2.symbols,
-	      segments = _ref2.segments,
-	      commands = _ref2.commands;
+	  var hasModifierSymbols = Array.from(assignmentsByTarget.values()).some(function (assignment) {
+	    return Array.from(assignment.symbols).some(function (symbol) {
+	      return ASSIGNED_MODIFIER_BY_SYMBOL[symbol];
+	    });
+	  });
+	  var modifierFeedback = hasModifierSymbols ? ensureAssignedModifierFeedback(openKeyNav) : null;
+	  assignmentsByTarget.forEach(function (_ref5) {
+	    var target = _ref5.target,
+	      symbols = _ref5.symbols,
+	      segments = _ref5.segments,
+	      commands = _ref5.commands;
 	    var overlay = openKeyNav.createOverlay(target, symbols, cssClass);
 	    overlay.dataset.openkeynavKeylabelOwner = owner;
 	    overlay.dataset.openkeynavKeylabelCommand = commands.join(' ');
@@ -1159,16 +1358,23 @@
 	      var segmentElements = segments.map(function (segment) {
 	        var element = overlay.ownerDocument.createElement('span');
 	        element.className = 'openKeyNav-keylabel-alternative';
-	        element.textContent = segment;
+	        appendAssignedKeylabelSymbols(element, segment, modifierFeedback);
 	        return element;
 	      });
 	      overlay.replaceChildren.apply(overlay, _toConsumableArray$2(segmentElements));
+	      openKeyNav.updateOverlayPosition(target, overlay);
+	    } else if (Array.from(symbols).some(function (symbol) {
+	      return ASSIGNED_MODIFIER_BY_SYMBOL[symbol];
+	    })) {
+	      overlay.replaceChildren();
+	      appendAssignedKeylabelSymbols(overlay, symbols, modifierFeedback);
 	      openKeyNav.updateOverlayPosition(target, overlay);
 	    }
 	    assignedTargetByOverlay.set(overlay, target);
 	    markAssignedTarget(openKeyNav, owner, target);
 	    overlays.push(overlay);
 	  });
+	  if (!hasModifierSymbols) releaseAssignedModifierFeedback(openKeyNav);
 	  return overlays;
 	};
 	var generateLabels = keylabels.generateLabels = function generateLabels(openKeyNav, count) {
@@ -3389,6 +3595,35 @@
 	    writable: false
 	  }), e;
 	}
+	function ownKeys(e, r) {
+	  var t = Object.keys(e);
+	  if (Object.getOwnPropertySymbols) {
+	    var o = Object.getOwnPropertySymbols(e);
+	    r && (o = o.filter(function (r) {
+	      return Object.getOwnPropertyDescriptor(e, r).enumerable;
+	    })), t.push.apply(t, o);
+	  }
+	  return t;
+	}
+	function _objectSpread(e) {
+	  for (var r = 1; r < arguments.length; r++) {
+	    var t = null != arguments[r] ? arguments[r] : {};
+	    r % 2 ? ownKeys(Object(t), true).forEach(function (r) {
+	      _defineProperty(e, r, t[r]);
+	    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) {
+	      Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+	    });
+	  }
+	  return e;
+	}
+	function _defineProperty(e, r, t) {
+	  return (r = _toPropertyKey$1(r)) in e ? Object.defineProperty(e, r, {
+	    value: t,
+	    enumerable: true,
+	    configurable: true,
+	    writable: true
+	  }) : e[r] = t, e;
+	}
 	function _toPropertyKey$1(t) {
 	  var i = _toPrimitive$1(t, "string");
 	  return "symbol" == _typeof$1(i) ? i : i + "";
@@ -3459,6 +3694,12 @@
 	  shiftKey: 'Shift',
 	  metaKey: 'Meta'
 	});
+	var KEYLABEL_MODIFIER_SYMBOLS = Object.freeze({
+	  altKey: _keylabels.KEYLABEL_SYMBOLS.alt,
+	  ctrlKey: _keylabels.KEYLABEL_SYMBOLS.control,
+	  metaKey: _keylabels.KEYLABEL_SYMBOLS.meta,
+	  shiftKey: _keylabels.KEYLABEL_SYMBOLS.shift
+	});
 	var shortcutLabel = function shortcutLabel(shortcut) {
 	  var normalized = (0, _keyboardEvents.normalizeShortcut)(shortcut);
 	  if (!normalized) return '';
@@ -3471,10 +3712,11 @@
 	  return [].concat(_toConsumableArray(modifiers), [key]).join('+');
 	};
 	var shortcutSymbols = function shortcutSymbols(shortcut) {
+	  var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+	    _ref$extraModifiers = _ref.extraModifiers,
+	    extraModifiers = _ref$extraModifiers === void 0 ? [] : _ref$extraModifiers;
 	  var normalized = (0, _keyboardEvents.normalizeShortcut)(shortcut);
-	  if (!normalized || normalized.altKey || normalized.ctrlKey || normalized.metaKey) {
-	    return '';
-	  }
+	  if (!normalized) return '';
 	  var keySymbol = {
 	    Tab: _keylabels.KEYLABEL_SYMBOLS.tab,
 	    ArrowLeft: _keylabels.KEYLABEL_SYMBOLS.left,
@@ -3486,7 +3728,14 @@
 	    Spacebar: _keylabels.KEYLABEL_SYMBOLS.space
 	  }[normalized.key];
 	  if (!keySymbol) return '';
-	  return "".concat(normalized.shiftKey ? _keylabels.KEYLABEL_SYMBOLS.shift : '').concat(keySymbol);
+	  var modifierSymbols = [].concat(_toConsumableArray(extraModifiers), _toConsumableArray(_keyboardEvents.MODIFIER_KEYS.filter(function (modifier) {
+	    return normalized[modifier];
+	  }))).filter(function (modifier, index, modifiers) {
+	    return _keyboardEvents.MODIFIER_KEYS.includes(modifier) && modifiers.indexOf(modifier) === index;
+	  }).map(function (modifier) {
+	    return KEYLABEL_MODIFIER_SYMBOLS[modifier];
+	  });
+	  return "".concat(modifierSymbols.join('')).concat(keySymbol);
 	};
 
 	/**
@@ -3627,14 +3876,30 @@
 	    }
 	  };
 	};
-	var targetAcceptsStructuralArrow = function targetAcceptsStructuralArrow(target, shortcut, config) {
+	var structuralArrowSymbols = function structuralArrowSymbols(target, shortcut, config) {
 	  var event = shortcutEventForTarget(target, shortcut);
-	  if (!event || !event.key.startsWith('Arrow')) return false;
+	  if (!event || !event.key.startsWith('Arrow')) return '';
 	  var ownership = classifyStructuralKeyOwnership(event, config);
-	  if (ownership.all) return false;
-	  if (!ownership.arrows) return true;
+	  if (ownership.all) return '';
+	  if (!ownership.arrows) return shortcutSymbols(shortcut);
 	  var overrideModifier = _keyboardEvents.MODIFIER_KEYS.includes(config.overrideModifier) ? config.overrideModifier : null;
-	  return Boolean(overrideModifier && event[overrideModifier]);
+	  if (!overrideModifier) return '';
+	  var normalized = (0, _keyboardEvents.normalizeShortcut)(shortcut);
+	  if (Object.prototype.hasOwnProperty.call(normalized, overrideModifier) && !normalized[overrideModifier]) {
+	    return '';
+	  }
+	  var extraModifiers = normalized[overrideModifier] ? [] : [overrideModifier];
+	  var overriddenEvent = _objectSpread(_objectSpread({}, event), {}, _defineProperty({}, overrideModifier, true));
+	  var overriddenOwnership = classifyStructuralKeyOwnership(overriddenEvent, config);
+	  if (overriddenOwnership.all) return '';
+	  if (!matchesStructuralShortcut(overriddenEvent, shortcut, {
+	    allowedExtraModifiers: extraModifiers
+	  })) {
+	    return '';
+	  }
+	  return shortcutSymbols(shortcut, {
+	    extraModifiers: extraModifiers
+	  });
 	};
 	var nativeActivationSymbols = function nativeActivationSymbols(target) {
 	  if (!(0, _domUtilities$1.isElement)(target) || target.hasAttribute('disabled')) return [];
@@ -4133,9 +4398,9 @@
 	    key: "deactivate",
 	    value: function deactivate() {
 	      var _this$document, _this$document2, _this$document3, _this$document4, _this$document5;
-	      var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-	        _ref$announce = _ref.announce,
-	        announce = _ref$announce === void 0 ? true : _ref$announce;
+	      var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+	        _ref2$announce = _ref2.announce,
+	        announce = _ref2$announce === void 0 ? true : _ref2$announce;
 	      if (!this.active && !this.model && !this.observer && !this.openKeyNav.getStatusElement(STRUCTURAL_STATUS_CHANNEL) && !this.contextIndicatorElement) {
 	        return false;
 	      }
@@ -4255,17 +4520,17 @@
 	        return false;
 	      }
 	      var commandEntries = Object.entries(this.config.commands || {});
-	      var exactMatch = commandEntries.find(function (_ref2) {
-	        var _ref3 = _slicedToArray$1(_ref2, 2),
-	          shortcut = _ref3[1];
+	      var exactMatch = commandEntries.find(function (_ref3) {
+	        var _ref4 = _slicedToArray$1(_ref3, 2),
+	          shortcut = _ref4[1];
 	        return matchesStructuralShortcut(event, shortcut);
 	      });
 	      // Option/Alt is an ownership override, not part of the structural arrow
 	      // chord. Once held, it may stay held as focus leaves a widget. Exact
 	      // bindings still win, and explicit modifier requirements remain exact.
-	      var matched = exactMatch || (isArrowKey && overridePressed ? commandEntries.find(function (_ref4) {
-	        var _ref5 = _slicedToArray$1(_ref4, 2),
-	          shortcut = _ref5[1];
+	      var matched = exactMatch || (isArrowKey && overridePressed ? commandEntries.find(function (_ref5) {
+	        var _ref6 = _slicedToArray$1(_ref5, 2),
+	          shortcut = _ref6[1];
 	        return matchesStructuralShortcut(event, shortcut, {
 	          allowedExtraModifiers: [overrideModifier]
 	        });
@@ -4372,13 +4637,13 @@
 	  }, {
 	    key: "synchronizeFocus",
 	    value: function synchronizeFocus() {
-	      var _ref6 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-	        _ref6$preserveRoute = _ref6.preserveRoute,
-	        preserveRoute = _ref6$preserveRoute === void 0 ? true : _ref6$preserveRoute,
-	        _ref6$announce = _ref6.announce,
-	        announce = _ref6$announce === void 0 ? true : _ref6$announce,
-	        _ref6$refresh = _ref6.refresh,
-	        refresh = _ref6$refresh === void 0 ? true : _ref6$refresh;
+	      var _ref7 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+	        _ref7$preserveRoute = _ref7.preserveRoute,
+	        preserveRoute = _ref7$preserveRoute === void 0 ? true : _ref7$preserveRoute,
+	        _ref7$announce = _ref7.announce,
+	        announce = _ref7$announce === void 0 ? true : _ref7$announce,
+	        _ref7$refresh = _ref7.refresh,
+	        refresh = _ref7$refresh === void 0 ? true : _ref7$refresh;
 	      if (!this.active) return;
 	      if (refresh) this.refresh();
 	      var focused = (0, _domUtilities$1.getDeepActiveElement)(this.root);
@@ -4685,12 +4950,13 @@
 	      var keylabelConfig = this.config.keylabels || {};
 	      var structuralRoute = (this.activeTypedContext && this.currentTarget ? directContextForTarget(this.model, this.currentTarget) : this.activeStructuralContext) || ((_this$model3 = this.model) === null || _this$model3 === void 0 ? void 0 : _this$model3.rootContext);
 	      var add = function add(target, symbols, command) {
+	        var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 	        if (!target || !symbols || !_this0.targetSet.has(target)) return;
-	        assignments.push({
+	        assignments.push(_objectSpread({
 	          target: target,
 	          symbols: symbols,
 	          command: command
-	        });
+	        }, options));
 	      };
 	      var addNativeFocusRoute = function addNativeFocusRoute(assignment) {
 	        var target = assignment === null || assignment === void 0 ? void 0 : assignment.target;
@@ -4704,18 +4970,20 @@
 	        var _horizontalContextPee2 = horizontalContextPeers(this.model, structuralRoute),
 	          peers = _horizontalContextPee2.contexts;
 	        var currentIndex = peers.indexOf(structuralRoute);
-	        [[-1, 'previousSiblingContext'], [1, 'nextSiblingContext']].forEach(function (_ref7) {
+	        [[-1, 'previousSiblingContext'], [1, 'nextSiblingContext']].forEach(function (_ref8) {
 	          var _this0$config$command;
-	          var _ref8 = _slicedToArray$1(_ref7, 2),
-	            direction = _ref8[0],
-	            command = _ref8[1];
+	          var _ref9 = _slicedToArray$1(_ref8, 2),
+	            direction = _ref9[0],
+	            command = _ref9[1];
 	          var shortcut = (_this0$config$command = _this0.config.commands) === null || _this0$config$command === void 0 ? void 0 : _this0$config$command[command];
-	          var symbols = shortcutSymbols(shortcut);
-	          if (currentIndex < 0 || !symbols || !targetAcceptsStructuralArrow(_this0.currentTarget, shortcut, _this0.config)) {
+	          var symbols = structuralArrowSymbols(_this0.currentTarget, shortcut, _this0.config);
+	          if (currentIndex < 0 || !symbols) {
 	            return;
 	          }
 	          var peer = peers[currentIndex + direction];
-	          add(contextTargets(peer)[0], symbols, command);
+	          add(contextTargets(peer)[0], symbols, command, {
+	            maxSymbols: Array.from(symbols).length
+	          });
 	        });
 	      }
 	      if (keylabelConfig.vertical !== false && structuralRoute) {
@@ -4723,11 +4991,13 @@
 	        var addVertical = function addVertical(command, target) {
 	          var _this0$config$command2;
 	          var shortcut = (_this0$config$command2 = _this0.config.commands) === null || _this0$config$command2 === void 0 ? void 0 : _this0$config$command2[command];
-	          var symbols = shortcutSymbols(shortcut);
-	          if (target === _this0.currentTarget || !symbols || !targetAcceptsStructuralArrow(commandSource, shortcut, _this0.config)) {
+	          var symbols = structuralArrowSymbols(commandSource, shortcut, _this0.config);
+	          if (target === _this0.currentTarget || !symbols) {
 	            return;
 	          }
-	          add(target, symbols, command);
+	          add(target, symbols, command, {
+	            maxSymbols: Array.from(symbols).length
+	          });
 	        };
 	        var headingParent = previousBroaderHeadingContext(this.model, structuralRoute);
 	        if (headingParent) {
@@ -4971,9 +5241,9 @@
 	    value: function updateStatus() {
 	      var _this$config$status, _this$config$status2, _this$config$status3;
 	      var prefix = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-	      var _ref9 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
-	        _ref9$force = _ref9.force,
-	        force = _ref9$force === void 0 ? false : _ref9$force;
+	      var _ref0 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+	        _ref0$force = _ref0.force,
+	        force = _ref0$force === void 0 ? false : _ref0$force;
 	      if (!this.active && !force) return;
 	      if (this.active) {
 	        this.scheduleContextIndicatorUpdate();
@@ -5623,7 +5893,7 @@
 	  var style = document.createElement('style');
 	  style.className = styleClassname;
 	  style.type = 'text/css';
-	  style.textContent = ".openKeyNav-label {\n        font: inherit;\n        vertical-align: baseline;\n        box-sizing: border-box;\n        white-space: nowrap;\n        border: 1px solid ".concat(openKeyNav.config.spot.fontColor, "; \n        // box-shadow: inset 0 -2.5px 0 ").concat(openKeyNav.config.spot.insetColor, ", inset 0 -3px 0 #999, 0 0 4px #fff; \n        // background: linear-gradient(to top, #999 5%, ").concat(openKeyNav.config.spot.backgroundColor, " 20%); \n        background-color: ").concat(openKeyNav.config.spot.backgroundColor, "; \n        // border-radius: calc( 4px );\n        color: ").concat(openKeyNav.config.spot.fontColor, "; \n        display: inline-block;\n        font-size: ").concat(openKeyNav.config.spot.fontSize, "; \n        // outline : 2px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n        outline-offset: -2px !important;\n        // +\"font-weight: bold;\"\n        font-weight: inherit;\n        // line-height: 1.5;\n        line-height: 1;\n        margin: 0 .1em 0 1px;\n        overflow-wrap: break-word;\n        // padding: .0 .15em .1em;\n        padding: 3px;\n        text-shadow: 0 1px 0 ").concat(openKeyNav.config.spot.insetColor, "; \n        min-width: 1rem;\n        text-align: center;\n        position: absolute;\n        z-index: 99999999;\n        font-family: monospace;\n      }\n      .openKeyNav-keylabel-alternatives {\n        display: inline-flex;\n        align-items: center;\n      }\n      .openKeyNav-keylabel-alternative + .openKeyNav-keylabel-alternative {\n        border-left: 1px solid currentColor;\n        margin-left: .3em;\n        padding-left: .3em;\n      }\n      .openKeyNav-keylabel-focused {\n        background-color: ").concat(focusLabelBackground, ";\n        color: #fff;\n        text-shadow: none;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        content: \"\";\n        position: absolute;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        top: 50%;\n        transform: translateY(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        left: 50%;\n        transform: translateX(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before {\n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        right: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after {\n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        right: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before {\n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        left: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        left: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]{\n        padding-bottom: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before {\n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        bottom: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after {\n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        bottom: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]{\n        padding-top: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before {\n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        top: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        top: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-keylabel-focused[data-openkeynav-position=\"left\"]::after {\n        border-left-color: ").concat(focusLabelBackground, ";\n      }\n      .openKeyNav-keylabel-focused[data-openkeynav-position=\"right\"]::after {\n        border-right-color: ").concat(focusLabelBackground, ";\n      }\n      .openKeyNav-keylabel-focused[data-openkeynav-position=\"top\"]::after {\n        border-top-color: ").concat(focusLabelBackground, ";\n      }\n      .openKeyNav-keylabel-focused[data-openkeynav-position=\"bottom\"]::after {\n        border-bottom-color: ").concat(focusLabelBackground, ";\n      }\n      .openKeyNav-label-selected{\n        // padding : 0;\n        // margin : 0;\n        display : grid;\n        align-content : center;\n        color : ").concat(openKeyNav.config.spot.fontColor, "; \n        background : ").concat(openKeyNav.config.spot.backgroundColor, "; \n        // outline : 4px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n        outline: none; \n        // border-radius: 100%; \n        // width: 1rem; \n        // height: 1rem; \n        // text-shadow : none;\n        // padding : 0 !important;\n        // margin: 0 !important;\n      }\n      [data-openkeynav-label]:not(.openKeyNav-label):not(button),\n      [data-openkeynav-keylabel-target-active]:not(button){\n        // outline: 2px double ").concat(openKeyNav.config.focus.outlineColor, " !important; \n        // outline-offset: 2px !important;\n        box-shadow:  inset 0 0 0 .5px #000,\n                      0 0 0 .75px #000,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        // border-radius: 3px;\n        border-color: #000;\n        border-radius: 3px;\n      }\n      button[data-openkeynav-label],\n      button[data-openkeynav-keylabel-target-active]{\n        outline:2px solid #000 !important;\n      }\n      .openKeyNav-inaccessible:not(.openKeyNav-label):not(button){\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        border-color: #f00;\n        border-radius: 3px;\n      }\n      button.openKeyNav-inaccessible{\n        outline:2px solid #f00 !important;\n      }\n      .openKeyNav-inaccessible.openKeyNav-label{\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        border-color: #f00;\n        border-radius: 3px;\n      }\n      .openKeyNav-label.debug-inaccessible{\n        background-color: #ff4444 !important;\n        border-color: #cc0000 !important;\n        color: #ffffff !important;\n        text-shadow: 0 1px 0 rgba(0,0,0,0.5) !important;\n      }\n        //   +\"span[data-openkeynav-label]{\"\n        //       +\"display: inherit;\"\n        //   +\"}\"\n      .openKeyNav-noCursor *{\n        cursor: none !important;\n      }\n      .openKeyNav-mouseover-tooltip{\n        position: absolute;\n        background-color: #333;\n        color: #fff;\n        padding: 5px;\n        border-radius: 5px;\n        display: none;\n        z-index: 1000;\n        font-size: 12px;\n      }\n      .openKeyNav-mouseover-tooltip::before{\n        content: \"Debug mode\"\n      }\n      //   [data-openkeynav-draggable=\"true\"] {\n      //   outline: 2px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n      //   outline-offset: -1px !important;\n      // }\n      ;\n      ");
+	  style.textContent = ".openKeyNav-label {\n        font: inherit;\n        vertical-align: baseline;\n        box-sizing: border-box;\n        white-space: nowrap;\n        border: 1px solid ".concat(openKeyNav.config.spot.fontColor, "; \n        // box-shadow: inset 0 -2.5px 0 ").concat(openKeyNav.config.spot.insetColor, ", inset 0 -3px 0 #999, 0 0 4px #fff; \n        // background: linear-gradient(to top, #999 5%, ").concat(openKeyNav.config.spot.backgroundColor, " 20%); \n        background-color: ").concat(openKeyNav.config.spot.backgroundColor, "; \n        // border-radius: calc( 4px );\n        color: ").concat(openKeyNav.config.spot.fontColor, "; \n        display: inline-block;\n        font-size: ").concat(openKeyNav.config.spot.fontSize, "; \n        // outline : 2px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n        outline-offset: -2px !important;\n        // +\"font-weight: bold;\"\n        font-weight: inherit;\n        // line-height: 1.5;\n        line-height: 1;\n        margin: 0 .1em 0 1px;\n        overflow-wrap: break-word;\n        // padding: .0 .15em .1em;\n        padding: 3px;\n        text-shadow: 0 1px 0 ").concat(openKeyNav.config.spot.insetColor, "; \n        min-width: 1rem;\n        text-align: center;\n        position: absolute;\n        z-index: 99999999;\n        font-family: monospace;\n      }\n      .openKeyNav-keylabel-alternatives {\n        display: inline-flex;\n        align-items: center;\n      }\n      .openKeyNav-keylabel-alternative + .openKeyNav-keylabel-alternative {\n        border-left: 1px solid currentColor;\n        margin-left: .3em;\n        padding-left: .3em;\n      }\n      .openKeyNav-keylabel-modifier {\n        border-radius: 2px;\n        display: inline-block;\n        margin: -1px 0;\n        padding: 1px;\n      }\n      .openKeyNav-keylabel-modifier[data-openkeynav-keylabel-pressed=\"true\"] {\n        background-color: #fff;\n        box-shadow: inset 0 0 0 1px #111;\n        color: #111;\n        text-shadow: none;\n      }\n      .openKeyNav-keylabel-focused {\n        background-color: ").concat(focusLabelBackground, ";\n        color: #fff;\n        text-shadow: none;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        content: \"\";\n        position: absolute;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        top: 50%;\n        transform: translateY(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        left: 50%;\n        transform: translateX(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before {\n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        right: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after {\n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        right: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before {\n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        left: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        left: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]{\n        padding-bottom: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before {\n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        bottom: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after {\n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        bottom: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]{\n        padding-top: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before {\n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        top: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        top: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-keylabel-focused[data-openkeynav-position=\"left\"]::after {\n        border-left-color: ").concat(focusLabelBackground, ";\n      }\n      .openKeyNav-keylabel-focused[data-openkeynav-position=\"right\"]::after {\n        border-right-color: ").concat(focusLabelBackground, ";\n      }\n      .openKeyNav-keylabel-focused[data-openkeynav-position=\"top\"]::after {\n        border-top-color: ").concat(focusLabelBackground, ";\n      }\n      .openKeyNav-keylabel-focused[data-openkeynav-position=\"bottom\"]::after {\n        border-bottom-color: ").concat(focusLabelBackground, ";\n      }\n      .openKeyNav-label-selected{\n        // padding : 0;\n        // margin : 0;\n        display : grid;\n        align-content : center;\n        color : ").concat(openKeyNav.config.spot.fontColor, "; \n        background : ").concat(openKeyNav.config.spot.backgroundColor, "; \n        // outline : 4px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n        outline: none; \n        // border-radius: 100%; \n        // width: 1rem; \n        // height: 1rem; \n        // text-shadow : none;\n        // padding : 0 !important;\n        // margin: 0 !important;\n      }\n      [data-openkeynav-label]:not(.openKeyNav-label):not(button),\n      [data-openkeynav-keylabel-target-active]:not(button){\n        // outline: 2px double ").concat(openKeyNav.config.focus.outlineColor, " !important; \n        // outline-offset: 2px !important;\n        box-shadow:  inset 0 0 0 .5px #000,\n                      0 0 0 .75px #000,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        // border-radius: 3px;\n        border-color: #000;\n        border-radius: 3px;\n      }\n      button[data-openkeynav-label],\n      button[data-openkeynav-keylabel-target-active]{\n        outline:2px solid #000 !important;\n      }\n      .openKeyNav-inaccessible:not(.openKeyNav-label):not(button){\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        border-color: #f00;\n        border-radius: 3px;\n      }\n      button.openKeyNav-inaccessible{\n        outline:2px solid #f00 !important;\n      }\n      .openKeyNav-inaccessible.openKeyNav-label{\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        border-color: #f00;\n        border-radius: 3px;\n      }\n      .openKeyNav-label.debug-inaccessible{\n        background-color: #ff4444 !important;\n        border-color: #cc0000 !important;\n        color: #ffffff !important;\n        text-shadow: 0 1px 0 rgba(0,0,0,0.5) !important;\n      }\n        //   +\"span[data-openkeynav-label]{\"\n        //       +\"display: inherit;\"\n        //   +\"}\"\n      .openKeyNav-noCursor *{\n        cursor: none !important;\n      }\n      .openKeyNav-mouseover-tooltip{\n        position: absolute;\n        background-color: #333;\n        color: #fff;\n        padding: 5px;\n        border-radius: 5px;\n        display: none;\n        z-index: 1000;\n        font-size: 12px;\n      }\n      .openKeyNav-mouseover-tooltip::before{\n        content: \"Debug mode\"\n      }\n      //   [data-openkeynav-draggable=\"true\"] {\n      //   outline: 2px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n      //   outline-offset: -1px !important;\n      // }\n      ;\n      ");
 	  style.textContent += statusStyles;
 	  style.textContent += keyButtonStyles;
 	  // *:focus { // could be problematic to edit focus states throughout a website
