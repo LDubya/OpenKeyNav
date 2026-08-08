@@ -28,6 +28,8 @@ import { discoverTabbableTargets } from './tabbableTargets.js';
 export const STRUCTURAL_NAVIGATION_COMMANDS = Object.freeze({
   previousTarget: 'previousTarget',
   nextTarget: 'nextTarget',
+  previousContextStart: 'previousContextStart',
+  nextContextStart: 'nextContextStart',
   previousSiblingContext: 'previousSiblingContext',
   nextSiblingContext: 'nextSiblingContext',
   broadenContext: 'broadenContext',
@@ -40,6 +42,32 @@ const STRUCTURAL_STATUS_CHANNEL = 'structural-navigation';
 const STRUCTURAL_EXIT_STATUS_CHANNEL = 'structural-navigation-exit';
 const STRUCTURAL_KEYLABEL_OWNER = 'structural-navigation';
 const STRUCTURAL_KEYLABEL_CLASS = 'openKeyNav-structural-keylabel';
+const HEADING_CONTEXT_ARROW_COMMANDS = new Set([
+  STRUCTURAL_NAVIGATION_COMMANDS.previousSiblingContext,
+  STRUCTURAL_NAVIGATION_COMMANDS.nextSiblingContext,
+  STRUCTURAL_NAVIGATION_COMMANDS.broadenContext,
+  STRUCTURAL_NAVIGATION_COMMANDS.narrowContext,
+]);
+const MODIFIER_KEY_EVENTS = new Set(['Alt', 'Control', 'Meta', 'Shift']);
+const NATIVE_SCROLL_KEYS = new Set([
+  'ArrowDown',
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowUp',
+  'End',
+  'Home',
+  'PageDown',
+  'PageUp',
+]);
+const SPACE_ACTIVATION_ROLES = new Set([
+  'button',
+  'checkbox',
+  'menuitemcheckbox',
+  'menuitemradio',
+  'option',
+  'radio',
+  'switch',
+]);
 const ARROW_OWNING_ROLES = new Set([
   'combobox',
   'grid',
@@ -338,6 +366,35 @@ const nativeActivationSymbols = target => {
   return [];
 };
 
+const targetUsesSpaceForActivation = target => {
+  if (nativeActivationSymbols(target).includes(KEYLABEL_SYMBOLS.space)) {
+    return true;
+  }
+  if (!isElement(target)) return false;
+  return SPACE_ACTIVATION_ROLES.has(
+    (target.getAttribute('role') || '').toLowerCase()
+  );
+};
+
+const isNativeKeyboardScroll = (event, ownership, target) => {
+  if (
+    ownership.all ||
+    ownership.arrows ||
+    ownership.character ||
+    event.altKey ||
+    event.ctrlKey ||
+    event.metaKey
+  ) {
+    return false;
+  }
+
+  if (event.key === ' ' || event.key === 'Spacebar') {
+    return !targetUsesSpaceForActivation(target);
+  }
+
+  return !event.shiftKey && NATIVE_SCROLL_KEYS.has(event.key);
+};
+
 const radioIsAvailable = (radio, root, displayCheck, targetFilter) => {
   if (
     !radio?.isConnected ||
@@ -449,11 +506,6 @@ const contextTargets = context => {
   return context.targets || context.flattenedTargets || [];
 };
 
-const contextChildren = context => {
-  if (!context) return [];
-  return context.children || [];
-};
-
 const contextId = context => context && context.id;
 
 const modelContextById = (model, id) => {
@@ -550,12 +602,6 @@ const contextHierarchyLevel = (model, context) => {
   return Math.max(1, level);
 };
 
-const normalizeContextChildren = (model, context) => (
-  contextChildren(context)
-    .map(child => typeof child === 'object' ? child : modelContextById(model, child))
-    .filter(Boolean)
-);
-
 const modelStructuralContexts = model => {
   if (!model?.contexts) return [];
   if (model.contexts instanceof Map) return Array.from(model.contexts.values());
@@ -575,14 +621,13 @@ const contextOrder = context => {
 
 /**
  * Heading-backed contexts use the authored heading level as their horizontal
- * lane, regardless of inferred container ancestry. Contexts without a heading
- * level use ordinary structural siblings.
+ * lane, regardless of inferred container ancestry. Semantic nesting does not
+ * create additional levels.
  */
 const horizontalContextPeers = (model, context) => {
   const headingLevel = contextHeadingLevel(context);
-  const structuralParent = parentContext(model, context);
   const contexts = headingLevel === null
-    ? normalizeContextChildren(model, structuralParent)
+    ? []
     : modelStructuralContexts(model).filter(candidate => (
       contextHeadingLevel(candidate) === headingLevel
     ));
@@ -596,6 +641,39 @@ const horizontalContextPeers = (model, context) => {
         String(contextId(left)).localeCompare(String(contextId(right)))
       )),
   };
+};
+
+const headingContextForTarget = (model, target, headingLevel = null) => {
+  if (!model || !target) return null;
+  return modelStructuralContexts(model)
+    .filter(context => (
+      contextHeadingLevel(context) !== null &&
+      (headingLevel === null || contextHeadingLevel(context) === headingLevel) &&
+      contextTargets(context).includes(target)
+    ))
+    .sort((left, right) => (
+      contextHierarchyLevel(model, right) - contextHierarchyLevel(model, left) ||
+      contextTargets(left).length - contextTargets(right).length ||
+      contextOrder(right) - contextOrder(left)
+    ))[0] || null;
+};
+
+const headingContextForRoute = (model, context, target) => {
+  if (!model || !context) return null;
+  if (context === model.rootContext) {
+    return headingContextForTarget(model, target);
+  }
+  if (contextHeadingLevel(context) !== null) return context;
+
+  let ancestor = parentContext(model, context);
+  const seen = new Set();
+  while (ancestor && !seen.has(ancestor)) {
+    if (contextHeadingLevel(ancestor) !== null) return ancestor;
+    seen.add(ancestor);
+    ancestor = parentContext(model, ancestor);
+  }
+
+  return headingContextForTarget(model, target);
 };
 
 /**
@@ -631,13 +709,12 @@ const previousBroaderHeadingContext = (model, context) => {
 };
 
 /**
- * Finds the next page-forward context. A heading-backed context advances by
- * authored heading level. An unheaded context first enters an authored heading
- * at the next reported level, then falls back to inferred structural depth.
+ * Finds the next page-forward context at the next authored heading level.
+ * Semantic nesting is deliberately excluded from the level model.
  */
 const nextNarrowFallbackContext = (model, context) => {
   const headingLevel = contextHeadingLevel(context);
-  if (headingLevel !== null && headingLevel >= 6) return null;
+  if (headingLevel === null || headingLevel >= 6) return null;
 
   const orderedContexts = modelStructuralContexts(model)
     .filter(candidate => contextTargets(candidate).length > 0)
@@ -650,21 +727,8 @@ const nextNarrowFallbackContext = (model, context) => {
     ? orderedContexts.slice(currentIndex + 1)
     : orderedContexts;
 
-  if (headingLevel !== null) {
-    return followingContexts.find(candidate => (
-      contextHeadingLevel(candidate) === headingLevel + 1
-    )) || null;
-  }
-
-  const hierarchyLevel = contextHierarchyLevel(model, context);
-  const nextHeadingContext = followingContexts.find(candidate => (
-    contextHeadingLevel(candidate) === hierarchyLevel + 1
-  ));
-  if (nextHeadingContext) return nextHeadingContext;
-
   return followingContexts.find(candidate => (
-    contextHeadingLevel(candidate) === null &&
-    contextHierarchyLevel(model, candidate) === hierarchyLevel + 1
+    contextHeadingLevel(candidate) === headingLevel + 1
   )) || null;
 };
 
@@ -791,6 +855,7 @@ export class StructuralNavigationController {
     this.contextIndicatorFrame = null;
     this.contextIndicatorResizeObserver = null;
     this.contextIndicatorObservedElements = new Set();
+    this.transientContextIndicatorVisible = false;
     this.keylabelUpdateFrame = null;
     this.keylabelUpdateTimer = null;
     this.updatingKeylabels = false;
@@ -835,6 +900,7 @@ export class StructuralNavigationController {
     );
     this.foregroundModeWasActive = foregroundModeActive;
     if (!active || foregroundModeActive) {
+      if (foregroundModeActive) this.clearTransientContextIndicator();
       this.cancelKeylabelUpdate();
       this.clearKeylabels();
       return;
@@ -974,6 +1040,7 @@ export class StructuralNavigationController {
     this.activeStructuralContext = null;
     this.activeTypedContext = null;
     this.statusDismissed = false;
+    this.transientContextIndicatorVisible = false;
     this.dirty = true;
     this.focusSyncToken += 1;
 
@@ -1093,18 +1160,56 @@ export class StructuralNavigationController {
     );
     if (dismissStatus) {
       preventAcceptedCommand(event);
+      this.clearTransientContextIndicator();
       this.statusDismissed = true;
       this.updateStatus('Status closed.');
       return true;
     }
 
+    const contextStartCommand = [
+      STRUCTURAL_NAVIGATION_COMMANDS.previousContextStart,
+      STRUCTURAL_NAVIGATION_COMMANDS.nextContextStart,
+    ].find(command => matchesStructuralShortcut(
+      event,
+      this.contextStartShortcut(
+        command === STRUCTURAL_NAVIGATION_COMMANDS.previousContextStart
+          ? -1
+          : 1
+      )
+    ));
+    if (contextStartCommand && !ownership.all) {
+      preventAcceptedCommand(event);
+      this.execute(contextStartCommand);
+      return true;
+    }
+
+    const focusedTarget = getDeepActiveElement(this.root) || event.target;
+    const nativeKeyboardScroll = isNativeKeyboardScroll(
+      event,
+      ownership,
+      focusedTarget
+    );
+    const configuredScrollCommand = Boolean(
+      !ownership.all &&
+      !ownership.character &&
+      matchesStructuralShortcut(
+        event,
+        { key: this.openKeyNav.config.keys.scroll },
+        { allowedExtraModifiers: ['shiftKey'] }
+      )
+    );
+    const preservesContextIndicator = Boolean(
+      nativeKeyboardScroll || configuredScrollCommand
+    );
+
     if (
       event.key === 'Tab' ||
       event.key === 'Enter' ||
-      event.key === ' ' ||
-      event.key === 'Spacebar' ||
+      ((event.key === ' ' || event.key === 'Spacebar') &&
+        !nativeKeyboardScroll) ||
       event.key === 'Escape'
     ) {
+      this.clearTransientContextIndicator();
       return false;
     }
 
@@ -1124,6 +1229,7 @@ export class StructuralNavigationController {
       (ownsArrow && !overridesArrowOwnership) ||
       (isCharacterKey && ownership.character)
     ) {
+      this.clearTransientContextIndicator();
       return false;
     }
 
@@ -1146,7 +1252,15 @@ export class StructuralNavigationController {
         ))
         : null
     );
-    if (!matched) return false;
+    if (!matched) {
+      if (
+        !preservesContextIndicator &&
+        !MODIFIER_KEY_EVENTS.has(event.key)
+      ) {
+        this.clearTransientContextIndicator();
+      }
+      return false;
+    }
 
     preventAcceptedCommand(event);
     this.execute(matched[0]);
@@ -1163,6 +1277,9 @@ export class StructuralNavigationController {
     this.focusSyncToken += 1;
     this.refresh();
     this.synchronizeFocus({ preserveRoute: true, announce: false, refresh: false });
+    if (!HEADING_CONTEXT_ARROW_COMMANDS.has(command)) {
+      this.clearTransientContextIndicator();
+    }
 
     switch (command) {
       case STRUCTURAL_NAVIGATION_COMMANDS.previousTarget:
@@ -1170,6 +1287,12 @@ export class StructuralNavigationController {
         break;
       case STRUCTURAL_NAVIGATION_COMMANDS.nextTarget:
         this.moveTarget(1);
+        break;
+      case STRUCTURAL_NAVIGATION_COMMANDS.previousContextStart:
+        this.moveContextStart(-1);
+        break;
+      case STRUCTURAL_NAVIGATION_COMMANDS.nextContextStart:
+        this.moveContextStart(1);
         break;
       case STRUCTURAL_NAVIGATION_COMMANDS.previousSiblingContext:
         this.moveSiblingContext(-1);
@@ -1208,6 +1331,7 @@ export class StructuralNavigationController {
     const previousModel = this.model;
     const previousStructuralId = contextId(this.activeStructuralContext);
     const previousTypedId = contextId(this.activeTypedContext);
+    const previousActiveContextId = previousTypedId || previousStructuralId;
     const previousTarget = this.currentTarget;
 
     const targetFilter = typeof this.config.targetFilter === 'function'
@@ -1255,6 +1379,7 @@ export class StructuralNavigationController {
       contextTargets(preservedTyped).includes(this.currentTarget)
     ) ? preservedTyped : null;
 
+    this.showContextChange(previousActiveContextId);
     this.scheduleContextIndicatorUpdate();
     if (!this.updatingKeylabels) this.scheduleKeylabelUpdate();
     return true;
@@ -1266,6 +1391,9 @@ export class StructuralNavigationController {
     refresh = true,
   } = {}) {
     if (!this.active) return;
+    const previousActiveContextId = contextId(
+      this.activeTypedContext || this.activeStructuralContext
+    );
     if (refresh) this.refresh();
 
     const focused = getDeepActiveElement(this.root);
@@ -1284,6 +1412,7 @@ export class StructuralNavigationController {
       } else if (!this.activeStructuralContext) {
         this.activeStructuralContext = this.model?.rootContext || null;
       }
+      this.showContextChange(previousActiveContextId);
       this.scheduleKeylabelUpdate();
       if (announce) this.updateStatus();
       return;
@@ -1308,6 +1437,7 @@ export class StructuralNavigationController {
       if (!routeStillContainsTarget) this.activeStructuralContext = direct;
     }
 
+    this.showContextChange(previousActiveContextId);
     this.scheduleKeylabelUpdate();
     if (announce) this.updateStatus();
   }
@@ -1328,6 +1458,7 @@ export class StructuralNavigationController {
     this.dirty = true;
     this.scheduleContextIndicatorUpdate();
     this.clearKeylabels();
+    this.scheduleKeylabelUpdate();
   }
 
   invalidate() {
@@ -1335,6 +1466,7 @@ export class StructuralNavigationController {
       this.dirty = true;
       this.scheduleContextIndicatorUpdate();
       this.clearKeylabels();
+      this.scheduleKeylabelUpdate();
     }
   }
 
@@ -1343,6 +1475,7 @@ export class StructuralNavigationController {
     this.dirty = true;
     this.scheduleContextIndicatorUpdate();
     this.clearKeylabels();
+    this.scheduleKeylabelUpdate();
   }
 
   reconnectObservers() {
@@ -1433,6 +1566,17 @@ export class StructuralNavigationController {
     ).filter(target => this.targetSet.has(target) && target.isConnected);
   }
 
+  activeHeadingContext() {
+    const structuralRoute = this.activeTypedContext && this.currentTarget
+      ? directContextForTarget(this.model, this.currentTarget)
+      : this.activeStructuralContext;
+    return headingContextForRoute(
+      this.model,
+      structuralRoute,
+      this.currentTarget
+    );
+  }
+
   moveTarget(direction) {
     const sequence = this.activeSequence();
     if (!sequence.length) {
@@ -1455,6 +1599,73 @@ export class StructuralNavigationController {
     this.focusTarget(sequence[nextIndex]);
   }
 
+  contextStartShortcut(direction) {
+    const modifier = this.config.overrideModifier;
+    if (!MODIFIER_KEYS.includes(modifier) || modifier === 'shiftKey') {
+      return null;
+    }
+
+    return {
+      key: 'Tab',
+      [modifier]: true,
+      ...(direction < 0 ? { shiftKey: true } : {}),
+    };
+  }
+
+  contextStartRoute() {
+    const route = [];
+    let previousContext = null;
+
+    this.targets
+      .filter(target => target.tabIndex >= 0)
+      .forEach((target, index) => {
+        const context = directContextForTarget(this.model, target) ||
+          this.model?.rootContext || null;
+        if (context === previousContext) return;
+        route.push({ context, target, index });
+        previousContext = context;
+      });
+
+    return route;
+  }
+
+  contextStartDestination(direction) {
+    const tabTargets = this.targets.filter(target => target.tabIndex >= 0);
+    const route = this.contextStartRoute();
+    if (!route.length) return null;
+
+    const currentIndex = tabTargets.indexOf(this.currentTarget);
+    if (currentIndex < 0) {
+      return direction > 0 ? route[0] : route[route.length - 1];
+    }
+
+    let currentRouteIndex = -1;
+    for (let index = 0; index < route.length; index += 1) {
+      if (route[index].index > currentIndex) break;
+      currentRouteIndex = index;
+    }
+    return route[currentRouteIndex + direction] || null;
+  }
+
+  moveContextStart(direction) {
+    this.useStructuralRoute();
+    const destination = this.contextStartDestination(direction);
+    if (!destination) {
+      this.updateStatus(direction > 0
+        ? 'No next context start.'
+        : 'No previous context start.');
+      return;
+    }
+
+    const previousActiveContextId = contextId(
+      this.activeTypedContext || this.activeStructuralContext
+    );
+    this.activeStructuralContext = destination.context;
+    this.activeTypedContext = null;
+    this.showContextChange(previousActiveContextId);
+    this.focusTarget(destination.target);
+  }
+
   focusTarget(target) {
     if (!target || !this.targetSet.has(target) || !target.isConnected) {
       this.dirty = true;
@@ -1463,7 +1674,7 @@ export class StructuralNavigationController {
     }
 
     this.currentTarget = target;
-    this.openKeyNav.focus(target);
+    this.openKeyNav.focus(target, { decorate: false });
     this.updateStatus();
 
     const token = ++this.focusSyncToken;
@@ -1477,23 +1688,26 @@ export class StructuralNavigationController {
   moveSiblingContext(direction) {
     this.useStructuralRoute();
 
+    const activeContext = this.activeHeadingContext();
+    if (!activeContext) {
+      this.updateStatus('No authored heading context is active.');
+      return;
+    }
+
     const {
       contexts: peers,
       headingLevel,
     } = horizontalContextPeers(
       this.model,
-      this.activeStructuralContext
+      activeContext
     );
-    const currentIndex = peers.indexOf(this.activeStructuralContext);
+    const currentIndex = peers.indexOf(activeContext);
     const nextIndex = currentIndex + direction;
     if (currentIndex < 0 || nextIndex < 0 || nextIndex >= peers.length) {
-      const relation = headingLevel === null
-        ? 'sibling context'
-        : `peer context at heading level ${headingLevel}`;
       this.updateStatus(
         direction > 0
-          ? `No next ${relation}.`
-          : `No previous ${relation}.`
+          ? `No next peer context at heading level ${headingLevel}.`
+          : `No previous peer context at heading level ${headingLevel}.`
       );
       return;
     }
@@ -1501,6 +1715,7 @@ export class StructuralNavigationController {
     const peer = peers[nextIndex];
     const target = contextTargets(peer)[0];
 
+    this.showTransientContextIndicator();
     this.activeStructuralContext = peer;
     this.activeTypedContext = null;
     this.focusTarget(target);
@@ -1509,56 +1724,59 @@ export class StructuralNavigationController {
   broadenContext() {
     this.useStructuralRoute();
 
-    const headingParent = previousBroaderHeadingContext(
-      this.model,
-      this.activeStructuralContext
-    );
-    const parent = headingParent || parentContext(
-      this.model,
-      this.activeStructuralContext
-    );
-    if (!parent) {
-      this.updateStatus('Already at the broadest context.');
+    const activeContext = this.activeHeadingContext();
+    if (!activeContext) {
+      this.updateStatus('No authored heading context is active.');
       return;
     }
-    this.activeStructuralContext = parent;
-    if (headingParent) {
-      this.focusTarget(contextTargets(parent)[0]);
-    } else {
-      this.updateStatus();
+    const headingParent = previousBroaderHeadingContext(
+      this.model,
+      activeContext
+    );
+    if (!headingParent) {
+      this.updateStatus('Already at the broadest heading level.');
+      return;
     }
+    this.showTransientContextIndicator();
+    this.activeStructuralContext = headingParent;
+    this.focusTarget(contextTargets(headingParent)[0]);
   }
 
   narrowContext() {
     this.useStructuralRoute();
-    const activeContext = this.activeStructuralContext || this.model.rootContext;
-    const child = this.currentTarget
-      ? normalizeContextChildren(this.model, activeContext)
-        .find(context => contextTargets(context).includes(this.currentTarget))
+    const activeContext = this.activeHeadingContext();
+    if (!activeContext) {
+      this.updateStatus('No authored heading context is active.');
+      return;
+    }
+
+    const headingLevel = contextHeadingLevel(activeContext);
+    const child = this.currentTarget && headingLevel < 6
+      ? headingContextForTarget(
+        this.model,
+        this.currentTarget,
+        headingLevel + 1
+      )
       : null;
     if (child) {
+      this.showTransientContextIndicator();
       this.activeStructuralContext = child;
       this.updateStatus();
       return;
     }
 
-    const headingLevel = contextHeadingLevel(activeContext);
-    if (headingLevel !== null && headingLevel >= 6) {
+    if (headingLevel >= 6) {
       this.updateStatus('Already at heading level 6.');
       return;
     }
 
     const fallback = nextNarrowFallbackContext(this.model, activeContext);
     if (!fallback) {
-      this.updateStatus(headingLevel === null
-        ? `No next context at hierarchy level ${contextHierarchyLevel(
-          this.model,
-          activeContext
-        ) + 1}.`
-        : `No next H${headingLevel + 1} context.`);
+      this.updateStatus(`No next H${headingLevel + 1} context.`);
       return;
     }
 
+    this.showTransientContextIndicator();
     this.activeStructuralContext = fallback;
     this.activeTypedContext = null;
     this.focusTarget(contextTargets(fallback)[0]);
@@ -1577,6 +1795,9 @@ export class StructuralNavigationController {
     }
 
     const ring = [null, ...typed];
+    const previousActiveContextId = contextId(
+      this.activeTypedContext || this.activeStructuralContext
+    );
     const currentIndex = this.activeTypedContext
       ? ring.findIndex(context => contextId(context) === contextId(this.activeTypedContext))
       : 0;
@@ -1589,16 +1810,19 @@ export class StructuralNavigationController {
         directContextForTarget(this.model, this.currentTarget) ||
         this.model.rootContext;
     }
+    this.showContextChange(previousActiveContextId);
     this.updateStatus();
   }
 
   useStructuralRoute() {
     if (!this.activeTypedContext) return;
+    const previousActiveContextId = contextId(this.activeTypedContext);
     this.activeTypedContext = null;
     this.activeStructuralContext =
       directContextForTarget(this.model, this.currentTarget) ||
       this.activeStructuralContext ||
       this.model.rootContext;
+    this.showContextChange(previousActiveContextId);
   }
 
   clearKeylabels() {
@@ -1648,20 +1872,97 @@ export class StructuralNavigationController {
   keylabelAssignments() {
     const assignments = [];
     const keylabelConfig = this.config.keylabels || {};
-    const structuralRoute = (
+    const tabTargets = this.targets.filter(target => target.tabIndex >= 0);
+    const currentTabIndex = tabTargets.indexOf(this.currentTarget);
+    const focused = getDeepActiveElement(this.root);
+    const hasInitialDocumentFocus = isDocument(this.root) && (
+      focused === this.document?.body ||
+      focused === this.document?.documentElement
+    );
+    const nativeTabAssignments = currentTabIndex < 0
+      ? (hasInitialDocumentFocus && tabTargets[0]
+        ? [{
+          target: tabTargets[0],
+          symbols: KEYLABEL_SYMBOLS.tab,
+          command: 'nextTabTarget',
+        }]
+        : [])
+      : [
+        {
+          target: tabTargets[currentTabIndex - 1],
+          symbols: `${KEYLABEL_SYMBOLS.shift}${KEYLABEL_SYMBOLS.tab}`,
+          command: 'previousTabTarget',
+        },
+        {
+          target: tabTargets[currentTabIndex + 1],
+          symbols: KEYLABEL_SYMBOLS.tab,
+          command: 'nextTabTarget',
+        },
+      ].filter(assignment => assignment.target);
+    const nativeTabDestinations = new Set(
+      nativeTabAssignments.map(assignment => assignment.target)
+    );
+    const contextStartAssignments = keylabelConfig.contextJump === false
+      ? []
+      : [
+        [-1, 'previousContextStart'],
+        [1, 'nextContextStart'],
+      ].map(([direction, command]) => {
+        const destination = this.contextStartDestination(direction);
+        const symbols = shortcutSymbols(this.contextStartShortcut(direction));
+        return {
+          target: destination?.target,
+          symbols,
+          command,
+        };
+      }).filter(assignment => (
+        assignment.target &&
+        assignment.symbols &&
+        !nativeTabDestinations.has(assignment.target)
+      ));
+    const contextStartDestinations = new Set(
+      contextStartAssignments.map(assignment => assignment.target)
+    );
+    const selectedStructuralRoute = (
       this.activeTypedContext && this.currentTarget
         ? directContextForTarget(this.model, this.currentTarget)
         : this.activeStructuralContext
     ) || this.model?.rootContext;
+    const headingRoute = headingContextForRoute(
+      this.model,
+      selectedStructuralRoute,
+      this.currentTarget
+    );
     const add = (target, symbols, command, options = {}) => {
-      if (!target || !symbols || !this.targetSet.has(target)) return;
+      if (
+        !target ||
+        !symbols ||
+        !this.targetSet.has(target) ||
+        nativeTabDestinations.has(target)
+      ) {
+        return;
+      }
       assignments.push({ target, symbols, command, ...options });
     };
     const addNativeFocusRoute = assignment => {
       const target = assignment?.target;
-      if (!target?.isConnected || !isComposedWithin(this.root, target)) return;
+      if (
+        !target?.isConnected ||
+        !isComposedWithin(this.root, target) ||
+        nativeTabDestinations.has(target)
+      ) {
+        return;
+      }
       assignments.push(assignment);
     };
+
+    // Ordinary sequential focus is always the simplest useful route.
+    if (keylabelConfig.tab !== false) {
+      nativeTabAssignments.forEach(assignment => assignments.push({
+        ...assignment,
+        maxSymbols: Array.from(assignment.symbols).length,
+      }));
+    }
 
     if (keylabelConfig.nativeArrows !== false) {
       nativeRadioArrowAssignments(
@@ -1672,12 +1973,16 @@ export class StructuralNavigationController {
       ).forEach(addNativeFocusRoute);
     }
 
-    if (keylabelConfig.horizontal !== false && this.currentTarget) {
+    if (
+      keylabelConfig.horizontal !== false &&
+      this.currentTarget &&
+      headingRoute
+    ) {
       const { contexts: peers } = horizontalContextPeers(
         this.model,
-        structuralRoute
+        headingRoute
       );
-      const currentIndex = peers.indexOf(structuralRoute);
+      const currentIndex = peers.indexOf(headingRoute);
       [
         [-1, 'previousSiblingContext'],
         [1, 'nextSiblingContext'],
@@ -1695,13 +2000,15 @@ export class StructuralNavigationController {
           return;
         }
         const peer = peers[currentIndex + direction];
-        add(contextTargets(peer)[0], symbols, command, {
+        const target = contextTargets(peer)[0];
+        if (contextStartDestinations.has(target)) return;
+        add(target, symbols, command, {
           maxSymbols: Array.from(symbols).length,
         });
       });
     }
 
-    if (keylabelConfig.vertical !== false && structuralRoute) {
+    if (keylabelConfig.vertical !== false && headingRoute) {
       const commandSource = getDeepActiveElement(this.root);
       const addVertical = (command, target) => {
         const shortcut = this.config.commands?.[command];
@@ -1712,7 +2019,8 @@ export class StructuralNavigationController {
         );
         if (
           target === this.currentTarget ||
-          !symbols
+          !symbols ||
+          contextStartDestinations.has(target)
         ) {
           return;
         }
@@ -1723,7 +2031,7 @@ export class StructuralNavigationController {
 
       const headingParent = previousBroaderHeadingContext(
         this.model,
-        structuralRoute
+        headingRoute
       );
       if (headingParent) {
         addVertical(
@@ -1732,21 +2040,30 @@ export class StructuralNavigationController {
         );
       }
 
-      const child = this.currentTarget
-        ? normalizeContextChildren(this.model, structuralRoute)
-          .find(context => contextTargets(context).includes(this.currentTarget))
+      const headingLevel = contextHeadingLevel(headingRoute);
+      const child = this.currentTarget && headingLevel < 6
+        ? headingContextForTarget(
+          this.model,
+          this.currentTarget,
+          headingLevel + 1
+        )
         : null;
       if (!child) {
-        const headingLevel = contextHeadingLevel(structuralRoute);
-        const canNarrow = headingLevel === null || headingLevel < 6;
-        const fallback = canNarrow
-          ? nextNarrowFallbackContext(this.model, structuralRoute)
+        const fallback = headingLevel < 6
+          ? nextNarrowFallbackContext(this.model, headingRoute)
           : null;
         if (fallback) {
           addVertical('narrowContext', contextTargets(fallback)[0]);
         }
       }
     }
+
+    // A context-start Tab chord that skips sequential stops is more useful
+    // than a structural arrow chord when both reach the same target.
+    contextStartAssignments.forEach(assignment => assignments.push({
+      ...assignment,
+      maxSymbols: Array.from(assignment.symbols).length,
+    }));
 
     if (keylabelConfig.activation !== false && this.currentTarget) {
       nativeActivationSymbols(this.currentTarget).forEach(symbols => {
@@ -1758,25 +2075,6 @@ export class StructuralNavigationController {
             : 'activateSpace'
         );
       });
-    }
-
-    // Familiar sequential-navigation hints are lowest priority when a Tab
-    // route and a structural route reach the same target.
-    if (keylabelConfig.tab !== false) {
-      const tabTargets = this.targets.filter(target => target.tabIndex >= 0);
-      const currentIndex = tabTargets.indexOf(this.currentTarget);
-      if (currentIndex >= 0) {
-        add(
-          tabTargets[currentIndex - 1],
-          `${KEYLABEL_SYMBOLS.shift}${KEYLABEL_SYMBOLS.tab}`,
-          'previousTabTarget'
-        );
-        add(
-          tabTargets[currentIndex + 1],
-          KEYLABEL_SYMBOLS.tab,
-          'nextTabTarget'
-        );
-      }
     }
 
     return assignments;
@@ -1794,6 +2092,7 @@ export class StructuralNavigationController {
 
     this.updatingKeylabels = true;
     try {
+      if (this.dirty || !this.model) this.refresh();
       if (this.dirty || !this.model) {
         this.clearKeylabels();
         return;
@@ -1862,8 +2161,39 @@ export class StructuralNavigationController {
     return this.document?.body || this.document?.documentElement || null;
   }
 
+  contextIndicatorShouldDisplay() {
+    return Boolean(
+      this.config.contextIndicator?.enabled !== false ||
+      this.transientContextIndicatorVisible
+    );
+  }
+
+  showTransientContextIndicator() {
+    this.transientContextIndicatorVisible = true;
+    this.scheduleContextIndicatorUpdate();
+  }
+
+  showContextChange(previousContextId) {
+    const nextContextId = contextId(
+      this.activeTypedContext || this.activeStructuralContext
+    );
+    if (
+      previousContextId &&
+      nextContextId &&
+      previousContextId !== nextContextId
+    ) {
+      this.showTransientContextIndicator();
+    }
+  }
+
+  clearTransientContextIndicator() {
+    if (!this.transientContextIndicatorVisible) return;
+    this.transientContextIndicatorVisible = false;
+    this.scheduleContextIndicatorUpdate();
+  }
+
   ensureContextIndicator() {
-    if (!this.active || this.config.contextIndicator?.enabled === false) return;
+    if (!this.active || !this.contextIndicatorShouldDisplay()) return;
     if (!this.contextIndicatorElement) {
       const element = this.document.createElement('div');
       element.className = 'openKeyNav-structural-context-outline';
@@ -1922,7 +2252,7 @@ export class StructuralNavigationController {
   }
 
   updateContextIndicator() {
-    if (!this.active || this.config.contextIndicator?.enabled === false) {
+    if (!this.active || !this.contextIndicatorShouldDisplay()) {
       if (this.contextIndicatorElement) {
         this.contextIndicatorElement.style.display = 'none';
       }
@@ -1968,7 +2298,7 @@ export class StructuralNavigationController {
     const configuredOffset = Number(this.config.contextIndicator?.offset);
     const offset = Number.isFinite(configuredOffset)
       ? Math.max(0, configuredOffset)
-      : 4;
+      : 10;
     const left = Math.max(0, rect.left - offset);
     const top = Math.max(0, rect.top - offset);
     const right = Math.min(viewportWidth, rect.right + offset);
@@ -1982,15 +2312,24 @@ export class StructuralNavigationController {
     const width = Number.isFinite(configuredWidth)
       ? Math.max(1, configuredWidth)
       : 3;
-    const color = this.config.contextIndicator?.color ||
-      this.openKeyNav.config.focus.outlineColor ||
-      '#0088cc';
+    const color = this.config.contextIndicator?.color || '#000000';
+    const contrastColor = this.config.contextIndicator?.contrastColor ||
+      '#ffffff';
+    const configuredContrastWidth = Number(
+      this.config.contextIndicator?.contrastWidth
+    );
+    const contrastWidth = Number.isFinite(configuredContrastWidth)
+      ? Math.max(0, configuredContrastWidth)
+      : 2;
+    const style = this.config.contextIndicator?.style || 'dashed';
     indicator.style.display = 'block';
     indicator.style.left = `${left}px`;
     indicator.style.top = `${top}px`;
     indicator.style.width = `${right - left}px`;
     indicator.style.height = `${bottom - top}px`;
-    indicator.style.border = `${width}px solid ${color}`;
+    indicator.style.border = `${width}px ${style} ${color}`;
+    indicator.style.boxShadow =
+      `0 0 0 ${contrastWidth}px ${contrastColor}`;
     indicator.dataset.contextId = String(contextId(context) || '');
     indicator.dataset.contextName = context.name || 'Document';
     indicator.dataset.contextType = this.activeTypedContext
@@ -2016,28 +2355,25 @@ export class StructuralNavigationController {
     const targetDescription = this.currentTarget
       ? `${targetName(this.currentTarget)}, ${index >= 0 ? index + 1 : '?'} of ${sequence.length}`
       : `${sequence.length} available ${sequence.length === 1 ? 'target' : 'targets'}`;
-    const hierarchyContext = this.activeTypedContext
+    const structuralContext = this.activeTypedContext
       ? (
         directContextForTarget(this.model, this.currentTarget) ||
         this.activeStructuralContext ||
         this.model.rootContext
       )
       : (this.activeStructuralContext || this.model.rootContext);
-    const headingLevel = contextHeadingLevel(hierarchyContext);
-    const reportedLevel = headingLevel ?? contextHierarchyLevel(
+    const headingContext = headingContextForRoute(
       this.model,
-      hierarchyContext
+      structuralContext,
+      this.currentTarget
     );
-    const hierarchyDescription = this.activeTypedContext
-      ? (
-        headingLevel === null
-          ? `Underlying hierarchy level: ${reportedLevel}.`
-          : `Underlying heading level: ${reportedLevel}.`
-      )
+    const headingLevel = contextHeadingLevel(headingContext);
+    const headingDescription = headingLevel === null
+      ? ''
       : (
-        headingLevel === null
-          ? `Hierarchy level: ${reportedLevel}.`
-          : `Heading level: ${reportedLevel}.`
+        this.activeTypedContext
+          ? `Underlying heading level: ${headingLevel}.`
+          : `Heading level: ${headingLevel}.`
       );
     const typedContexts = typedContextsForTarget(this.model, this.currentTarget);
     const typedDescription = typedContexts.length
@@ -2057,7 +2393,7 @@ export class StructuralNavigationController {
     const message = [
       prefix,
       contextDescription,
-      hierarchyDescription,
+      headingDescription,
       targetDescription ? `${targetDescription}.` : '',
       typedDescription,
     ].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();

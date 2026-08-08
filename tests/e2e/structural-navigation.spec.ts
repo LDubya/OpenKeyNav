@@ -112,6 +112,148 @@ test.describe('structural navigation mode', () => {
     ))).toBe(false);
   });
 
+  test('keeps the context outline through keyboard scrolling and shows context changes', async ({ page }) => {
+    await page.evaluate(() => {
+      (window as any).okn.config.modesConfig.structuralNavigation
+        .contextIndicator.enabled = false;
+    });
+    await enableOpenKeyNav(page);
+    await focusFixtureTarget(page, 'in-stock');
+    await enterStructuralNavigation(page);
+
+    const indicator = page.locator('.openKeyNav-structural-context-outline');
+    await expect(indicator).toHaveCount(0);
+
+    await page.keyboard.press('Shift+ArrowUp');
+    await expectDeepFocus(page, 'clear-filters');
+    await expect(indicator).toBeVisible();
+    await expect(indicator).toHaveAttribute('data-context-name', 'Catalog');
+    expect(await indicator.evaluate(element => {
+      const style = getComputedStyle(element);
+      return {
+        borderColor: style.borderColor,
+        borderStyle: style.borderStyle,
+        boxShadow: style.boxShadow,
+      };
+    })).toEqual({
+      borderColor: 'rgb(0, 0, 0)',
+      borderStyle: 'dashed',
+      boxShadow: 'rgb(255, 255, 255) 0px 0px 0px 2px',
+    });
+    expect(await page.locator('.openKeyNav-structural-keylabel').evaluateAll(
+      (labels, contextIndicator) => labels.every(label => (
+        Number(getComputedStyle(label).zIndex) >
+        Number(getComputedStyle(contextIndicator as Element).zIndex)
+      )),
+      await indicator.elementHandle()
+    )).toBe(true);
+
+    await page.keyboard.press('Shift+ArrowDown');
+    await expect(indicator).toBeVisible();
+    await expect(indicator).toHaveAttribute('data-context-name', 'Filters');
+
+    await page.keyboard.press('Shift+ArrowRight');
+    await expectDeepFocus(page, 'product-a');
+    await expect(indicator).toBeVisible();
+    await expect(indicator).toHaveAttribute('data-context-name', 'Results');
+
+    const scrollTopBefore = await page.evaluate(() => window.scrollY);
+    await page.keyboard.press('ArrowDown');
+    await expect.poll(() => page.evaluate(() => window.scrollY))
+      .toBeGreaterThan(scrollTopBefore);
+    await expect(indicator).toBeVisible();
+    await expect(indicator).toHaveAttribute('data-context-name', 'Results');
+
+    await page.keyboard.press('Tab');
+    await expectDeepFocus(page, 'product-b');
+    await expect(indicator).toBeHidden();
+
+    await page.keyboard.press('Shift+ArrowLeft');
+    await expectDeepFocus(page, 'clear-filters');
+    await expect(indicator).toBeVisible();
+    await expect(indicator).toHaveAttribute('data-context-name', 'Filters');
+
+    await page.keyboard.press('Enter');
+    await expect(indicator).toBeHidden();
+
+    await page.locator('#product-a').focus();
+    await expectDeepFocus(page, 'product-a');
+    await expect(indicator).toBeVisible();
+    await expect(indicator).toHaveAttribute('data-context-name', 'Results');
+  });
+
+  test('labels the first tabbable target with native Tab on initial page entry', async ({ page }) => {
+    expect(await page.evaluate(() => (window as any).fixture.deepActiveId()))
+      .toBe('');
+    await enableAndEnter(page);
+
+    const firstTargetLabel = page.locator(
+      '.openKeyNav-structural-keylabel' +
+      '[data-openkeynav-keylabel-target="search-input"]'
+    );
+    await expect(firstTargetLabel).toHaveText('⇥');
+    await expect(firstTargetLabel).toHaveAttribute(
+      'data-openkeynav-keylabel-command',
+      'nextTabTarget'
+    );
+
+    await page.keyboard.press('Tab');
+    await expectDeepFocus(page, 'search-input');
+  });
+
+  test('preserves all page-authored focus styling on the active structural target', async ({ page }) => {
+    await page.addStyleTag({
+      content: `
+        #product-a:focus,
+        #recommendation-a:focus {
+          outline: 5px dashed rgb(12, 34, 56);
+          outline-offset: 7px;
+          border: 4px dotted rgb(45, 67, 89);
+          border-radius: 17px;
+          box-shadow: 0 0 0 6px rgb(78, 90, 123);
+          opacity: 0.43;
+        }
+      `,
+    });
+    const focusStyle = (id: string) => page.locator(`#${id}`).evaluate(element => {
+      const style = getComputedStyle(element);
+      return {
+        borderColor: style.borderColor,
+        borderRadius: style.borderRadius,
+        borderStyle: style.borderStyle,
+        borderWidth: style.borderWidth,
+        boxShadow: style.boxShadow,
+        opacity: style.opacity,
+        color: style.outlineColor,
+        offset: style.outlineOffset,
+        style: style.outlineStyle,
+        width: style.outlineWidth,
+      };
+    });
+
+    await focusFixtureTarget(page, 'recommendation-a');
+    const expectedRecommendationStyle = await focusStyle('recommendation-a');
+    await focusFixtureTarget(page, 'product-a');
+    const expectedProductStyle = await focusStyle('product-a');
+    await enableOpenKeyNav(page);
+    await enterStructuralNavigation(page);
+
+    await expect(page.locator('#product-a'))
+      .toHaveAttribute('data-openkeynav-keylabel-target-active', '');
+    expect(await focusStyle('product-a')).toEqual(expectedProductStyle);
+    expect(await page.locator('#product-a').evaluate(element => {
+      (element as HTMLElement).style.visibility = 'hidden';
+      return getComputedStyle(element).visibility;
+    })).toBe('hidden');
+    await page.locator('#product-a').evaluate(element => {
+      (element as HTMLElement).style.visibility = '';
+    });
+
+    await page.keyboard.press('Shift+ArrowRight');
+    await expectDeepFocus(page, 'recommendation-a');
+    expect(await focusStyle('recommendation-a')).toEqual(expectedRecommendationStyle);
+  });
+
   test('routes real focus through hierarchy, boundaries, broaden/narrow, and horizontal contexts', async ({ page }) => {
     await enableOpenKeyNav(page);
     await focusFixtureTarget(page, 'in-stock');
@@ -128,9 +270,18 @@ test.describe('structural navigation mode', () => {
     // Activation and context-only changes retain the meaningful page focus.
     await expectDeepFocus(page, 'in-stock');
     await expect(page.locator('.openKeyNav-structural-status')).toContainText('Availability');
-    await expect(structuralStatusContent).toContainText('Hierarchy level: 4.');
+    await expect(structuralStatusContent).toContainText('Heading level: 2.');
     await expect(activeIndicator).toHaveAttribute('data-context-name', 'Availability');
     expect(await page.evaluate(() => (window as any).fixture.focusEvents)).toEqual([]);
+    const initialProductLabel = page.locator(
+      '.openKeyNav-structural-keylabel' +
+      '[data-openkeynav-keylabel-target="product-a"]'
+    );
+    await expect(initialProductLabel).toHaveText('⌥⇥');
+    await expect(initialProductLabel).toHaveAttribute(
+      'data-openkeynav-keylabel-command',
+      'nextContextStart'
+    );
 
     await page.keyboard.press('Tab');
     await expectDeepFocus(page, 'preorder');
@@ -142,22 +293,30 @@ test.describe('structural navigation mode', () => {
     await page.keyboard.press('Shift+Tab');
     await expectDeepFocus(page, 'preorder');
     await expect(page.locator('.openKeyNav-structural-status')).toContainText('Availability');
+    const immediateProductLabel = page.locator(
+      '.openKeyNav-structural-keylabel' +
+      '[data-openkeynav-keylabel-target="product-a"]'
+    );
+    await expect(immediateProductLabel).toHaveText('⇥');
+    await expect(immediateProductLabel).toHaveAttribute(
+      'data-openkeynav-keylabel-command',
+      'nextTabTarget'
+    );
 
     await page.keyboard.press('Shift+ArrowUp');
-    await expectDeepFocus(page, 'preorder');
+    await expectDeepFocus(page, 'clear-filters');
+    await expect(page.locator('.openKeyNav-structural-status')).toContainText('Catalog');
+    await expect(structuralStatusContent).toContainText('Heading level: 1.');
+    await expect(activeIndicator).toHaveAttribute('data-context-name', 'Catalog');
+
+    await page.keyboard.press('Shift+ArrowDown');
+    await expectDeepFocus(page, 'clear-filters');
     await expect(page.locator('.openKeyNav-structural-status')).toContainText('Filters');
     await expect(structuralStatusContent).toContainText('Heading level: 2.');
     await expect(activeIndicator).toHaveAttribute('data-context-name', 'Filters');
 
-    await page.keyboard.press('Shift+ArrowDown');
-    await expectDeepFocus(page, 'preorder');
-    await expect(page.locator('.openKeyNav-structural-status')).toContainText('Availability');
-    await expect(structuralStatusContent).toContainText('Hierarchy level: 4.');
-    await expect(activeIndicator).toHaveAttribute('data-context-name', 'Availability');
-
     // Shift+Left/Right traverses the authored H2 lane, always entering the
     // destination's first stop.
-    await page.keyboard.press('Shift+ArrowUp');
     await page.keyboard.press('Shift+ArrowRight');
     await expectDeepFocus(page, 'product-a');
     await expect(page.locator('.openKeyNav-structural-status')).toContainText('Results');
@@ -180,7 +339,6 @@ test.describe('structural navigation mode', () => {
     // narrowing it.
     await focusFixtureTarget(page, 'preorder');
     await page.keyboard.press('Shift+ArrowUp');
-    await page.keyboard.press('Shift+ArrowUp');
     await expectDeepFocus(page, 'clear-filters');
     await expect(page.locator('.openKeyNav-structural-status')).toContainText('Catalog');
     await expect(structuralStatusContent).toContainText('Heading level: 1.');
@@ -197,6 +355,20 @@ test.describe('structural navigation mode', () => {
     await expect(page.locator('.openKeyNav-structural-status')).toContainText('Catalog');
     await expect(structuralStatusContent).toContainText('Heading level: 1.');
     await expect(activeIndicator).toHaveAttribute('data-context-name', 'Catalog');
+
+    const nextContextStartLabel = page.locator(
+      '.openKeyNav-structural-keylabel' +
+      '[data-openkeynav-keylabel-command="nextContextStart"]' +
+      '[data-openkeynav-keylabel-target="product-a"]'
+    );
+    await expect(nextContextStartLabel).toHaveText('⌥⇥');
+    await page.keyboard.press('Alt+Tab');
+    await expectDeepFocus(page, 'product-a');
+    await expect(page.locator('.openKeyNav-structural-status')).toContainText('Results');
+
+    await page.keyboard.press('Alt+Shift+Tab');
+    await expectDeepFocus(page, 'in-stock');
+    await expect(page.locator('.openKeyNav-structural-status')).toContainText('Availability');
 
     const focusEvents = await page.evaluate(() => (window as any).fixture.focusEvents);
     const blurEvents = await page.evaluate(() => (window as any).fixture.blurEvents);
@@ -224,8 +396,8 @@ test.describe('structural navigation mode', () => {
       .toHaveText('⇧←');
     await expect(structuralLabel('previousSiblingContext', 'clear-filters'))
       .not.toHaveAttribute('data-openkeynav-keylabel-alternatives');
-    await expect(structuralLabel('nextSiblingContext', 'recommendation-a'))
-      .toHaveText('⇧→');
+    await expect(structuralLabel('nextContextStart', 'recommendation-a'))
+      .toHaveText('⌥⇥');
     await expect(structuralLabel('broadenContext', 'clear-filters'))
       .toHaveCount(0);
     await expect(structuralLabel('narrowContext', 'same-level-current-first'))
@@ -295,12 +467,15 @@ test.describe('structural navigation mode', () => {
       .toHaveAttribute('data-openkeynav-keylabel-target-active', '');
     expect(await page.locator('#product-a').evaluate(element => (
       getComputedStyle(element).boxShadow
+    ))).toBe('none');
+    expect(await page.locator('#product-b').evaluate(element => (
+      getComputedStyle(element).boxShadow
     ))).not.toBe('none');
     expect(await page.locator('#clear-filters').evaluate(element => (
       getComputedStyle(element).outlineStyle
     ))).toBe('solid');
     expect(await page.locator('.openKeyNav-structural-keylabel').evaluateAll(
-      labels => labels.every(label => Array.from(label.textContent || '').length <= 2)
+      labels => labels.every(label => Array.from(label.textContent || '').length <= 3)
     )).toBe(true);
     expect(await page.locator('.openKeyNav-structural-keylabel').evaluateAll(
       labels => new Set(labels.map(label => (
@@ -693,12 +868,12 @@ test.describe('structural navigation mode', () => {
     );
   });
 
-  test('narrows from the document to H2 and then to the next H3', async ({ page }) => {
+  test('narrows from H1 to H2 and then to the next H3', async ({ page }) => {
     await page.evaluate(() => {
       const fixture = document.createElement('div');
       fixture.id = 'heading-level-fixture';
       fixture.innerHTML = `
-        <button id="document-intro">Hi, we're the MIT Visualization Group!</button>
+        <a id="document-intro" href="#intro"><h1>Hi, we're the MIT Visualization Group!</h1></a>
         <div class="research-card">
           <div class="theme-summary">
             <a id="fixture-tools-theme" href="#tools-theme"><h2>Visualization Authoring Tools</h2></a>
@@ -723,19 +898,62 @@ test.describe('structural navigation mode', () => {
     const status = page.locator(
       '.openKeyNav-structural-status .openKeyNav-status__content'
     );
-    await expect(status).toContainText('Context: Document.');
-    await expect(status).toContainText('Hierarchy level: 1.');
+    await expect(status).toContainText("Context: Hi, we're the MIT Visualization Group!.");
+    await expect(status).toContainText('Heading level: 1.');
 
     await page.keyboard.press('Shift+ArrowDown');
-    await expectDeepFocus(page, 'fixture-tools-theme');
+    await expectDeepFocus(page, 'fixture-languages');
     await expect(status).toContainText('Context: Visualization Authoring Tools.');
     await expect(status).toContainText('Heading level: 2.');
-    await expect(status).toContainText('Visualization Authoring Tools, 1 of 4.');
+    await expect(status).toContainText('languages, 1 of 3.');
 
     await page.keyboard.press('Shift+ArrowDown');
     await expectDeepFocus(page, 'fixture-gofish');
     await expect(status).toContainText('Context: Latest & Greatest.');
     await expect(status).toContainText('Heading level: 3.');
+  });
+
+  test('prefers context-start Tab over vertical heading chords for the same target', async ({ page }) => {
+    await page.evaluate(() => {
+      const fixture = document.createElement('div');
+      fixture.id = 'context-down-keylabel-fixture';
+      fixture.innerHTML = `
+        <section aria-labelledby="collision-current-title">
+          <h2 id="collision-current-title">Current context</h2>
+          <button id="collision-current">Current target</button>
+          <button id="collision-intervening">Intervening target</button>
+        </section>
+        <section aria-labelledby="collision-child-title">
+          <h3 id="collision-child-title">Child context</h3>
+          <button id="collision-child">Child target</button>
+        </section>
+      `;
+      document.body.prepend(fixture);
+    });
+    await enableOpenKeyNav(page);
+    await focusFixtureTarget(page, 'collision-current');
+    await enterStructuralNavigation(page);
+
+    const childLabel = page.locator(
+      '.openKeyNav-structural-keylabel' +
+      '[data-openkeynav-keylabel-target="collision-child"]'
+    );
+    await expect(childLabel).toHaveText('⌥⇥');
+    await expect(childLabel).toHaveAttribute(
+      'data-openkeynav-keylabel-command',
+      'nextContextStart'
+    );
+
+    await focusFixtureTarget(page, 'collision-child');
+    const parentLabel = page.locator(
+      '.openKeyNav-structural-keylabel' +
+      '[data-openkeynav-keylabel-target="collision-current"]'
+    );
+    await expect(parentLabel).toHaveText('⌥⇧⇥');
+    await expect(parentLabel).toHaveAttribute(
+      'data-openkeynav-keylabel-command',
+      'previousContextStart'
+    );
   });
 
   test('supports an opt-in context outline and follows the screenshot horizontal route', async ({ page }) => {
@@ -787,11 +1005,16 @@ test.describe('structural navigation mode', () => {
     await enterStructuralNavigation(page);
 
     await page.keyboard.press('Shift+ArrowUp');
-    await expectDeepFocus(page, 'in-stock');
-    await expect(page.locator('.openKeyNav-structural-status')).toContainText('Context: Filters');
+    await expectDeepFocus(page, 'clear-filters');
+    await expect(page.locator('.openKeyNav-structural-status')).toContainText('Context: Catalog');
     const filtersStatusContent = page.locator(
       '.openKeyNav-structural-status .openKeyNav-status__content'
     );
+    await expect(filtersStatusContent).toContainText('Heading level: 1.');
+
+    await page.keyboard.press('Shift+ArrowDown');
+    await expectDeepFocus(page, 'clear-filters');
+    await expect(page.locator('.openKeyNav-structural-status')).toContainText('Context: Filters');
     await expect(filtersStatusContent).toContainText('Heading level: 2.');
     await expect(filtersStatusContent).not.toContainText('Previous context:');
     await expect(filtersStatusContent).not.toContainText('Next context:');
@@ -866,8 +1089,8 @@ test.describe('structural navigation mode', () => {
       (window as any).dismissStatusIdentity = document.querySelector(
         '.openKeyNav-structural-status'
       );
-      (window as any).dismissContextIdentity = (window as any).okn
-        .getStructuralNavigationState().activeContext;
+      (window as any).dismissContextId = (window as any).okn
+        .getStructuralNavigationState().activeContext?.id;
       (window as any).dismissIndicatorIdentity = document.querySelector(
         '.openKeyNav-structural-context-outline'
       );
@@ -891,8 +1114,8 @@ test.describe('structural navigation mode', () => {
       sameStatus: (window as any).dismissStatusIdentity === document.querySelector(
         '.openKeyNav-structural-status'
       ),
-      sameContext: (window as any).dismissContextIdentity === (window as any).okn
-        .getStructuralNavigationState().activeContext,
+      sameContextId: (window as any).dismissContextId === (window as any).okn
+        .getStructuralNavigationState().activeContext?.id,
       sameIndicator: (window as any).dismissIndicatorIdentity === document.querySelector(
         '.openKeyNav-structural-context-outline'
       )
@@ -900,7 +1123,7 @@ test.describe('structural navigation mode', () => {
       active: true,
       dismissed: true,
       sameStatus: true,
-      sameContext: true,
+      sameContextId: true,
       sameIndicator: true
     });
     await expect.poll(() => page.evaluate(() => (
@@ -1060,12 +1283,12 @@ test.describe('structural navigation mode', () => {
     await expect(structuralStatus).toBeVisible();
     await expect(page.locator(
       '.openKeyNav-structural-keylabel' +
-      '[data-openkeynav-keylabel-command="previousSiblingContext"]'
-    )).toHaveText('⌥⇧←');
+      '[data-openkeynav-keylabel-command="previousContextStart"]'
+    )).toHaveText('⌥⇧⇥');
     await expect(page.locator(
       '.openKeyNav-structural-keylabel' +
-      '[data-openkeynav-keylabel-command="nextSiblingContext"]'
-    )).toHaveText('⌥⇧→');
+      '[data-openkeynav-keylabel-command="nextContextStart"]'
+    )).toHaveText('⌥⇥');
     const overrideSymbols = page.locator(
       '.openKeyNav-structural-keylabel ' +
       '[data-openkeynav-keylabel-modifier="alt"]'
@@ -1421,7 +1644,8 @@ test.describe('structural navigation mode', () => {
     );
     const indicator = page.locator('.openKeyNav-structural-context-outline');
     await expect(content).toContainText('Context: Document.');
-    await expect(content).toContainText('Hierarchy level: 1.');
+    await expect(content).not.toContainText('Heading level:');
+    await expect(content).not.toContainText('Context depth:');
     await expect(indicator).toHaveAttribute('data-context-name', 'Document');
     const indicatorBox = await indicator.boundingBox();
     expect(indicatorBox).not.toBeNull();

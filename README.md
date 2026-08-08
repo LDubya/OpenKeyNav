@@ -135,7 +135,7 @@ OpenKeyNav includes a compact, persistent keyboard-command strip so applications
 </aside>
 ```
 
-The strip can be present before `init()` or added later by a client-side framework. With the default configuration, it shows `Shift+o` while shortcuts are off. Once they are on, it shows `o` as the command for opening its shortcut guide; the expanded guide lists `k` for Click Mode and `m` when Move Mode is configured. While a mode is active, the strip changes to the relevant exit hint. This is persistent, contextual guidance rather than a complete command catalog or live announcement, so pair it with the command table above or an application-specific help page for heading, scroll-region, Structural Navigation, and custom commands.
+The strip can be present before `init()` or added later by a client-side framework. With the default configuration, it shows `Shift+o` while shortcuts are off. Once they are on, it shows `o` as the command for opening its shortcut guide; the expanded guide lists `k` for Click Mode, the configured Structural Navigation key (`r` by default) when that mode is enabled, and `m` only when Move Mode is configured. While a mode is active, the strip changes to the relevant exit hint. This is persistent, contextual guidance rather than a complete command catalog or live announcement, so pair it with the command table above or an application-specific help page for heading, scroll-region, structural movement, and custom commands.
 
 The current release provides the compact strip layout. Sidebar and settings-page block variants are candidates for a later release. Enable, disable, Click Mode, and Move Mode notification alerts are a separate OpenKeyNav surface and do not replace persistent command discovery. They are transient by default; a zero duration makes them persistent and dismissible. Structural Navigation uses its own persistent status.
 
@@ -198,6 +198,7 @@ After enabling OpenKeyNav with `Shift+o`, press `r` to enter Structural Navigati
 | Action | Default command |
 | --- | --- |
 | Enter Structural Navigation | `r` |
+| Move to the previous or next structural context start | `Alt+Shift+Tab` / `Alt+Tab` |
 | Move to the previous or next lateral structural context | `Shift+Left` / `Shift+Right` |
 | Broaden or narrow the active context | `Shift+Up` / `Shift+Down` |
 | Hide the visible status without leaving the mode | `Shift+Escape` |
@@ -205,36 +206,59 @@ After enabling OpenKeyNav with `Shift+o`, press `r` to enter Structural Navigati
 
 For a heading-backed context, `Shift+Left` and `Shift+Right` follow the authored
 heading level (H1 through H6) across the page and enter the first target in the
-previous or next matching context. Unheaded contexts move among structural
-siblings instead.
+previous or next matching context. Semantic nesting does not create another
+level: when focus is inside a landmark, section, form, fieldset, or list,
+Shift+Arrow routing resolves through its enclosing authored heading context.
+If no authored heading contains the route, no numeric level or Shift+Arrow
+destination is reported.
 When a native Tab stop wraps a heading, the wrapper remains the focus target and
 the first exposed heading it contains supplies that target's authored heading
 level.
 
-`Shift+Up` follows the authored heading outline to the nearest preceding
-lower-level heading and enters its first target. `Shift+Down` reverses that
-progression: the document can enter the first H2, and H1–H5 can enter the first
-following H(n+1).
+`Alt+Tab` and `Alt+Shift+Tab` use the configured ownership-override modifier
+to enter the first native Tab stop in the next or previous innermost structural
+context. This route follows focus rather than the selected context, so it stays
+available after native Tab moves into deeper content without narrowing the
+active route. Plain `Tab` and `Shift+Tab` remain browser-owned. If
+`overrideModifier` is changed to `ctrlKey` or `metaKey`, the context-start chord
+uses that modifier instead; `shiftKey` disables the chord so native
+`Shift+Tab` is never intercepted. Platforms may reserve modifier-plus-Tab
+chords before a page receives them, so applications should also expose the
+`previousContextStart` and `nextContextStart` programmatic commands where their
+supported environments require another binding.
+
+`Shift+Up` follows the authored heading outline to the nearest preceding heading
+with a lower rank number and enters its first target. `Shift+Down` reverses that
+progression: H1–H5 can enter the first following H(n+1).
 
 While the mode is active, its keylabels show the structural destinations
 available from the current focus: `⇧←` / `⇧→` for lateral movement and
-`⇧↑` / `⇧↓` for broaden/narrow, plus `⇧⇥` / `⇥` for the previous and next
-native Tab destinations. The
+`⇧↑` / `⇧↓` for broaden/narrow, `⌥⇧⇥` / `⌥⇥` for context starts, plus
+`⇧⇥` / `⇥` for the previous and next native Tab destinations. The
 focused native control also shows `↵` and/or `⎵` when Enter and/or Space
 provide its standard activation. These
 visual hints use the existing keylabel creation and positioning system; they do
-not intercept native Tab or activation behavior. Labeled targets also receive
+not intercept native Tab or activation behavior. When ordinary Tab or
+Shift+Tab already reaches a structural destination, that target shows only the
+simpler native Tab chord. Otherwise, when a context-start chord and a heading
+arrow reach the same target, the context-start chord takes precedence. Labeled
+targets also receive
 the existing keylabel target outline without becoming type-to-select targets.
+The actively focused target retains the page's normal focus outline; OpenKeyNav's
+destination treatment applies without suppressing that authored focus style.
 Set
 `modesConfig.structuralNavigation.keylabels.enabled` to `false` to hide them,
-or independently disable its `tab`, `horizontal`, `vertical`, or `activation`
-groups. Set `keylabels.tab` to `false` to hide Tab and Shift+Tab hints.
+or independently disable its `tab`, `contextJump`, `horizontal`, `vertical`,
+or `activation` groups. Set `keylabels.contextJump` to `false` to hide
+context-start hints, or set `keylabels.tab` to `false` to hide native Tab and
+Shift+Tab hints.
 While Shift is held, the `⇧` symbol in every Shift-based label highlights as a
 pressed key and returns to its normal treatment on release.
 When the focused control owns its arrow keys, structural destinations remain
 visible and prepend the configured ownership override to the chord—for example,
-`⌥⇧→` with the default Alt override. This full three-symbol chord is the sole
-exception to the ordinary two-symbol label limit. Holding the override also
+`⌥⇧→` with the default Alt override. Ownership-override arrows and the reverse
+context-start chord can use three-symbol labels; other labels remain limited to
+two symbols. Holding the override also
 highlights its modifier glyph until the key is released.
 Native radio groups additionally label the browser's bare-arrow focus routes:
 `←↑` for the previous radio and `→↓` for the next. In a two-radio group, the
@@ -245,11 +269,17 @@ The label attached to the actively focused element uses the configured focus-rin
 color with white text so it stands apart from destinations. When necessary, its
 background is darkened just enough to maintain at least 4.5:1 text contrast while
 the existing thin keylabel outline remains white.
-The large active-context outline is disabled by default now that the focused
-keylabel provides the persistent visual anchor. Applications can restore it
-with `modesConfig.structuralNavigation.contextIndicator.enabled: true`.
-The persistent status says `Heading level` for heading-backed contexts and
-`Hierarchy level` for unheaded structural contexts.
+The large active-context outline is not persistent by default. It appears while
+Shift+Up, Shift+Down, Shift+Left, or Shift+Right changes the heading context,
+follows consecutive heading-context moves, and clears on the next different
+action such as Tab. Its dashed black outline sits 10px outside the context and
+uses a white contrast layer, keeping it visually distinct from the page's focus
+indicator. Applications can keep it
+visible throughout Structural Navigation with
+`modesConfig.structuralNavigation.contextIndicator.enabled: true`.
+The persistent status says `Heading level` only when the current route resolves
+to an authored H1–H6 context. It never presents semantic nesting as a numbered
+level.
 
 Previous/next target and typed-route commands begin with empty key bindings so applications can assign shortcuts that fit the host interface; each command is also available programmatically. Read the [Structural Navigation documentation](https://openkeynav.com/docs/usage/structural_navigation) for configuration, APIs, focus-scope behavior, and keyboard ownership.
 

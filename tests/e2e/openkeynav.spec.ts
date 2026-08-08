@@ -95,6 +95,19 @@ test.describe('OpenKeyNav E2E', () => {
     await expect(toolbar).toBeVisible();
     
     await page.screenshot({ path: path.join(artifactsDir, '05-toolbar.png'), fullPage: true });
+
+    await page.keyboard.press('KeyO');
+    await expect(toolbar.locator('.openKeyNav-toolBar-expanded')).toBeVisible();
+    const commands = await toolbar.locator(
+      '.openKeyNav-toolBar-expanded .keyButtonContainer'
+    ).evaluateAll(containers => containers.map(container => ({
+      key: container.querySelector('.keyButton')?.textContent?.trim(),
+      label: container.querySelector('.keyButtonLabel')?.textContent?.trim(),
+    })));
+    expect(commands).toEqual([
+      { key: 'k', label: 'Click' },
+      { key: 'r', label: 'Structural Navigation' },
+    ]);
   });
 
   test('heading navigation', async ({ page }) => {

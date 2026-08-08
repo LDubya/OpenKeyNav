@@ -446,7 +446,7 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
       return (0, _domUtilities.isComposedWithin)(context.boundary, heading) && nearestContextBoundary((0, _domUtilities.getComposedParent)(heading), boundaryContexts, root) === context;
     });
     var labelledHeadingIds = new Set((context.boundary.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean));
-    var explicitlyAssociated = directHeadings.find(function (heading) {
+    var explicitlyAssociated = headings.find(function (heading) {
       return heading.id && labelledHeadingIds.has(heading.id);
     });
     var leadingHeading = directHeadings.find(function (heading) {

@@ -344,7 +344,7 @@ export const injectStylesheet = (parent, replace) => {
         min-width: 1rem;
         text-align: center;
         position: absolute;
-        z-index: 99999999;
+        z-index: 2147483646;
         font-family: monospace;
       }
       .openKeyNav-keylabel-alternatives {
@@ -480,20 +480,21 @@ export const injectStylesheet = (parent, replace) => {
         // padding : 0 !important;
         // margin: 0 !important;
       }
-      [data-openkeynav-label]:not(.openKeyNav-label):not(button),
-      [data-openkeynav-keylabel-target-active]:not(button){
-        // outline: 2px double ${openKeyNav.config.focus.outlineColor} !important; 
-        // outline-offset: 2px !important;
+      [data-openkeynav-label]:not(.openKeyNav-label):not(button):not(:focus),
+      [data-openkeynav-keylabel-target-active]:not(button):not(:focus){
         box-shadow:  inset 0 0 0 .5px #000,
                       0 0 0 .75px #000,
                       0 0 0 1.5px rgba(255,255,255,1); 
-        outline:none !important;
         // border-radius: 3px;
         border-color: #000;
         border-radius: 3px;
       }
-      button[data-openkeynav-label],
-      button[data-openkeynav-keylabel-target-active]{
+      [data-openkeynav-label]:not(.openKeyNav-label):not(button):not(:focus),
+      [data-openkeynav-keylabel-target-active]:not(button):not(:focus){
+        outline:none !important;
+      }
+      button[data-openkeynav-label]:not(:focus),
+      button[data-openkeynav-keylabel-target-active]:not(:focus){
         outline:2px solid #000 !important;
       }
       .openKeyNav-inaccessible:not(.openKeyNav-label):not(button){
@@ -556,8 +557,8 @@ export const injectStylesheet = (parent, replace) => {
       // `;
       // ensuring hidden labeled elements are made visible
       style.textContent += `
-        [data-openkeynav-label]:not(.openKeyNav-label),
-        [data-openkeynav-keylabel-target-active]{
+        [data-openkeynav-label]:not(.openKeyNav-label):not(:focus),
+        [data-openkeynav-keylabel-target-active]:not(:focus){
           opacity:1 !important;
           visibility:visible !important;
         }
@@ -572,7 +573,7 @@ export const injectStylesheet = (parent, replace) => {
         .openKeyNav-structural-context-outline {
           box-sizing: border-box;
           position: fixed;
-          z-index: 2147483646;
+          z-index: 2147483645;
           display: none;
           border-radius: 4px;
           background: transparent;

@@ -113,7 +113,13 @@ var toolbarTemplates = {
       // if drag mode is configured
       dragButton = (0, _keyButton.keyButton)([openKeyNav.config.keys.move], "Drag");
     }
-    return "\n            <p>".concat((0, _keyButton.keyButton)(["Esc"], "Shortcuts"), "</p>\n            <div class=\"openKeyNav-toolBar-expanded\">\n                ").concat((0, _keyButton.keyButton)([openKeyNav.config.keys.click], "Click"), "\n                ").concat(dragButton, "\n            </div>\n        ");
+    var structuralNavigationButton = "";
+    var structuralNavigationConfig = openKeyNav.config.modesConfig.structuralNavigation;
+    var structuralNavigationKey = openKeyNav.config.keys.structuralNavigation;
+    if ((structuralNavigationConfig === null || structuralNavigationConfig === void 0 ? void 0 : structuralNavigationConfig.enabled) === true && typeof structuralNavigationKey === 'string' && structuralNavigationKey.length) {
+      structuralNavigationButton = (0, _keyButton.keyButton)([structuralNavigationKey], "Structural Navigation");
+    }
+    return "\n            <p>".concat((0, _keyButton.keyButton)(["Esc"], "Shortcuts"), "</p>\n            <div class=\"openKeyNav-toolBar-expanded\">\n                ").concat((0, _keyButton.keyButton)([openKeyNav.config.keys.click], "Click"), "\n                ").concat(dragButton, "\n                ").concat(structuralNavigationButton, "\n            </div>\n        ");
   }
 };
 var updateElement = function updateElement(element, html) {

@@ -125,11 +125,27 @@ const toolbarTemplates = {
         if(openKeyNav.config.modesConfig.move.config.length){ // if drag mode is configured
             dragButton = keyButton([openKeyNav.config.keys.move], "Drag")
         }
+        let structuralNavigationButton = "";
+        const structuralNavigationConfig =
+            openKeyNav.config.modesConfig.structuralNavigation;
+        const structuralNavigationKey =
+            openKeyNav.config.keys.structuralNavigation;
+        if (
+            structuralNavigationConfig?.enabled === true &&
+            typeof structuralNavigationKey === 'string' &&
+            structuralNavigationKey.length
+        ) {
+            structuralNavigationButton = keyButton(
+                [structuralNavigationKey],
+                "Structural Navigation"
+            );
+        }
         return `
             <p>${ keyButton(["Esc"], "Shortcuts")}</p>
             <div class="openKeyNav-toolBar-expanded">
                 ${keyButton([openKeyNav.config.keys.click], "Click")}
                 ${dragButton}
+                ${structuralNavigationButton}
             </div>
         `;
     }

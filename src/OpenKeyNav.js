@@ -185,13 +185,17 @@ class OpenKeyNav {
             },
             contextIndicator: {
               enabled: false,
-              color: null,
+              color: '#000000',
+              contrastColor: '#ffffff',
+              contrastWidth: 2,
+              style: 'dashed',
               width: 3,
-              offset: 4
+              offset: 10
             },
             keylabels: {
               enabled: true,
               tab: true,
+              contextJump: true,
               horizontal: true,
               vertical: true,
               nativeArrows: true,

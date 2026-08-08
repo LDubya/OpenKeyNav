@@ -514,7 +514,7 @@ export const buildStructuralModel = ({
         .split(/\s+/)
         .filter(Boolean)
     );
-    const explicitlyAssociated = directHeadings.find(heading => (
+    const explicitlyAssociated = headings.find(heading => (
       heading.id && labelledHeadingIds.has(heading.id)
     ));
     const leadingHeading = directHeadings.find(heading => {
