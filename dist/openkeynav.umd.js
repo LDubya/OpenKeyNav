@@ -41,7 +41,7 @@
 	  value: true
 	});
 	version.version = void 0;
-	version.version = "0.1.239";
+	version.version = "0.1.242";
 
 	var signals = {};
 
@@ -985,7 +985,7 @@
 	Object.defineProperty(keylabels, "__esModule", {
 	  value: true
 	});
-	keylabels.showMoveableFromOverlays = keylabels.showClickableOverlays = keylabels.generateValidKeyChars = keylabels.generateLabels = keylabels.filterRemainingOverlays = void 0;
+	keylabels.showMoveableFromOverlays = keylabels.showClickableOverlays = keylabels.showAssignedKeylabels = keylabels.repositionAssignedKeylabels = keylabels.generateValidKeyChars = keylabels.generateLabels = keylabels.filterRemainingOverlays = keylabels.clearAssignedKeylabels = keylabels.KEYLABEL_SYMBOLS = void 0;
 	var _escape = _escape$1;
 	var _isTabbable = isTabbable$1;
 	var _scrolling = scrolling;
@@ -1013,6 +1013,164 @@
 	  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
 	  return n;
 	}
+	keylabels.KEYLABEL_SYMBOLS = Object.freeze({
+	  shift: '⇧',
+	  tab: '⇥',
+	  left: '←',
+	  right: '→',
+	  up: '↑',
+	  down: '↓',
+	  horizontalAxis: '↔',
+	  verticalAxis: '↕',
+	  enter: '↵',
+	  space: '⎵'
+	});
+	var assignedTargetByOverlay = new WeakMap();
+	var assignedTargetsByOwner = new WeakMap();
+	var ASSIGNED_KEYLABEL_TARGET_ATTRIBUTE = 'data-openkeynav-keylabel-target-active';
+	var ownerDocument = function ownerDocument(openKeyNav) {
+	  var _openKeyNav$statusSer;
+	  return (openKeyNav === null || openKeyNav === void 0 || (_openKeyNav$statusSer = openKeyNav.statusService) === null || _openKeyNav$statusSer === void 0 ? void 0 : _openKeyNav$statusSer.document) || (typeof document === 'undefined' ? null : document);
+	};
+	var ownedAssignedKeylabels = function ownedAssignedKeylabels(openKeyNav, owner) {
+	  var documentObject = ownerDocument(openKeyNav);
+	  if (!(documentObject !== null && documentObject !== void 0 && documentObject.querySelectorAll)) return [];
+	  return Array.from(documentObject.querySelectorAll('.openKeyNav-label[data-openkeynav-keylabel-owner]')).filter(function (overlay) {
+	    return overlay.dataset.openkeynavKeylabelOwner === owner;
+	  });
+	};
+	var releaseAssignedTargets = function releaseAssignedTargets(openKeyNav, owner) {
+	  var targetsByOwner = assignedTargetsByOwner.get(openKeyNav);
+	  var targets = targetsByOwner === null || targetsByOwner === void 0 ? void 0 : targetsByOwner.get(owner);
+	  if (!targets) return;
+	  targetsByOwner.delete(owner);
+	  targets.forEach(function (target) {
+	    var remainsAssigned = Array.from(targetsByOwner.values()).some(function (ownedTargets) {
+	      return ownedTargets.has(target);
+	    });
+	    if (!remainsAssigned) {
+	      var _target$removeAttribu;
+	      (_target$removeAttribu = target.removeAttribute) === null || _target$removeAttribu === void 0 || _target$removeAttribu.call(target, ASSIGNED_KEYLABEL_TARGET_ATTRIBUTE);
+	    }
+	  });
+	  if (targetsByOwner.size === 0) assignedTargetsByOwner.delete(openKeyNav);
+	};
+	var markAssignedTarget = function markAssignedTarget(openKeyNav, owner, target) {
+	  var _target$setAttribute;
+	  var targetsByOwner = assignedTargetsByOwner.get(openKeyNav);
+	  if (!targetsByOwner) {
+	    targetsByOwner = new Map();
+	    assignedTargetsByOwner.set(openKeyNav, targetsByOwner);
+	  }
+	  var targets = targetsByOwner.get(owner);
+	  if (!targets) {
+	    targets = new Set();
+	    targetsByOwner.set(owner, targets);
+	  }
+	  targets.add(target);
+	  (_target$setAttribute = target.setAttribute) === null || _target$setAttribute === void 0 || _target$setAttribute.call(target, ASSIGNED_KEYLABEL_TARGET_ATTRIBUTE, '');
+	};
+
+	/**
+	 * Removes one caller's descriptive keylabels without disturbing Click or Move
+	 * Mode labels. Callers own only the assignment data; this module owns the
+	 * overlay lifecycle.
+	 */
+	var clearAssignedKeylabels = keylabels.clearAssignedKeylabels = function clearAssignedKeylabels(openKeyNav, owner) {
+	  ownedAssignedKeylabels(openKeyNav, owner).forEach(function (overlay) {
+	    return overlay.remove();
+	  });
+	  releaseAssignedTargets(openKeyNav, owner);
+	};
+
+	/**
+	 * Repositions an existing caller-owned set through OpenKeyNav's established
+	 * overlay placement routine.
+	 */
+	keylabels.repositionAssignedKeylabels = function repositionAssignedKeylabels(openKeyNav, owner) {
+	  ownedAssignedKeylabels(openKeyNav, owner).forEach(function (overlay) {
+	    var target = assignedTargetByOverlay.get(overlay);
+	    if (!(target !== null && target !== void 0 && target.isConnected)) {
+	      overlay.remove();
+	      return;
+	    }
+	    openKeyNav.updateOverlayPosition(target, overlay);
+	  });
+	};
+
+	/**
+	 * Renders caller-supplied descriptive labels with the existing keylabel
+	 * creation and positioning system. These labels are hints, not type-to-select
+	 * labels, so the page targets are deliberately left without
+	 * data-openkeynav-label attributes. The renderer applies the shared keylabel
+	 * target treatment through a non-selectable, owner-managed attribute instead.
+	 */
+	keylabels.showAssignedKeylabels = function showAssignedKeylabels(openKeyNav, assignments) {
+	  var _ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
+	    owner = _ref.owner,
+	    _ref$cssClass = _ref.cssClass,
+	    cssClass = _ref$cssClass === void 0 ? null : _ref$cssClass,
+	    _ref$focusedTarget = _ref.focusedTarget,
+	    focusedTarget = _ref$focusedTarget === void 0 ? null : _ref$focusedTarget;
+	  if (!owner) {
+	    throw new TypeError('Assigned keylabels require an owner.');
+	  }
+	  clearAssignedKeylabels(openKeyNav, owner);
+	  var overlays = [];
+	  var assignmentsByTarget = new Map();
+	  Array.from(assignments || []).forEach(function (assignment) {
+	    var target = assignment === null || assignment === void 0 ? void 0 : assignment.target;
+	    var symbols = Array.from(String((assignment === null || assignment === void 0 ? void 0 : assignment.symbols) || '')).slice(0, 2).join('');
+	    if (!(target !== null && target !== void 0 && target.isConnected) || !symbols) return;
+	    var existing = assignmentsByTarget.get(target);
+	    if (!existing) {
+	      assignmentsByTarget.set(target, {
+	        target: target,
+	        symbols: symbols,
+	        segments: [symbols],
+	        commands: assignment.command ? [String(assignment.command)] : []
+	      });
+	      return;
+	    }
+	    var availableSymbols = 2 - Array.from(existing.symbols).length;
+	    if (Array.from(symbols).length > availableSymbols) return;
+	    existing.symbols += symbols;
+	    existing.segments.push(symbols);
+	    if (assignment.command) existing.commands.push(String(assignment.command));
+	  });
+	  assignmentsByTarget.forEach(function (_ref2) {
+	    var target = _ref2.target,
+	      symbols = _ref2.symbols,
+	      segments = _ref2.segments,
+	      commands = _ref2.commands;
+	    var overlay = openKeyNav.createOverlay(target, symbols, cssClass);
+	    overlay.dataset.openkeynavKeylabelOwner = owner;
+	    overlay.dataset.openkeynavKeylabelCommand = commands.join(' ');
+	    if (target.id) overlay.dataset.openkeynavKeylabelTarget = target.id;
+	    overlay.setAttribute('data-openkeynav-ui', "".concat(owner, "-keylabel"));
+	    overlay.setAttribute('aria-hidden', 'true');
+	    if (target === focusedTarget) {
+	      overlay.classList.add('openKeyNav-keylabel-focused');
+	      overlay.dataset.openkeynavKeylabelFocused = 'true';
+	    }
+	    if (segments.length > 1) {
+	      overlay.classList.add('openKeyNav-keylabel-alternatives');
+	      overlay.dataset.openkeynavKeylabelAlternatives = String(segments.length);
+	      var segmentElements = segments.map(function (segment) {
+	        var element = overlay.ownerDocument.createElement('span');
+	        element.className = 'openKeyNav-keylabel-alternative';
+	        element.textContent = segment;
+	        return element;
+	      });
+	      overlay.replaceChildren.apply(overlay, _toConsumableArray$2(segmentElements));
+	      openKeyNav.updateOverlayPosition(target, overlay);
+	    }
+	    assignedTargetByOverlay.set(overlay, target);
+	    markAssignedTarget(openKeyNav, owner, target);
+	    overlays.push(overlay);
+	  });
+	  return overlays;
+	};
 	var generateLabels = keylabels.generateLabels = function generateLabels(openKeyNav, count) {
 	  var labels = [];
 	  var chars = generateValidKeyChars(openKeyNav);
@@ -1922,6 +2080,15 @@
 	  var headings = elements.filter(function (element) {
 	    return headingRank(element) !== null && !isSemanticallyHidden(element, root) && isOperativeSemanticElement(element, root);
 	  });
+	  var ownedHeadingByTarget = new Map();
+	  liveTargets.forEach(function (target) {
+	    var firstContainedHeading = headings.find(function (heading) {
+	      return (0, _domUtilities$2.isComposedWithin)(target, heading);
+	    });
+	    if (firstContainedHeading) {
+	      ownedHeadingByTarget.set(target, firstContainedHeading);
+	    }
+	  });
 	  automaticContexts.forEach(function (context) {
 	    var directHeadings = headings.filter(function (heading) {
 	      return (0, _domUtilities$2.isComposedWithin)(context.boundary, heading) && nearestContextBoundary((0, _domUtilities$2.getComposedParent)(heading), boundaryContexts, root) === context;
@@ -2076,7 +2243,8 @@
 	      var context = closing.context;
 	      context.rangeEnd = Math.min(closing.scopeEnd, requestedEnd);
 	      context.memberTargets = liveTargets.filter(function (target) {
-	        return targetOrder(target) >= context.rangeStart && targetOrder(target) < context.rangeEnd && container.memberSet.has(target) && !isSemanticallyHidden(target, root) && (0, _domUtilities$2.isComposedWithin)(context.rangeBoundary, target);
+	        var ownedHeading = ownedHeadingByTarget.get(target);
+	        return (ownedHeading ? ownedHeading === context.boundary : targetOrder(target) >= context.rangeStart && targetOrder(target) < context.rangeEnd) && container.memberSet.has(target) && !isSemanticallyHidden(target, root) && (0, _domUtilities$2.isComposedWithin)(context.rangeBoundary, target);
 	      });
 	      context.memberSet = new Set(context.memberTargets);
 	    };
@@ -3171,6 +3339,8 @@
 	var _accessibilityName = accessibilityName;
 	var _domUtilities$1 = domUtilities;
 	var _keyboardEvents = keyboardEvents;
+	var _keylabels = keylabels;
+	var _signals = signals;
 	var _tabbableTargets = tabbableTargets;
 	function _slicedToArray$1(r, e) {
 	  return _arrayWithHoles$1(r) || _iterableToArrayLimit$1(r, e) || _unsupportedIterableToArray$1(r, e) || _nonIterableRest$1();
@@ -3278,6 +3448,8 @@
 	});
 	var STRUCTURAL_STATUS_CHANNEL = 'structural-navigation';
 	var STRUCTURAL_EXIT_STATUS_CHANNEL = 'structural-navigation-exit';
+	var STRUCTURAL_KEYLABEL_OWNER = 'structural-navigation';
+	var STRUCTURAL_KEYLABEL_CLASS = 'openKeyNav-structural-keylabel';
 	var ARROW_OWNING_ROLES = new Set(['combobox', 'grid', 'listbox', 'menu', 'menubar', 'radiogroup', 'scrollbar', 'slider', 'spinbutton', 'tablist', 'toolbar', 'tree', 'treegrid']);
 	var ESCAPE_OWNING_ROLES = new Set([].concat(_toConsumableArray(ARROW_OWNING_ROLES), ['dialog']));
 	var TEXT_INPUT_TYPES = new Set(['date', 'datetime-local', 'email', 'month', 'number', 'password', 'range', 'search', 'tel', 'text', 'time', 'url', 'week']);
@@ -3297,6 +3469,24 @@
 	  });
 	  var key = normalized.key === 'Escape' ? 'Esc' : normalized.key === ' ' ? 'Space' : normalized.key;
 	  return [].concat(_toConsumableArray(modifiers), [key]).join('+');
+	};
+	var shortcutSymbols = function shortcutSymbols(shortcut) {
+	  var normalized = (0, _keyboardEvents.normalizeShortcut)(shortcut);
+	  if (!normalized || normalized.altKey || normalized.ctrlKey || normalized.metaKey) {
+	    return '';
+	  }
+	  var keySymbol = {
+	    Tab: _keylabels.KEYLABEL_SYMBOLS.tab,
+	    ArrowLeft: _keylabels.KEYLABEL_SYMBOLS.left,
+	    ArrowRight: _keylabels.KEYLABEL_SYMBOLS.right,
+	    ArrowUp: _keylabels.KEYLABEL_SYMBOLS.up,
+	    ArrowDown: _keylabels.KEYLABEL_SYMBOLS.down,
+	    Enter: _keylabels.KEYLABEL_SYMBOLS.enter,
+	    ' ': _keylabels.KEYLABEL_SYMBOLS.space,
+	    Spacebar: _keylabels.KEYLABEL_SYMBOLS.space
+	  }[normalized.key];
+	  if (!keySymbol) return '';
+	  return "".concat(normalized.shiftKey ? _keylabels.KEYLABEL_SYMBOLS.shift : '').concat(keySymbol);
 	};
 
 	/**
@@ -3415,6 +3605,122 @@
 	    }
 	  }
 	  return result;
+	};
+	var shortcutEventForTarget = function shortcutEventForTarget(target, shortcut) {
+	  var normalized = (0, _keyboardEvents.normalizeShortcut)(shortcut);
+	  if (!target || !normalized) return null;
+	  var path = [];
+	  var current = target;
+	  while (current) {
+	    path.push(current);
+	    current = (0, _domUtilities$1.getComposedParent)(current);
+	  }
+	  return {
+	    target: target,
+	    key: normalized.key,
+	    altKey: normalized.altKey,
+	    ctrlKey: normalized.ctrlKey,
+	    metaKey: normalized.metaKey,
+	    shiftKey: normalized.shiftKey,
+	    composedPath: function composedPath() {
+	      return path;
+	    }
+	  };
+	};
+	var targetAcceptsStructuralArrow = function targetAcceptsStructuralArrow(target, shortcut, config) {
+	  var event = shortcutEventForTarget(target, shortcut);
+	  if (!event || !event.key.startsWith('Arrow')) return false;
+	  var ownership = classifyStructuralKeyOwnership(event, config);
+	  if (ownership.all) return false;
+	  if (!ownership.arrows) return true;
+	  var overrideModifier = _keyboardEvents.MODIFIER_KEYS.includes(config.overrideModifier) ? config.overrideModifier : null;
+	  return Boolean(overrideModifier && event[overrideModifier]);
+	};
+	var nativeActivationSymbols = function nativeActivationSymbols(target) {
+	  if (!(0, _domUtilities$1.isElement)(target) || target.hasAttribute('disabled')) return [];
+	  var tagName = target.tagName.toLowerCase();
+	  var both = [_keylabels.KEYLABEL_SYMBOLS.enter, _keylabels.KEYLABEL_SYMBOLS.space];
+	  if (tagName === 'button' || tagName === 'summary') return both;
+	  if ((tagName === 'a' || tagName === 'area') && target.hasAttribute('href')) {
+	    return [_keylabels.KEYLABEL_SYMBOLS.enter];
+	  }
+	  if (tagName !== 'input') return [];
+	  var inputType = (target.getAttribute('type') || 'text').toLowerCase();
+	  if (['button', 'submit', 'reset', 'image'].includes(inputType)) return both;
+	  if (['checkbox', 'radio'].includes(inputType)) {
+	    return [_keylabels.KEYLABEL_SYMBOLS.space];
+	  }
+	  return [];
+	};
+	var radioIsAvailable = function radioIsAvailable(radio, root, displayCheck, targetFilter) {
+	  var _radio$closest, _radio$ownerDocument, _radio$ownerDocument$;
+	  if (!(radio !== null && radio !== void 0 && radio.isConnected) || radio.type !== 'radio' || !(0, _domUtilities$1.isComposedWithin)(root, radio) || (_radio$closest = radio.closest) !== null && _radio$closest !== void 0 && _radio$closest.call(radio, '[inert], [hidden]') || targetFilter && !targetFilter(radio)) {
+	    return false;
+	  }
+	  try {
+	    if (radio.matches(':disabled')) return false;
+	  } catch (error) {
+	    if (radio.disabled) return false;
+	  }
+	  if (displayCheck === 'none') return true;
+	  var style = (_radio$ownerDocument = radio.ownerDocument) === null || _radio$ownerDocument === void 0 || (_radio$ownerDocument = _radio$ownerDocument.defaultView) === null || _radio$ownerDocument === void 0 || (_radio$ownerDocument$ = _radio$ownerDocument.getComputedStyle) === null || _radio$ownerDocument$ === void 0 ? void 0 : _radio$ownerDocument$.call(_radio$ownerDocument, radio);
+	  if ((style === null || style === void 0 ? void 0 : style.display) === 'none' || ['hidden', 'collapse'].includes(style === null || style === void 0 ? void 0 : style.visibility)) {
+	    return false;
+	  }
+	  return elementClientRects(radio).length > 0;
+	};
+
+	/**
+	 * Predicts the browser's native focus movement inside one HTML radio group.
+	 * These are descriptive hints only; bare arrow events remain browser-owned.
+	 */
+	var nativeRadioArrowAssignments = function nativeRadioArrowAssignments(target, root, displayCheck, targetFilter) {
+	  var _target$getRootNode;
+	  if (!(0, _domUtilities$1.isElement)(target) || target.tagName.toLowerCase() !== 'input' || target.type !== 'radio' || !target.name) {
+	    return [];
+	  }
+	  var treeRoot = ((_target$getRootNode = target.getRootNode) === null || _target$getRootNode === void 0 ? void 0 : _target$getRootNode.call(target)) || target.ownerDocument;
+	  if (!(treeRoot !== null && treeRoot !== void 0 && treeRoot.querySelectorAll)) return [];
+	  var radios = Array.from(treeRoot.querySelectorAll('input')).filter(function (radio) {
+	    return radio !== target && radio.type === 'radio' && radio.name === target.name && radio.form === target.form && radioIsAvailable(radio, root, displayCheck, targetFilter);
+	  });
+	  var group = [target].concat(_toConsumableArray(radios)).sort(function (left, right) {
+	    if (left === right) return 0;
+	    var position = left.compareDocumentPosition(right);
+	    return position & 2 ? 1 : -1;
+	  });
+	  if (group.length < 2) return [];
+	  var currentIndex = group.indexOf(target);
+	  var previous = group[(currentIndex - 1 + group.length) % group.length];
+	  var next = group[(currentIndex + 1) % group.length];
+	  if (previous === next) {
+	    return [{
+	      target: previous,
+	      symbols: _keylabels.KEYLABEL_SYMBOLS.horizontalAxis,
+	      command: 'nativeArrowLeft nativeArrowRight'
+	    }, {
+	      target: previous,
+	      symbols: _keylabels.KEYLABEL_SYMBOLS.verticalAxis,
+	      command: 'nativeArrowUp nativeArrowDown'
+	    }];
+	  }
+	  return [{
+	    target: previous,
+	    symbols: _keylabels.KEYLABEL_SYMBOLS.left,
+	    command: 'nativeArrowLeft'
+	  }, {
+	    target: previous,
+	    symbols: _keylabels.KEYLABEL_SYMBOLS.up,
+	    command: 'nativeArrowUp'
+	  }, {
+	    target: next,
+	    symbols: _keylabels.KEYLABEL_SYMBOLS.right,
+	    command: 'nativeArrowRight'
+	  }, {
+	    target: next,
+	    symbols: _keylabels.KEYLABEL_SYMBOLS.down,
+	    command: 'nativeArrowDown'
+	  }];
 	};
 	var resolveValue = function resolveValue(value, details) {
 	  return typeof value === 'function' ? value(details) : value;
@@ -3550,9 +3856,33 @@
 	};
 
 	/**
+	 * Finds the authored outline parent for a heading-backed context. Walking
+	 * backward to the nearest lower-level heading prevents inferred DOM container
+	 * ancestry from skipping the heading level that visually and semantically
+	 * introduces the current context.
+	 */
+	var previousBroaderHeadingContext = function previousBroaderHeadingContext(model, context) {
+	  var headingLevel = contextHeadingLevel(context);
+	  if (headingLevel === null || headingLevel <= 1) return null;
+	  var orderedContexts = modelStructuralContexts(model).sort(function (left, right) {
+	    return contextOrder(left) - contextOrder(right) || String(contextId(left)).localeCompare(String(contextId(right)));
+	  });
+	  var currentIndex = orderedContexts.indexOf(context);
+	  if (currentIndex <= 0) return null;
+	  for (var index = currentIndex - 1; index >= 0; index -= 1) {
+	    var candidate = orderedContexts[index];
+	    var candidateHeadingLevel = contextHeadingLevel(candidate);
+	    if (candidateHeadingLevel !== null && candidateHeadingLevel < headingLevel) {
+	      return contextTargets(candidate).length > 0 ? candidate : null;
+	    }
+	  }
+	  return null;
+	};
+
+	/**
 	 * Finds the next page-forward context. A heading-backed context advances by
-	 * authored heading level; an unheaded context advances by inferred structural
-	 * depth.
+	 * authored heading level. An unheaded context first enters an authored heading
+	 * at the next reported level, then falls back to inferred structural depth.
 	 */
 	var nextNarrowFallbackContext = function nextNarrowFallbackContext(model, context) {
 	  var headingLevel = contextHeadingLevel(context);
@@ -3570,6 +3900,10 @@
 	    }) || null;
 	  }
 	  var hierarchyLevel = contextHierarchyLevel(model, context);
+	  var nextHeadingContext = followingContexts.find(function (candidate) {
+	    return contextHeadingLevel(candidate) === hierarchyLevel + 1;
+	  });
+	  if (nextHeadingContext) return nextHeadingContext;
 	  return followingContexts.find(function (candidate) {
 	    return contextHeadingLevel(candidate) === null && contextHierarchyLevel(model, candidate) === hierarchyLevel + 1;
 	  }) || null;
@@ -3678,11 +4012,22 @@
 	    this.contextIndicatorFrame = null;
 	    this.contextIndicatorResizeObserver = null;
 	    this.contextIndicatorObservedElements = new Set();
+	    this.keylabelUpdateFrame = null;
+	    this.keylabelUpdateTimer = null;
+	    this.updatingKeylabels = false;
+	    this.foregroundModeWasActive = false;
 	    this.handleFocusIn = this.handleFocusIn.bind(this);
 	    this.handleMutations = this.handleMutations.bind(this);
 	    this.handleSlotChange = this.handleSlotChange.bind(this);
 	    this.invalidate = this.invalidate.bind(this);
+	    this.handleModeLayerChange = this.handleModeLayerChange.bind(this);
 	    this.scheduleContextIndicatorUpdate = this.scheduleContextIndicatorUpdate.bind(this);
+	    this.scheduleKeylabelUpdate = this.scheduleKeylabelUpdate.bind(this);
+
+	    // Structural navigation consumes the keylabel renderer as a one-way
+	    // dependency. Signal changes pause hints under foreground modes and restore
+	    // them when the structural layer becomes visible again.
+	    (0, _signals.effect)(this.handleModeLayerChange);
 	  }
 	  return _createClass$1(StructuralNavigationController, [{
 	    key: "config",
@@ -3693,6 +4038,26 @@
 	    key: "active",
 	    get: function get() {
 	      return Boolean(this.openKeyNav.config.modes.structuralNavigation.value);
+	    }
+	  }, {
+	    key: "foregroundModeActive",
+	    get: function get() {
+	      return Boolean(this.openKeyNav.config.modes.clicking.value || this.openKeyNav.config.modes.moving.value || this.openKeyNav.config.modes.menu.value);
+	    }
+	  }, {
+	    key: "handleModeLayerChange",
+	    value: function handleModeLayerChange() {
+	      var active = this.active;
+	      var foregroundModeActive = this.foregroundModeActive;
+	      var resumedFromForeground = this.foregroundModeWasActive && !foregroundModeActive;
+	      this.foregroundModeWasActive = foregroundModeActive;
+	      if (!active || foregroundModeActive) {
+	        this.cancelKeylabelUpdate();
+	        this.clearKeylabels();
+	        return;
+	      }
+	      if (resumedFromForeground && this.dirty) this.refresh();
+	      if (!this.updatingKeylabels) this.scheduleKeylabelUpdate();
 	    }
 	  }, {
 	    key: "resolveActiveRoot",
@@ -3788,6 +4153,8 @@
 	      (_this$document5 = this.document) === null || _this$document5 === void 0 || (_this$document5 = _this$document5.defaultView) === null || _this$document5 === void 0 || _this$document5.removeEventListener('popstate', this.invalidate);
 	      this.disconnectContextIndicatorListeners();
 	      this.disconnectObservers();
+	      this.cancelKeylabelUpdate();
+	      this.clearKeylabels();
 	      this.openKeyNav.clearStatus(STRUCTURAL_STATUS_CHANNEL);
 	      this.openKeyNav.clearStatus(STRUCTURAL_EXIT_STATUS_CHANNEL);
 	      this.removeContextIndicator();
@@ -3839,7 +4206,7 @@
 	      };
 	      var exitShortcut = (0, _keyboardEvents.normalizeShortcut)(this.config.exitCommand) || defaultExit;
 	      var configuredExit = matchesStructuralShortcut(event, exitShortcut);
-	      var foregroundModeActive = Boolean(this.openKeyNav.config.modes.clicking.value || this.openKeyNav.config.modes.moving.value || this.openKeyNav.config.modes.menu.value);
+	      var foregroundModeActive = this.foregroundModeActive;
 
 	      // Click, Move, and menu are temporary layers over structural navigation.
 	      // Their keystrokes take priority until they finish. The deliberately
@@ -3999,6 +4366,7 @@
 	      var preservedTyped = modelTypedContextById(this.model, previousTypedId);
 	      this.activeTypedContext = preservedTyped && this.currentTarget && contextTargets(preservedTyped).includes(this.currentTarget) ? preservedTyped : null;
 	      this.scheduleContextIndicatorUpdate();
+	      if (!this.updatingKeylabels) this.scheduleKeylabelUpdate();
 	      return true;
 	    }
 	  }, {
@@ -4026,6 +4394,7 @@
 	          var _this$model2;
 	          this.activeStructuralContext = ((_this$model2 = this.model) === null || _this$model2 === void 0 ? void 0 : _this$model2.rootContext) || null;
 	        }
+	        this.scheduleKeylabelUpdate();
 	        if (announce) this.updateStatus();
 	        return;
 	      }
@@ -4039,6 +4408,7 @@
 	        var routeStillContainsTarget = preserveRoute && hadCurrentTarget && this.activeStructuralContext && contextTargets(this.activeStructuralContext).includes(focused);
 	        if (!routeStillContainsTarget) this.activeStructuralContext = direct;
 	      }
+	      this.scheduleKeylabelUpdate();
 	      if (announce) this.updateStatus();
 	    }
 	  }, {
@@ -4062,6 +4432,7 @@
 	      if (mutations.every(mutationBelongsOnlyToGeneratedUI)) return;
 	      this.dirty = true;
 	      this.scheduleContextIndicatorUpdate();
+	      this.clearKeylabels();
 	    }
 	  }, {
 	    key: "invalidate",
@@ -4069,6 +4440,7 @@
 	      if (this.active) {
 	        this.dirty = true;
 	        this.scheduleContextIndicatorUpdate();
+	        this.clearKeylabels();
 	      }
 	    }
 	  }, {
@@ -4077,6 +4449,7 @@
 	      if ((0, _domUtilities$1.isOpenKeyNavGeneratedUI)(event.target)) return;
 	      this.dirty = true;
 	      this.scheduleContextIndicatorUpdate();
+	      this.clearKeylabels();
 	    }
 	  }, {
 	    key: "reconnectObservers",
@@ -4188,13 +4561,18 @@
 	    key: "broadenContext",
 	    value: function broadenContext() {
 	      this.useStructuralRoute();
-	      var parent = parentContext(this.model, this.activeStructuralContext);
+	      var headingParent = previousBroaderHeadingContext(this.model, this.activeStructuralContext);
+	      var parent = headingParent || parentContext(this.model, this.activeStructuralContext);
 	      if (!parent) {
 	        this.updateStatus('Already at the broadest context.');
 	        return;
 	      }
 	      this.activeStructuralContext = parent;
-	      this.updateStatus();
+	      if (headingParent) {
+	        this.focusTarget(contextTargets(parent)[0]);
+	      } else {
+	        this.updateStatus();
+	      }
 	    }
 	  }, {
 	    key: "narrowContext",
@@ -4257,18 +4635,172 @@
 	      this.activeStructuralContext = directContextForTarget(this.model, this.currentTarget) || this.activeStructuralContext || this.model.rootContext;
 	    }
 	  }, {
-	    key: "connectContextIndicatorListeners",
-	    value: function connectContextIndicatorListeners() {
+	    key: "clearKeylabels",
+	    value: function clearKeylabels() {
+	      (0, _keylabels.clearAssignedKeylabels)(this.openKeyNav, STRUCTURAL_KEYLABEL_OWNER);
+	    }
+	  }, {
+	    key: "cancelKeylabelUpdate",
+	    value: function cancelKeylabelUpdate() {
 	      var _this$document8;
 	      var view = (_this$document8 = this.document) === null || _this$document8 === void 0 ? void 0 : _this$document8.defaultView;
+	      if (this.keylabelUpdateFrame !== null && typeof (view === null || view === void 0 ? void 0 : view.cancelAnimationFrame) === 'function') {
+	        view.cancelAnimationFrame(this.keylabelUpdateFrame);
+	      }
+	      if (this.keylabelUpdateTimer !== null) {
+	        clearTimeout(this.keylabelUpdateTimer);
+	      }
+	      this.keylabelUpdateFrame = null;
+	      this.keylabelUpdateTimer = null;
+	    }
+	  }, {
+	    key: "scheduleKeylabelUpdate",
+	    value: function scheduleKeylabelUpdate() {
+	      var _this$config$keylabel,
+	        _this9 = this,
+	        _this$document9;
+	      if (!this.active || this.foregroundModeActive || ((_this$config$keylabel = this.config.keylabels) === null || _this$config$keylabel === void 0 ? void 0 : _this$config$keylabel.enabled) === false || this.keylabelUpdateFrame !== null || this.keylabelUpdateTimer !== null) {
+	        var _this$config$keylabel2;
+	        if (((_this$config$keylabel2 = this.config.keylabels) === null || _this$config$keylabel2 === void 0 ? void 0 : _this$config$keylabel2.enabled) === false) this.clearKeylabels();
+	        return;
+	      }
+	      var update = function update() {
+	        _this9.keylabelUpdateFrame = null;
+	        _this9.keylabelUpdateTimer = null;
+	        _this9.updateKeylabels();
+	      };
+	      var view = (_this$document9 = this.document) === null || _this$document9 === void 0 ? void 0 : _this$document9.defaultView;
+	      if (typeof (view === null || view === void 0 ? void 0 : view.requestAnimationFrame) === 'function') {
+	        this.keylabelUpdateFrame = view.requestAnimationFrame(update);
+	      } else {
+	        this.keylabelUpdateTimer = setTimeout(update, 0);
+	      }
+	    }
+	  }, {
+	    key: "keylabelAssignments",
+	    value: function keylabelAssignments() {
+	      var _this$model3,
+	        _this0 = this;
+	      var assignments = [];
+	      var keylabelConfig = this.config.keylabels || {};
+	      var structuralRoute = (this.activeTypedContext && this.currentTarget ? directContextForTarget(this.model, this.currentTarget) : this.activeStructuralContext) || ((_this$model3 = this.model) === null || _this$model3 === void 0 ? void 0 : _this$model3.rootContext);
+	      var add = function add(target, symbols, command) {
+	        if (!target || !symbols || !_this0.targetSet.has(target)) return;
+	        assignments.push({
+	          target: target,
+	          symbols: symbols,
+	          command: command
+	        });
+	      };
+	      var addNativeFocusRoute = function addNativeFocusRoute(assignment) {
+	        var target = assignment === null || assignment === void 0 ? void 0 : assignment.target;
+	        if (!(target !== null && target !== void 0 && target.isConnected) || !(0, _domUtilities$1.isComposedWithin)(_this0.root, target)) return;
+	        assignments.push(assignment);
+	      };
+	      if (keylabelConfig.nativeArrows !== false) {
+	        nativeRadioArrowAssignments((0, _domUtilities$1.getDeepActiveElement)(this.root), this.root, this.config.displayCheck || 'full', this.config.targetFilter).forEach(addNativeFocusRoute);
+	      }
+	      if (keylabelConfig.horizontal !== false && this.currentTarget) {
+	        var _horizontalContextPee2 = horizontalContextPeers(this.model, structuralRoute),
+	          peers = _horizontalContextPee2.contexts;
+	        var currentIndex = peers.indexOf(structuralRoute);
+	        [[-1, 'previousSiblingContext'], [1, 'nextSiblingContext']].forEach(function (_ref7) {
+	          var _this0$config$command;
+	          var _ref8 = _slicedToArray$1(_ref7, 2),
+	            direction = _ref8[0],
+	            command = _ref8[1];
+	          var shortcut = (_this0$config$command = _this0.config.commands) === null || _this0$config$command === void 0 ? void 0 : _this0$config$command[command];
+	          var symbols = shortcutSymbols(shortcut);
+	          if (currentIndex < 0 || !symbols || !targetAcceptsStructuralArrow(_this0.currentTarget, shortcut, _this0.config)) {
+	            return;
+	          }
+	          var peer = peers[currentIndex + direction];
+	          add(contextTargets(peer)[0], symbols, command);
+	        });
+	      }
+	      if (keylabelConfig.vertical !== false && structuralRoute) {
+	        var commandSource = (0, _domUtilities$1.getDeepActiveElement)(this.root);
+	        var addVertical = function addVertical(command, target) {
+	          var _this0$config$command2;
+	          var shortcut = (_this0$config$command2 = _this0.config.commands) === null || _this0$config$command2 === void 0 ? void 0 : _this0$config$command2[command];
+	          var symbols = shortcutSymbols(shortcut);
+	          if (target === _this0.currentTarget || !symbols || !targetAcceptsStructuralArrow(commandSource, shortcut, _this0.config)) {
+	            return;
+	          }
+	          add(target, symbols, command);
+	        };
+	        var headingParent = previousBroaderHeadingContext(this.model, structuralRoute);
+	        if (headingParent) {
+	          addVertical('broadenContext', contextTargets(headingParent)[0]);
+	        }
+	        var child = this.currentTarget ? normalizeContextChildren(this.model, structuralRoute).find(function (context) {
+	          return contextTargets(context).includes(_this0.currentTarget);
+	        }) : null;
+	        if (!child) {
+	          var headingLevel = contextHeadingLevel(structuralRoute);
+	          var canNarrow = headingLevel === null || headingLevel < 6;
+	          var fallback = canNarrow ? nextNarrowFallbackContext(this.model, structuralRoute) : null;
+	          if (fallback) {
+	            addVertical('narrowContext', contextTargets(fallback)[0]);
+	          }
+	        }
+	      }
+	      if (keylabelConfig.activation !== false && this.currentTarget) {
+	        nativeActivationSymbols(this.currentTarget).forEach(function (symbols) {
+	          add(_this0.currentTarget, symbols, symbols === _keylabels.KEYLABEL_SYMBOLS.enter ? 'activateEnter' : 'activateSpace');
+	        });
+	      }
+
+	      // Familiar sequential-navigation hints are lowest priority when a Tab
+	      // route and a structural route reach the same target.
+	      if (keylabelConfig.tab !== false) {
+	        var tabTargets = this.targets.filter(function (target) {
+	          return target.tabIndex >= 0;
+	        });
+	        var _currentIndex = tabTargets.indexOf(this.currentTarget);
+	        if (_currentIndex >= 0) {
+	          add(tabTargets[_currentIndex - 1], "".concat(_keylabels.KEYLABEL_SYMBOLS.shift).concat(_keylabels.KEYLABEL_SYMBOLS.tab), 'previousTabTarget');
+	          add(tabTargets[_currentIndex + 1], _keylabels.KEYLABEL_SYMBOLS.tab, 'nextTabTarget');
+	        }
+	      }
+	      return assignments;
+	    }
+	  }, {
+	    key: "updateKeylabels",
+	    value: function updateKeylabels() {
+	      var _this$config$keylabel3;
+	      if (!this.active || this.foregroundModeActive || ((_this$config$keylabel3 = this.config.keylabels) === null || _this$config$keylabel3 === void 0 ? void 0 : _this$config$keylabel3.enabled) === false) {
+	        this.clearKeylabels();
+	        return;
+	      }
+	      this.updatingKeylabels = true;
+	      try {
+	        if (this.dirty || !this.model) {
+	          this.clearKeylabels();
+	          return;
+	        }
+	        (0, _keylabels.showAssignedKeylabels)(this.openKeyNav, this.keylabelAssignments(), {
+	          owner: STRUCTURAL_KEYLABEL_OWNER,
+	          cssClass: STRUCTURAL_KEYLABEL_CLASS,
+	          focusedTarget: (0, _domUtilities$1.getDeepActiveElement)(this.root)
+	        });
+	      } finally {
+	        this.updatingKeylabels = false;
+	      }
+	    }
+	  }, {
+	    key: "connectContextIndicatorListeners",
+	    value: function connectContextIndicatorListeners() {
+	      var _this$document0;
+	      var view = (_this$document0 = this.document) === null || _this$document0 === void 0 ? void 0 : _this$document0.defaultView;
 	      view === null || view === void 0 || view.addEventListener('scroll', this.scheduleContextIndicatorUpdate, true);
 	      view === null || view === void 0 || view.addEventListener('resize', this.scheduleContextIndicatorUpdate);
 	    }
 	  }, {
 	    key: "disconnectContextIndicatorListeners",
 	    value: function disconnectContextIndicatorListeners() {
-	      var _this$document9, _this$contextIndicato;
-	      var view = (_this$document9 = this.document) === null || _this$document9 === void 0 ? void 0 : _this$document9.defaultView;
+	      var _this$document1, _this$contextIndicato;
+	      var view = (_this$document1 = this.document) === null || _this$document1 === void 0 ? void 0 : _this$document1.defaultView;
 	      view === null || view === void 0 || view.removeEventListener('scroll', this.scheduleContextIndicatorUpdate, true);
 	      view === null || view === void 0 || view.removeEventListener('resize', this.scheduleContextIndicatorUpdate);
 	      if (this.contextIndicatorFrame !== null && typeof (view === null || view === void 0 ? void 0 : view.cancelAnimationFrame) === 'function') {
@@ -4282,27 +4814,29 @@
 	  }, {
 	    key: "scheduleContextIndicatorUpdate",
 	    value: function scheduleContextIndicatorUpdate() {
-	      var _this$document0,
-	        _this9 = this;
+	      var _this$document10,
+	        _this1 = this;
 	      if (!this.active) return;
-	      var view = (_this$document0 = this.document) === null || _this$document0 === void 0 ? void 0 : _this$document0.defaultView;
+	      var view = (_this$document10 = this.document) === null || _this$document10 === void 0 ? void 0 : _this$document10.defaultView;
 	      if (typeof (view === null || view === void 0 ? void 0 : view.requestAnimationFrame) !== 'function') {
 	        this.updateContextIndicator();
+	        (0, _keylabels.repositionAssignedKeylabels)(this.openKeyNav, STRUCTURAL_KEYLABEL_OWNER);
 	        return;
 	      }
 	      if (this.contextIndicatorFrame !== null) return;
 	      this.contextIndicatorFrame = view.requestAnimationFrame(function () {
-	        _this9.contextIndicatorFrame = null;
-	        _this9.updateContextIndicator();
+	        _this1.contextIndicatorFrame = null;
+	        _this1.updateContextIndicator();
+	        (0, _keylabels.repositionAssignedKeylabels)(_this1.openKeyNav, STRUCTURAL_KEYLABEL_OWNER);
 	      });
 	    }
 	  }, {
 	    key: "contextIndicatorHost",
 	    value: function contextIndicatorHost() {
-	      var _this$document1, _this$document10;
+	      var _this$document11, _this$document12;
 	      var activeModal = topmostNativeModal(this.document);
 	      if (activeModal && this.root === activeModal) return activeModal;
-	      return ((_this$document1 = this.document) === null || _this$document1 === void 0 ? void 0 : _this$document1.body) || ((_this$document10 = this.document) === null || _this$document10 === void 0 ? void 0 : _this$document10.documentElement) || null;
+	      return ((_this$document11 = this.document) === null || _this$document11 === void 0 ? void 0 : _this$document11.body) || ((_this$document12 = this.document) === null || _this$document12 === void 0 ? void 0 : _this$document12.documentElement) || null;
 	    }
 	  }, {
 	    key: "ensureContextIndicator",
@@ -4347,13 +4881,13 @@
 	  }, {
 	    key: "observeContextIndicatorElements",
 	    value: function observeContextIndicatorElements(elements) {
-	      var _this$document11,
-	        _this0 = this;
-	      var ResizeObserverClass = (_this$document11 = this.document) === null || _this$document11 === void 0 || (_this$document11 = _this$document11.defaultView) === null || _this$document11 === void 0 ? void 0 : _this$document11.ResizeObserver;
+	      var _this$document13,
+	        _this10 = this;
+	      var ResizeObserverClass = (_this$document13 = this.document) === null || _this$document13 === void 0 || (_this$document13 = _this$document13.defaultView) === null || _this$document13 === void 0 ? void 0 : _this$document13.ResizeObserver;
 	      if (typeof ResizeObserverClass !== 'function') return;
 	      var nextElements = new Set(elements.filter(_domUtilities$1.isElement));
 	      if (nextElements.size === this.contextIndicatorObservedElements.size && Array.from(nextElements).every(function (element) {
-	        return _this0.contextIndicatorObservedElements.has(element);
+	        return _this10.contextIndicatorObservedElements.has(element);
 	      })) {
 	        return;
 	      }
@@ -4362,7 +4896,7 @@
 	      }
 	      this.contextIndicatorResizeObserver.disconnect();
 	      nextElements.forEach(function (element) {
-	        _this0.contextIndicatorResizeObserver.observe(element);
+	        _this10.contextIndicatorResizeObserver.observe(element);
 	      });
 	      this.contextIndicatorObservedElements = nextElements;
 	    }
@@ -4437,11 +4971,14 @@
 	    value: function updateStatus() {
 	      var _this$config$status, _this$config$status2, _this$config$status3;
 	      var prefix = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-	      var _ref7 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
-	        _ref7$force = _ref7.force,
-	        force = _ref7$force === void 0 ? false : _ref7$force;
+	      var _ref9 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+	        _ref9$force = _ref9.force,
+	        force = _ref9$force === void 0 ? false : _ref9$force;
 	      if (!this.active && !force) return;
-	      if (this.active) this.scheduleContextIndicatorUpdate();
+	      if (this.active) {
+	        this.scheduleContextIndicatorUpdate();
+	        this.scheduleKeylabelUpdate();
+	      }
 	      if (!((_this$config$status = this.config.status) !== null && _this$config$status !== void 0 && _this$config$status.enabled)) {
 	        this.openKeyNav.clearStatus(STRUCTURAL_STATUS_CHANNEL);
 	        return;
@@ -4975,10 +5512,98 @@
 	Object.defineProperty(styles, "__esModule", {
 	  value: true
 	});
-	styles.statusStyles = styles.injectToolbarStyleSheet = styles.injectStylesheet = styles.deleteStylesheets = void 0;
+	styles.statusStyles = styles.injectToolbarStyleSheet = styles.injectStylesheet = styles.getAccessibleFocusLabelBackground = styles.deleteStylesheets = void 0;
 	var openKeyNav;
 	var styleClassname = "openKeyNav-style";
 	var toolbarStyleClassname = "okn-toolbar-stylesheet";
+	var minimumWhiteTextContrast = 4.5;
+	var fallbackFocusLabelRgb = [0, 90, 133];
+	var parseCssRgb = function parseCssRgb(color) {
+	  if (typeof color !== 'string') return null;
+	  var value = color.trim();
+	  var hexMatch = value.match(/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i);
+	  if (hexMatch) {
+	    var hex = hexMatch[1];
+	    var componentSize = hex.length <= 4 ? 1 : 2;
+	    var _components = [];
+	    for (var index = 0; index < componentSize * 3; index += componentSize) {
+	      var component = hex.slice(index, index + componentSize);
+	      _components.push(parseInt(componentSize === 1 ? component.repeat(2) : component, 16));
+	    }
+	    return _components;
+	  }
+	  var rgbMatch = value.match(/^rgba?\((.*)\)$/i);
+	  if (!rgbMatch) return null;
+	  var colorComponents = rgbMatch[1].split('/')[0].trim();
+	  var components = colorComponents.includes(',') ? colorComponents.split(',') : colorComponents.split(/\s+/);
+	  if (components.length < 3) return null;
+	  var rgb = components.slice(0, 3).map(function (component) {
+	    var normalized = component.trim();
+	    var numericValue = Number.parseFloat(normalized);
+	    if (!Number.isFinite(numericValue)) return NaN;
+	    var value255 = normalized.endsWith('%') ? numericValue * 2.55 : numericValue;
+	    return Math.min(255, Math.max(0, value255));
+	  });
+	  return rgb.every(Number.isFinite) ? rgb : null;
+	};
+	var resolveCssRgb = function resolveCssRgb(color, ownerDocument) {
+	  var parsedColor = parseCssRgb(color);
+	  if (parsedColor) return parsedColor;
+	  if (!(ownerDocument !== null && ownerDocument !== void 0 && ownerDocument.createElement) || !ownerDocument.defaultView) return null;
+	  var probe = ownerDocument.createElement('span');
+	  probe.style.color = color;
+	  probe.style.position = 'absolute';
+	  probe.style.visibility = 'hidden';
+	  probe.style.pointerEvents = 'none';
+	  if (!probe.style.color) return null;
+	  var container = ownerDocument.body || ownerDocument.documentElement;
+	  if (!container) return null;
+	  container.appendChild(probe);
+	  var resolvedColor = ownerDocument.defaultView.getComputedStyle(probe).color;
+	  probe.remove();
+	  return parseCssRgb(resolvedColor);
+	};
+	var relativeLuminance = function relativeLuminance(rgb) {
+	  return rgb.reduce(function (luminance, component, index) {
+	    var channel = component / 255;
+	    var linearChannel = channel <= 0.04045 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4);
+	    return luminance + linearChannel * [0.2126, 0.7152, 0.0722][index];
+	  }, 0);
+	};
+	var whiteTextContrast = function whiteTextContrast(rgb) {
+	  return 1.05 / (relativeLuminance(rgb) + 0.05);
+	};
+	var darkenForWhiteText = function darkenForWhiteText(rgb) {
+	  if (whiteTextContrast(rgb) >= minimumWhiteTextContrast) {
+	    return rgb.map(function (component) {
+	      return Math.floor(component);
+	    });
+	  }
+	  var accessibleScale = 0;
+	  var inaccessibleScale = 1;
+	  var _loop = function _loop() {
+	    var candidateScale = (accessibleScale + inaccessibleScale) / 2;
+	    var candidate = rgb.map(function (component) {
+	      return component * candidateScale;
+	    });
+	    if (whiteTextContrast(candidate) >= minimumWhiteTextContrast) {
+	      accessibleScale = candidateScale;
+	    } else {
+	      inaccessibleScale = candidateScale;
+	    }
+	  };
+	  for (var index = 0; index < 24; index += 1) {
+	    _loop();
+	  }
+	  return rgb.map(function (component) {
+	    return Math.floor(component * accessibleScale);
+	  });
+	};
+	var getAccessibleFocusLabelBackground = styles.getAccessibleFocusLabelBackground = function getAccessibleFocusLabelBackground(focusColor) {
+	  var ownerDocument = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : typeof document === 'undefined' ? null : document;
+	  var focusRgb = resolveCssRgb(focusColor, ownerDocument) || fallbackFocusLabelRgb;
+	  return "rgb(".concat(darkenForWhiteText(focusRgb).join(', '), ")");
+	};
 	var keyButtonStyles = "\n  .keyButtonContainer {\n      margin: 0 .1em;\n      display: inline-grid;\n      grid-template-columns: min-content auto;\n      align-items: baseline;\n      column-gap: 4px;\n  }\n  .keyButtonContainer .keyButtonLabel{\n    white-space:nowrap;\n  }\n  .keyButton {\n    display: inline-block;\n    padding: 1px 4px;\n    min-width: 1.3em;\n    text-align: center;\n    line-height: 1;\n    color: hsl(210, 8%, 5%);\n    text-shadow: 0 1px 0 hsl(0, 0%, 100%);\n    background-color: hsl(210, 8%, 90%);\n    border: 1px solid hsl(210, 8%, 68%);\n    border-radius: 3px;\n    box-shadow: 0 1px 1px hsla(210, 8%, 5%, 0.15), inset 0 1px 0 0 hsl(0, 0%, 100%);\n    white-space: nowrap;\n    margin: 0 1px;\n  }\n";
 	var logoStyles = "\n  .okn-logo-text {\n      font-size: 36px;\n      font-weight: 600;\n      color: #ffffff;\n      background-color: #333;\n      padding: .1em .2em;\n      border-radius: 1em;\n      box-sizing: border-box;\n      line-height: 1;\n      text-align: center;\n      position: relative;\n      display: inline-block;\n      min-width: 1rem;\n      border: max(.1em, 2px) solid #ffffff;\n      white-space: nowrap;\n  }\n\n  .okn-logo-text.small {\n      font-size: 18px;\n  }\n  .okn-logo-text.tiny {\n      font-size: 10px;\n      border: none;\n  }\n  .okn-logo-text.tiny .key {\n      font-weight: 700;\n  }\n\n  .okn-logo-text.light {\n      color: #333;\n      background-color: #fff;\n      border-color: #333;\n  }\n\n  .okn-logo-text .key {\n      display: inline;\n      padding: .1em .2em;\n      margin: 0 .1em;\n      background-color: #ffffff;\n      color: #333;\n      line-height: 1;\n      position: relative;\n      top: -.3em;\n  }\n\n  .okn-logo-text.light .key {\n      background-color: #333;\n      color: #ffffff;\n  }\n\n  .okn-logo-text .key::before,\n  .okn-logo-text .key::after {\n      content: \"\";\n      position: absolute;\n      left: 50%;\n      transform: translateX(-50%);\n  }\n\n  .okn-logo-text .key::before {\n      --border-size: 0.5em;\n      --min-border-size: 5px;\n      border-top: max(var(--border-size), var(--min-border-size)) solid #333;\n      bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n      border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n      border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n  }\n  .okn-logo-text.light .key::before {\n      border-top-color: #fff;\n  }\n\n  .okn-logo-text .key::after {\n      --border-size: .4em;\n      --min-border-size: 4px;\n      border-top: max(calc(var(--border-size) + 2px), var(--min-border-size)) solid #fff;\n      bottom: calc(-1 * max(var(--border-size), var(--min-border-size)));\n      border-left: max(var(--border-size), var(--min-border-size)) solid transparent;\n      border-right: max(var(--border-size), var(--min-border-size)) solid transparent;\n  }\n  .okn-logo-text.light .key::after {\n      border-top-color: #333;\n  }\n";
 
@@ -4988,6 +5613,7 @@
 	var statusStyles = styles.statusStyles = "\n  ".concat(logoStyles, "\n\n  .openKeyNav-status {\n      box-sizing: border-box;\n      position: fixed;\n      left: 12px;\n      bottom: 12px;\n      z-index: 2147483647;\n      max-width: min(34rem, calc(100vw - 24px));\n      padding: 8px 12px;\n      border: 1px solid #666;\n      border-radius: 4px;\n      color: #fff;\n      background: rgba(20, 24, 28, .94);\n      box-shadow: 0 4px 6px rgba(0, 0, 0, .16);\n      font: 14px/1.35 sans-serif;\n      text-align: left;\n      pointer-events: none;\n  }\n\n  .openKeyNav-status--visually-hidden {\n      width: 1px !important;\n      height: 1px !important;\n      padding: 0 !important;\n      margin: -1px !important;\n      border: 0 !important;\n      overflow: hidden !important;\n      clip: rect(0 0 0 0) !important;\n      clip-path: inset(50%) !important;\n      white-space: nowrap !important;\n  }\n\n  .openKeyNav-notification-container {\n      position: fixed;\n      left: 50%;\n      bottom: 10px;\n      z-index: 2147483647;\n      display: flex;\n      flex-direction: column;\n      align-items: center;\n      gap: 10px;\n      width: min(34rem, calc(100vw - 24px));\n      transform: translateX(-50%);\n      pointer-events: none;\n  }\n\n  .openKeyNav-notification-container .openKeyNav-notification {\n      position: relative;\n      left: auto;\n      bottom: auto;\n      display: inline-block;\n      max-width: 100%;\n      padding: 10px 20px;\n      text-align: center;\n      pointer-events: auto;\n  }\n\n  .openKeyNav-status__dismiss {\n      position: absolute;\n      top: 5px;\n      right: 8px;\n      border: 0;\n      padding: 0 2px;\n      color: inherit;\n      background: transparent;\n      font: 20px/1 sans-serif;\n      cursor: pointer;\n  }\n\n  .openKeyNav-status__hint {\n      margin-top: 4px;\n      font-size: .85em;\n      opacity: .8;\n  }\n\n  .openKeyNav-status--dismissible {\n      padding-right: 30px;\n  }\n");
 	styles.injectStylesheet = function injectStylesheet(parent, replace) {
 	  openKeyNav = parent;
+	  var focusLabelBackground = getAccessibleFocusLabelBackground(openKeyNav.config.focus.outlineColor, document);
 	  if (document.querySelectorAll('.' + styleClassname).length > 0) {
 	    if (!replace) {
 	      return;
@@ -4997,7 +5623,7 @@
 	  var style = document.createElement('style');
 	  style.className = styleClassname;
 	  style.type = 'text/css';
-	  style.textContent = ".openKeyNav-label {\n        font: inherit;\n        vertical-align: baseline;\n        box-sizing: border-box;\n        white-space: nowrap;\n        border: 1px solid ".concat(openKeyNav.config.spot.fontColor, "; \n        // box-shadow: inset 0 -2.5px 0 ").concat(openKeyNav.config.spot.insetColor, ", inset 0 -3px 0 #999, 0 0 4px #fff; \n        // background: linear-gradient(to top, #999 5%, ").concat(openKeyNav.config.spot.backgroundColor, " 20%); \n        background-color: ").concat(openKeyNav.config.spot.backgroundColor, "; \n        // border-radius: calc( 4px );\n        color: ").concat(openKeyNav.config.spot.fontColor, "; \n        display: inline-block;\n        font-size: ").concat(openKeyNav.config.spot.fontSize, "; \n        // outline : 2px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n        outline-offset: -2px !important;\n        // +\"font-weight: bold;\"\n        font-weight: inherit;\n        // line-height: 1.5;\n        line-height: 1;\n        margin: 0 .1em 0 1px;\n        overflow-wrap: break-word;\n        // padding: .0 .15em .1em;\n        padding: 3px;\n        text-shadow: 0 1px 0 ").concat(openKeyNav.config.spot.insetColor, "; \n        min-width: 1rem;\n        text-align: center;\n        position: absolute;\n        z-index: 99999999;\n        font-family: monospace;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        content: \"\";\n        position: absolute;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        top: 50%;\n        transform: translateY(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        left: 50%;\n        transform: translateX(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before {\n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        right: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after {\n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        right: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before {\n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        left: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        left: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]{\n        padding-bottom: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before {\n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        bottom: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after {\n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        bottom: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]{\n        padding-top: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before {\n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        top: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        top: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label-selected{\n        // padding : 0;\n        // margin : 0;\n        display : grid;\n        align-content : center;\n        color : ").concat(openKeyNav.config.spot.fontColor, "; \n        background : ").concat(openKeyNav.config.spot.backgroundColor, "; \n        // outline : 4px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n        outline: none; \n        // border-radius: 100%; \n        // width: 1rem; \n        // height: 1rem; \n        // text-shadow : none;\n        // padding : 0 !important;\n        // margin: 0 !important;\n      }\n      [data-openkeynav-label]:not(.openKeyNav-label):not(button){\n        // outline: 2px double ").concat(openKeyNav.config.focus.outlineColor, " !important; \n        // outline-offset: 2px !important;\n        box-shadow:  inset 0 0 0 .5px #000,\n                      0 0 0 .75px #000,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        // border-radius: 3px;\n        border-color: #000;\n        border-radius: 3px;\n      }\n      button[data-openkeynav-label]{\n        outline:2px solid #000 !important;\n      }\n      .openKeyNav-inaccessible:not(.openKeyNav-label):not(button){\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        border-color: #f00;\n        border-radius: 3px;\n      }\n      button.openKeyNav-inaccessible{\n        outline:2px solid #f00 !important;\n      }\n      .openKeyNav-inaccessible.openKeyNav-label{\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        border-color: #f00;\n        border-radius: 3px;\n      }\n      .openKeyNav-label.debug-inaccessible{\n        background-color: #ff4444 !important;\n        border-color: #cc0000 !important;\n        color: #ffffff !important;\n        text-shadow: 0 1px 0 rgba(0,0,0,0.5) !important;\n      }\n        //   +\"span[data-openkeynav-label]{\"\n        //       +\"display: inherit;\"\n        //   +\"}\"\n      .openKeyNav-noCursor *{\n        cursor: none !important;\n      }\n      .openKeyNav-mouseover-tooltip{\n        position: absolute;\n        background-color: #333;\n        color: #fff;\n        padding: 5px;\n        border-radius: 5px;\n        display: none;\n        z-index: 1000;\n        font-size: 12px;\n      }\n      .openKeyNav-mouseover-tooltip::before{\n        content: \"Debug mode\"\n      }\n      //   [data-openkeynav-draggable=\"true\"] {\n      //   outline: 2px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n      //   outline-offset: -1px !important;\n      // }\n      ;\n      ");
+	  style.textContent = ".openKeyNav-label {\n        font: inherit;\n        vertical-align: baseline;\n        box-sizing: border-box;\n        white-space: nowrap;\n        border: 1px solid ".concat(openKeyNav.config.spot.fontColor, "; \n        // box-shadow: inset 0 -2.5px 0 ").concat(openKeyNav.config.spot.insetColor, ", inset 0 -3px 0 #999, 0 0 4px #fff; \n        // background: linear-gradient(to top, #999 5%, ").concat(openKeyNav.config.spot.backgroundColor, " 20%); \n        background-color: ").concat(openKeyNav.config.spot.backgroundColor, "; \n        // border-radius: calc( 4px );\n        color: ").concat(openKeyNav.config.spot.fontColor, "; \n        display: inline-block;\n        font-size: ").concat(openKeyNav.config.spot.fontSize, "; \n        // outline : 2px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n        outline-offset: -2px !important;\n        // +\"font-weight: bold;\"\n        font-weight: inherit;\n        // line-height: 1.5;\n        line-height: 1;\n        margin: 0 .1em 0 1px;\n        overflow-wrap: break-word;\n        // padding: .0 .15em .1em;\n        padding: 3px;\n        text-shadow: 0 1px 0 ").concat(openKeyNav.config.spot.insetColor, "; \n        min-width: 1rem;\n        text-align: center;\n        position: absolute;\n        z-index: 99999999;\n        font-family: monospace;\n      }\n      .openKeyNav-keylabel-alternatives {\n        display: inline-flex;\n        align-items: center;\n      }\n      .openKeyNav-keylabel-alternative + .openKeyNav-keylabel-alternative {\n        border-left: 1px solid currentColor;\n        margin-left: .3em;\n        padding-left: .3em;\n      }\n      .openKeyNav-keylabel-focused {\n        background-color: ").concat(focusLabelBackground, ";\n        color: #fff;\n        text-shadow: none;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        content: \"\";\n        position: absolute;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        top: 50%;\n        transform: translateY(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before,\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        left: 50%;\n        transform: translateX(-50%);\n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::before {\n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        right: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"left\"]::after {\n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        right: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::before {\n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        left: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"right\"]::after {\n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        left: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]{\n        padding-bottom: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::before {\n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        bottom: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"top\"]::after {\n        border-top: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        bottom: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]{\n        padding-top: 0;\n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::before {\n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid #fff; \n        top: -").concat(openKeyNav.config.spot.arrowSize_px + 1, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px + 1, "px solid transparent; \n      }\n      .openKeyNav-label[data-openkeynav-position=\"bottom\"]::after {\n        border-bottom: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid ").concat(openKeyNav.config.spot.backgroundColor, "; \n        top: -").concat(openKeyNav.config.spot.arrowSize_px, "px; \n        border-left: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n        border-right: ").concat(openKeyNav.config.spot.arrowSize_px, "px solid transparent; \n      }\n      .openKeyNav-keylabel-focused[data-openkeynav-position=\"left\"]::after {\n        border-left-color: ").concat(focusLabelBackground, ";\n      }\n      .openKeyNav-keylabel-focused[data-openkeynav-position=\"right\"]::after {\n        border-right-color: ").concat(focusLabelBackground, ";\n      }\n      .openKeyNav-keylabel-focused[data-openkeynav-position=\"top\"]::after {\n        border-top-color: ").concat(focusLabelBackground, ";\n      }\n      .openKeyNav-keylabel-focused[data-openkeynav-position=\"bottom\"]::after {\n        border-bottom-color: ").concat(focusLabelBackground, ";\n      }\n      .openKeyNav-label-selected{\n        // padding : 0;\n        // margin : 0;\n        display : grid;\n        align-content : center;\n        color : ").concat(openKeyNav.config.spot.fontColor, "; \n        background : ").concat(openKeyNav.config.spot.backgroundColor, "; \n        // outline : 4px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n        outline: none; \n        // border-radius: 100%; \n        // width: 1rem; \n        // height: 1rem; \n        // text-shadow : none;\n        // padding : 0 !important;\n        // margin: 0 !important;\n      }\n      [data-openkeynav-label]:not(.openKeyNav-label):not(button),\n      [data-openkeynav-keylabel-target-active]:not(button){\n        // outline: 2px double ").concat(openKeyNav.config.focus.outlineColor, " !important; \n        // outline-offset: 2px !important;\n        box-shadow:  inset 0 0 0 .5px #000,\n                      0 0 0 .75px #000,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        // border-radius: 3px;\n        border-color: #000;\n        border-radius: 3px;\n      }\n      button[data-openkeynav-label],\n      button[data-openkeynav-keylabel-target-active]{\n        outline:2px solid #000 !important;\n      }\n      .openKeyNav-inaccessible:not(.openKeyNav-label):not(button){\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        outline:none !important;\n        border-color: #f00;\n        border-radius: 3px;\n      }\n      button.openKeyNav-inaccessible{\n        outline:2px solid #f00 !important;\n      }\n      .openKeyNav-inaccessible.openKeyNav-label{\n        box-shadow:  inset 0 0 0 .5px #f00,\n                      0 0 0 1px #f00,\n                      0 0 0 1.5px rgba(255,255,255,1); \n        border-color: #f00;\n        border-radius: 3px;\n      }\n      .openKeyNav-label.debug-inaccessible{\n        background-color: #ff4444 !important;\n        border-color: #cc0000 !important;\n        color: #ffffff !important;\n        text-shadow: 0 1px 0 rgba(0,0,0,0.5) !important;\n      }\n        //   +\"span[data-openkeynav-label]{\"\n        //       +\"display: inherit;\"\n        //   +\"}\"\n      .openKeyNav-noCursor *{\n        cursor: none !important;\n      }\n      .openKeyNav-mouseover-tooltip{\n        position: absolute;\n        background-color: #333;\n        color: #fff;\n        padding: 5px;\n        border-radius: 5px;\n        display: none;\n        z-index: 1000;\n        font-size: 12px;\n      }\n      .openKeyNav-mouseover-tooltip::before{\n        content: \"Debug mode\"\n      }\n      //   [data-openkeynav-draggable=\"true\"] {\n      //   outline: 2px solid ").concat(openKeyNav.config.focus.outlineColor, "; \n      //   outline-offset: -1px !important;\n      // }\n      ;\n      ");
 	  style.textContent += statusStyles;
 	  style.textContent += keyButtonStyles;
 	  // *:focus { // could be problematic to edit focus states throughout a website
@@ -5006,7 +5632,7 @@
 	  // }
 	  // `;
 	  // ensuring hidden labeled elements are made visible
-	  style.textContent += "\n        [data-openkeynav-label]:not(.openKeyNav-label){\n          opacity:1 !important;\n          visibility:visible !important;\n        }\n      ";
+	  style.textContent += "\n        [data-openkeynav-label]:not(.openKeyNav-label),\n        [data-openkeynav-keylabel-target-active]{\n          opacity:1 !important;\n          visibility:visible !important;\n        }\n      ";
 	  style.textContent += "\n        [data-openkeynav-focused]{\n          outline: 2px ".concat(openKeyNav.config.focus.outlineStyle, " ").concat(openKeyNav.config.focus.outlineColor, " !important; \n          outline-offset: -2px !important;\n        }\n\n        .openKeyNav-structural-context-outline {\n          box-sizing: border-box;\n          position: fixed;\n          z-index: 2147483646;\n          display: none;\n          border-radius: 4px;\n          background: transparent;\n          pointer-events: none;\n        }\n      ");
 	  document.head.appendChild(style);
 	};
@@ -6150,10 +6776,18 @@
 	              }
 	            },
 	            contextIndicator: {
-	              enabled: true,
+	              enabled: false,
 	              color: null,
 	              width: 3,
 	              offset: 4
+	            },
+	            keylabels: {
+	              enabled: true,
+	              tab: true,
+	              horizontal: true,
+	              vertical: true,
+	              nativeArrows: true,
+	              activation: true
 	            },
 	            commands: {
 	              previousTarget: null,

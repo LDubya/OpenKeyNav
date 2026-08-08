@@ -432,6 +432,15 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
   var headings = elements.filter(function (element) {
     return headingRank(element) !== null && !isSemanticallyHidden(element, root) && isOperativeSemanticElement(element, root);
   });
+  var ownedHeadingByTarget = new Map();
+  liveTargets.forEach(function (target) {
+    var firstContainedHeading = headings.find(function (heading) {
+      return (0, _domUtilities.isComposedWithin)(target, heading);
+    });
+    if (firstContainedHeading) {
+      ownedHeadingByTarget.set(target, firstContainedHeading);
+    }
+  });
   automaticContexts.forEach(function (context) {
     var directHeadings = headings.filter(function (heading) {
       return (0, _domUtilities.isComposedWithin)(context.boundary, heading) && nearestContextBoundary((0, _domUtilities.getComposedParent)(heading), boundaryContexts, root) === context;
@@ -586,7 +595,8 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
       var context = closing.context;
       context.rangeEnd = Math.min(closing.scopeEnd, requestedEnd);
       context.memberTargets = liveTargets.filter(function (target) {
-        return targetOrder(target) >= context.rangeStart && targetOrder(target) < context.rangeEnd && container.memberSet.has(target) && !isSemanticallyHidden(target, root) && (0, _domUtilities.isComposedWithin)(context.rangeBoundary, target);
+        var ownedHeading = ownedHeadingByTarget.get(target);
+        return (ownedHeading ? ownedHeading === context.boundary : targetOrder(target) >= context.rangeStart && targetOrder(target) < context.rangeEnd) && container.memberSet.has(target) && !isSemanticallyHidden(target, root) && (0, _domUtilities.isComposedWithin)(context.rangeBoundary, target);
       });
       context.memberSet = new Set(context.memberTargets);
     };

@@ -228,10 +228,18 @@ var OpenKeyNav = /*#__PURE__*/function () {
             }
           },
           contextIndicator: {
-            enabled: true,
+            enabled: false,
             color: null,
             width: 3,
             offset: 4
+          },
+          keylabels: {
+            enabled: true,
+            tab: true,
+            horizontal: true,
+            vertical: true,
+            nativeArrows: true,
+            activation: true
           },
           commands: {
             previousTarget: null,

@@ -112,6 +112,12 @@ describe('structural navigation key policy', () => {
 
     expect(openKeyNav.config.modesConfig.structuralNavigation.status.dismissCommand)
       .toEqual({ key: 'Escape', shiftKey: true });
+    expect(openKeyNav.config.modesConfig.structuralNavigation.keylabels.tab)
+      .toBe(true);
+    expect(openKeyNav.config.modesConfig.structuralNavigation.keylabels.nativeArrows)
+      .toBe(true);
+    expect(openKeyNav.config.modesConfig.structuralNavigation.contextIndicator.enabled)
+      .toBe(false);
 
     openKeyNav.destroy();
   });
@@ -123,6 +129,153 @@ describe('StructuralNavigationController', () => {
   afterEach(() => {
     openKeyNav?.destroy();
     document.body.innerHTML = '';
+  });
+
+  it('imports keylabels for native Tab routes, horizontal routes, and activation', async () => {
+    document.body.innerHTML = `
+      <section aria-labelledby="previous-title">
+        <h2 id="previous-title">Previous</h2>
+        <a id="previous-target" href="#previous">Previous target</a>
+      </section>
+      <section aria-labelledby="current-title">
+        <h2 id="current-title">Current</h2>
+        <a id="previous-tab-target" href="#previous-tab">Previous Tab target</a>
+        <button id="current-target">Current target</button>
+        <a id="next-tab-target" href="#next-tab">Next Tab target</a>
+      </section>
+      <section aria-labelledby="next-title">
+        <h2 id="next-title">Next</h2>
+        <a id="next-context-target" href="#next-context">Next context target</a>
+      </section>
+    `;
+    openKeyNav = createOpenKeyNav();
+    document.getElementById('current-target').focus();
+
+    openKeyNav.enterStructuralNavigation();
+    await new Promise(resolve => setTimeout(resolve, 25));
+
+    const labelsFor = targetId => Array.from(document.querySelectorAll(
+      `.openKeyNav-structural-keylabel[data-openkeynav-keylabel-target="${targetId}"]`
+    )).map(label => ({
+      command: label.dataset.openkeynavKeylabelCommand,
+      symbols: label.textContent,
+    }));
+
+    expect(labelsFor('previous-target')).toEqual([
+      { command: 'previousSiblingContext', symbols: '⇧←' },
+    ]);
+    expect(labelsFor('previous-tab-target')).toEqual([
+      { command: 'previousTabTarget', symbols: '⇧⇥' },
+    ]);
+    expect(labelsFor('next-tab-target')).toEqual([
+      { command: 'nextTabTarget', symbols: '⇥' },
+    ]);
+    expect(labelsFor('next-context-target')).toEqual([
+      { command: 'nextSiblingContext', symbols: '⇧→' },
+    ]);
+    expect(labelsFor('current-target')).toEqual([
+      { command: 'activateEnter activateSpace', symbols: '↵⎵' },
+    ]);
+    expect(document.querySelector(
+      '.openKeyNav-structural-keylabel' +
+      '[data-openkeynav-keylabel-target="current-target"]'
+    )?.classList).toContain('openKeyNav-keylabel-focused');
+    expect(Array.from(document.querySelectorAll(
+      '.openKeyNav-structural-keylabel'
+    )).every(label => Array.from(label.textContent).length <= 2)).toBe(true);
+    expect(new Set(Array.from(document.querySelectorAll(
+      '.openKeyNav-structural-keylabel'
+    )).map(label => label.dataset.openkeynavKeylabelTarget)).size)
+      .toBe(document.querySelectorAll('.openKeyNav-structural-keylabel').length);
+    expect(document.getElementById('current-target')
+      .hasAttribute('data-openkeynav-keylabel-target-active')).toBe(true);
+    expect(document.getElementById('current-target')
+      .hasAttribute('data-openkeynav-label')).toBe(false);
+
+    openKeyNav.config.modes.clicking.value = true;
+    expect(document.querySelectorAll('.openKeyNav-structural-keylabel'))
+      .toHaveLength(0);
+    expect(document.querySelectorAll('[data-openkeynav-keylabel-target-active]'))
+      .toHaveLength(0);
+    openKeyNav.config.modes.clicking.value = false;
+    await new Promise(resolve => setTimeout(resolve, 25));
+    expect(document.querySelectorAll('.openKeyNav-structural-keylabel'))
+      .toHaveLength(5);
+    expect(document.getElementById('current-target')
+      .hasAttribute('data-openkeynav-keylabel-target-active')).toBe(true);
+  });
+
+  it('labels the targets left focused by vertical heading navigation', async () => {
+    document.body.innerHTML = `
+      <a id="parent-heading-target" href="#parent">
+        <h2>Visualization Authoring Tools</h2>
+      </a>
+      <a id="parent-detail" href="#detail">languages</a>
+      <h3>Latest and Greatest</h3>
+      <a id="child-heading-target" href="#child">GoFish</a>
+    `;
+    openKeyNav = createOpenKeyNav();
+    const parentTarget = document.getElementById('parent-heading-target');
+    const childTarget = document.getElementById('child-heading-target');
+    childTarget.focus();
+    openKeyNav.enterStructuralNavigation();
+    await new Promise(resolve => setTimeout(resolve, 25));
+
+    const verticalLabel = (command, targetId) => document.querySelector(
+      `.openKeyNav-structural-keylabel` +
+      `[data-openkeynav-keylabel-command="${command}"]` +
+      `[data-openkeynav-keylabel-target="${targetId}"]`
+    );
+
+    expect(verticalLabel('broadenContext', parentTarget.id)?.textContent)
+      .toBe('⇧↑');
+
+    parentTarget.focus();
+    await new Promise(resolve => setTimeout(resolve, 25));
+    expect(verticalLabel('narrowContext', childTarget.id)?.textContent)
+      .toBe('⇧↓');
+    // Broadening this H2 changes only the context. Because focus stays on the
+    // current target, there is no destination to label.
+    expect(verticalLabel('broadenContext', parentTarget.id)).toBeNull();
+  });
+
+  it('labels native radio-group arrow focus destinations without handling them', async () => {
+    document.body.innerHTML = `
+      <fieldset>
+        <legend>Choice</legend>
+        <input id="radio-one" type="radio" name="choice" checked>
+        <input id="radio-two" type="radio" name="choice">
+        <input id="radio-three" type="radio" name="choice">
+      </fieldset>
+    `;
+    openKeyNav = createOpenKeyNav();
+    const current = document.getElementById('radio-one');
+    current.focus();
+    openKeyNav.enterStructuralNavigation();
+    await new Promise(resolve => setTimeout(resolve, 25));
+
+    const nativeArrowLabel = (command, targetId) => document.querySelector(
+      `.openKeyNav-structural-keylabel` +
+      `[data-openkeynav-keylabel-command~="${command}"]` +
+      `[data-openkeynav-keylabel-target="${targetId}"]`
+    );
+    expect(nativeArrowLabel('nativeArrowLeft', 'radio-three')?.textContent)
+      .toBe('←↑');
+    expect(nativeArrowLabel('nativeArrowUp', 'radio-three')?.textContent)
+      .toBe('←↑');
+    expect(nativeArrowLabel('nativeArrowRight', 'radio-two')?.textContent)
+      .toBe('→↓');
+    expect(nativeArrowLabel('nativeArrowDown', 'radio-two')?.textContent)
+      .toBe('→↓');
+    expect(document.querySelectorAll(
+      '.openKeyNav-structural-keylabel[data-openkeynav-keylabel-target="radio-two"]'
+    )).toHaveLength(1);
+    expect(document.querySelectorAll(
+      '.openKeyNav-structural-keylabel[data-openkeynav-keylabel-target="radio-three"]'
+    )).toHaveLength(1);
+
+    const nativeArrow = dispatchKey(current, 'ArrowRight');
+    expect(nativeArrow.defaultPrevented).toBe(false);
   });
 
   it('moves real focus, broadens/narrows without moving, and navigates horizontally', async () => {
@@ -712,14 +865,23 @@ describe('StructuralNavigationController', () => {
   it('uses authored H3 lanes across the card and people structures from vis.mit.edu', () => {
     document.body.innerHTML = `
       <div class="research-card">
-        <div>
-          <a id="accessible-theme" href="#accessible-theme">
-            <h2>Accessible Data Representations</h2>
+        <div class="theme-summary">
+          <a id="tools-theme" href="#tools-theme">
+            <h2>Visualization Authoring Tools</h2>
           </a>
+          <p>
+            We develop <a id="languages" href="#languages">languages</a> and
+            <a id="systems" href="#systems">systems</a> for visualization.
+          </p>
+          <a id="lyra" href="#lyra">Lyra</a>
         </div>
-        <div>
+        <div class="latest-publications">
           <h3>Latest &amp; Greatest</h3>
-          <a id="benthic" href="#benthic">Benthic</a>
+          <a id="gofish" href="#gofish">GoFish</a>
+          <a id="pluto" href="#pluto">Pluto</a>
+          <a id="bluefish" href="#bluefish">Bluefish</a>
+          <a id="umwelt" href="#umwelt">Umwelt</a>
+          <a id="deimos" href="#deimos">Deimos</a>
         </div>
       </div>
       <div class="research-card">
@@ -743,7 +905,7 @@ describe('StructuralNavigationController', () => {
     `;
     openKeyNav = createOpenKeyNav();
     openKeyNav.addKeydownEventListener();
-    document.getElementById('benthic').focus();
+    document.getElementById('gofish').focus();
     openKeyNav.enterStructuralNavigation();
 
     expect(openKeyNav.getStructuralNavigationState().activeContext.name)
@@ -752,8 +914,33 @@ describe('StructuralNavigationController', () => {
       '.openKeyNav-structural-status .openKeyNav-status__content'
     ).textContent).toContain('Heading level: 3.');
 
+    const broadenToH2 = dispatchKey(
+      document.getElementById('gofish'),
+      'ArrowUp',
+      { shiftKey: true }
+    );
+    expect(broadenToH2.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('tools-theme');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Visualization Authoring Tools');
+    expect(document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    ).textContent).toContain(
+      'Heading level: 2. Visualization Authoring Tools, 1 of 4.'
+    );
+
+    const narrowBackToH3 = dispatchKey(
+      document.getElementById('tools-theme'),
+      'ArrowDown',
+      { shiftKey: true }
+    );
+    expect(narrowBackToH3.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('gofish');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Latest & Greatest');
+
     const nextH3 = dispatchKey(
-      document.getElementById('benthic'),
+      document.getElementById('gofish'),
       'ArrowRight',
       { shiftKey: true }
     );
@@ -820,6 +1007,66 @@ describe('StructuralNavigationController', () => {
     ).textContent).toContain('Heading level: 3.');
   });
 
+  it('narrows from the document through the next H2 and then H3', () => {
+    document.body.innerHTML = `
+      <button id="intro">Hi, we're the MIT Visualization Group!</button>
+      <div class="research-card">
+        <div class="theme-summary">
+          <a id="tools-theme" href="#tools-theme">
+            <h2>Visualization Authoring Tools</h2>
+          </a>
+          <p>
+            <a id="languages" href="#languages">languages</a>
+            <a id="systems" href="#systems">systems</a>
+          </p>
+          <a id="lyra" href="#lyra">Lyra</a>
+        </div>
+        <div class="latest-publications">
+          <h3>Latest &amp; Greatest</h3>
+          <a id="gofish" href="#gofish">GoFish</a>
+        </div>
+      </div>
+    `;
+    openKeyNav = createOpenKeyNav();
+    openKeyNav.addKeydownEventListener();
+    document.getElementById('intro').focus();
+    openKeyNav.enterStructuralNavigation();
+
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Document');
+    expect(document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    ).textContent).toContain('Hierarchy level: 1.');
+
+    const narrowToH2 = dispatchKey(
+      document.getElementById('intro'),
+      'ArrowDown',
+      { shiftKey: true }
+    );
+    expect(narrowToH2.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('tools-theme');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Visualization Authoring Tools');
+    expect(document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    ).textContent).toContain(
+      'Heading level: 2. Visualization Authoring Tools, 1 of 4.'
+    );
+
+    const narrowToH3 = dispatchKey(
+      document.getElementById('tools-theme'),
+      'ArrowDown',
+      { shiftKey: true }
+    );
+    expect(narrowToH3.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('gofish');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Latest & Greatest');
+    expect(document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    ).textContent).toContain('Heading level: 3.');
+  });
+
   it('treats H6 as the boundary for page-forward narrow fallback', () => {
     document.body.innerHTML = `
       <h6>Terminal level six</h6>
@@ -864,7 +1111,13 @@ describe('StructuralNavigationController', () => {
       left: 20, top: 150, right: 320, bottom: 270, width: 300, height: 120,
     });
 
-    openKeyNav = createOpenKeyNav();
+    openKeyNav = createOpenKeyNav({
+      modesConfig: {
+        structuralNavigation: {
+          contextIndicator: { enabled: true },
+        },
+      },
+    });
     openKeyNav.addKeydownEventListener();
     const clear = document.getElementById('clear');
     clear.focus();
@@ -1025,7 +1278,13 @@ describe('StructuralNavigationController', () => {
       left: 250, top: 30, right: 480, bottom: 150, width: 230, height: 120,
     });
 
-    openKeyNav = createOpenKeyNav();
+    openKeyNav = createOpenKeyNav({
+      modesConfig: {
+        structuralNavigation: {
+          contextIndicator: { enabled: true },
+        },
+      },
+    });
     document.getElementById('clear').focus();
     openKeyNav.enterStructuralNavigation();
     openKeyNav.structuralNavigation.updateContextIndicator();

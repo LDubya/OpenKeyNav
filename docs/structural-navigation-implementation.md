@@ -36,6 +36,10 @@ navigation mode described in `structural-navigation-mode-brief.md`.
 - Composed-tree traversal, deep active-element lookup, generated-interface
   exclusion, and author-provided accessible-name extraction live in shared DOM
   and naming utilities rather than separate structural implementations.
+- Structural navigation imports the reusable assigned-keylabel renderer from
+  `src/keylabels.js`. Structural code supplies only target, symbol, and command
+  assignments; the keylabel module owns overlay creation, existing placement,
+  owner-scoped cleanup, and repositioning.
 
 ## Target discovery
 
@@ -86,6 +90,12 @@ Application structural contexts use stable IDs, explicit boundaries or members,
 names, parent/order metadata, and may request that an otherwise redundant
 context remain selectable.
 
+A live focus target that wraps one or more headings belongs to the first
+contained heading's context. This explicit ownership overrides ordinary heading
+range-start ordering, since the ancestor target appears before its descendant
+heading in composed traversal. It also prevents a malformed multi-heading
+wrapper from being claimed by every contained heading.
+
 Application-supplied typed contexts provide the required overlapping peer
 extension. They use the same live target identities and declare stable ID, name,
 type, ordered targets (or a resolver), provenance, and priority. Automatic
@@ -103,28 +113,33 @@ static-table row/column inference is intentionally deferred.
   active root, in document order, regardless of structural parent or inferred
   tree depth. An unheaded context uses only its structural siblings. Movement
   always enters the destination's first target.
-- Broaden selects the immediate structural parent. Narrow first selects the child
-  on the current target's direct-context path; both transitions retain focus.
-  When no such child exists, narrow scans forward without wrapping. From a
-  heading-backed H1–H5 it finds the first nonempty H(n+1), regardless of
-  inferred tree depth; from an unheaded context it finds the first nonempty
-  unheaded context exactly one canonical structural level deeper. It activates
-  that context and focuses its first target. H6 blocks only this forward
-  fallback, not a real child containing the current target.
+- Broaden from a heading-backed H2–H6 selects the nearest preceding lower-level
+  heading context in the authored outline and focuses its first target. This
+  crosses generic-wrapper parent boundaries. Broaden from an unheaded context,
+  or from an H1 with no authored outline parent, selects the immediate
+  structural parent and retains focus. Narrow first selects the child on the
+  current target's direct-context path and retains focus. When no such child
+  exists, narrow scans forward without wrapping. From a heading-backed H1–H5 it
+  finds the first nonempty H(n+1), regardless of inferred tree depth. From an
+  unheaded hierarchy level n it prefers the first nonempty H(n+1), then falls
+  back to an unheaded context exactly one canonical structural level deeper.
+  The fallback activates that context and focuses its first target. H6 blocks
+  only this forward fallback, not a real child containing the current target.
 - Explicit peer-context commands cycle through structural routing and the
   applicable typed contexts. That typed ring wraps and changing typed peers
   retains focus. Typed cycling has no default keyboard binding; applications
   may configure commands or invoke `structuralNavigate('previousPeerContext')`
   and `structuralNavigate('nextPeerContext')` programmatically.
-- A generated, `aria-hidden`, pointer-transparent box follows the active context
-  boundary or heading range. It never enters target discovery or page focus.
+- An optional generated, `aria-hidden`, pointer-transparent box can follow the
+  active context boundary or heading range. It is disabled by default and never
+  enters target discovery or page focus.
 - A heading range is capped by the nearest authored composed-DOM wrapper that
   groups that heading with a following exposed target, when that wrapper ends
   before the enclosing semantic context. This keeps final heading families
   from absorbing later sibling content without promoting generic wrappers into
   structural contexts.
-- Exit removes mode state, observers, listeners, status, and the context box
-  without blurring or moving the current page focus.
+- Exit removes mode state, observers, listeners, status, and any opt-in context
+  box without blurring or moving the current page focus.
 
 Native focus is authoritative. `focusin` synchronizes pointer, script,
 assistive-technology, Tab, and other OpenKeyNav focus changes. A page focus
@@ -153,6 +168,44 @@ after focus leaves the widget, so continuous navigation does not require
 releasing and pressing `Alt` again. Other extra modifiers remain exact.
 Applications may declare ownership with `ownsKey` or the
 `data-openkeynav-key-owner` hook.
+
+## Structural keylabels
+
+The default visual hints are `⇧←` / `⇧→` for previous / next horizontal
+context and `⇧↑` / `⇧↓` for broaden / narrow. Each structural
+label is attached only to a different target the command will focus. A
+context-only broaden or narrow operation has no destination label. An arrow
+hint is also omitted when the current widget owns the chord. The focused target
+gets `↵` and/or `⎵` only for stable native activation semantics: links use
+Enter, buttons and summaries use Enter and Space, and checkboxes/radios use
+Space.
+When focus is on a native HTML radio, the browser's own focus destinations get
+bare-arrow hints: `←↑` on the previous group member and `→↓` on the next. A
+two-radio group uses `↔↕` on its single peer. Select, range, and number controls
+do not receive destination hints because their arrows change internal state
+without moving DOM focus. Native arrow events remain unhandled.
+
+Every hint is at most two Unicode symbols, and each target receives at most one
+hint. One-symbol activation hints combine when both fit (for example `↵⎵`);
+the shared renderer places a visual divider between them to mean “or.”
+Two-symbol structural chords remain joined and atomic. Assigned structural
+hints are visual, `aria-hidden`, and never add `data-openkeynav-label` to page
+targets, so they cannot become Click Mode type-to-select destinations. The imported
+renderer applies the standard keylabel target treatment through an owner-scoped
+attribute and removes it with the overlays. Click, Move, and menu layers remove
+the structural hints while they are in front; the mode signal restores them
+through the imported keylabel renderer when the temporary layer closes. Exit
+and teardown remove the owner-scoped overlays.
+The renderer marks the label whose target is actively focused and colors it from
+the configured focus-ring color. Its background is darkened only when necessary
+to maintain at least 4.5:1 contrast with white text, while the existing thin
+white keylabel outline remains in place. Destination labels retain the normal
+palette.
+
+`modesConfig.structuralNavigation.keylabels` enables structural and activation
+hints by default and provides independent `tab`, `horizontal`, `vertical`,
+`nativeArrows`, and `activation` switches. The `tab` group is on by default and
+shows `⇥` and `⇧⇥` destination hints; setting it to `false` hides them.
 
 An accepted structural command has precedence in OpenKeyNav's capture listener.
 Native-owned keys, application-owned character commands, and unhandled system

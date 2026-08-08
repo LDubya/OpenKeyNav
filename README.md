@@ -207,6 +207,42 @@ For a heading-backed context, `Shift+Left` and `Shift+Right` follow the authored
 heading level (H1 through H6) across the page and enter the first target in the
 previous or next matching context. Unheaded contexts move among structural
 siblings instead.
+When a native Tab stop wraps a heading, the wrapper remains the focus target and
+the first exposed heading it contains supplies that target's authored heading
+level.
+
+`Shift+Up` follows the authored heading outline to the nearest preceding
+lower-level heading and enters its first target. `Shift+Down` reverses that
+progression: the document can enter the first H2, and H1–H5 can enter the first
+following H(n+1).
+
+While the mode is active, its keylabels show the structural destinations
+available from the current focus: `⇧←` / `⇧→` for lateral movement and
+`⇧↑` / `⇧↓` for broaden/narrow, plus `⇧⇥` / `⇥` for the previous and next
+native Tab destinations. The
+focused native control also shows `↵` and/or `⎵` when Enter and/or Space
+provide its standard activation. These
+visual hints use the existing keylabel creation and positioning system; they do
+not intercept native Tab or activation behavior. Labeled targets also receive
+the existing keylabel target outline without becoming type-to-select targets.
+Set
+`modesConfig.structuralNavigation.keylabels.enabled` to `false` to hide them,
+or independently disable its `tab`, `horizontal`, `vertical`, or `activation`
+groups. Set `keylabels.tab` to `false` to hide Tab and Shift+Tab hints.
+Native radio groups additionally label the browser's bare-arrow focus routes:
+`←↑` for the previous radio and `→↓` for the next. In a two-radio group, the
+single peer uses `↔↕`. OpenKeyNav describes these routes without handling the
+arrow events. A divider separates symbols that mean “or,” such as the Enter or
+Space alternatives in `↵⎵`; chord symbols such as `⇧←` remain joined.
+The label attached to the actively focused element uses the configured focus-ring
+color with white text so it stands apart from destinations. When necessary, its
+background is darkened just enough to maintain at least 4.5:1 text contrast while
+the existing thin keylabel outline remains white.
+The large active-context outline is disabled by default now that the focused
+keylabel provides the persistent visual anchor. Applications can restore it
+with `modesConfig.structuralNavigation.contextIndicator.enabled: true`.
+The persistent status says `Heading level` for heading-backed contexts and
+`Hierarchy level` for unheaded structural contexts.
 
 Previous/next target and typed-route commands begin with empty key bindings so applications can assign shortcuts that fit the host interface; each command is also available programmatically. Read the [Structural Navigation documentation](https://openkeynav.com/docs/usage/structural_navigation) for configuration, APIs, focus-scope behavior, and keyboard ownership.
 

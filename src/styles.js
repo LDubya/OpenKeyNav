@@ -2,6 +2,105 @@ let openKeyNav;
 
 const styleClassname = "openKeyNav-style";
 const toolbarStyleClassname ="okn-toolbar-stylesheet";
+const minimumWhiteTextContrast = 4.5;
+const fallbackFocusLabelRgb = [0, 90, 133];
+
+const parseCssRgb = color => {
+  if (typeof color !== 'string') return null;
+
+  const value = color.trim();
+  const hexMatch = value.match(/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i);
+  if (hexMatch) {
+    const hex = hexMatch[1];
+    const componentSize = hex.length <= 4 ? 1 : 2;
+    const components = [];
+    for (let index = 0; index < componentSize * 3; index += componentSize) {
+      const component = hex.slice(index, index + componentSize);
+      components.push(parseInt(componentSize === 1 ? component.repeat(2) : component, 16));
+    }
+    return components;
+  }
+
+  const rgbMatch = value.match(/^rgba?\((.*)\)$/i);
+  if (!rgbMatch) return null;
+
+  const colorComponents = rgbMatch[1].split('/')[0].trim();
+  const components = colorComponents.includes(',')
+    ? colorComponents.split(',')
+    : colorComponents.split(/\s+/);
+  if (components.length < 3) return null;
+
+  const rgb = components.slice(0, 3).map(component => {
+    const normalized = component.trim();
+    const numericValue = Number.parseFloat(normalized);
+    if (!Number.isFinite(numericValue)) return NaN;
+    const value255 = normalized.endsWith('%')
+      ? numericValue * 2.55
+      : numericValue;
+    return Math.min(255, Math.max(0, value255));
+  });
+
+  return rgb.every(Number.isFinite) ? rgb : null;
+};
+
+const resolveCssRgb = (color, ownerDocument) => {
+  const parsedColor = parseCssRgb(color);
+  if (parsedColor) return parsedColor;
+  if (!ownerDocument?.createElement || !ownerDocument.defaultView) return null;
+
+  const probe = ownerDocument.createElement('span');
+  probe.style.color = color;
+  probe.style.position = 'absolute';
+  probe.style.visibility = 'hidden';
+  probe.style.pointerEvents = 'none';
+  if (!probe.style.color) return null;
+
+  const container = ownerDocument.body || ownerDocument.documentElement;
+  if (!container) return null;
+
+  container.appendChild(probe);
+  const resolvedColor = ownerDocument.defaultView.getComputedStyle(probe).color;
+  probe.remove();
+  return parseCssRgb(resolvedColor);
+};
+
+const relativeLuminance = rgb => rgb.reduce((luminance, component, index) => {
+  const channel = component / 255;
+  const linearChannel = channel <= 0.04045
+    ? channel / 12.92
+    : ((channel + 0.055) / 1.055) ** 2.4;
+  return luminance + linearChannel * [0.2126, 0.7152, 0.0722][index];
+}, 0);
+
+const whiteTextContrast = rgb => 1.05 / (relativeLuminance(rgb) + 0.05);
+
+const darkenForWhiteText = rgb => {
+  if (whiteTextContrast(rgb) >= minimumWhiteTextContrast) {
+    return rgb.map(component => Math.floor(component));
+  }
+
+  let accessibleScale = 0;
+  let inaccessibleScale = 1;
+  for (let index = 0; index < 24; index += 1) {
+    const candidateScale = (accessibleScale + inaccessibleScale) / 2;
+    const candidate = rgb.map(component => component * candidateScale);
+    if (whiteTextContrast(candidate) >= minimumWhiteTextContrast) {
+      accessibleScale = candidateScale;
+    } else {
+      inaccessibleScale = candidateScale;
+    }
+  }
+
+  return rgb.map(component => Math.floor(component * accessibleScale));
+};
+
+export const getAccessibleFocusLabelBackground = (
+  focusColor,
+  ownerDocument = typeof document === 'undefined' ? null : document
+) => {
+  const focusRgb = resolveCssRgb(focusColor, ownerDocument) || fallbackFocusLabelRgb;
+  return `rgb(${darkenForWhiteText(focusRgb).join(', ')})`;
+};
 
 const keyButtonStyles = `
   .keyButtonContainer {
@@ -201,6 +300,10 @@ export const statusStyles = `
 
 export const injectStylesheet = (parent, replace) => {
     openKeyNav = parent;
+    const focusLabelBackground = getAccessibleFocusLabelBackground(
+      openKeyNav.config.focus.outlineColor,
+      document
+    );
 
 
     if(document.querySelectorAll('.'+styleClassname).length > 0){
@@ -243,6 +346,20 @@ export const injectStylesheet = (parent, replace) => {
         position: absolute;
         z-index: 99999999;
         font-family: monospace;
+      }
+      .openKeyNav-keylabel-alternatives {
+        display: inline-flex;
+        align-items: center;
+      }
+      .openKeyNav-keylabel-alternative + .openKeyNav-keylabel-alternative {
+        border-left: 1px solid currentColor;
+        margin-left: .3em;
+        padding-left: .3em;
+      }
+      .openKeyNav-keylabel-focused {
+        background-color: ${focusLabelBackground};
+        color: #fff;
+        text-shadow: none;
       }
       .openKeyNav-label[data-openkeynav-position="left"]::after,
       .openKeyNav-label[data-openkeynav-position="right"]::before,
@@ -323,6 +440,18 @@ export const injectStylesheet = (parent, replace) => {
         border-left: ${openKeyNav.config.spot.arrowSize_px}px solid transparent; 
         border-right: ${openKeyNav.config.spot.arrowSize_px}px solid transparent; 
       }
+      .openKeyNav-keylabel-focused[data-openkeynav-position="left"]::after {
+        border-left-color: ${focusLabelBackground};
+      }
+      .openKeyNav-keylabel-focused[data-openkeynav-position="right"]::after {
+        border-right-color: ${focusLabelBackground};
+      }
+      .openKeyNav-keylabel-focused[data-openkeynav-position="top"]::after {
+        border-top-color: ${focusLabelBackground};
+      }
+      .openKeyNav-keylabel-focused[data-openkeynav-position="bottom"]::after {
+        border-bottom-color: ${focusLabelBackground};
+      }
       .openKeyNav-label-selected{
         // padding : 0;
         // margin : 0;
@@ -339,7 +468,8 @@ export const injectStylesheet = (parent, replace) => {
         // padding : 0 !important;
         // margin: 0 !important;
       }
-      [data-openkeynav-label]:not(.openKeyNav-label):not(button){
+      [data-openkeynav-label]:not(.openKeyNav-label):not(button),
+      [data-openkeynav-keylabel-target-active]:not(button){
         // outline: 2px double ${openKeyNav.config.focus.outlineColor} !important; 
         // outline-offset: 2px !important;
         box-shadow:  inset 0 0 0 .5px #000,
@@ -350,7 +480,8 @@ export const injectStylesheet = (parent, replace) => {
         border-color: #000;
         border-radius: 3px;
       }
-      button[data-openkeynav-label]{
+      button[data-openkeynav-label],
+      button[data-openkeynav-keylabel-target-active]{
         outline:2px solid #000 !important;
       }
       .openKeyNav-inaccessible:not(.openKeyNav-label):not(button){
@@ -413,7 +544,8 @@ export const injectStylesheet = (parent, replace) => {
       // `;
       // ensuring hidden labeled elements are made visible
       style.textContent += `
-        [data-openkeynav-label]:not(.openKeyNav-label){
+        [data-openkeynav-label]:not(.openKeyNav-label),
+        [data-openkeynav-keylabel-target-active]{
           opacity:1 !important;
           visibility:visible !important;
         }

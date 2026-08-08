@@ -2,6 +2,171 @@ import { handleEscape } from "./escape";
 import { isTabbable } from "./isTabbable";
 import { disableScrolling } from "./scrolling";
 
+export const KEYLABEL_SYMBOLS = Object.freeze({
+  shift: '⇧',
+  tab: '⇥',
+  left: '←',
+  right: '→',
+  up: '↑',
+  down: '↓',
+  horizontalAxis: '↔',
+  verticalAxis: '↕',
+  enter: '↵',
+  space: '⎵',
+});
+
+const assignedTargetByOverlay = new WeakMap();
+const assignedTargetsByOwner = new WeakMap();
+const ASSIGNED_KEYLABEL_TARGET_ATTRIBUTE =
+  'data-openkeynav-keylabel-target-active';
+
+const ownerDocument = openKeyNav => (
+  openKeyNav?.statusService?.document ||
+  (typeof document === 'undefined' ? null : document)
+);
+
+const ownedAssignedKeylabels = (openKeyNav, owner) => {
+  const documentObject = ownerDocument(openKeyNav);
+  if (!documentObject?.querySelectorAll) return [];
+  return Array.from(documentObject.querySelectorAll(
+    '.openKeyNav-label[data-openkeynav-keylabel-owner]'
+  )).filter(overlay => overlay.dataset.openkeynavKeylabelOwner === owner);
+};
+
+const releaseAssignedTargets = (openKeyNav, owner) => {
+  const targetsByOwner = assignedTargetsByOwner.get(openKeyNav);
+  const targets = targetsByOwner?.get(owner);
+  if (!targets) return;
+
+  targetsByOwner.delete(owner);
+  targets.forEach(target => {
+    const remainsAssigned = Array.from(targetsByOwner.values())
+      .some(ownedTargets => ownedTargets.has(target));
+    if (!remainsAssigned) {
+      target.removeAttribute?.(ASSIGNED_KEYLABEL_TARGET_ATTRIBUTE);
+    }
+  });
+  if (targetsByOwner.size === 0) assignedTargetsByOwner.delete(openKeyNav);
+};
+
+const markAssignedTarget = (openKeyNav, owner, target) => {
+  let targetsByOwner = assignedTargetsByOwner.get(openKeyNav);
+  if (!targetsByOwner) {
+    targetsByOwner = new Map();
+    assignedTargetsByOwner.set(openKeyNav, targetsByOwner);
+  }
+  let targets = targetsByOwner.get(owner);
+  if (!targets) {
+    targets = new Set();
+    targetsByOwner.set(owner, targets);
+  }
+  targets.add(target);
+  target.setAttribute?.(ASSIGNED_KEYLABEL_TARGET_ATTRIBUTE, '');
+};
+
+/**
+ * Removes one caller's descriptive keylabels without disturbing Click or Move
+ * Mode labels. Callers own only the assignment data; this module owns the
+ * overlay lifecycle.
+ */
+export const clearAssignedKeylabels = (openKeyNav, owner) => {
+  ownedAssignedKeylabels(openKeyNav, owner).forEach(overlay => overlay.remove());
+  releaseAssignedTargets(openKeyNav, owner);
+};
+
+/**
+ * Repositions an existing caller-owned set through OpenKeyNav's established
+ * overlay placement routine.
+ */
+export const repositionAssignedKeylabels = (openKeyNav, owner) => {
+  ownedAssignedKeylabels(openKeyNav, owner).forEach(overlay => {
+    const target = assignedTargetByOverlay.get(overlay);
+    if (!target?.isConnected) {
+      overlay.remove();
+      return;
+    }
+    openKeyNav.updateOverlayPosition(target, overlay);
+  });
+};
+
+/**
+ * Renders caller-supplied descriptive labels with the existing keylabel
+ * creation and positioning system. These labels are hints, not type-to-select
+ * labels, so the page targets are deliberately left without
+ * data-openkeynav-label attributes. The renderer applies the shared keylabel
+ * target treatment through a non-selectable, owner-managed attribute instead.
+ */
+export const showAssignedKeylabels = (
+  openKeyNav,
+  assignments,
+  {
+    owner,
+    cssClass = null,
+    focusedTarget = null,
+  } = {}
+) => {
+  if (!owner) {
+    throw new TypeError('Assigned keylabels require an owner.');
+  }
+
+  clearAssignedKeylabels(openKeyNav, owner);
+  const overlays = [];
+  const assignmentsByTarget = new Map();
+  Array.from(assignments || []).forEach(assignment => {
+    const target = assignment?.target;
+    const symbols = Array.from(String(assignment?.symbols || ''))
+      .slice(0, 2)
+      .join('');
+    if (!target?.isConnected || !symbols) return;
+
+    const existing = assignmentsByTarget.get(target);
+    if (!existing) {
+      assignmentsByTarget.set(target, {
+        target,
+        symbols,
+        segments: [symbols],
+        commands: assignment.command ? [String(assignment.command)] : [],
+      });
+      return;
+    }
+
+    const availableSymbols = 2 - Array.from(existing.symbols).length;
+    if (Array.from(symbols).length > availableSymbols) return;
+    existing.symbols += symbols;
+    existing.segments.push(symbols);
+    if (assignment.command) existing.commands.push(String(assignment.command));
+  });
+
+  assignmentsByTarget.forEach(({ target, symbols, segments, commands }) => {
+    const overlay = openKeyNav.createOverlay(target, symbols, cssClass);
+    overlay.dataset.openkeynavKeylabelOwner = owner;
+    overlay.dataset.openkeynavKeylabelCommand = commands.join(' ');
+    if (target.id) overlay.dataset.openkeynavKeylabelTarget = target.id;
+    overlay.setAttribute('data-openkeynav-ui', `${owner}-keylabel`);
+    overlay.setAttribute('aria-hidden', 'true');
+    if (target === focusedTarget) {
+      overlay.classList.add('openKeyNav-keylabel-focused');
+      overlay.dataset.openkeynavKeylabelFocused = 'true';
+    }
+    if (segments.length > 1) {
+      overlay.classList.add('openKeyNav-keylabel-alternatives');
+      overlay.dataset.openkeynavKeylabelAlternatives = String(segments.length);
+      const segmentElements = segments.map(segment => {
+        const element = overlay.ownerDocument.createElement('span');
+        element.className = 'openKeyNav-keylabel-alternative';
+        element.textContent = segment;
+        return element;
+      });
+      overlay.replaceChildren(...segmentElements);
+      openKeyNav.updateOverlayPosition(target, overlay);
+    }
+    assignedTargetByOverlay.set(overlay, target);
+    markAssignedTarget(openKeyNav, owner, target);
+    overlays.push(overlay);
+  });
+  return overlays;
+};
+
 export const generateLabels = (openKeyNav, count) => {
     function shuffle(array) {
       for (let i = array.length - 1; i > 0; i--) {

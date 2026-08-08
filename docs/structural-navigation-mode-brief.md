@@ -319,6 +319,13 @@ Build and normalize that tree deterministically:
 
 These rules prevent the same authored section or heading from appearing repeatedly under slightly different inferred identities.
 
+When a real focus target contains one or more authored headings, assign that
+target to the context of the first contained heading in document order. The
+focus target may precede the heading node in traversal order because it is the
+heading's interactive wrapper. For example, focus on `<a><h2>Title</h2></a>` is
+focus in the H2 context. If one focus target contains both H2 and H3, the H2
+owns that target; the later H3 does not also claim it.
+
 ### Context sources
 
 Infer contexts conservatively from:
@@ -478,7 +485,8 @@ Define relationship commands independently of their key bindings:
    structural sibling when the active context is unheaded.
 4. Next horizontal peer at the active authored heading level, or next
    structural sibling when the active context is unheaded.
-5. Broaden to the structural parent.
+5. Broaden to the authored outline parent for a heading-backed context, or the
+   structural parent for an unheaded context.
 6. Narrow to the structural child on the current target's path, or advance to
    the next qualifying deeper context when that path has no child.
 7. Previous applicable peer context.
@@ -492,7 +500,7 @@ Integrate with OpenKeyNav's configurable shortcut system. A reasonable initial m
 | Key | Relationship command |
 | --- | --- |
 | `Shift+Tab` / `Tab` | Native browser sequential focus; not intercepted |
-| `Shift+ArrowUp` | Broaden to structural parent |
+| `Shift+ArrowUp` | Broaden to the authored outline parent, or structural parent for an unheaded context |
 | `Shift+ArrowDown` | Narrow along the current target's path, or advance one qualifying level |
 | `Shift+ArrowLeft` | Previous context at the same authored heading level, or previous structural sibling for an unheaded context |
 | `Shift+ArrowRight` | Next context at the same authored heading level, or next structural sibling for an unheaded context |
@@ -559,7 +567,16 @@ Do not invent “structurally corresponding” targets through text similarity o
 
 ### Broaden to parent
 
-Broaden to the immediate structural parent and keep focus on the same target.
+For a heading-backed H2–H6 context, scan backward in document order to the
+nearest preceding heading-backed context with a lower authored level. Activate
+that authored outline parent and focus the first target in its flattened
+sequence. In well-ranked content, an H3 therefore broadens to its governing H2
+even when generic DOM wrappers gave the two contexts different inferred
+parents.
+
+For an unheaded context, broaden to the immediate structural parent and keep
+focus on the same target. An H1 with no lower-level authored outline parent also
+uses its structural parent.
 
 At the root, do nothing and announce the boundary.
 
@@ -577,8 +594,11 @@ fallback rather than selecting an arbitrary child of the active context:
   Semantic regions associated with headings use their inherited level. This
   prevents an H2 command from entering an unrelated unheaded context or an H4
   merely because either appears first.
-- When the active context is unheaded, require the destination to be exactly one
-  canonical structural hierarchy level deeper and unheaded.
+- When the active context is unheaded at hierarchy level n, first look for the
+  next nonempty authored H(n+1) context. If none exists, require a nonempty
+  unheaded destination exactly one canonical structural hierarchy level deeper.
+  Thus the document/root at level 1 can narrow to the first available H2, and a
+  second command from that H2 can narrow to the first following H3.
 - Activate the first qualifying context and focus the first target in its
   flattened sequence.
 - H6 is the boundary for this page-forward heading fallback. It does not block a
@@ -628,6 +648,40 @@ Tab after a mode-reached target must continue according to the browser's actual 
 ### Enter and Space
 
 Do not repurpose Enter or Space as structural-navigation commands. They retain their page and widget meanings.
+
+### Route and activation keylabels
+
+While structural navigation is the foreground mode, use the existing OpenKeyNav
+keylabel renderer and placement logic to show compact destination hints:
+
+- `⇥` on the next native Tab destination and `⇧⇥` on the previous one. Show
+  these sequential-navigation hints by default, with a configuration switch to
+  hide them.
+- `⇧←` and `⇧→` on the first targets reached by the available previous and
+  next horizontal context commands.
+- `⇧↑` and `⇧↓` on different targets focused by the available broaden and
+  narrow commands. When a command changes only the context and retains focus,
+  omit its destination label.
+- `↵` and/or `⎵` on the currently focused target when its native semantics
+  reliably support Enter and/or Space activation.
+- For native HTML radio groups, `←↑` on the previous radio and `→↓` on the
+  next radio because those bare arrows move DOM focus. When a two-radio group
+  has one peer in both directions, use `↔↕`. Do not intercept the native keys.
+
+Each target receives at most one keylabel of at most two symbols. Combine
+one-symbol actions when they fit, such as `↵⎵`, with a visible divider that
+communicates “or.” Keep two-symbol chords joined and atomic, and retain the
+first applicable structural route when routes converge. The
+labels describe the current route without intercepting Tab, Shift+Tab, Enter,
+or Space. Keep labeled targets out of type-to-select matching, but apply the
+shared keylabel target treatment for as long as their owner-managed labels are
+visible. Use the configured focus-ring color for the label whose target is
+actively focused, darkening its background only as much as needed for at least
+4.5:1 contrast with white text while retaining the existing thin white keylabel
+outline. Omit a
+horizontal label when the focused widget owns that arrow chord. Hide
+structural labels while Click, Move, or menu is the foreground layer, restore
+them when structural navigation resumes, and remove them on exit.
 
 ### Arrow-owning controls and widgets
 
@@ -788,7 +842,9 @@ Requirements:
 - A configurable, non-focus-stealing status-dismissal command may close the visual surface while retaining visually hidden polite updates, and must defer to controls or applications that own the key.
 - Repeated navigation does not queue long or redundant announcements.
 - OpenKeyNav may augment a weak page focus indicator but must not suppress the page's native or authored focus styles.
-- A generated visual context indicator may outline the active context, but it is `aria-hidden`, ignores pointer events, never receives focus, and is removed on mode exit.
+- An opt-in generated visual context indicator may outline the active context,
+  but it is disabled by default, `aria-hidden`, ignores pointer events, never
+  receives focus, and is removed on mode exit.
 - No generated item is presented as a second focused page target.
 
 ## Public configuration
@@ -806,6 +862,8 @@ Follow OpenKeyNav's current public configuration conventions. Provide capabiliti
 - Opting into programmatic-only targets, if supported.
 - Enabling optional semantic adapters such as static tables.
 - Controlling status and announcements.
+- Opting into the large visual context indicator when the focused keylabel is
+  not sufficient for the host interface.
 
 Do not commit to a property name or nested object shape until the implementer reviews the current public API.
 
@@ -888,8 +946,11 @@ Demonstrate:
 1. Activation does not move meaningful current focus.
 2. Explicit configured or programmatic next/previous target commands move real
    focus within a narrow context, while native Tab remains unmodified.
-3. Broaden retains focus and enlarges the available flattened sequence.
-4. Narrow follows the current target's path and retains focus. When an H1–H5
+3. Broaden from a heading-backed context activates the nearest preceding
+   lower-level heading and focuses its first target. Broaden from an unheaded
+   context retains focus and enlarges the available flattened sequence.
+4. Narrow follows the current target's path and retains focus. From the
+   document/root, its fallback enters the first nonempty H2. When an H1–H5
    context has no child on that path, it advances without wrapping to the first
    nonempty H(n+1) in document order, regardless of inferred structural depth,
    and focuses that destination's first target; H6 is the fallback boundary.

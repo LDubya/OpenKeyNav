@@ -116,6 +116,56 @@ describe('buildStructuralModel', () => {
     expect(contextNamed(model, 'Malformed heading')).toBeUndefined();
   });
 
+  it('assigns a tabbable heading wrapper to its first contained heading', () => {
+    document.body.innerHTML = `
+      <a
+        id="sociocultural-theme"
+        class="hover:underline hover:decoration-amber-600"
+        href="/research/#theme=sociocultural-design"
+      >
+        <h2>Sociocultural Design</h2>
+      </a>
+      <button id="theme-details">Theme details</button>
+      <a id="multi-heading-link" href="#family">
+        <h2>Heading family</h2>
+        <h3>Nested heading</h3>
+      </a>
+      <button id="nested-target">Nested target</button>
+      <a id="non-tabbable-heading-wrapper">
+        <h2>Non-tabbable family</h2>
+        <h3>Non-tabbable detail</h3>
+      </a>
+      <button id="non-tabbable-detail-target">Detail target</button>
+    `;
+    const targets = Array.from(document.querySelectorAll('a[href], button'));
+    const model = buildStructuralModel({ root: document, targets });
+    const sociocultural = contextNamed(model, 'Sociocultural Design');
+    const family = contextNamed(model, 'Heading family');
+    const nested = contextNamed(model, 'Nested heading');
+    const nonTabbableDetail = contextNamed(model, 'Non-tabbable detail');
+
+    expect(model.directContextByTarget.get(
+      document.getElementById('sociocultural-theme')
+    )).toBe(sociocultural);
+    expect(sociocultural.targets[0])
+      .toBe(document.getElementById('sociocultural-theme'));
+    expect(model.directContextByTarget.get(
+      document.getElementById('multi-heading-link')
+    )).toBe(family);
+    expect(model.directContextByTarget.get(
+      document.getElementById('multi-heading-link')
+    )).not.toBe(nested);
+    expect(model.directContextByTarget.get(
+      document.getElementById('nested-target')
+    )).toBe(nested);
+    expect(model.directContextByTarget.has(
+      document.getElementById('non-tabbable-heading-wrapper')
+    )).toBe(false);
+    expect(model.directContextByTarget.get(
+      document.getElementById('non-tabbable-detail-target')
+    )).toBe(nonTabbableDetail);
+  });
+
   it('preserves same-rank heading contexts across different parents', () => {
     document.body.innerHTML = `
       <h2>First family</h2>

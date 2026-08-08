@@ -16,6 +16,13 @@ import {
   normalizeShortcut,
   preventAcceptedCommand,
 } from './keyboardEvents.js';
+import {
+  clearAssignedKeylabels,
+  KEYLABEL_SYMBOLS,
+  repositionAssignedKeylabels,
+  showAssignedKeylabels,
+} from './keylabels.js';
+import { effect } from './signals.js';
 import { discoverTabbableTargets } from './tabbableTargets.js';
 
 export const STRUCTURAL_NAVIGATION_COMMANDS = Object.freeze({
@@ -31,6 +38,8 @@ export const STRUCTURAL_NAVIGATION_COMMANDS = Object.freeze({
 
 const STRUCTURAL_STATUS_CHANNEL = 'structural-navigation';
 const STRUCTURAL_EXIT_STATUS_CHANNEL = 'structural-navigation-exit';
+const STRUCTURAL_KEYLABEL_OWNER = 'structural-navigation';
+const STRUCTURAL_KEYLABEL_CLASS = 'openKeyNav-structural-keylabel';
 const ARROW_OWNING_ROLES = new Set([
   'combobox',
   'grid',
@@ -84,6 +93,31 @@ const shortcutLabel = shortcut => {
     ? 'Esc'
     : (normalized.key === ' ' ? 'Space' : normalized.key);
   return [...modifiers, key].join('+');
+};
+
+const shortcutSymbols = shortcut => {
+  const normalized = normalizeShortcut(shortcut);
+  if (
+    !normalized ||
+    normalized.altKey ||
+    normalized.ctrlKey ||
+    normalized.metaKey
+  ) {
+    return '';
+  }
+
+  const keySymbol = {
+    Tab: KEYLABEL_SYMBOLS.tab,
+    ArrowLeft: KEYLABEL_SYMBOLS.left,
+    ArrowRight: KEYLABEL_SYMBOLS.right,
+    ArrowUp: KEYLABEL_SYMBOLS.up,
+    ArrowDown: KEYLABEL_SYMBOLS.down,
+    Enter: KEYLABEL_SYMBOLS.enter,
+    ' ': KEYLABEL_SYMBOLS.space,
+    Spacebar: KEYLABEL_SYMBOLS.space,
+  }[normalized.key];
+  if (!keySymbol) return '';
+  return `${normalized.shiftKey ? KEYLABEL_SYMBOLS.shift : ''}${keySymbol}`;
 };
 
 /**
@@ -214,6 +248,163 @@ export const classifyStructuralKeyOwnership = (event, config = {}) => {
   }
 
   return result;
+};
+
+const shortcutEventForTarget = (target, shortcut) => {
+  const normalized = normalizeShortcut(shortcut);
+  if (!target || !normalized) return null;
+  const path = [];
+  let current = target;
+  while (current) {
+    path.push(current);
+    current = getComposedParent(current);
+  }
+  return {
+    target,
+    key: normalized.key,
+    altKey: normalized.altKey,
+    ctrlKey: normalized.ctrlKey,
+    metaKey: normalized.metaKey,
+    shiftKey: normalized.shiftKey,
+    composedPath: () => path,
+  };
+};
+
+const targetAcceptsStructuralArrow = (target, shortcut, config) => {
+  const event = shortcutEventForTarget(target, shortcut);
+  if (!event || !event.key.startsWith('Arrow')) return false;
+  const ownership = classifyStructuralKeyOwnership(event, config);
+  if (ownership.all) return false;
+  if (!ownership.arrows) return true;
+
+  const overrideModifier = MODIFIER_KEYS.includes(config.overrideModifier)
+    ? config.overrideModifier
+    : null;
+  return Boolean(overrideModifier && event[overrideModifier]);
+};
+
+const nativeActivationSymbols = target => {
+  if (!isElement(target) || target.hasAttribute('disabled')) return [];
+  const tagName = target.tagName.toLowerCase();
+  const both = [KEYLABEL_SYMBOLS.enter, KEYLABEL_SYMBOLS.space];
+
+  if (tagName === 'button' || tagName === 'summary') return both;
+  if (
+    (tagName === 'a' || tagName === 'area') &&
+    target.hasAttribute('href')
+  ) {
+    return [KEYLABEL_SYMBOLS.enter];
+  }
+  if (tagName !== 'input') return [];
+
+  const inputType = (target.getAttribute('type') || 'text').toLowerCase();
+  if (['button', 'submit', 'reset', 'image'].includes(inputType)) return both;
+  if (['checkbox', 'radio'].includes(inputType)) {
+    return [KEYLABEL_SYMBOLS.space];
+  }
+  return [];
+};
+
+const radioIsAvailable = (radio, root, displayCheck, targetFilter) => {
+  if (
+    !radio?.isConnected ||
+    radio.type !== 'radio' ||
+    !isComposedWithin(root, radio) ||
+    radio.closest?.('[inert], [hidden]') ||
+    (targetFilter && !targetFilter(radio))
+  ) {
+    return false;
+  }
+
+  try {
+    if (radio.matches(':disabled')) return false;
+  } catch (error) {
+    if (radio.disabled) return false;
+  }
+
+  if (displayCheck === 'none') return true;
+  const style = radio.ownerDocument?.defaultView?.getComputedStyle?.(radio);
+  if (style?.display === 'none' || ['hidden', 'collapse'].includes(style?.visibility)) {
+    return false;
+  }
+  return elementClientRects(radio).length > 0;
+};
+
+/**
+ * Predicts the browser's native focus movement inside one HTML radio group.
+ * These are descriptive hints only; bare arrow events remain browser-owned.
+ */
+const nativeRadioArrowAssignments = (
+  target,
+  root,
+  displayCheck,
+  targetFilter
+) => {
+  if (
+    !isElement(target) ||
+    target.tagName.toLowerCase() !== 'input' ||
+    target.type !== 'radio' ||
+    !target.name
+  ) {
+    return [];
+  }
+
+  const treeRoot = target.getRootNode?.() || target.ownerDocument;
+  if (!treeRoot?.querySelectorAll) return [];
+  const radios = Array.from(treeRoot.querySelectorAll('input')).filter(radio => (
+    radio !== target &&
+    radio.type === 'radio' &&
+    radio.name === target.name &&
+    radio.form === target.form &&
+    radioIsAvailable(radio, root, displayCheck, targetFilter)
+  ));
+  const group = [target, ...radios].sort((left, right) => {
+    if (left === right) return 0;
+    const position = left.compareDocumentPosition(right);
+    return position & 2 ? 1 : -1;
+  });
+  if (group.length < 2) return [];
+
+  const currentIndex = group.indexOf(target);
+  const previous = group[(currentIndex - 1 + group.length) % group.length];
+  const next = group[(currentIndex + 1) % group.length];
+  if (previous === next) {
+    return [
+      {
+        target: previous,
+        symbols: KEYLABEL_SYMBOLS.horizontalAxis,
+        command: 'nativeArrowLeft nativeArrowRight',
+      },
+      {
+        target: previous,
+        symbols: KEYLABEL_SYMBOLS.verticalAxis,
+        command: 'nativeArrowUp nativeArrowDown',
+      },
+    ];
+  }
+
+  return [
+    {
+      target: previous,
+      symbols: KEYLABEL_SYMBOLS.left,
+      command: 'nativeArrowLeft',
+    },
+    {
+      target: previous,
+      symbols: KEYLABEL_SYMBOLS.up,
+      command: 'nativeArrowUp',
+    },
+    {
+      target: next,
+      symbols: KEYLABEL_SYMBOLS.right,
+      command: 'nativeArrowRight',
+    },
+    {
+      target: next,
+      symbols: KEYLABEL_SYMBOLS.down,
+      command: 'nativeArrowDown',
+    },
+  ];
 };
 
 const resolveValue = (value, details) => (
@@ -375,9 +566,41 @@ const horizontalContextPeers = (model, context) => {
 };
 
 /**
+ * Finds the authored outline parent for a heading-backed context. Walking
+ * backward to the nearest lower-level heading prevents inferred DOM container
+ * ancestry from skipping the heading level that visually and semantically
+ * introduces the current context.
+ */
+const previousBroaderHeadingContext = (model, context) => {
+  const headingLevel = contextHeadingLevel(context);
+  if (headingLevel === null || headingLevel <= 1) return null;
+
+  const orderedContexts = modelStructuralContexts(model)
+    .sort((left, right) => (
+      contextOrder(left) - contextOrder(right) ||
+      String(contextId(left)).localeCompare(String(contextId(right)))
+    ));
+  const currentIndex = orderedContexts.indexOf(context);
+  if (currentIndex <= 0) return null;
+
+  for (let index = currentIndex - 1; index >= 0; index -= 1) {
+    const candidate = orderedContexts[index];
+    const candidateHeadingLevel = contextHeadingLevel(candidate);
+    if (
+      candidateHeadingLevel !== null &&
+      candidateHeadingLevel < headingLevel
+    ) {
+      return contextTargets(candidate).length > 0 ? candidate : null;
+    }
+  }
+
+  return null;
+};
+
+/**
  * Finds the next page-forward context. A heading-backed context advances by
- * authored heading level; an unheaded context advances by inferred structural
- * depth.
+ * authored heading level. An unheaded context first enters an authored heading
+ * at the next reported level, then falls back to inferred structural depth.
  */
 const nextNarrowFallbackContext = (model, context) => {
   const headingLevel = contextHeadingLevel(context);
@@ -401,6 +624,11 @@ const nextNarrowFallbackContext = (model, context) => {
   }
 
   const hierarchyLevel = contextHierarchyLevel(model, context);
+  const nextHeadingContext = followingContexts.find(candidate => (
+    contextHeadingLevel(candidate) === hierarchyLevel + 1
+  ));
+  if (nextHeadingContext) return nextHeadingContext;
+
   return followingContexts.find(candidate => (
     contextHeadingLevel(candidate) === null &&
     contextHierarchyLevel(model, candidate) === hierarchyLevel + 1
@@ -530,13 +758,24 @@ export class StructuralNavigationController {
     this.contextIndicatorFrame = null;
     this.contextIndicatorResizeObserver = null;
     this.contextIndicatorObservedElements = new Set();
+    this.keylabelUpdateFrame = null;
+    this.keylabelUpdateTimer = null;
+    this.updatingKeylabels = false;
+    this.foregroundModeWasActive = false;
 
     this.handleFocusIn = this.handleFocusIn.bind(this);
     this.handleMutations = this.handleMutations.bind(this);
     this.handleSlotChange = this.handleSlotChange.bind(this);
     this.invalidate = this.invalidate.bind(this);
+    this.handleModeLayerChange = this.handleModeLayerChange.bind(this);
     this.scheduleContextIndicatorUpdate =
       this.scheduleContextIndicatorUpdate.bind(this);
+    this.scheduleKeylabelUpdate = this.scheduleKeylabelUpdate.bind(this);
+
+    // Structural navigation consumes the keylabel renderer as a one-way
+    // dependency. Signal changes pause hints under foreground modes and restore
+    // them when the structural layer becomes visible again.
+    effect(this.handleModeLayerChange);
   }
 
   get config() {
@@ -545,6 +784,30 @@ export class StructuralNavigationController {
 
   get active() {
     return Boolean(this.openKeyNav.config.modes.structuralNavigation.value);
+  }
+
+  get foregroundModeActive() {
+    return Boolean(
+      this.openKeyNav.config.modes.clicking.value ||
+      this.openKeyNav.config.modes.moving.value ||
+      this.openKeyNav.config.modes.menu.value
+    );
+  }
+
+  handleModeLayerChange() {
+    const active = this.active;
+    const foregroundModeActive = this.foregroundModeActive;
+    const resumedFromForeground = (
+      this.foregroundModeWasActive && !foregroundModeActive
+    );
+    this.foregroundModeWasActive = foregroundModeActive;
+    if (!active || foregroundModeActive) {
+      this.cancelKeylabelUpdate();
+      this.clearKeylabels();
+      return;
+    }
+    if (resumedFromForeground && this.dirty) this.refresh();
+    if (!this.updatingKeylabels) this.scheduleKeylabelUpdate();
   }
 
   resolveActiveRoot() {
@@ -665,6 +928,8 @@ export class StructuralNavigationController {
     this.document?.defaultView?.removeEventListener('popstate', this.invalidate);
     this.disconnectContextIndicatorListeners();
     this.disconnectObservers();
+    this.cancelKeylabelUpdate();
+    this.clearKeylabels();
     this.openKeyNav.clearStatus(STRUCTURAL_STATUS_CHANNEL);
     this.openKeyNav.clearStatus(STRUCTURAL_EXIT_STATUS_CHANNEL);
     this.removeContextIndicator();
@@ -736,11 +1001,7 @@ export class StructuralNavigationController {
     };
     const exitShortcut = normalizeShortcut(this.config.exitCommand) || defaultExit;
     const configuredExit = matchesStructuralShortcut(event, exitShortcut);
-    const foregroundModeActive = Boolean(
-      this.openKeyNav.config.modes.clicking.value ||
-      this.openKeyNav.config.modes.moving.value ||
-      this.openKeyNav.config.modes.menu.value
-    );
+    const foregroundModeActive = this.foregroundModeActive;
 
     // Click, Move, and menu are temporary layers over structural navigation.
     // Their keystrokes take priority until they finish. The deliberately
@@ -962,6 +1223,7 @@ export class StructuralNavigationController {
     ) ? preservedTyped : null;
 
     this.scheduleContextIndicatorUpdate();
+    if (!this.updatingKeylabels) this.scheduleKeylabelUpdate();
     return true;
   }
 
@@ -989,6 +1251,7 @@ export class StructuralNavigationController {
       } else if (!this.activeStructuralContext) {
         this.activeStructuralContext = this.model?.rootContext || null;
       }
+      this.scheduleKeylabelUpdate();
       if (announce) this.updateStatus();
       return;
     }
@@ -1012,6 +1275,7 @@ export class StructuralNavigationController {
       if (!routeStillContainsTarget) this.activeStructuralContext = direct;
     }
 
+    this.scheduleKeylabelUpdate();
     if (announce) this.updateStatus();
   }
 
@@ -1030,12 +1294,14 @@ export class StructuralNavigationController {
     if (mutations.every(mutationBelongsOnlyToGeneratedUI)) return;
     this.dirty = true;
     this.scheduleContextIndicatorUpdate();
+    this.clearKeylabels();
   }
 
   invalidate() {
     if (this.active) {
       this.dirty = true;
       this.scheduleContextIndicatorUpdate();
+      this.clearKeylabels();
     }
   }
 
@@ -1043,6 +1309,7 @@ export class StructuralNavigationController {
     if (isOpenKeyNavGeneratedUI(event.target)) return;
     this.dirty = true;
     this.scheduleContextIndicatorUpdate();
+    this.clearKeylabels();
   }
 
   reconnectObservers() {
@@ -1209,13 +1476,24 @@ export class StructuralNavigationController {
   broadenContext() {
     this.useStructuralRoute();
 
-    const parent = parentContext(this.model, this.activeStructuralContext);
+    const headingParent = previousBroaderHeadingContext(
+      this.model,
+      this.activeStructuralContext
+    );
+    const parent = headingParent || parentContext(
+      this.model,
+      this.activeStructuralContext
+    );
     if (!parent) {
       this.updateStatus('Already at the broadest context.');
       return;
     }
     this.activeStructuralContext = parent;
-    this.updateStatus();
+    if (headingParent) {
+      this.focusTarget(contextTargets(parent)[0]);
+    } else {
+      this.updateStatus();
+    }
   }
 
   narrowContext() {
@@ -1290,6 +1568,215 @@ export class StructuralNavigationController {
       this.model.rootContext;
   }
 
+  clearKeylabels() {
+    clearAssignedKeylabels(this.openKeyNav, STRUCTURAL_KEYLABEL_OWNER);
+  }
+
+  cancelKeylabelUpdate() {
+    const view = this.document?.defaultView;
+    if (
+      this.keylabelUpdateFrame !== null &&
+      typeof view?.cancelAnimationFrame === 'function'
+    ) {
+      view.cancelAnimationFrame(this.keylabelUpdateFrame);
+    }
+    if (this.keylabelUpdateTimer !== null) {
+      clearTimeout(this.keylabelUpdateTimer);
+    }
+    this.keylabelUpdateFrame = null;
+    this.keylabelUpdateTimer = null;
+  }
+
+  scheduleKeylabelUpdate() {
+    if (
+      !this.active ||
+      this.foregroundModeActive ||
+      this.config.keylabels?.enabled === false ||
+      this.keylabelUpdateFrame !== null ||
+      this.keylabelUpdateTimer !== null
+    ) {
+      if (this.config.keylabels?.enabled === false) this.clearKeylabels();
+      return;
+    }
+
+    const update = () => {
+      this.keylabelUpdateFrame = null;
+      this.keylabelUpdateTimer = null;
+      this.updateKeylabels();
+    };
+    const view = this.document?.defaultView;
+    if (typeof view?.requestAnimationFrame === 'function') {
+      this.keylabelUpdateFrame = view.requestAnimationFrame(update);
+    } else {
+      this.keylabelUpdateTimer = setTimeout(update, 0);
+    }
+  }
+
+  keylabelAssignments() {
+    const assignments = [];
+    const keylabelConfig = this.config.keylabels || {};
+    const structuralRoute = (
+      this.activeTypedContext && this.currentTarget
+        ? directContextForTarget(this.model, this.currentTarget)
+        : this.activeStructuralContext
+    ) || this.model?.rootContext;
+    const add = (target, symbols, command) => {
+      if (!target || !symbols || !this.targetSet.has(target)) return;
+      assignments.push({ target, symbols, command });
+    };
+    const addNativeFocusRoute = assignment => {
+      const target = assignment?.target;
+      if (!target?.isConnected || !isComposedWithin(this.root, target)) return;
+      assignments.push(assignment);
+    };
+
+    if (keylabelConfig.nativeArrows !== false) {
+      nativeRadioArrowAssignments(
+        getDeepActiveElement(this.root),
+        this.root,
+        this.config.displayCheck || 'full',
+        this.config.targetFilter
+      ).forEach(addNativeFocusRoute);
+    }
+
+    if (keylabelConfig.horizontal !== false && this.currentTarget) {
+      const { contexts: peers } = horizontalContextPeers(
+        this.model,
+        structuralRoute
+      );
+      const currentIndex = peers.indexOf(structuralRoute);
+      [
+        [-1, 'previousSiblingContext'],
+        [1, 'nextSiblingContext'],
+      ].forEach(([direction, command]) => {
+        const shortcut = this.config.commands?.[command];
+        const symbols = shortcutSymbols(shortcut);
+        if (
+          currentIndex < 0 ||
+          !symbols ||
+          !targetAcceptsStructuralArrow(
+            this.currentTarget,
+            shortcut,
+            this.config
+          )
+        ) {
+          return;
+        }
+        const peer = peers[currentIndex + direction];
+        add(contextTargets(peer)[0], symbols, command);
+      });
+    }
+
+    if (keylabelConfig.vertical !== false && structuralRoute) {
+      const commandSource = getDeepActiveElement(this.root);
+      const addVertical = (command, target) => {
+        const shortcut = this.config.commands?.[command];
+        const symbols = shortcutSymbols(shortcut);
+        if (
+          target === this.currentTarget ||
+          !symbols ||
+          !targetAcceptsStructuralArrow(
+            commandSource,
+            shortcut,
+            this.config
+          )
+        ) {
+          return;
+        }
+        add(target, symbols, command);
+      };
+
+      const headingParent = previousBroaderHeadingContext(
+        this.model,
+        structuralRoute
+      );
+      if (headingParent) {
+        addVertical(
+          'broadenContext',
+          contextTargets(headingParent)[0]
+        );
+      }
+
+      const child = this.currentTarget
+        ? normalizeContextChildren(this.model, structuralRoute)
+          .find(context => contextTargets(context).includes(this.currentTarget))
+        : null;
+      if (!child) {
+        const headingLevel = contextHeadingLevel(structuralRoute);
+        const canNarrow = headingLevel === null || headingLevel < 6;
+        const fallback = canNarrow
+          ? nextNarrowFallbackContext(this.model, structuralRoute)
+          : null;
+        if (fallback) {
+          addVertical('narrowContext', contextTargets(fallback)[0]);
+        }
+      }
+    }
+
+    if (keylabelConfig.activation !== false && this.currentTarget) {
+      nativeActivationSymbols(this.currentTarget).forEach(symbols => {
+        add(
+          this.currentTarget,
+          symbols,
+          symbols === KEYLABEL_SYMBOLS.enter
+            ? 'activateEnter'
+            : 'activateSpace'
+        );
+      });
+    }
+
+    // Familiar sequential-navigation hints are lowest priority when a Tab
+    // route and a structural route reach the same target.
+    if (keylabelConfig.tab !== false) {
+      const tabTargets = this.targets.filter(target => target.tabIndex >= 0);
+      const currentIndex = tabTargets.indexOf(this.currentTarget);
+      if (currentIndex >= 0) {
+        add(
+          tabTargets[currentIndex - 1],
+          `${KEYLABEL_SYMBOLS.shift}${KEYLABEL_SYMBOLS.tab}`,
+          'previousTabTarget'
+        );
+        add(
+          tabTargets[currentIndex + 1],
+          KEYLABEL_SYMBOLS.tab,
+          'nextTabTarget'
+        );
+      }
+    }
+
+    return assignments;
+  }
+
+  updateKeylabels() {
+    if (
+      !this.active ||
+      this.foregroundModeActive ||
+      this.config.keylabels?.enabled === false
+    ) {
+      this.clearKeylabels();
+      return;
+    }
+
+    this.updatingKeylabels = true;
+    try {
+      if (this.dirty || !this.model) {
+        this.clearKeylabels();
+        return;
+      }
+      showAssignedKeylabels(
+        this.openKeyNav,
+        this.keylabelAssignments(),
+        {
+          owner: STRUCTURAL_KEYLABEL_OWNER,
+          cssClass: STRUCTURAL_KEYLABEL_CLASS,
+          focusedTarget: getDeepActiveElement(this.root),
+        }
+      );
+    } finally {
+      this.updatingKeylabels = false;
+    }
+  }
+
   connectContextIndicatorListeners() {
     const view = this.document?.defaultView;
     view?.addEventListener('scroll', this.scheduleContextIndicatorUpdate, true);
@@ -1317,12 +1804,20 @@ export class StructuralNavigationController {
     const view = this.document?.defaultView;
     if (typeof view?.requestAnimationFrame !== 'function') {
       this.updateContextIndicator();
+      repositionAssignedKeylabels(
+        this.openKeyNav,
+        STRUCTURAL_KEYLABEL_OWNER
+      );
       return;
     }
     if (this.contextIndicatorFrame !== null) return;
     this.contextIndicatorFrame = view.requestAnimationFrame(() => {
       this.contextIndicatorFrame = null;
       this.updateContextIndicator();
+      repositionAssignedKeylabels(
+        this.openKeyNav,
+        STRUCTURAL_KEYLABEL_OWNER
+      );
     });
   }
 
@@ -1470,7 +1965,10 @@ export class StructuralNavigationController {
 
   updateStatus(prefix = '', { force = false } = {}) {
     if (!this.active && !force) return;
-    if (this.active) this.scheduleContextIndicatorUpdate();
+    if (this.active) {
+      this.scheduleContextIndicatorUpdate();
+      this.scheduleKeylabelUpdate();
+    }
     if (!this.config.status?.enabled) {
       this.openKeyNav.clearStatus(STRUCTURAL_STATUS_CHANNEL);
       return;

@@ -12,6 +12,13 @@ async function loadFixture(page: Page) {
     };
     return Boolean(fixtureWindow.okn && fixtureWindow.fixture?.deepActiveId);
   });
+  // Most routing tests also exercise the optional context indicator.
+  await page.evaluate(() => {
+    const contextIndicator = (window as any).okn.config.modesConfig
+      .structuralNavigation.contextIndicator;
+    (window as any).defaultContextIndicatorEnabled = contextIndicator.enabled;
+    contextIndicator.enabled = true;
+  });
 }
 
 async function focusFixtureTarget(page: Page, id: string) {
@@ -87,6 +94,24 @@ test.describe('structural navigation mode', () => {
     await expect(notification).toBeVisible();
   });
 
+  test('keeps the large context outline off by default', async ({ page }) => {
+    expect(await page.evaluate(() => (
+      (window as any).defaultContextIndicatorEnabled
+    ))).toBe(false);
+    await page.evaluate(() => {
+      (window as any).okn.config.modesConfig.structuralNavigation
+        .contextIndicator.enabled = false;
+    });
+    await enableAndEnter(page);
+
+    await expect(page.locator('.openKeyNav-structural-context-outline'))
+      .toHaveCount(0);
+    expect(await page.evaluate(() => (
+      (window as any).okn.config.modesConfig.structuralNavigation
+        .contextIndicator.enabled
+    ))).toBe(false);
+  });
+
   test('routes real focus through hierarchy, boundaries, broaden/narrow, and horizontal contexts', async ({ page }) => {
     await enableOpenKeyNav(page);
     await focusFixtureTarget(page, 'in-stock');
@@ -156,6 +181,7 @@ test.describe('structural navigation mode', () => {
     await focusFixtureTarget(page, 'preorder');
     await page.keyboard.press('Shift+ArrowUp');
     await page.keyboard.press('Shift+ArrowUp');
+    await expectDeepFocus(page, 'clear-filters');
     await expect(page.locator('.openKeyNav-structural-status')).toContainText('Catalog');
     await expect(structuralStatusContent).toContainText('Heading level: 1.');
     await expect(activeIndicator).toHaveAttribute('data-context-name', 'Catalog');
@@ -167,7 +193,7 @@ test.describe('structural navigation mode', () => {
     expect(catalogIndicatorBox!.y).toBeLessThan(catalogBox!.y);
     expect(catalogIndicatorBox!.width).toBeGreaterThan(catalogBox!.width);
     await page.keyboard.press('Tab');
-    await expectDeepFocus(page, 'product-a');
+    await expectDeepFocus(page, 'in-stock');
     await expect(page.locator('.openKeyNav-structural-status')).toContainText('Catalog');
     await expect(structuralStatusContent).toContainText('Heading level: 1.');
     await expect(activeIndicator).toHaveAttribute('data-context-name', 'Catalog');
@@ -177,6 +203,154 @@ test.describe('structural navigation mode', () => {
     expect(focusEvents).toContain('preorder');
     expect(focusEvents).toContain('product-a');
     expect(blurEvents).toContain('in-stock');
+  });
+
+  test('shows compact keylabels for real focus routes and native activation', async ({ page }) => {
+    await enableOpenKeyNav(page);
+    await focusFixtureTarget(page, 'product-a');
+    await enterStructuralNavigation(page);
+
+    const structuralLabel = (command: string, target: string) => page.locator(
+      `.openKeyNav-structural-keylabel` +
+      `[data-openkeynav-keylabel-command~="${command}"]` +
+      `[data-openkeynav-keylabel-target="${target}"]`
+    );
+
+    await expect(structuralLabel('previousTabTarget', 'preorder'))
+      .toHaveText('⇧⇥');
+    await expect(structuralLabel('nextTabTarget', 'product-b'))
+      .toHaveText('⇥');
+    await expect(structuralLabel('previousSiblingContext', 'clear-filters'))
+      .toHaveText('⇧←');
+    await expect(structuralLabel('previousSiblingContext', 'clear-filters'))
+      .not.toHaveAttribute('data-openkeynav-keylabel-alternatives');
+    await expect(structuralLabel('nextSiblingContext', 'recommendation-a'))
+      .toHaveText('⇧→');
+    await expect(structuralLabel('broadenContext', 'clear-filters'))
+      .toHaveCount(0);
+    await expect(structuralLabel('narrowContext', 'same-level-current-first'))
+      .toHaveText('⇧↓');
+    await expect(structuralLabel('activateEnter', 'product-a'))
+      .toHaveText('↵');
+    await expect(structuralLabel('activateEnter', 'product-a'))
+      .toHaveClass(/openKeyNav-keylabel-focused/);
+    await expect(structuralLabel('activateSpace', 'product-a')).toHaveCount(0);
+    const focusedLabelColors = await structuralLabel(
+      'activateEnter',
+      'product-a'
+    ).evaluate(element => {
+      const style = getComputedStyle(element);
+      return {
+        background: style.backgroundColor,
+        border: style.borderColor,
+        color: style.color,
+      };
+    });
+    const destinationLabelColors = await structuralLabel(
+      'previousSiblingContext',
+      'clear-filters'
+    ).evaluate(element => {
+      const style = getComputedStyle(element);
+      return { background: style.backgroundColor, color: style.color };
+    });
+    expect(focusedLabelColors.color).toBe('rgb(255, 255, 255)');
+    expect(focusedLabelColors.border).toBe('rgb(255, 255, 255)');
+    expect(focusedLabelColors.background).not.toBe(destinationLabelColors.background);
+    const focusedBackgroundRgb = focusedLabelColors.background
+      .match(/[\d.]+/g)?.slice(0, 3).map(Number) || [];
+    const relativeLuminance = focusedBackgroundRgb.reduce((sum, component, index) => {
+      const channel = component / 255;
+      const linearChannel = channel <= 0.04045
+        ? channel / 12.92
+        : ((channel + 0.055) / 1.055) ** 2.4;
+      return sum + linearChannel * [0.2126, 0.7152, 0.0722][index];
+    }, 0);
+    expect(1.05 / (relativeLuminance + 0.05)).toBeGreaterThanOrEqual(4.5);
+    await expect(page.locator('#product-a'))
+      .toHaveAttribute('data-openkeynav-keylabel-target-active', '');
+    await expect(page.locator('#clear-filters'))
+      .toHaveAttribute('data-openkeynav-keylabel-target-active', '');
+    expect(await page.locator('#product-a').evaluate(element => (
+      getComputedStyle(element).boxShadow
+    ))).not.toBe('none');
+    expect(await page.locator('#clear-filters').evaluate(element => (
+      getComputedStyle(element).outlineStyle
+    ))).toBe('solid');
+    expect(await page.locator('.openKeyNav-structural-keylabel').evaluateAll(
+      labels => labels.every(label => Array.from(label.textContent || '').length <= 2)
+    )).toBe(true);
+    expect(await page.locator('.openKeyNav-structural-keylabel').evaluateAll(
+      labels => new Set(labels.map(label => (
+        (label as HTMLElement).dataset.openkeynavKeylabelTarget
+      ))).size === labels.length
+    )).toBe(true);
+
+    await focusFixtureTarget(page, 'native-checkbox');
+    await expect(structuralLabel('activateSpace', 'native-checkbox'))
+      .toHaveText('⎵');
+    await expect(structuralLabel('activateEnter', 'native-checkbox'))
+      .toHaveCount(0);
+
+    await focusFixtureTarget(page, 'native-button');
+    await expect(structuralLabel('activateEnter', 'native-button'))
+      .toHaveText('↵⎵');
+    await expect(structuralLabel('activateSpace', 'native-button'))
+      .toHaveText('↵⎵');
+    const activationAlternatives = structuralLabel(
+      'activateEnter',
+      'native-button'
+    );
+    await expect(activationAlternatives)
+      .toHaveAttribute('data-openkeynav-keylabel-alternatives', '2');
+    await expect(activationAlternatives.locator(
+      '.openKeyNav-keylabel-alternative'
+    )).toHaveCount(2);
+    expect(await activationAlternatives.locator(
+      '.openKeyNav-keylabel-alternative'
+    ).nth(1).evaluate(element => getComputedStyle(element).borderLeftStyle))
+      .toBe('solid');
+
+    await focusFixtureTarget(page, 'radio-one');
+    await expect(structuralLabel('nativeArrowRight', 'radio-two'))
+      .toHaveText('↔↕');
+    await expect(structuralLabel('nativeArrowDown', 'radio-two'))
+      .toHaveText('↔↕');
+    await expect(structuralLabel('nativeArrowRight', 'radio-two'))
+      .toHaveAttribute('data-openkeynav-keylabel-alternatives', '2');
+    await expect(structuralLabel('activateSpace', 'radio-one'))
+      .toHaveClass(/openKeyNav-keylabel-focused/);
+    await page.keyboard.press('ArrowRight');
+    await expectDeepFocus(page, 'radio-two');
+    await expect(structuralLabel('nativeArrowLeft', 'radio-one'))
+      .toHaveText('↔↕');
+    await expect(structuralLabel('nativeArrowLeft', 'radio-one'))
+      .not.toHaveClass(/openKeyNav-keylabel-focused/);
+    await expect(structuralLabel('activateSpace', 'radio-two'))
+      .toHaveClass(/openKeyNav-keylabel-focused/);
+
+    await focusFixtureTarget(page, 'native-button');
+    await page.keyboard.press('KeyK');
+    await expect.poll(() => page.evaluate(
+      () => (window as any).okn.config.modes.clicking.value
+    )).toBe(true);
+    await expect(page.locator('.openKeyNav-structural-keylabel')).toHaveCount(0);
+    await expect(page.locator('[data-openkeynav-keylabel-target-active]'))
+      .toHaveCount(0);
+    await expect.poll(() => page.locator(
+      '.openKeyNav-label:not(.openKeyNav-structural-keylabel)'
+    ).count()).toBeGreaterThan(0);
+    await page.keyboard.press('Escape');
+    await expect.poll(() => page.locator(
+      '.openKeyNav-structural-keylabel'
+    ).count()).toBeGreaterThan(0);
+    await expect.poll(() => page.locator(
+      '[data-openkeynav-keylabel-target-active]'
+    ).count()).toBeGreaterThan(0);
+
+    await page.keyboard.press('Alt+KeyR');
+    await expect(page.locator('.openKeyNav-structural-keylabel')).toHaveCount(0);
+    await expect(page.locator('[data-openkeynav-keylabel-target-active]'))
+      .toHaveCount(0);
   });
 
   test('keeps Structural Navigation active around heading and scroll commands without stealing editable characters', async ({ page }) => {
@@ -260,14 +434,21 @@ test.describe('structural navigation mode', () => {
     await expect.poll(() => page.evaluate(
       () => (window as any).okn.config.modes.clicking.value
     )).toBe(true);
-    await expect.poll(() => page.locator('.openKeyNav-label').count())
+    await expect.poll(() => page.locator(
+      '.openKeyNav-label:not(.openKeyNav-structural-keylabel)'
+    ).count())
       .toBeGreaterThan(0);
     await page.keyboard.press('Escape');
     await expect.poll(() => page.evaluate(() => ({
       clicking: (window as any).okn.config.modes.clicking.value,
       structural: (window as any).okn.config.modes.structuralNavigation.value,
     }))).toEqual({ clicking: false, structural: true });
-    await expect(page.locator('.openKeyNav-label')).toHaveCount(0);
+    await expect(page.locator(
+      '.openKeyNav-label:not(.openKeyNav-structural-keylabel)'
+    )).toHaveCount(0);
+    await expect.poll(() => page.locator(
+      '.openKeyNav-structural-keylabel'
+    ).count()).toBeGreaterThan(0);
     await expect(structuralStatus).toBeVisible();
     await expectDeepFocus(page, 'clear-filters');
 
@@ -311,7 +492,12 @@ test.describe('structural navigation mode', () => {
       clicking: (window as any).okn.config.modes.clicking.value,
       structural: (window as any).okn.config.modes.structuralNavigation.value,
     }))).toEqual({ clicking: false, structural: true });
-    await expect(page.locator('.openKeyNav-label')).toHaveCount(0);
+    await expect(page.locator(
+      '.openKeyNav-label:not(.openKeyNav-structural-keylabel)'
+    )).toHaveCount(0);
+    await expect.poll(() => page.locator(
+      '.openKeyNav-structural-keylabel'
+    ).count()).toBeGreaterThan(0);
     await expectDeepFocus(page, 'clear-filters');
   });
 
@@ -484,7 +670,52 @@ test.describe('structural navigation mode', () => {
     );
   });
 
-  test('outlines the active context and follows the screenshot horizontal route', async ({ page }) => {
+  test('narrows from the document to H2 and then to the next H3', async ({ page }) => {
+    await page.evaluate(() => {
+      const fixture = document.createElement('div');
+      fixture.id = 'heading-level-fixture';
+      fixture.innerHTML = `
+        <button id="document-intro">Hi, we're the MIT Visualization Group!</button>
+        <div class="research-card">
+          <div class="theme-summary">
+            <a id="fixture-tools-theme" href="#tools-theme"><h2>Visualization Authoring Tools</h2></a>
+            <p>
+              <a id="fixture-languages" href="#languages">languages</a>
+              <a id="fixture-systems" href="#systems">systems</a>
+            </p>
+            <a id="fixture-lyra" href="#lyra">Lyra</a>
+          </div>
+          <div class="latest-publications">
+            <h3>Latest &amp; Greatest</h3>
+            <a id="fixture-gofish" href="#gofish">GoFish</a>
+          </div>
+        </div>
+      `;
+      document.body.prepend(fixture);
+    });
+    await enableOpenKeyNav(page);
+    await focusFixtureTarget(page, 'document-intro');
+    await enterStructuralNavigation(page);
+
+    const status = page.locator(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    );
+    await expect(status).toContainText('Context: Document.');
+    await expect(status).toContainText('Hierarchy level: 1.');
+
+    await page.keyboard.press('Shift+ArrowDown');
+    await expectDeepFocus(page, 'fixture-tools-theme');
+    await expect(status).toContainText('Context: Visualization Authoring Tools.');
+    await expect(status).toContainText('Heading level: 2.');
+    await expect(status).toContainText('Visualization Authoring Tools, 1 of 4.');
+
+    await page.keyboard.press('Shift+ArrowDown');
+    await expectDeepFocus(page, 'fixture-gofish');
+    await expect(status).toContainText('Context: Latest & Greatest.');
+    await expect(status).toContainText('Heading level: 3.');
+  });
+
+  test('supports an opt-in context outline and follows the screenshot horizontal route', async ({ page }) => {
     await expect(page.locator('#structural-navigation-guide')).toContainText(
       'moves to the previous / next context at the same authored heading level'
     );
@@ -493,6 +724,9 @@ test.describe('structural navigation mode', () => {
     );
     await expect(page.locator('#structural-navigation-guide')).toContainText(
       'H1–H5 advances to the next nonempty H(n+1) in document order'
+    );
+    await expect(page.locator('#structural-navigation-guide')).toContainText(
+      'the document enters the first nonempty H2'
     );
     await expect(page.locator('#structural-navigation-guide')).toContainText(
       'even across different structural parents'
