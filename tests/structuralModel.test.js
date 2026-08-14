@@ -116,6 +116,52 @@ describe('buildStructuralModel', () => {
     expect(contextNamed(model, 'Malformed heading')).toBeUndefined();
   });
 
+  it('ends a heading context where its sibling focusable wrapper begins', () => {
+    document.body.innerHTML = `
+      <div id="cards">
+        <div id="first-card" role="button" tabindex="0">
+          <header><h2>First card</h2></header>
+          <p>First content</p>
+        </div>
+        <div id="second-card" role="button" tabindex="0">
+          <header><h2>Second card</h2></header>
+          <p>Second content</p>
+        </div>
+      </div>
+      <section id="following-region" aria-labelledby="following-heading">
+        <h3 id="following-heading">Following region</h3>
+        <button id="following-target">Following target</button>
+      </section>
+    `;
+    const firstCard = document.getElementById('first-card');
+    const secondCard = document.getElementById('second-card');
+    const followingTarget = document.getElementById('following-target');
+    const model = buildStructuralModel({
+      root: document,
+      targets: [firstCard, secondCard, followingTarget],
+    });
+    const first = contextNamed(model, 'First card');
+    const second = contextNamed(model, 'Second card');
+
+    expect(first.memberTargets).toEqual([firstCard]);
+    expect(first.visualElements).toContain(firstCard);
+    expect(first.visualElements).not.toContain(secondCard);
+    expect(first.visualElements).not.toContain(
+      secondCard.querySelector('header')
+    );
+    expect(first.visualElements).not.toContain(secondCard.querySelector('h2'));
+    expect(second.memberTargets).toEqual([secondCard]);
+    expect(second.visualElements).not.toContain(
+      document.getElementById('following-region')
+    );
+    expect(second.visualElements).not.toContain(
+      document.getElementById('following-heading')
+    );
+    expect(second.visualElements).not.toContain(followingTarget);
+    expect(model.directContextByTarget.get(firstCard)).toBe(first);
+    expect(model.directContextByTarget.get(secondCard)).toBe(second);
+  });
+
   it('assigns a tabbable heading wrapper to its first contained heading', () => {
     document.body.innerHTML = `
       <a

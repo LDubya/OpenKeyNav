@@ -143,7 +143,11 @@ static-table row/column inference is intentionally deferred.
   groups that heading with a following exposed target, when that wrapper ends
   before the enclosing semantic context. This keeps final heading families
   from absorbing later sibling content without promoting generic wrappers into
-  structural contexts.
+  structural contexts. When an immediate sibling branch begins another heading
+  or semantic context, the prior range ends before that branch even if its
+  heading rank is deeper. When a closing same-or-higher heading begins inside a
+  sibling wrapper, the prior range likewise ends at the start of that wrapper
+  rather than at the nested heading itself.
 - Exit removes mode state, observers, listeners, status, and any opt-in context
   box without blurring or moving the current page focus.
 

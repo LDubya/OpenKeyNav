@@ -564,10 +564,57 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
     // contains a following target outside the heading itself. This prevents a
     // final heading range from absorbing later sibling content merely because
     // no same-or-higher heading follows it.
+    var hasFollowingContextBranchBeforeTarget = function hasFollowingContextBranchBeforeTarget(element) {
+      var parent = (0, _domUtilities.getComposedParent)(element);
+      var siblings = (0, _domUtilities.getComposedChildren)(parent).filter(_domUtilities.isElement);
+      var index = siblings.indexOf(element);
+      if (index < 0) return false;
+      var _iterator3 = _createForOfIteratorHelper(siblings.slice(index + 1)),
+        _step3;
+      try {
+        var _loop = function _loop() {
+            var sibling = _step3.value;
+            if ((0, _domUtilities.isOpenKeyNavGeneratedUI)(sibling) || isSemanticallyHidden(sibling, root)) {
+              return 0; // continue
+            }
+            if (beginsContextBranch(sibling)) return {
+              v: true
+            };
+            if (liveTargets.some(function (target) {
+              return (0, _domUtilities.isComposedWithin)(sibling, target);
+            })) {
+              return {
+                v: false
+              };
+            }
+          },
+          _ret;
+        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+          _ret = _loop();
+          if (_ret === 0) continue;
+          if (_ret) return _ret.v;
+        }
+      } catch (err) {
+        _iterator3.e(err);
+      } finally {
+        _iterator3.f();
+      }
+      return false;
+    };
+    var beginsContextBranch = function beginsContextBranch(element) {
+      return headings.some(function (heading) {
+        return (0, _domUtilities.isComposedWithin)(element, heading);
+      }) || Array.from(boundaryContexts.keys()).some(function (contextBoundary) {
+        return (0, _domUtilities.isComposedWithin)(element, contextBoundary);
+      });
+    };
     var rangeBoundaryForHeading = function rangeBoundaryForHeading(heading) {
       var headingOrder = orderByElement.get(heading);
       var candidate = (0, _domUtilities.getComposedParent)(heading);
       while (candidate && candidate !== boundary) {
+        if (hasFollowingContextBranchBeforeTarget(candidate)) {
+          return candidate;
+        }
         if ((0, _domUtilities.isElement)(candidate) && liveTargets.some(function (target) {
           return container.memberSet.has(target) && !isSemanticallyHidden(target, root) && !(0, _domUtilities.isComposedWithin)(heading, target) && (0, _domUtilities.isComposedWithin)(candidate, target) && targetOrder(target) > headingOrder;
         })) {
@@ -594,6 +641,18 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
       });
       context.memberSet = new Set(context.memberTargets);
     };
+    var rangeEndBeforeHeading = function rangeEndBeforeHeading(closing, heading, headingOrder) {
+      var rangeBoundary = closing.context.rangeBoundary;
+      var branch = heading;
+      var parent = (0, _domUtilities.getComposedParent)(branch);
+      while (parent && parent !== rangeBoundary) {
+        branch = parent;
+        parent = (0, _domUtilities.getComposedParent)(branch);
+      }
+      if (parent !== rangeBoundary) return headingOrder;
+      var branchOrder = orderByElement.get(branch);
+      return Number.isFinite(branchOrder) && branchOrder > closing.context.rangeStart ? branchOrder : headingOrder;
+    };
     containerHeadings.forEach(function (heading) {
       var level = headingRank(heading);
       var start = orderByElement.get(heading);
@@ -603,7 +662,7 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
       }
       while (stack.length && stack[stack.length - 1].level >= level) {
         var _closing = stack.pop();
-        closeHeadingContext(_closing, start);
+        closeHeadingContext(_closing, rangeEndBeforeHeading(_closing, heading, start));
       }
       var rangeBoundary = rangeBoundaryForHeading(heading);
       var headingScopeEnd = rangeEndForBoundary(rangeBoundary);
@@ -639,10 +698,15 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
   // controller uses this to draw one context indicator around the heading and
   // all of its content without turning any of those elements into focus stops.
   headingContexts.forEach(function (context) {
-    context.visualElements = elements.filter(function (element) {
+    var rangeElements = elements.filter(function (element) {
       var order = orderByElement.get(element);
       return order >= context.rangeStart && order < context.rangeEnd && !isSemanticallyHidden(element, root) && (0, _domUtilities.isComposedWithin)(context.rangeBoundary, element);
     });
+    var singleHeadingOwners = context.memberTargets.filter(function (target) {
+      var ownedHeadings = ownedHeadingsByTarget.get(target);
+      return (ownedHeadings === null || ownedHeadings === void 0 ? void 0 : ownedHeadings.size) === 1 && ownedHeadings.has(context.boundary);
+    });
+    context.visualElements = Array.from(new Set([].concat(_toConsumableArray(rangeElements), _toConsumableArray(singleHeadingOwners))));
   });
   headingContexts.filter(function (context) {
     return context.memberTargets.length;
@@ -780,12 +844,12 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
       if (isContextAncestor(right, left)) return -1;
       return right.order - left.order;
     });
-    var _iterator3 = _createForOfIteratorHelper(bottomUp),
-      _step3;
+    var _iterator4 = _createForOfIteratorHelper(bottomUp),
+      _step4;
     try {
-      var _loop = function _loop() {
+      var _loop2 = function _loop2() {
           var _parent$children;
-          var context = _step3.value;
+          var context = _step4.value;
           var parent = context.parent;
           if (context.required || context.headingLevel !== null || !parent || parent.children.length !== 1 || !setsEqual(context.memberSet, parent.memberSet)) {
             return 0; // continue
@@ -802,16 +866,16 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
           collapsedContext = true;
           return 1; // break
         },
-        _ret;
-      for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-        _ret = _loop();
-        if (_ret === 0) continue;
-        if (_ret === 1) break;
+        _ret2;
+      for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+        _ret2 = _loop2();
+        if (_ret2 === 0) continue;
+        if (_ret2 === 1) break;
       }
     } catch (err) {
-      _iterator3.e(err);
+      _iterator4.e(err);
     } finally {
-      _iterator3.f();
+      _iterator4.f();
     }
   }
   var _deepestContextForTarget = function deepestContextForTarget(context, target) {

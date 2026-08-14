@@ -191,6 +191,69 @@ test.describe('structural navigation mode', () => {
     await expect(indicator).toHaveAttribute('data-context-name', 'Results');
   });
 
+  test('ends a heading outline where its sibling focusable wrapper begins', async ({ page }) => {
+    await page.evaluate(() => {
+      const row = document.createElement('div');
+      row.id = 'heading-card-siblings';
+      row.style.display = 'flex';
+      row.style.gap = '32px';
+      row.innerHTML = `
+        <div id="heading-card-one" role="button" tabindex="0">
+          <header><h2>Heading card one</h2></header>
+          <p>First card content</p>
+        </div>
+        <div id="heading-card-two" role="button" tabindex="0">
+          <header><h2>Heading card two</h2></header>
+          <p>Second card content</p>
+        </div>
+      `;
+      Array.from(row.children).forEach((child: HTMLElement) => {
+        child.style.border = '1px solid';
+        child.style.flex = '1';
+        child.style.padding = '16px';
+      });
+      document.body.prepend(row);
+    });
+    await enableOpenKeyNav(page);
+    await focusFixtureTarget(page, 'heading-card-one');
+    await enterStructuralNavigation(page);
+
+    const indicator = page.locator('.openKeyNav-structural-context-outline');
+    await expect(indicator).toBeVisible();
+    await expect(indicator).toHaveAttribute(
+      'data-context-name',
+      'Heading card one'
+    );
+    await expect(page.locator(
+      '.openKeyNav-structural-context-heading-level'
+    )).toHaveText('h2');
+
+    const indicatorBox = await indicator.boundingBox();
+    const firstBox = await page.locator('#heading-card-one').boundingBox();
+    const secondBox = await page.locator('#heading-card-two').boundingBox();
+    expect(indicatorBox).not.toBeNull();
+    expect(firstBox).not.toBeNull();
+    expect(secondBox).not.toBeNull();
+    expect(indicatorBox!.x).toBeLessThan(firstBox!.x);
+    expect(indicatorBox!.x + indicatorBox!.width)
+      .toBeLessThan(secondBox!.x);
+
+    await page.keyboard.press('Shift+ArrowRight');
+    await expectDeepFocus(page, 'heading-card-two');
+    await expect(indicator).toHaveAttribute(
+      'data-context-name',
+      'Heading card two'
+    );
+    const secondIndicatorBox = await indicator.boundingBox();
+    const followingHeaderBox = await page.locator(
+      'body > header[aria-labelledby="site-title"]'
+    ).boundingBox();
+    expect(secondIndicatorBox).not.toBeNull();
+    expect(followingHeaderBox).not.toBeNull();
+    expect(secondIndicatorBox!.y + secondIndicatorBox!.height)
+      .toBeLessThan(followingHeaderBox!.y);
+  });
+
   test('labels the first tabbable target with native Tab on initial page entry', async ({ page }) => {
     expect(await page.evaluate(() => (window as any).fixture.deepActiveId()))
       .toBe('');
@@ -1045,10 +1108,12 @@ test.describe('structural navigation mode', () => {
     await expect(status).toContainText('Heading level: 1.');
 
     await page.keyboard.press('Shift+ArrowDown');
-    await expectDeepFocus(page, 'fixture-languages');
+    await expectDeepFocus(page, 'fixture-tools-theme');
     await expect(status).toContainText('Context: Visualization Authoring Tools.');
     await expect(status).toContainText('Heading level: 2.');
-    await expect(status).toContainText('languages, 1 of 3.');
+    await expect(status).toContainText(
+      'Visualization Authoring Tools, 1 of 4.'
+    );
 
     await page.keyboard.press('Shift+ArrowDown');
     await expectDeepFocus(page, 'fixture-gofish');

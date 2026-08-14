@@ -373,9 +373,11 @@ Within each enclosing structural container:
 5. Heading scope never crosses the boundary of its enclosing structural
    context. Within that context, the nearest authored composed-DOM wrapper
    that groups the heading with a following exposed target may cap the range
-   earlier. The wrapper bounds membership and the visual indicator without
-   becoming an additional structural context merely because it is a generic
-   `div` or `span`.
+   earlier. An immediately following sibling branch that begins another
+   authored heading or semantic context also caps the range, even when that
+   heading has a deeper rank. The wrapper bounds membership and the visual
+   indicator without becoming an additional structural context merely because
+   it is a generic `div` or `span`.
 6. When an explicit sectioning element and its own heading describe the same range, collapse them into one context instead of producing duplicate nested contexts.
 
 Use `h1` through `h6` rank for native headings and a valid `aria-level` for an element with `role="heading"`. Ignore malformed or missing rank information rather than inventing a level.

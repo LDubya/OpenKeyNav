@@ -1525,17 +1525,17 @@ describe('StructuralNavigationController', () => {
       { shiftKey: true }
     );
     expect(narrowToH2.defaultPrevented).toBe(true);
-    expect(document.activeElement.id).toBe('languages');
+    expect(document.activeElement.id).toBe('tools-theme');
     expect(openKeyNav.getStructuralNavigationState().activeContext.name)
       .toBe('Visualization Authoring Tools');
     expect(document.querySelector(
       '.openKeyNav-structural-status .openKeyNav-status__content'
     ).textContent).toContain(
-      'Heading level: 2. languages, 1 of 3.'
+      'Heading level: 2. Visualization Authoring Tools, 1 of 4.'
     );
 
     const narrowToH3 = dispatchKey(
-      document.getElementById('languages'),
+      document.getElementById('tools-theme'),
       'ArrowDown',
       { shiftKey: true }
     );

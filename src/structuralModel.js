@@ -4,6 +4,7 @@ import {
 } from './accessibilityName.js';
 import {
   collectComposedElements,
+  getComposedChildren,
   getComposedParent,
   hasAriaHiddenAncestor,
   isComposedWithin,
@@ -682,11 +683,40 @@ export const buildStructuralModel = ({
     // contains a following target outside the heading itself. This prevents a
     // final heading range from absorbing later sibling content merely because
     // no same-or-higher heading follows it.
+    const hasFollowingContextBranchBeforeTarget = element => {
+      const parent = getComposedParent(element);
+      const siblings = getComposedChildren(parent).filter(isElement);
+      const index = siblings.indexOf(element);
+      if (index < 0) return false;
+
+      for (const sibling of siblings.slice(index + 1)) {
+        if (
+          isOpenKeyNavGeneratedUI(sibling) ||
+          isSemanticallyHidden(sibling, root)
+        ) {
+          continue;
+        }
+        if (beginsContextBranch(sibling)) return true;
+        if (liveTargets.some(target => isComposedWithin(sibling, target))) {
+          return false;
+        }
+      }
+      return false;
+    };
+    const beginsContextBranch = element => (
+      headings.some(heading => isComposedWithin(element, heading)) ||
+      Array.from(boundaryContexts.keys()).some(contextBoundary => (
+        isComposedWithin(element, contextBoundary)
+      ))
+    );
     const rangeBoundaryForHeading = heading => {
       const headingOrder = orderByElement.get(heading);
       let candidate = getComposedParent(heading);
 
       while (candidate && candidate !== boundary) {
+        if (hasFollowingContextBranchBeforeTarget(candidate)) {
+          return candidate;
+        }
         if (
           isElement(candidate) &&
           liveTargets.some(target => (
@@ -733,6 +763,23 @@ export const buildStructuralModel = ({
       });
       context.memberSet = new Set(context.memberTargets);
     };
+    const rangeEndBeforeHeading = (closing, heading, headingOrder) => {
+      const rangeBoundary = closing.context.rangeBoundary;
+      let branch = heading;
+      let parent = getComposedParent(branch);
+
+      while (parent && parent !== rangeBoundary) {
+        branch = parent;
+        parent = getComposedParent(branch);
+      }
+
+      if (parent !== rangeBoundary) return headingOrder;
+      const branchOrder = orderByElement.get(branch);
+      return Number.isFinite(branchOrder) &&
+        branchOrder > closing.context.rangeStart
+        ? branchOrder
+        : headingOrder;
+    };
 
     containerHeadings.forEach(heading => {
       const level = headingRank(heading);
@@ -744,7 +791,10 @@ export const buildStructuralModel = ({
       }
       while (stack.length && stack[stack.length - 1].level >= level) {
         const closing = stack.pop();
-        closeHeadingContext(closing, start);
+        closeHeadingContext(
+          closing,
+          rangeEndBeforeHeading(closing, heading, start)
+        );
       }
 
       const rangeBoundary = rangeBoundaryForHeading(heading);
@@ -782,7 +832,7 @@ export const buildStructuralModel = ({
   // controller uses this to draw one context indicator around the heading and
   // all of its content without turning any of those elements into focus stops.
   headingContexts.forEach(context => {
-    context.visualElements = elements.filter(element => {
+    const rangeElements = elements.filter(element => {
       const order = orderByElement.get(element);
       return (
         order >= context.rangeStart &&
@@ -791,6 +841,14 @@ export const buildStructuralModel = ({
         isComposedWithin(context.rangeBoundary, element)
       );
     });
+    const singleHeadingOwners = context.memberTargets.filter(target => {
+      const ownedHeadings = ownedHeadingsByTarget.get(target);
+      return ownedHeadings?.size === 1 && ownedHeadings.has(context.boundary);
+    });
+    context.visualElements = Array.from(new Set([
+      ...rangeElements,
+      ...singleHeadingOwners,
+    ]));
   });
 
   headingContexts
