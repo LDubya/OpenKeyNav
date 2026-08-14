@@ -41,7 +41,7 @@
 	  value: true
 	});
 	version.version = void 0;
-	version.version = "0.1.269";
+	version.version = "0.1.270";
 
 	var signals = {};
 
