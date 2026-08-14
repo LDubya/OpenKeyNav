@@ -919,6 +919,27 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
       return context.targets.includes(target);
     }));
   });
+
+  // Keep heading commands grounded in the same authored ranges as Structural
+  // Navigation. The routes include empty headings so callers can deliberately
+  // skip them without ever turning a heading into a synthetic focus target.
+  var headingRoutes = headings.map(function (heading) {
+    var headingContext = headingContexts.find(function (context) {
+      return context.boundary === heading;
+    });
+    var associatedContext = allContexts.find(function (context) {
+      return context.associatedHeading === heading;
+    });
+    var context = headingContext || associatedContext || null;
+    var memberSet = (context === null || context === void 0 ? void 0 : context.memberSet) || new Set();
+    return {
+      heading: heading,
+      level: headingRank(heading),
+      targets: liveTargets.filter(function (target) {
+        return memberSet.has(target);
+      })
+    };
+  });
   return {
     root: root,
     targets: liveTargets,
@@ -927,6 +948,7 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
     directContextByTarget: directContextByTarget,
     typedContexts: typedContextMap,
     typedContextsByTarget: typedContextsByTarget,
+    headingRoutes: headingRoutes,
     rejectedContexts: rejectedContexts,
     getDirectContext: function getDirectContext(target) {
       return directContextByTarget.get(target) || null;

@@ -6,13 +6,13 @@ import OpenKeyNav from '../src/OpenKeyNav.js';
 const nextTask = () => new Promise(resolve => setTimeout(resolve, 0));
 
 const LEGACY_FOCUS_COMMANDS = [
-  { label: 'all headings', key: 'h', code: 'KeyH', selector: 'h1' },
-  { label: 'level-one headings', key: '1', code: 'Digit1', selector: 'h1' },
-  { label: 'level-two headings', key: '2', code: 'Digit2', selector: 'h2' },
-  { label: 'level-three headings', key: '3', code: 'Digit3', selector: 'h3' },
-  { label: 'level-four headings', key: '4', code: 'Digit4', selector: 'h4' },
-  { label: 'level-five headings', key: '5', code: 'Digit5', selector: 'h5' },
-  { label: 'level-six headings', key: '6', code: 'Digit6', selector: 'h6' },
+  { label: 'all headings', key: 'h', code: 'KeyH', selector: '#current' },
+  { label: 'level-one headings', key: '1', code: 'Digit1', selector: '#current' },
+  { label: 'level-two headings', key: '2', code: 'Digit2', selector: '#current' },
+  { label: 'level-three headings', key: '3', code: 'Digit3', selector: '#current' },
+  { label: 'level-four headings', key: '4', code: 'Digit4', selector: '#current' },
+  { label: 'level-five headings', key: '5', code: 'Digit5', selector: '#current' },
+  { label: 'level-six headings', key: '6', code: 'Digit6', selector: '#current' },
   { label: 'scroll containers', key: 's', code: 'KeyS', selector: '#scroll-container' },
 ];
 
@@ -89,8 +89,15 @@ describe('keypress structural-mode arbitration', () => {
       expect(openKeyNav.config.modes.structuralNavigation.value).toBe(true);
       expect(document.activeElement.matches(selector)).toBe(true);
       expect(focusSpy).toHaveBeenCalledTimes(1);
-      expect(document.activeElement.getAttribute('tabindex')).toBe('-1');
-      expect(document.activeElement.getAttribute('data-openkeynav-tabIndexed')).toBe('true');
+      if (key === 's') {
+        expect(document.activeElement.getAttribute('tabindex')).toBe('-1');
+        expect(document.activeElement.getAttribute('data-openkeynav-tabIndexed')).toBe('true');
+      } else {
+        expect(document.activeElement.hasAttribute('data-openkeynav-tabIndexed')).toBe(false);
+        expect(Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'))
+          .some(heading => heading.hasAttribute('data-openkeynav-tabIndexed')))
+          .toBe(false);
+      }
 
       if (key === 's') {
         expect(openKeyNav.config.scrollables.currentScrollableIndex).toBe(0);

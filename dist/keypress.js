@@ -240,7 +240,7 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
       */
 
       (0, _keyboardEvents.preventAcceptedCommand)(e);
-      (0, _focus.focusOnHeadings)(openKeyNav, 'h1, h2, h3, h4, h5, h6', e);
+      (0, _focus.focusOnHeadings)(openKeyNav, 'h1, h2, h3, h4, h5, h6, [role="heading"][aria-level]', e);
       return true;
       break;
     case openKeyNav.config.keys.scroll.toLowerCase():
@@ -266,7 +266,7 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
   var headingLevel = configuredHeadingLevel(openKeyNav, e);
   if (headingLevel !== null) {
     (0, _keyboardEvents.preventAcceptedCommand)(e);
-    (0, _focus.focusOnHeadings)(openKeyNav, "h".concat(headingLevel), e);
+    (0, _focus.focusOnHeadings)(openKeyNav, "h".concat(headingLevel, ", [role=\"heading\"][aria-level=\"").concat(headingLevel, "\"]"), e);
     return true;
   }
 };

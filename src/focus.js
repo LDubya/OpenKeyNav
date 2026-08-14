@@ -1,19 +1,19 @@
-export const focusOnHeadings = (openKeyNav, headings, e) => {
-    openKeyNav.config.headings.list = Array.from(document.querySelectorAll(headings)) // Get all headings in the view
-      .filter(el => {
-        // Skip if the element is visually hidden
-        const style = getComputedStyle(el);
-        if (style.display === 'none' || style.visibility === 'hidden') return false;
+import { buildStructuralModel } from './structuralModel.js';
+import { discoverTabbableTargets } from './tabbableTargets.js';
 
-        // debug mode: debug mode: do isAnyCornerVisible check by default and disable the check if debug.screenReaderVisible is true
-        if (!openKeyNav.config.debug.screenReaderVisible) {
-          // Skip if the element's top left corner is covered by another element
-          if (!openKeyNav.isAnyCornerVisible(el)) {
-            return false;
-          }
-        }
-        return true;
-      });
+export const focusOnHeadings = (openKeyNav, headings, e) => {
+    const targets = discoverTabbableTargets(document, {
+      displayCheck: openKeyNav.config.debug.screenReaderVisible
+        ? 'none'
+        : 'full',
+      getShadowRoot: true,
+      includeProgrammatic: false,
+    });
+    const model = buildStructuralModel({ root: document, targets });
+    const routes = model.headingRoutes
+      .filter(route => route.heading.matches(headings))
+      .filter(route => route.targets.length > 0);
+    openKeyNav.config.headings.list = routes.map(route => route.targets[0]);
 
     if (openKeyNav.config.headings.list.length == 0) {
       return true;
@@ -21,7 +21,17 @@ export const focusOnHeadings = (openKeyNav, headings, e) => {
 
     const headingState = openKeyNav.config.headings;
     const lastIndex = headingState.list.length - 1;
-    const focusedHeadingIndex = headingState.list.indexOf(document.activeElement);
+    const currentRouteIndex = routes.findIndex(route => (
+      route.heading === headingState.currentHeading &&
+      route.targets[0] === document.activeElement
+    ));
+    const focusedHeadingIndex = currentRouteIndex >= 0
+      ? currentRouteIndex
+      : routes.reduce((activeIndex, route, routeIndex) => (
+        route.targets.includes(document.activeElement)
+          ? routeIndex
+          : activeIndex
+      ), -1);
     if (focusedHeadingIndex >= 0) {
       headingState.currentHeadingIndex = focusedHeadingIndex;
     } else {
@@ -46,20 +56,10 @@ export const focusOnHeadings = (openKeyNav, headings, e) => {
         headingState.currentHeadingIndex = 0;
       }
     }
-    const nextHeading = headingState.list[headingState.currentHeadingIndex];
-    if (!nextHeading.hasAttribute('tabindex')) {
-      nextHeading.setAttribute('tabindex', '-1'); // Make the heading focusable
-      nextHeading.setAttribute('data-openkeynav-tabIndexed', true);
-    }
-    openKeyNav.focus(nextHeading) // Set focus on the next heading
-    // Listen for the blur event to remove the tabindex attribute
-    nextHeading.addEventListener('blur', function handler() {
-      if (nextHeading.hasAttribute('data-openkeynav-tabIndexed')) {
-        nextHeading.removeAttribute('tabindex') // Remove the tabindex attribute
-        nextHeading.removeAttribute('data-openkeynav-tabIndexed');
-      }
-      nextHeading.removeEventListener('blur', handler); // Clean up the event listener
-    });
+    const nextRoute = routes[headingState.currentHeadingIndex];
+    const nextTarget = nextRoute.targets[0];
+    headingState.currentHeading = nextRoute.heading;
+    openKeyNav.focus(nextTarget);
 };
 
 export const focusOnScrollables = (openKeyNav, e) => {

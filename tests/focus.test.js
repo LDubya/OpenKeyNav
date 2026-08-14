@@ -57,24 +57,79 @@ describe('OpenKeyNav focus', () => {
     expect(current.hasAttribute('data-openkeynav-focused')).toBe(false);
   });
 
-  it('starts heading navigation at the first heading and cycles in both directions', () => {
+  it('cycles through headings with tabbable content and focuses their first target', () => {
     document.body.innerHTML = `
-      <h1 id="heading-one">One</h1>
+      <h2 id="empty-heading">Empty</h2>
+      <p>No keyboard target here.</p>
       <h2 id="heading-two">Two</h2>
+      <button id="two-first">First target in two</button>
+      <button id="two-second">Second target in two</button>
+      <h2 id="heading-three">Three</h2>
+      <a id="three-first" href="#three">First target in three</a>
     `;
     openKeyNav.config.debug.screenReaderVisible = true;
 
-    focusOnHeadings(openKeyNav, 'h1, h2', { shiftKey: false });
-    expect(document.activeElement.id).toBe('heading-one');
+    focusOnHeadings(openKeyNav, 'h2', { shiftKey: false });
+    expect(document.activeElement.id).toBe('two-first');
     expect(openKeyNav.config.headings.currentHeadingIndex).toBe(0);
+    expect(openKeyNav.config.headings.currentHeading.id).toBe('heading-two');
 
-    focusOnHeadings(openKeyNav, 'h1, h2', { shiftKey: false });
-    expect(document.activeElement.id).toBe('heading-two');
+    focusOnHeadings(openKeyNav, 'h2', { shiftKey: false });
+    expect(document.activeElement.id).toBe('three-first');
     expect(openKeyNav.config.headings.currentHeadingIndex).toBe(1);
 
-    focusOnHeadings(openKeyNav, 'h1, h2', { shiftKey: true });
-    expect(document.activeElement.id).toBe('heading-one');
+    focusOnHeadings(openKeyNav, 'h2', { shiftKey: true });
+    expect(document.activeElement.id).toBe('two-first');
     expect(openKeyNav.config.headings.currentHeadingIndex).toBe(0);
+
+    expect(document.getElementById('empty-heading').hasAttribute('tabindex')).toBe(false);
+    expect(document.getElementById('heading-two').hasAttribute('tabindex')).toBe(false);
+    expect(document.getElementById('heading-three').hasAttribute('tabindex')).toBe(false);
+  });
+
+  it('cycles all authored heading levels in document order, including ARIA headings', () => {
+    document.body.innerHTML = `
+      <h1 id="heading-one">One</h1>
+      <button id="one-first">First target in one</button>
+      <h2 id="empty-heading">Empty</h2>
+      <div role="heading" aria-level="2" id="aria-heading">ARIA two</div>
+      <a id="aria-first" href="#aria">First target in ARIA two</a>
+      <h3 id="heading-three">Three</h3>
+      <input id="three-first">
+    `;
+    openKeyNav.config.debug.screenReaderVisible = true;
+    const selector = 'h1, h2, h3, h4, h5, h6, [role="heading"][aria-level]';
+
+    focusOnHeadings(openKeyNav, selector, { shiftKey: false });
+    expect(document.activeElement.id).toBe('one-first');
+
+    focusOnHeadings(openKeyNav, selector, { shiftKey: false });
+    expect(document.activeElement.id).toBe('aria-first');
+
+    focusOnHeadings(openKeyNav, selector, { shiftKey: false });
+    expect(document.activeElement.id).toBe('three-first');
+  });
+
+  it('continues after the active authored heading context', () => {
+    document.body.innerHTML = `
+      <h1>Page</h1>
+      <h2 id="heading-two">Two</h2>
+      <button id="two-first">First target in two</button>
+      <button id="two-second">Second target in two</button>
+      <h2 id="heading-three">Three</h2>
+      <a id="three-first" href="#three">First target in three</a>
+    `;
+    openKeyNav.config.debug.screenReaderVisible = true;
+    document.getElementById('two-second').focus();
+
+    focusOnHeadings(
+      openKeyNav,
+      'h1, h2, h3, h4, h5, h6',
+      { shiftKey: false }
+    );
+
+    expect(document.activeElement.id).toBe('three-first');
+    expect(openKeyNav.config.headings.currentHeading.id).toBe('heading-three');
   });
 
   it('cycles scroll regions through the declared scrollable state', () => {

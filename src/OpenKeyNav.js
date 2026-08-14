@@ -213,6 +213,7 @@ class OpenKeyNav {
         typedLabel: signal(''),
         headings: {
           currentHeadingIndex: -1, // Start before the first heading
+          currentHeading: null,
           list: []
         },
         scrollables: {

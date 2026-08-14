@@ -41,7 +41,7 @@
 	  value: true
 	});
 	version.version = void 0;
-	version.version = "0.1.259";
+	version.version = "0.1.260";
 
 	var signals = {};
 
@@ -655,983 +655,6 @@
 
 	var focus = {};
 
-	Object.defineProperty(focus, "__esModule", {
-	  value: true
-	});
-	focus.focusOnScrollables = focus.focusOnHeadings = void 0;
-	focus.focusOnHeadings = function focusOnHeadings(openKeyNav, headings, e) {
-	  openKeyNav.config.headings.list = Array.from(document.querySelectorAll(headings)) // Get all headings in the view
-	  .filter(function (el) {
-	    // Skip if the element is visually hidden
-	    var style = getComputedStyle(el);
-	    if (style.display === 'none' || style.visibility === 'hidden') return false;
-
-	    // debug mode: debug mode: do isAnyCornerVisible check by default and disable the check if debug.screenReaderVisible is true
-	    if (!openKeyNav.config.debug.screenReaderVisible) {
-	      // Skip if the element's top left corner is covered by another element
-	      if (!openKeyNav.isAnyCornerVisible(el)) {
-	        return false;
-	      }
-	    }
-	    return true;
-	  });
-	  if (openKeyNav.config.headings.list.length == 0) {
-	    return true;
-	  }
-	  var headingState = openKeyNav.config.headings;
-	  var lastIndex = headingState.list.length - 1;
-	  var focusedHeadingIndex = headingState.list.indexOf(document.activeElement);
-	  if (focusedHeadingIndex >= 0) {
-	    headingState.currentHeadingIndex = focusedHeadingIndex;
-	  } else {
-	    // The current focus is outside this particular heading route. Start at
-	    // its boundary instead of reusing an index from another heading level.
-	    headingState.currentHeadingIndex = -1;
-	  }
-
-	  // handle moving to the next / previous heading
-	  if (e.shiftKey) {
-	    // shift key is pressed, so move backwards. If at the beginning, go to the end.
-	    if (headingState.currentHeadingIndex > 0) {
-	      headingState.currentHeadingIndex--;
-	    } else {
-	      headingState.currentHeadingIndex = lastIndex;
-	    }
-	  } else {
-	    // Move to the next heading. If at the end, go to the beginning.
-	    if (headingState.currentHeadingIndex < lastIndex) {
-	      headingState.currentHeadingIndex++;
-	    } else {
-	      headingState.currentHeadingIndex = 0;
-	    }
-	  }
-	  var nextHeading = headingState.list[headingState.currentHeadingIndex];
-	  if (!nextHeading.hasAttribute('tabindex')) {
-	    nextHeading.setAttribute('tabindex', '-1'); // Make the heading focusable
-	    nextHeading.setAttribute('data-openkeynav-tabIndexed', true);
-	  }
-	  openKeyNav.focus(nextHeading); // Set focus on the next heading
-	  // Listen for the blur event to remove the tabindex attribute
-	  nextHeading.addEventListener('blur', function handler() {
-	    if (nextHeading.hasAttribute('data-openkeynav-tabIndexed')) {
-	      nextHeading.removeAttribute('tabindex'); // Remove the tabindex attribute
-	      nextHeading.removeAttribute('data-openkeynav-tabIndexed');
-	    }
-	    nextHeading.removeEventListener('blur', handler); // Clean up the event listener
-	  });
-	};
-	focus.focusOnScrollables = function focusOnScrollables(openKeyNav, e) {
-	  openKeyNav.config.scrollables.list = openKeyNav.getScrollableElements(); // Populate or refresh the list of scrollable elements
-
-	  if (openKeyNav.config.scrollables.list.length == 0) {
-	    return; // If no scrollable elements, exit the function
-	  }
-	  var scrollables = openKeyNav.config.scrollables;
-	  var lastIndex = scrollables.list.length - 1;
-	  var focusedScrollableIndex = scrollables.list.indexOf(document.activeElement);
-
-	  // Re-enter the route from its boundary when focus is elsewhere instead of
-	  // reusing an index from a different or stale scrollable list.
-	  if (focusedScrollableIndex >= 0) {
-	    scrollables.currentScrollableIndex = focusedScrollableIndex;
-	  } else {
-	    scrollables.currentScrollableIndex = -1;
-	  }
-	  if (e.shiftKey) {
-	    scrollables.currentScrollableIndex = scrollables.currentScrollableIndex > 0 ? scrollables.currentScrollableIndex - 1 : lastIndex;
-	  } else {
-	    scrollables.currentScrollableIndex = scrollables.currentScrollableIndex < lastIndex ? scrollables.currentScrollableIndex + 1 : 0;
-	  }
-
-	  // Focus the current scrollable element
-	  var currentScrollable = scrollables.list[scrollables.currentScrollableIndex];
-	  if (!currentScrollable.hasAttribute('tabindex')) {
-	    currentScrollable.setAttribute('tabindex', '-1'); // Make the element focusable
-	    currentScrollable.setAttribute('data-openkeynav-tabIndexed', true);
-	  }
-	  openKeyNav.focus(currentScrollable); // Set focus on the element
-
-	  // Clean up: remove tabindex and blur listener when focus is lost
-	  currentScrollable.addEventListener('blur', function handler() {
-	    if (currentScrollable.hasAttribute('data-openkeynav-tabIndexed')) {
-	      currentScrollable.removeAttribute('tabindex'); // Remove the tabindex attribute
-	      currentScrollable.removeAttribute('data-openkeynav-tabIndexed');
-	    }
-	    currentScrollable.removeEventListener('blur', handler);
-	  });
-	};
-
-	var isTabbable$1 = {};
-
-	Object.defineProperty(isTabbable$1, "__esModule", {
-	  value: true
-	});
-	isTabbable$1.isTabbable = void 0;
-	var isHiddenByOverflow = function isHiddenByOverflow(element) {
-	  var parent = element.parentNode;
-	  // Use the ownerDocument to get the correct document context
-	  var doc = element.ownerDocument;
-	  var body = doc.body;
-	  while (parent && parent !== body) {
-	    // Use the specific document body of the element
-	    // if (parent instanceof HTMLElement) {
-	    var parentStyle = getComputedStyle(parent);
-	    if (['scroll', 'auto'].includes(parentStyle.overflow) || ['scroll', 'auto'].includes(parentStyle.overflowX) || ['scroll', 'auto'].includes(parentStyle.overflowY)) {
-	      var parentRect = parent.getBoundingClientRect();
-	      var rect = element.getBoundingClientRect();
-	      if (rect.bottom < parentRect.top || rect.top > parentRect.bottom || rect.right < parentRect.left || rect.left > parentRect.right) {
-	        return true; // Element is hidden by parent's overflow
-	      }
-	    }
-	    // }
-	    parent = parent.parentNode;
-	  }
-	  return false; // No parent hides the element by overflow
-	};
-	var inViewport = function inViewport(el) {
-	  // check if the element's top left corner is within the window's viewport
-	  var rect = el.getBoundingClientRect();
-	  var isInViewport = rect.top < window.innerHeight && rect.left < window.innerWidth && rect.bottom > 0 && rect.right > 0;
-	  return isInViewport;
-	};
-	isTabbable$1.isTabbable = function isTabbable(el, openKeyNav) {
-	  var clickableElements = ['a', 'button', 'textarea', 'select', 'input', 'iframe', 'summary', '[onclick]'];
-	  var interactiveRoles = ['button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio'];
-	  var isTypicallyClickableElement = function isTypicallyClickableElement(el) {
-	    // Check if the element is a known clickable element
-	    if (el.matches(clickableElements.join())) {
-	      return true;
-	    }
-
-	    // Check if the element has an interactive ARIA role
-	    var role = el.getAttribute('role');
-	    if (role && interactiveRoles.includes(role)) {
-	      return true;
-	    }
-	    return false;
-	  };
-
-	  // Ensure el is an Element before accessing styles
-	  if (!(el instanceof Element)) {
-	    // console.log(`!(el instanceof Element)`, el); //debug
-	    return false;
-	  }
-
-	  // Check for inert attribute (on element or ancestors)
-	  if (el.inert) {
-	    return false;
-	  }
-
-	  // Check if any ancestor has inert attribute
-	  var parent = el.parentElement;
-	  while (parent) {
-	    if (parent.inert) {
-	      return false;
-	    }
-	    parent = parent.parentElement;
-	  }
-
-	  // Skip if the element is set to not display (not the same as having zero size)
-	  var style = getComputedStyle(el);
-	  if (style.display === 'none') {
-	    // console.log(`style.display === 'none'`, el); //debug
-	    return false;
-	  }
-
-	  // Skip if the element is hidden by a parent's overflow
-	  if (isHiddenByOverflow(el)) {
-	    // console.log(`isHiddenByOverflow(el)`, el); //debug
-	    return false;
-	  }
-
-	  // Skip if the element is within a <details> that is not open, but allow if it's a <summary> or a clickable element inside a <summary>
-	  // aka it's hidden by the collapsed detail
-	  if (el.matches('details:not([open]) *') && !el.matches('details:not([open]) > summary, details:not([open]) > summary *')) {
-	    // console.log(`hidden details element`, el); //debug
-	    return false;
-	  }
-
-	  // always include if tabindex > -1
-	  // include this after checking if the element is hidden by a parent's overflow, which most screen readers respect
-	  // (elements should not be tabbable by keyboard if they are visibly hidden,
-	  // so include visibly hidden items that are explicitly tabbable to help with accessibility bug discovery)
-	  // do not move this earlier in the heuristic
-	  var tabIndex = el.getAttribute('tabindex');
-	  if (tabIndex && parseInt(tabIndex, 10) > -1) {
-	    // console.log(`tabindex > -1`, el); //debug
-	    return true;
-	  }
-
-	  // Skip if the element is visually hidden (not the same as having zero size or set to not display)
-	  if (style.visibility === 'hidden') {
-	    // console.log(`style.visibility === 'hidden'`, el); //debug
-	    return false;
-	  }
-
-	  // console.log("isTabbable() -> openKeyNav", openKeyNav);
-
-	  // Skip if the element has no size (another way to visually hide something)
-	  if (!openKeyNav.isNonzeroSize(el)) {
-	    // console.log(`!openKeyNav.isNonzeroSize(el)`, el); //debug
-	    return false;
-	  }
-
-	  // Skip if the element's top left corner is not within the window's viewport
-	  // During a full-page audit we may want to include offscreen elements. The audit
-	  // runner can set `openKeyNav._auditIncludeOffscreen = true` to bypass this check.
-	  if (!openKeyNav._auditIncludeOffscreen && !inViewport(el)) {
-	    // console.log(`!inViewport(el)`, el); //debug
-	    return false;
-	  }
-
-	  // do isAnyCornerVisible check by default and disable the check if debug.screenReaderVisible is true
-	  if (!openKeyNav.config.debug.screenReaderVisible) {
-	    // Skip if the element's top left corner is covered by another element
-	    if (!openKeyNav.isAnyCornerVisible(el)) {
-	      // console.log(`!openKeyNav.isAnyCornerVisible(el)`, el); //debug
-	      return false;
-	    }
-	  }
-
-	  // Skip if <summary> is not the first <summary> element of a <details>
-	  if (el.tagName.toLowerCase() === 'summary') {
-	    var details = el.parentElement;
-	    if (details && details.tagName.toLowerCase() === 'details' && details.querySelector('summary') !== el) {
-	      // console.log(`<summary> is not the first <summary> element of a <details>`, el); //debug
-	      return false;
-	    }
-	  }
-
-	  // Lastly, flag likely pointer actions that do not have a conventional Tab stop.
-	  // Keep them in Click Mode so OpenKeyNav can still provide direct keyboard operation.
-
-	  if (tabIndex && parseInt(tabIndex, 10) == -1) {
-	    if (isTypicallyClickableElement(el)) {
-	      // if (openKeyNav.config.modes.clicking.value) {
-	      openKeyNav.flagAsInaccessible(el, "\n            <h2>Keyboard Focus Review</h2>\n            <h3>Detected</h3>\n            <p>This action uses <code>tabindex=\"-1\"</code>, so sequential keyboard navigation does not reach it.</p>\n            <p>OpenKeyNav Click Mode can still label and activate this target directly.</p>\n            <h3>Review</h3>\n            <p>Confirm the target's semantics, accessible name, focus behavior, and every keyboard path through the complete workflow.</p>\n            <p>When this action should participate in sequential focus navigation, use the appropriate native control or a <code>tabindex</code> value of <code>0</code>.</p>\n            ", "keyboard");
-	      // }
-	    }
-
-	    // return false; // let's keep it, since we are flagging it
-	  }
-
-	  // Skip if the element is an <a> without an href (unless it has an ARIA role that makes it tabbable)
-
-	  var role = el.getAttribute('role');
-	  switch (el.tagName.toLowerCase()) {
-	    case 'a':
-	      if (!el.hasAttribute('href') || el.getAttribute('href') === '') {
-	        if (!interactiveRoles.includes(role)) {
-	          // if (openKeyNav.config.modes.clicking.value) {
-	          openKeyNav.flagAsInaccessible(el, "\n                <h2>Anchor Interaction Review</h2>\n                <h3>Detected</h3>\n                <p>This anchor has no link destination or interactive role, so browsers do not expose it as a conventional keyboard control.</p>\n                <p>OpenKeyNav Click Mode can still label and activate this target directly.</p>\n                <h3>Review</h3>\n                <p>Use an anchor with a non-empty <code>href</code> for navigation. Use a native <code>&lt;button&gt;</code> for an action, or implement the complete semantics and keyboard behavior of the intended control.</p>\n                ", "keyboard");
-	          // return false;
-	          // }
-	        }
-	      }
-	      break;
-	    case 'button':
-	    case 'textarea':
-	    case 'select':
-	    case 'input':
-	    case 'iframe':
-	    case 'summary':
-	      break;
-	    default:
-	      if (!!role && !interactiveRoles.includes(role)) {
-	        if (openKeyNav.config.modesConfig.click.clickEventElements.has(el)) {
-	          openKeyNav.flagAsInaccessible(el, "\n              <!--\n                !el(a,button,textarea,select,input,iframe,summary)\n                !el[role('button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio')]\n                fromClickEvents\n              -->\n              <h2>Pointer Action Review</h2>\n              <h3>Detected</h3>\n              <p>This element has a click handler without a conventional keyboard focus stop.</p>\n              <p>OpenKeyNav Click Mode can provide direct keyboard selection when it detects the target.</p>\n              <h3>Review options</h3>\n              <ol>\n                <li>\n                  <p>For navigation, use an anchor link (&lt;a&gt;) with a non-empty <em>href</em> attribute.</p>\n                </li>\n                <li>\n                  <p>For an action, use a native &lt;button&gt; or implement the complete semantics, focus behavior, and keyboard commands of the intended control.</p>\n                </li>\n                <li>\n                  <p>Remove click handlers that do not provide user-facing functionality.</p>\n                </li>\n              </ol>\n              ", "keyboard");
-	        }
-	        // return false;
-	        // }
-	      }
-	      break;
-	  }
-
-	  // it must be a valid tabbable element
-	  return true;
-	};
-
-	var keylabels = {};
-
-	var scrolling = {};
-
-	Object.defineProperty(scrolling, "__esModule", {
-	  value: true
-	});
-	scrolling.disableScrolling = void 0;
-	scrolling.disableScrolling = function disableScrolling(openKeyNav) {
-	  // Prevent scrolling on the webpage
-
-	  var disableScrollingForEl = function disableScrollingForEl(el) {
-	    el.addEventListener('scroll', openKeyNav.preventScroll, {
-	      passive: false
-	    });
-	    el.addEventListener('wheel', openKeyNav.preventScroll, {
-	      passive: false
-	    });
-	    el.addEventListener('touchmove', openKeyNav.preventScroll, {
-	      passive: false
-	    });
-	  };
-	  var disableScrollingForScrollableElements = function disableScrollingForScrollableElements() {
-	    disableScrollingForEl(window);
-	    openKeyNav.getScrollableElements().forEach(function (el) {
-	      disableScrollingForEl(el);
-	    });
-	  };
-	  disableScrollingForScrollableElements();
-	};
-
-	Object.defineProperty(keylabels, "__esModule", {
-	  value: true
-	});
-	keylabels.showMoveableFromOverlays = keylabels.showClickableOverlays = keylabels.showAssignedKeylabels = keylabels.repositionAssignedKeylabels = keylabels.generateValidKeyChars = keylabels.generateLabels = keylabels.filterRemainingOverlays = keylabels.clearAssignedKeylabels = keylabels.KEYLABEL_SYMBOLS = void 0;
-	var _escape = _escape$1;
-	var _isTabbable = isTabbable$1;
-	var _scrolling = scrolling;
-	function _typeof$3(o) {
-	  "@babel/helpers - typeof";
-
-	  return _typeof$3 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
-	    return typeof o;
-	  } : function (o) {
-	    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
-	  }, _typeof$3(o);
-	}
-	function _toConsumableArray$2(r) {
-	  return _arrayWithoutHoles$2(r) || _iterableToArray$2(r) || _unsupportedIterableToArray$3(r) || _nonIterableSpread$2();
-	}
-	function _nonIterableSpread$2() {
-	  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-	}
-	function _iterableToArray$2(r) {
-	  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
-	}
-	function _arrayWithoutHoles$2(r) {
-	  if (Array.isArray(r)) return _arrayLikeToArray$3(r);
-	}
-	function _slicedToArray$2(r, e) {
-	  return _arrayWithHoles$2(r) || _iterableToArrayLimit$2(r, e) || _unsupportedIterableToArray$3(r, e) || _nonIterableRest$2();
-	}
-	function _nonIterableRest$2() {
-	  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-	}
-	function _unsupportedIterableToArray$3(r, a) {
-	  if (r) {
-	    if ("string" == typeof r) return _arrayLikeToArray$3(r, a);
-	    var t = {}.toString.call(r).slice(8, -1);
-	    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$3(r, a) : void 0;
-	  }
-	}
-	function _arrayLikeToArray$3(r, a) {
-	  (null == a || a > r.length) && (a = r.length);
-	  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
-	  return n;
-	}
-	function _iterableToArrayLimit$2(r, l) {
-	  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
-	  if (null != t) {
-	    var e,
-	      n,
-	      i,
-	      u,
-	      a = [],
-	      f = true,
-	      o = false;
-	    try {
-	      if (i = (t = t.call(r)).next, 0 === l) ; else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
-	    } catch (r) {
-	      o = true, n = r;
-	    } finally {
-	      try {
-	        if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return;
-	      } finally {
-	        if (o) throw n;
-	      }
-	    }
-	    return a;
-	  }
-	}
-	function _arrayWithHoles$2(r) {
-	  if (Array.isArray(r)) return r;
-	}
-	function _defineProperty$1(e, r, t) {
-	  return (r = _toPropertyKey$2(r)) in e ? Object.defineProperty(e, r, {
-	    value: t,
-	    enumerable: true,
-	    configurable: true,
-	    writable: true
-	  }) : e[r] = t, e;
-	}
-	function _toPropertyKey$2(t) {
-	  var i = _toPrimitive$2(t, "string");
-	  return "symbol" == _typeof$3(i) ? i : i + "";
-	}
-	function _toPrimitive$2(t, r) {
-	  if ("object" != _typeof$3(t) || !t) return t;
-	  var e = t[Symbol.toPrimitive];
-	  if (void 0 !== e) {
-	    var i = e.call(t, r);
-	    if ("object" != _typeof$3(i)) return i;
-	    throw new TypeError("@@toPrimitive must return a primitive value.");
-	  }
-	  return ("string" === r ? String : Number)(t);
-	}
-	var KEYLABEL_SYMBOLS = keylabels.KEYLABEL_SYMBOLS = Object.freeze({
-	  alt: '⌥',
-	  control: '⌃',
-	  meta: '⌘',
-	  shift: '⇧',
-	  tab: '⇥',
-	  left: '←',
-	  right: '→',
-	  up: '↑',
-	  down: '↓',
-	  horizontalAxis: '↔',
-	  verticalAxis: '↕',
-	  enter: '↵',
-	  space: '⎵'
-	});
-	var assignedTargetByOverlay = new WeakMap();
-	var assignedTargetsByOwner = new WeakMap();
-	var assignedModifierFeedbackByOpenKeyNav = new WeakMap();
-	var ASSIGNED_KEYLABEL_TARGET_ATTRIBUTE = 'data-openkeynav-keylabel-target-active';
-	var ASSIGNED_MODIFIER_BY_SYMBOL = Object.freeze(_defineProperty$1(_defineProperty$1(_defineProperty$1(_defineProperty$1({}, KEYLABEL_SYMBOLS.alt, 'alt'), KEYLABEL_SYMBOLS.control, 'control'), KEYLABEL_SYMBOLS.meta, 'meta'), KEYLABEL_SYMBOLS.shift, 'shift'));
-	var ASSIGNED_MODIFIER_EVENT_PROPERTIES = Object.freeze({
-	  alt: 'altKey',
-	  control: 'ctrlKey',
-	  meta: 'metaKey',
-	  shift: 'shiftKey'
-	});
-	var ASSIGNED_MODIFIER_BY_EVENT_KEY = Object.freeze({
-	  Alt: 'alt',
-	  Control: 'control',
-	  Meta: 'meta',
-	  Shift: 'shift'
-	});
-	var ownerDocument = function ownerDocument(openKeyNav) {
-	  var _openKeyNav$statusSer;
-	  return (openKeyNav === null || openKeyNav === void 0 || (_openKeyNav$statusSer = openKeyNav.statusService) === null || _openKeyNav$statusSer === void 0 ? void 0 : _openKeyNav$statusSer.document) || (typeof document === 'undefined' ? null : document);
-	};
-	var assignedModifierSymbols = function assignedModifierSymbols(openKeyNav) {
-	  var modifier = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-	  var documentObject = ownerDocument(openKeyNav);
-	  if (!(documentObject !== null && documentObject !== void 0 && documentObject.querySelectorAll)) return [];
-	  var symbols = Array.from(documentObject.querySelectorAll('.openKeyNav-label[data-openkeynav-keylabel-owner] ' + '[data-openkeynav-keylabel-modifier]'));
-	  return modifier ? symbols.filter(function (symbol) {
-	    return symbol.dataset.openkeynavKeylabelModifier === modifier;
-	  }) : symbols;
-	};
-	var updateAssignedModifierFeedback = function updateAssignedModifierFeedback(openKeyNav, modifier, pressed) {
-	  var feedback = assignedModifierFeedbackByOpenKeyNav.get(openKeyNav);
-	  if (!feedback) return;
-	  if (pressed) {
-	    feedback.pressedModifiers.add(modifier);
-	  } else {
-	    feedback.pressedModifiers.delete(modifier);
-	  }
-	  assignedModifierSymbols(openKeyNav, modifier).forEach(function (symbol) {
-	    if (pressed) {
-	      symbol.dataset.openkeynavKeylabelPressed = 'true';
-	    } else {
-	      delete symbol.dataset.openkeynavKeylabelPressed;
-	    }
-	  });
-	};
-	var ensureAssignedModifierFeedback = function ensureAssignedModifierFeedback(openKeyNav) {
-	  var existing = assignedModifierFeedbackByOpenKeyNav.get(openKeyNav);
-	  if (existing) return existing;
-	  var documentObject = ownerDocument(openKeyNav);
-	  if (!(documentObject !== null && documentObject !== void 0 && documentObject.addEventListener)) {
-	    return {
-	      pressedModifiers: new Set()
-	    };
-	  }
-	  var view = documentObject.defaultView;
-	  var feedback = {
-	    pressedModifiers: new Set()
-	  };
-	  var updateFromEvent = function updateFromEvent(event, isKeyDown) {
-	    Object.entries(ASSIGNED_MODIFIER_EVENT_PROPERTIES).forEach(function (_ref) {
-	      var _ref2 = _slicedToArray$2(_ref, 2),
-	        modifier = _ref2[0],
-	        property = _ref2[1];
-	      var isEventModifier = ASSIGNED_MODIFIER_BY_EVENT_KEY[event.key] === modifier;
-	      updateAssignedModifierFeedback(openKeyNav, modifier, isEventModifier ? isKeyDown : Boolean(event[property]));
-	    });
-	  };
-	  var handleKeyDown = function handleKeyDown(event) {
-	    updateFromEvent(event, true);
-	  };
-	  var handleKeyUp = function handleKeyUp(event) {
-	    updateFromEvent(event, false);
-	  };
-	  var reset = function reset() {
-	    return Object.keys(ASSIGNED_MODIFIER_EVENT_PROPERTIES).forEach(function (modifier) {
-	      return updateAssignedModifierFeedback(openKeyNav, modifier, false);
-	    });
-	  };
-	  var handleVisibilityChange = function handleVisibilityChange() {
-	    if (documentObject.visibilityState === 'hidden') reset();
-	  };
-	  Object.assign(feedback, {
-	    documentObject: documentObject,
-	    view: view,
-	    handleKeyDown: handleKeyDown,
-	    handleKeyUp: handleKeyUp,
-	    handleVisibilityChange: handleVisibilityChange,
-	    reset: reset
-	  });
-	  assignedModifierFeedbackByOpenKeyNav.set(openKeyNav, feedback);
-	  documentObject.addEventListener('keydown', handleKeyDown, true);
-	  documentObject.addEventListener('keyup', handleKeyUp, true);
-	  documentObject.addEventListener('visibilitychange', handleVisibilityChange, true);
-	  view === null || view === void 0 || view.addEventListener('blur', reset);
-	  return feedback;
-	};
-	var releaseAssignedModifierFeedback = function releaseAssignedModifierFeedback(openKeyNav) {
-	  var _feedback$view;
-	  if (assignedModifierSymbols(openKeyNav).length) return;
-	  var feedback = assignedModifierFeedbackByOpenKeyNav.get(openKeyNav);
-	  if (!feedback) return;
-	  feedback.documentObject.removeEventListener('keydown', feedback.handleKeyDown, true);
-	  feedback.documentObject.removeEventListener('keyup', feedback.handleKeyUp, true);
-	  feedback.documentObject.removeEventListener('visibilitychange', feedback.handleVisibilityChange, true);
-	  (_feedback$view = feedback.view) === null || _feedback$view === void 0 || _feedback$view.removeEventListener('blur', feedback.reset);
-	  assignedModifierFeedbackByOpenKeyNav.delete(openKeyNav);
-	};
-	var appendAssignedKeylabelSymbols = function appendAssignedKeylabelSymbols(element, symbols, feedback) {
-	  Array.from(symbols).forEach(function (symbol) {
-	    var modifierName = ASSIGNED_MODIFIER_BY_SYMBOL[symbol];
-	    if (!modifierName) {
-	      element.append(symbol);
-	      return;
-	    }
-	    var modifier = element.ownerDocument.createElement('span');
-	    modifier.className = 'openKeyNav-keylabel-modifier';
-	    modifier.dataset.openkeynavKeylabelModifier = modifierName;
-	    if (feedback !== null && feedback !== void 0 && feedback.pressedModifiers.has(modifierName)) {
-	      modifier.dataset.openkeynavKeylabelPressed = 'true';
-	    }
-	    modifier.textContent = symbol;
-	    element.appendChild(modifier);
-	  });
-	};
-	var ownedAssignedKeylabels = function ownedAssignedKeylabels(openKeyNav, owner) {
-	  var documentObject = ownerDocument(openKeyNav);
-	  if (!(documentObject !== null && documentObject !== void 0 && documentObject.querySelectorAll)) return [];
-	  return Array.from(documentObject.querySelectorAll('.openKeyNav-label[data-openkeynav-keylabel-owner]')).filter(function (overlay) {
-	    return overlay.dataset.openkeynavKeylabelOwner === owner;
-	  });
-	};
-	var releaseAssignedTargets = function releaseAssignedTargets(openKeyNav, owner) {
-	  var targetsByOwner = assignedTargetsByOwner.get(openKeyNav);
-	  var targets = targetsByOwner === null || targetsByOwner === void 0 ? void 0 : targetsByOwner.get(owner);
-	  if (!targets) return;
-	  targetsByOwner.delete(owner);
-	  targets.forEach(function (target) {
-	    var remainsAssigned = Array.from(targetsByOwner.values()).some(function (ownedTargets) {
-	      return ownedTargets.has(target);
-	    });
-	    if (!remainsAssigned) {
-	      var _target$removeAttribu;
-	      (_target$removeAttribu = target.removeAttribute) === null || _target$removeAttribu === void 0 || _target$removeAttribu.call(target, ASSIGNED_KEYLABEL_TARGET_ATTRIBUTE);
-	    }
-	  });
-	  if (targetsByOwner.size === 0) assignedTargetsByOwner.delete(openKeyNav);
-	};
-	var markAssignedTarget = function markAssignedTarget(openKeyNav, owner, target) {
-	  var _target$setAttribute;
-	  var targetsByOwner = assignedTargetsByOwner.get(openKeyNav);
-	  if (!targetsByOwner) {
-	    targetsByOwner = new Map();
-	    assignedTargetsByOwner.set(openKeyNav, targetsByOwner);
-	  }
-	  var targets = targetsByOwner.get(owner);
-	  if (!targets) {
-	    targets = new Set();
-	    targetsByOwner.set(owner, targets);
-	  }
-	  targets.add(target);
-	  (_target$setAttribute = target.setAttribute) === null || _target$setAttribute === void 0 || _target$setAttribute.call(target, ASSIGNED_KEYLABEL_TARGET_ATTRIBUTE, '');
-	};
-
-	/**
-	 * Removes one caller's descriptive keylabels without disturbing Click or Move
-	 * Mode labels. Callers own only the assignment data; this module owns the
-	 * overlay lifecycle.
-	 */
-	var clearAssignedKeylabels = keylabels.clearAssignedKeylabels = function clearAssignedKeylabels(openKeyNav, owner) {
-	  var _ref3 = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
-	    _ref3$preserveModifie = _ref3.preserveModifierFeedback,
-	    preserveModifierFeedback = _ref3$preserveModifie === void 0 ? false : _ref3$preserveModifie;
-	  ownedAssignedKeylabels(openKeyNav, owner).forEach(function (overlay) {
-	    return overlay.remove();
-	  });
-	  releaseAssignedTargets(openKeyNav, owner);
-	  if (!preserveModifierFeedback) releaseAssignedModifierFeedback(openKeyNav);
-	};
-
-	/**
-	 * Repositions an existing caller-owned set through OpenKeyNav's established
-	 * overlay placement routine.
-	 */
-	keylabels.repositionAssignedKeylabels = function repositionAssignedKeylabels(openKeyNav, owner) {
-	  ownedAssignedKeylabels(openKeyNav, owner).forEach(function (overlay) {
-	    var target = assignedTargetByOverlay.get(overlay);
-	    if (!(target !== null && target !== void 0 && target.isConnected)) {
-	      overlay.remove();
-	      return;
-	    }
-	    openKeyNav.updateOverlayPosition(target, overlay);
-	  });
-	};
-
-	/**
-	 * Renders caller-supplied descriptive labels with the existing keylabel
-	 * creation and positioning system. These labels are hints, not type-to-select
-	 * labels, so the page targets are deliberately left without
-	 * data-openkeynav-label attributes. The renderer applies the shared keylabel
-	 * target treatment through a non-selectable, owner-managed attribute instead.
-	 */
-	keylabels.showAssignedKeylabels = function showAssignedKeylabels(openKeyNav, assignments) {
-	  var _ref4 = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
-	    owner = _ref4.owner,
-	    _ref4$cssClass = _ref4.cssClass,
-	    cssClass = _ref4$cssClass === void 0 ? null : _ref4$cssClass,
-	    _ref4$focusedTarget = _ref4.focusedTarget,
-	    focusedTarget = _ref4$focusedTarget === void 0 ? null : _ref4$focusedTarget;
-	  if (!owner) {
-	    throw new TypeError('Assigned keylabels require an owner.');
-	  }
-	  clearAssignedKeylabels(openKeyNav, owner, {
-	    preserveModifierFeedback: true
-	  });
-	  var overlays = [];
-	  var assignmentsByTarget = new Map();
-	  Array.from(assignments || []).forEach(function (assignment) {
-	    var target = assignment === null || assignment === void 0 ? void 0 : assignment.target;
-	    var maxSymbols = Number.isInteger(assignment === null || assignment === void 0 ? void 0 : assignment.maxSymbols) && assignment.maxSymbols > 0 ? assignment.maxSymbols : 2;
-	    var symbols = Array.from(String((assignment === null || assignment === void 0 ? void 0 : assignment.symbols) || '')).slice(0, maxSymbols).join('');
-	    if (!(target !== null && target !== void 0 && target.isConnected) || !symbols) return;
-	    var existing = assignmentsByTarget.get(target);
-	    if (!existing) {
-	      assignmentsByTarget.set(target, {
-	        target: target,
-	        symbols: symbols,
-	        maxSymbols: maxSymbols,
-	        segments: [symbols],
-	        commands: assignment.command ? [String(assignment.command)] : []
-	      });
-	      // Make every target visible to the shared collision check before the
-	      // first overlay is positioned. This keeps placement single-pass while
-	      // preventing an early keylabel from obscuring a later target.
-	      markAssignedTarget(openKeyNav, owner, target);
-	      return;
-	    }
-	    var availableSymbols = existing.maxSymbols - Array.from(existing.symbols).length;
-	    if (Array.from(symbols).length > availableSymbols) return;
-	    existing.symbols += symbols;
-	    existing.segments.push(symbols);
-	    if (assignment.command) existing.commands.push(String(assignment.command));
-	  });
-	  var hasModifierSymbols = Array.from(assignmentsByTarget.values()).some(function (assignment) {
-	    return Array.from(assignment.symbols).some(function (symbol) {
-	      return ASSIGNED_MODIFIER_BY_SYMBOL[symbol];
-	    });
-	  });
-	  var modifierFeedback = hasModifierSymbols ? ensureAssignedModifierFeedback(openKeyNav) : null;
-	  assignmentsByTarget.forEach(function (_ref5) {
-	    var target = _ref5.target,
-	      symbols = _ref5.symbols,
-	      segments = _ref5.segments,
-	      commands = _ref5.commands;
-	    var overlay = openKeyNav.createOverlay(target, symbols, cssClass);
-	    overlay.dataset.openkeynavKeylabelOwner = owner;
-	    overlay.dataset.openkeynavKeylabelCommand = commands.join(' ');
-	    if (target.id) overlay.dataset.openkeynavKeylabelTarget = target.id;
-	    overlay.setAttribute('data-openkeynav-ui', "".concat(owner, "-keylabel"));
-	    overlay.setAttribute('aria-hidden', 'true');
-	    if (target === focusedTarget) {
-	      overlay.classList.add('openKeyNav-keylabel-focused');
-	      overlay.dataset.openkeynavKeylabelFocused = 'true';
-	    }
-	    if (segments.length > 1) {
-	      overlay.classList.add('openKeyNav-keylabel-alternatives');
-	      overlay.dataset.openkeynavKeylabelAlternatives = String(segments.length);
-	      var segmentElements = segments.map(function (segment) {
-	        var element = overlay.ownerDocument.createElement('span');
-	        element.className = 'openKeyNav-keylabel-alternative';
-	        appendAssignedKeylabelSymbols(element, segment, modifierFeedback);
-	        return element;
-	      });
-	      overlay.replaceChildren.apply(overlay, _toConsumableArray$2(segmentElements));
-	      openKeyNav.updateOverlayPosition(target, overlay);
-	    } else if (Array.from(symbols).some(function (symbol) {
-	      return ASSIGNED_MODIFIER_BY_SYMBOL[symbol];
-	    })) {
-	      overlay.replaceChildren();
-	      appendAssignedKeylabelSymbols(overlay, symbols, modifierFeedback);
-	      openKeyNav.updateOverlayPosition(target, overlay);
-	    }
-	    assignedTargetByOverlay.set(overlay, target);
-	    overlays.push(overlay);
-	  });
-	  if (!hasModifierSymbols) releaseAssignedModifierFeedback(openKeyNav);
-	  return overlays;
-	};
-	var generateLabels = keylabels.generateLabels = function generateLabels(openKeyNav, count) {
-	  var labels = [];
-	  var chars = generateValidKeyChars(openKeyNav);
-	  var maxLength = Math.pow(chars.length, 2);
-	  var useThirdChar = count > maxLength;
-	  if (useThirdChar) {
-	    maxLength = Math.pow(chars.length, 3);
-	  }
-	  for (var i = 0; i < count && labels.length < maxLength; i++) {
-	    var firstChar = chars[i % chars.length];
-	    var secondChar = chars[Math.floor(i / chars.length) % chars.length] || '';
-	    var thirdChar = useThirdChar ? chars[Math.floor(i / Math.pow(chars.length, 2)) % chars.length] : '';
-	    labels.push(firstChar + secondChar + thirdChar);
-	  }
-
-	  // Attempt to shorten labels that are uniquely identifiable by their first character
-	  var labelCounts = {};
-	  labels.forEach(function (label) {
-	    var firstChar = label[0];
-	    labelCounts[firstChar] = (labelCounts[firstChar] || 0) + 1;
-	  });
-	  labels = labels.map(function (label) {
-	    var firstChar = label[0];
-	    if (labelCounts[firstChar] === 1 && !label.includes('.')) {
-	      // Check for uniqueness and ensure not shortened if it's a prefix
-	      return firstChar;
-	    }
-	    return label;
-	  });
-
-	  // alert(labels)
-
-	  // now we have all the labels we will use.
-	  // Shuffle them for variable rewards. ++addiction
-	  // return shuffle(labels);
-
-	  return labels; // unshuffled
-	};
-	keylabels.showClickableOverlays = function showClickableOverlays(openKeyNav) {
-	  (0, _scrolling.disableScrolling)(openKeyNav);
-	  setTimeout(function () {
-	    // The user may dismiss Click Mode before this deferred discovery runs.
-	    if (!openKeyNav.config.modes.clicking.value) return;
-	    var allCandidates = _getAllCandidateElements(openKeyNav, document);
-	    var clickables = allCandidates.filter(function (el) {
-	      return (0, _isTabbable.isTabbable)(el, openKeyNav);
-	    });
-
-	    // Prefer the innermost target when nested candidates occupy the same area.
-	    clickables = clickables.filter(function (element) {
-	      var hasClickableDescendant = clickables.some(function (other) {
-	        if (other === element || !element.contains(other)) return false;
-	        var parentRect = element.getBoundingClientRect();
-	        var childRect = other.getBoundingClientRect();
-	        return Math.abs(parentRect.top - childRect.top) < 2 && Math.abs(parentRect.left - childRect.left) < 2 && Math.abs(parentRect.right - childRect.right) < 2 && Math.abs(parentRect.bottom - childRect.bottom) < 2;
-	      });
-	      return !hasClickableDescendant;
-	    });
-	    var labels = generateLabels(openKeyNav, clickables.length);
-	    clickables.forEach(function (element, index) {
-	      element.setAttribute('data-openkeynav-label', labels[index]);
-	    });
-	    clickables.forEach(function (element, index) {
-	      openKeyNav.createOverlay(element, labels[index]);
-	    });
-	  }, 0); // Use timeout to ensure the operation completes
-	};
-	keylabels.showMoveableFromOverlays = function showMoveableFromOverlays(openKeyNav) {
-	  // alert("showMoveableFromOverlays()");
-	  // return;
-
-	  // Combine all unique 'from' classes from moveConfig to query the document
-	  var moveables = [];
-
-	  // direct selectors of from elements
-	  var fromElementSelectors = _toConsumableArray$2(new Set(openKeyNav.config.modesConfig.move.config.filter(function (config) {
-	    return config.fromElements;
-	  }).map(function (config) {
-	    return config.fromElements;
-	  })));
-	  if (!!fromElementSelectors.length) {
-	    document.querySelectorAll(fromElementSelectors.join(', ')).forEach(function (element) {
-	      var config = openKeyNav.config.modesConfig.move.config.find(function (c) {
-	        return element.matches(c.fromElements);
-	      });
-	      if (config) {
-	        var configKey = openKeyNav.config.modesConfig.move.config.indexOf(config);
-	        if (openKeyNav.isNonzeroSize(element) && (!config.fromExclude || !element.matches(config.fromExclude))) {
-	          element.setAttribute('data-openkeynav-moveconfig', configKey); // Store the moveConfig key
-	          moveables.push(element);
-	        }
-	      }
-	    });
-	  }
-
-	  // containers of from elements
-	  var fromContainerSelectors = _toConsumableArray$2(new Set(openKeyNav.config.modesConfig.move.config.filter(function (config) {
-	    return config.fromContainer;
-	  }).map(function (config) {
-	    return config.fromContainer;
-	  })));
-	  if (!!fromContainerSelectors.length) {
-	    var fromContainers = document.querySelectorAll(fromContainerSelectors.join(', '));
-	    // Collect all direct children of each fromContainer as moveable elements
-	    fromContainers.forEach(function (container) {
-	      var config = openKeyNav.config.modesConfig.move.config.find(function (c) {
-	        return container.matches(c.fromContainer);
-	      });
-	      if (config) {
-	        var configKey = openKeyNav.config.modesConfig.move.config.indexOf(config);
-	        var children = Array.from(container.children);
-	        children.forEach(function (child) {
-	          if (openKeyNav.isNonzeroSize(child) && (!config.fromExclude || !child.matches(config.fromExclude))) {
-	            child.setAttribute('data-openkeynav-moveconfig', configKey); // Store the moveConfig key
-	            moveables.push(child);
-	          }
-	        });
-	      }
-	    });
-	  }
-
-	  // Resolve elements using provided callbacks if available
-	  openKeyNav.config.modesConfig.move.config.forEach(function (config) {
-	    if (config.resolveFromElements) {
-	      var resolvedElements = config.resolveFromElements();
-	      resolvedElements.forEach(function (element) {
-	        var configKey = openKeyNav.config.modesConfig.move.config.indexOf(config);
-	        if (openKeyNav.isNonzeroSize(element) && (!config.fromExclude || !element.matches(config.fromExclude))) {
-	          element.setAttribute('data-openkeynav-moveconfig', configKey); // Store the moveConfig key
-	          moveables.push(element);
-	        }
-	      });
-	    }
-	  });
-
-	  // filter out moveables that would not be clickable
-	  moveables = moveables.filter(function (el) {
-	    return (0, _isTabbable.isTabbable)(el, openKeyNav);
-	  });
-	  var labels = generateLabels(openKeyNav, moveables.length);
-	  moveables.forEach(function (element, index) {
-	    element.setAttribute('data-openkeynav-label', labels[index]);
-	  });
-	  moveables.forEach(function (element, index) {
-	    openKeyNav.createOverlay(element, labels[index]);
-	    element.setAttribute('data-openkeynav-draggable', 'true');
-	  });
-	};
-	keylabels.filterRemainingOverlays = function filterRemainingOverlays(openKeyNav, e) {
-	  // Filter overlays, removing non-matching ones
-	  document.querySelectorAll('.openKeyNav-label').forEach(function (overlay) {
-	    var label = overlay.textContent;
-
-	    // If the current typedLabel no longer matches the beginning of this element's label, remove both the overlay and clean up the target element
-	    if (!label.startsWith(openKeyNav.config.typedLabel.value)) {
-	      var targetElement = document.querySelector("[data-openkeynav-label=\"".concat(label, "\"]"));
-	      targetElement && targetElement.removeAttribute('data-openkeynav-label'); // Clean up the target element's attribute
-	      overlay.remove(); // Remove the overlay
-	    }
-	  });
-	  if (document.querySelectorAll('.openKeyNav-label').length == 0) {
-	    // there are no overlays left. clean up and unblock.
-	    (0, _escape.handleEscape)(openKeyNav, e);
-	    return true;
-	  }
-	};
-	var generateValidKeyChars = keylabels.generateValidKeyChars = function generateValidKeyChars(openKeyNav) {
-	  var chars = 'abcdefghijklmnopqrstuvwxyz';
-	  // let chars = '1234567890';
-	  // let chars = 'abcdefghijklmnopqrstuvwxyz1234567890'; // not a good idea because 1 and l can be confused
-
-	  // Remove letters from chars that are present in openKeyNav.config.keys
-	  // maybe this isn't necessary when in click mode (mode paradigm is common in screen readers)
-	  // Object.values(openKeyNav.config.keys).forEach(key => {
-	  //   chars = chars.replace(key, '');
-	  // });
-
-	  // remove the secondary escape key code
-	  chars = chars.replace(openKeyNav.config.keys.escape, '');
-	  return chars;
-	};
-	var _getAllCandidateElements = function getAllCandidateElements(openKeyNav, doc) {
-	  var allElements = Array.from(doc.querySelectorAll("a," +
-	  // can be made non-tabbable by removing the href attribute or setting tabindex="-1".
-	  "button:not([disabled])," +
-	  // are not tabbable when disabled.
-	  "textarea:not([disabled])," +
-	  // are not tabbable when disabled.
-	  "select:not([disabled])," +
-	  // are not tabbable when disabled.
-	  "input:not([disabled])," +
-	  // are not tabbable when disabled.
-	  // "label," +  // are not normally tabbable unless they contain tabbable content.
-	  "iframe," +
-	  // are tabbable by default.
-	  "details > summary," +
-	  // The summary element inside a details element can be tabbable
-	  "[role=button]," +
-	  // can be made non-tabbable by adding tabindex="-1".
-	  "[role=link]," +
-	  // can be made non-tabbable by adding tabindex="-1".
-	  "[role=menuitem]," +
-	  // can be made non-tabbable by adding tabindex="-1".
-	  "[role=option]," +
-	  // can be made non-tabbable by adding tabindex="-1".
-	  "[role=tab]," +
-	  // can be made non-tabbable by adding tabindex="-1".
-	  "[role=treeitem]," +
-	  // can be made non-tabbable by adding tabindex="-1".
-	  "[role=checkbox]," +
-	  // can be made non-tabbable by adding tabindex="-1".
-	  "[role=radio]," +
-	  // can be made non-tabbable by adding tabindex="-1".
-	  "[aria-checked]," +
-	  // not inherently tabbable or non-tabbable.
-	  "[contenteditable=true]," +
-	  // elements with contenteditable="true" are tabbable.
-	  "[contenteditable=plaintext-only]," +
-	  // elements with contenteditable="plaintext-only" are tabbable.
-	  "[tabindex]," +
-	  // elements with a tabindex attribute can be made tabbable or non-tabbable depending on the value of tabindex.
-	  "[onclick]" // elements with an onclick attribute are not inherently tabbable or non-tabbable.
-	  ));
-	  var iframes = doc.querySelectorAll('iframe');
-	  iframes.forEach(function (iframe) {
-	    try {
-	      var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-	      var iframeElements = _getAllCandidateElements(openKeyNav, iframeDoc);
-	      allElements = allElements.concat(Array.from(iframeElements)); // Add elements from each iframe
-	    } catch (error) {
-	      console.log('Access denied to iframe content:', error);
-	    }
-	  });
-
-	  // Merge with clickEventElements
-	  var mergedSet = new Set([].concat(_toConsumableArray$2(allElements), _toConsumableArray$2(openKeyNav.config.modesConfig.click.clickEventElements)));
-	  return Array.from(mergedSet);
-
-	  // return allElements;
-	};
-
-	var lifecycle = {};
-
-	Object.defineProperty(lifecycle, "__esModule", {
-	  value: true
-	});
-	lifecycle.enable = lifecycle.disable = void 0;
-	lifecycle.enable = function enable() {};
-	lifecycle.disable = function disable() {};
-
-	var structuralNavigation = {};
-
 	var structuralModel = {};
 
 	var accessibilityName = {};
@@ -1798,22 +821,22 @@
 	structuralModel.buildStructuralModel = void 0;
 	var _accessibilityName$1 = accessibilityName;
 	var _domUtilities$2 = domUtilities;
-	function _toConsumableArray$1(r) {
-	  return _arrayWithoutHoles$1(r) || _iterableToArray$1(r) || _unsupportedIterableToArray$2(r) || _nonIterableSpread$1();
+	function _toConsumableArray$2(r) {
+	  return _arrayWithoutHoles$2(r) || _iterableToArray$2(r) || _unsupportedIterableToArray$3(r) || _nonIterableSpread$2();
 	}
-	function _nonIterableSpread$1() {
+	function _nonIterableSpread$2() {
 	  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 	}
-	function _iterableToArray$1(r) {
+	function _iterableToArray$2(r) {
 	  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
 	}
-	function _arrayWithoutHoles$1(r) {
-	  if (Array.isArray(r)) return _arrayLikeToArray$2(r);
+	function _arrayWithoutHoles$2(r) {
+	  if (Array.isArray(r)) return _arrayLikeToArray$3(r);
 	}
 	function _createForOfIteratorHelper$1(r, e) {
 	  var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
 	  if (!t) {
-	    if (Array.isArray(r) || (t = _unsupportedIterableToArray$2(r)) || e) {
+	    if (Array.isArray(r) || (t = _unsupportedIterableToArray$3(r)) || e) {
 	      t && (r = t);
 	      var _n = 0,
 	        F = function F() {};
@@ -1858,14 +881,14 @@
 	    }
 	  };
 	}
-	function _unsupportedIterableToArray$2(r, a) {
+	function _unsupportedIterableToArray$3(r, a) {
 	  if (r) {
-	    if ("string" == typeof r) return _arrayLikeToArray$2(r, a);
+	    if ("string" == typeof r) return _arrayLikeToArray$3(r, a);
 	    var t = {}.toString.call(r).slice(8, -1);
-	    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$2(r, a) : void 0;
+	    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$3(r, a) : void 0;
 	  }
 	}
-	function _arrayLikeToArray$2(r, a) {
+	function _arrayLikeToArray$3(r, a) {
 	  (null == a || a > r.length) && (a = r.length);
 	  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
 	  return n;
@@ -2331,7 +1354,7 @@
 	    var memberTargets = resolveMembers(descriptor, boundary, root, liveTargets, details);
 	    if (!memberTargets.length) return;
 	    var existing = boundary && boundaryContexts.get(boundary);
-	    var order = Number.isFinite(Number(descriptor.order)) ? Number(descriptor.order) : boundary && orderByElement.has(boundary) ? orderByElement.get(boundary) : Math.min.apply(Math, _toConsumableArray$1(memberTargets.map(targetOrder)));
+	    var order = Number.isFinite(Number(descriptor.order)) ? Number(descriptor.order) : boundary && orderByElement.has(boundary) ? orderByElement.get(boundary) : Math.min.apply(Math, _toConsumableArray$2(memberTargets.map(targetOrder)));
 	    if (!Number.isFinite(order)) {
 	      throw new TypeError("Structural context \"".concat(descriptor.id, "\" requires a deterministic order."));
 	    }
@@ -2394,7 +1417,7 @@
 	  // Heading contexts are ordered ranges within the nearest explicit semantic
 	  // container. Native section headings associated with that same boundary are
 	  // deliberately merged into the explicit context and skipped here.
-	  var containerContexts = [rootContext].concat(_toConsumableArray$1(allContexts.slice(1).filter(function (context) {
+	  var containerContexts = [rootContext].concat(_toConsumableArray$2(allContexts.slice(1).filter(function (context) {
 	    return context.boundary;
 	  })));
 	  var headingContexts = [];
@@ -2412,7 +1435,7 @@
 	    }).map(function (element) {
 	      return orderByElement.get(element);
 	    });
-	    var scopeEnd = scopeOrders.length ? Math.max.apply(Math, _toConsumableArray$1(scopeOrders)) + 1 : elements.length + 1;
+	    var scopeEnd = scopeOrders.length ? Math.max.apply(Math, _toConsumableArray$2(scopeOrders)) + 1 : elements.length + 1;
 	    var stack = [];
 
 	    // A generic authored wrapper does not become a structural context, but it
@@ -2487,7 +1510,7 @@
 	      }).map(function (element) {
 	        return orderByElement.get(element);
 	      });
-	      return rangeOrders.length ? Math.max.apply(Math, _toConsumableArray$1(rangeOrders)) + 1 : scopeEnd;
+	      return rangeOrders.length ? Math.max.apply(Math, _toConsumableArray$2(rangeOrders)) + 1 : scopeEnd;
 	    };
 	    var closeHeadingContext = function closeHeadingContext(closing, requestedEnd) {
 	      var context = closing.context;
@@ -2563,7 +1586,7 @@
 	      var ownedHeadings = ownedHeadingsByTarget.get(target);
 	      return (ownedHeadings === null || ownedHeadings === void 0 ? void 0 : ownedHeadings.size) === 1 && ownedHeadings.has(context.boundary);
 	    });
-	    context.visualElements = Array.from(new Set([].concat(_toConsumableArray$1(rangeElements), _toConsumableArray$1(singleHeadingOwners))));
+	    context.visualElements = Array.from(new Set([].concat(_toConsumableArray$2(rangeElements), _toConsumableArray$2(singleHeadingOwners))));
 	  });
 	  headingContexts.filter(function (context) {
 	    return context.memberTargets.length;
@@ -2630,7 +1653,7 @@
 
 	  // Put explicit child boundaries into the applicable heading range and rich
 	  // list-item context. These are range/containment parents, not focus stops.
-	  var rangeParents = [].concat(_toConsumableArray$1(headingContexts.filter(function (context) {
+	  var rangeParents = [].concat(_toConsumableArray$2(headingContexts.filter(function (context) {
 	    return context.memberTargets.length;
 	  })), listItemContexts);
 	  allContexts.slice(1).forEach(function (context) {
@@ -2715,7 +1738,7 @@
 	          context.children.forEach(function (child) {
 	            child.parent = parent;
 	          });
-	          (_parent$children = parent.children).splice.apply(_parent$children, [childIndex, 1].concat(_toConsumableArray$1(context.children)));
+	          (_parent$children = parent.children).splice.apply(_parent$children, [childIndex, 1].concat(_toConsumableArray$2(context.children)));
 	          parent.children.sort(function (left, right) {
 	            return left.order - right.order;
 	          });
@@ -2776,6 +1799,27 @@
 	      return context.targets.includes(target);
 	    }));
 	  });
+
+	  // Keep heading commands grounded in the same authored ranges as Structural
+	  // Navigation. The routes include empty headings so callers can deliberately
+	  // skip them without ever turning a heading into a synthetic focus target.
+	  var headingRoutes = headings.map(function (heading) {
+	    var headingContext = headingContexts.find(function (context) {
+	      return context.boundary === heading;
+	    });
+	    var associatedContext = allContexts.find(function (context) {
+	      return context.associatedHeading === heading;
+	    });
+	    var context = headingContext || associatedContext || null;
+	    var memberSet = (context === null || context === void 0 ? void 0 : context.memberSet) || new Set();
+	    return {
+	      heading: heading,
+	      level: headingRank(heading),
+	      targets: liveTargets.filter(function (target) {
+	        return memberSet.has(target);
+	      })
+	    };
+	  });
 	  return {
 	    root: root,
 	    targets: liveTargets,
@@ -2784,6 +1828,7 @@
 	    directContextByTarget: directContextByTarget,
 	    typedContexts: typedContextMap,
 	    typedContextsByTarget: typedContextsByTarget,
+	    headingRoutes: headingRoutes,
 	    rejectedContexts: rejectedContexts,
 	    getDirectContext: function getDirectContext(target) {
 	      return directContextByTarget.get(target) || null;
@@ -2792,77 +1837,6 @@
 	      return typedContextsByTarget.get(target) || [];
 	    }
 	  };
-	};
-
-	var keyboardEvents = {};
-
-	Object.defineProperty(keyboardEvents, "__esModule", {
-	  value: true
-	});
-	keyboardEvents.preventAcceptedCommand = keyboardEvents.normalizeShortcut = keyboardEvents.matchesShortcut = keyboardEvents.MODIFIER_KEYS = void 0;
-	function _typeof$2(o) {
-	  "@babel/helpers - typeof";
-
-	  return _typeof$2 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
-	    return typeof o;
-	  } : function (o) {
-	    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
-	  }, _typeof$2(o);
-	}
-	var MODIFIER_KEYS = keyboardEvents.MODIFIER_KEYS = Object.freeze(['altKey', 'ctrlKey', 'metaKey', 'shiftKey']);
-	var normalizeShortcut = keyboardEvents.normalizeShortcut = function normalizeShortcut(shortcut) {
-	  if (!shortcut) return null;
-	  if (typeof shortcut === 'string') return {
-	    key: shortcut
-	  };
-	  if (_typeof$2(shortcut) === 'object' && typeof shortcut.key === 'string') {
-	    return shortcut;
-	  }
-	  return null;
-	};
-	var keysEqual = function keysEqual(left, right) {
-	  if (left.length === 1 && right.length === 1) {
-	    return left.toLowerCase() === right.toLowerCase();
-	  }
-	  return left === right;
-	};
-
-	/**
-	 * Match a configured shortcut exactly. Modifiers omitted by the configuration
-	 * are treated as false so browser and application chords do not collide.
-	 * A caller may permit specific extra modifiers without weakening an explicit
-	 * `true` or `false` requirement in the configured shortcut.
-	 */
-	keyboardEvents.matchesShortcut = function matchesShortcut(event, shortcut) {
-	  var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-	  var normalized = normalizeShortcut(shortcut);
-	  if (!normalized || !keysEqual(event.key, normalized.key)) return false;
-
-	  // Preserve the original string form for callers that deliberately need to
-	  // ignore a modifier entirely. New ownership overrides should use
-	  // `allowedExtraModifiers` so explicit shortcut requirements remain exact.
-	  var optionBag = _typeof$2(options) === 'object' && options !== null ? options : {};
-	  var ignoredModifier = typeof options === 'string' ? options : optionBag.ignoredModifier || null;
-	  var allowedExtras = optionBag.allowedExtraModifiers || [];
-	  var allowedExtraModifiers = new Set(Array.isArray(allowedExtras) ? allowedExtras : [allowedExtras].filter(Boolean));
-	  return MODIFIER_KEYS.every(function (modifier) {
-	    if (modifier === ignoredModifier) return true;
-	    var eventHasModifier = Boolean(event[modifier]);
-	    var shortcutDeclaresModifier = Object.prototype.hasOwnProperty.call(normalized, modifier);
-	    if (allowedExtraModifiers.has(modifier) && !shortcutDeclaresModifier && eventHasModifier) {
-	      return true;
-	    }
-	    return eventHasModifier === Boolean(normalized[modifier]);
-	  });
-	};
-
-	/**
-	 * Cancel one keyboard command after OpenKeyNav has accepted ownership of it.
-	 */
-	keyboardEvents.preventAcceptedCommand = function preventAcceptedCommand(event) {
-	  event.preventDefault();
-	  event.stopPropagation();
-	  return true;
 	};
 
 	var tabbableTargets = {};
@@ -3434,7 +2408,7 @@
 	  }
 	  return candidates;
 	};
-	var isTabbable = function isTabbable(node, options) {
+	var isTabbable$1 = function isTabbable(node, options) {
 	  options = options || {};
 	  if (!node) {
 	    throw new Error('No node provided');
@@ -3461,7 +2435,7 @@
 		focusable: focusable,
 		getTabIndex: getTabIndex,
 		isFocusable: isFocusable,
-		isTabbable: isTabbable,
+		isTabbable: isTabbable$1,
 		tabbable: tabbable
 	});
 
@@ -3606,6 +2580,1053 @@
 	    });
 	  };
 	})(tabbableTargets);
+
+	Object.defineProperty(focus, "__esModule", {
+	  value: true
+	});
+	focus.focusOnScrollables = focus.focusOnHeadings = void 0;
+	var _structuralModel$1 = structuralModel;
+	var _tabbableTargets$1 = tabbableTargets;
+	focus.focusOnHeadings = function focusOnHeadings(openKeyNav, headings, e) {
+	  var targets = (0, _tabbableTargets$1.discoverTabbableTargets)(document, {
+	    displayCheck: openKeyNav.config.debug.screenReaderVisible ? 'none' : 'full',
+	    getShadowRoot: true,
+	    includeProgrammatic: false
+	  });
+	  var model = (0, _structuralModel$1.buildStructuralModel)({
+	    root: document,
+	    targets: targets
+	  });
+	  var routes = model.headingRoutes.filter(function (route) {
+	    return route.heading.matches(headings);
+	  }).filter(function (route) {
+	    return route.targets.length > 0;
+	  });
+	  openKeyNav.config.headings.list = routes.map(function (route) {
+	    return route.targets[0];
+	  });
+	  if (openKeyNav.config.headings.list.length == 0) {
+	    return true;
+	  }
+	  var headingState = openKeyNav.config.headings;
+	  var lastIndex = headingState.list.length - 1;
+	  var currentRouteIndex = routes.findIndex(function (route) {
+	    return route.heading === headingState.currentHeading && route.targets[0] === document.activeElement;
+	  });
+	  var focusedHeadingIndex = currentRouteIndex >= 0 ? currentRouteIndex : routes.reduce(function (activeIndex, route, routeIndex) {
+	    return route.targets.includes(document.activeElement) ? routeIndex : activeIndex;
+	  }, -1);
+	  if (focusedHeadingIndex >= 0) {
+	    headingState.currentHeadingIndex = focusedHeadingIndex;
+	  } else {
+	    // The current focus is outside this particular heading route. Start at
+	    // its boundary instead of reusing an index from another heading level.
+	    headingState.currentHeadingIndex = -1;
+	  }
+
+	  // handle moving to the next / previous heading
+	  if (e.shiftKey) {
+	    // shift key is pressed, so move backwards. If at the beginning, go to the end.
+	    if (headingState.currentHeadingIndex > 0) {
+	      headingState.currentHeadingIndex--;
+	    } else {
+	      headingState.currentHeadingIndex = lastIndex;
+	    }
+	  } else {
+	    // Move to the next heading. If at the end, go to the beginning.
+	    if (headingState.currentHeadingIndex < lastIndex) {
+	      headingState.currentHeadingIndex++;
+	    } else {
+	      headingState.currentHeadingIndex = 0;
+	    }
+	  }
+	  var nextRoute = routes[headingState.currentHeadingIndex];
+	  var nextTarget = nextRoute.targets[0];
+	  headingState.currentHeading = nextRoute.heading;
+	  openKeyNav.focus(nextTarget);
+	};
+	focus.focusOnScrollables = function focusOnScrollables(openKeyNav, e) {
+	  openKeyNav.config.scrollables.list = openKeyNav.getScrollableElements(); // Populate or refresh the list of scrollable elements
+
+	  if (openKeyNav.config.scrollables.list.length == 0) {
+	    return; // If no scrollable elements, exit the function
+	  }
+	  var scrollables = openKeyNav.config.scrollables;
+	  var lastIndex = scrollables.list.length - 1;
+	  var focusedScrollableIndex = scrollables.list.indexOf(document.activeElement);
+
+	  // Re-enter the route from its boundary when focus is elsewhere instead of
+	  // reusing an index from a different or stale scrollable list.
+	  if (focusedScrollableIndex >= 0) {
+	    scrollables.currentScrollableIndex = focusedScrollableIndex;
+	  } else {
+	    scrollables.currentScrollableIndex = -1;
+	  }
+	  if (e.shiftKey) {
+	    scrollables.currentScrollableIndex = scrollables.currentScrollableIndex > 0 ? scrollables.currentScrollableIndex - 1 : lastIndex;
+	  } else {
+	    scrollables.currentScrollableIndex = scrollables.currentScrollableIndex < lastIndex ? scrollables.currentScrollableIndex + 1 : 0;
+	  }
+
+	  // Focus the current scrollable element
+	  var currentScrollable = scrollables.list[scrollables.currentScrollableIndex];
+	  if (!currentScrollable.hasAttribute('tabindex')) {
+	    currentScrollable.setAttribute('tabindex', '-1'); // Make the element focusable
+	    currentScrollable.setAttribute('data-openkeynav-tabIndexed', true);
+	  }
+	  openKeyNav.focus(currentScrollable); // Set focus on the element
+
+	  // Clean up: remove tabindex and blur listener when focus is lost
+	  currentScrollable.addEventListener('blur', function handler() {
+	    if (currentScrollable.hasAttribute('data-openkeynav-tabIndexed')) {
+	      currentScrollable.removeAttribute('tabindex'); // Remove the tabindex attribute
+	      currentScrollable.removeAttribute('data-openkeynav-tabIndexed');
+	    }
+	    currentScrollable.removeEventListener('blur', handler);
+	  });
+	};
+
+	var isTabbable = {};
+
+	Object.defineProperty(isTabbable, "__esModule", {
+	  value: true
+	});
+	isTabbable.isTabbable = void 0;
+	var isHiddenByOverflow = function isHiddenByOverflow(element) {
+	  var parent = element.parentNode;
+	  // Use the ownerDocument to get the correct document context
+	  var doc = element.ownerDocument;
+	  var body = doc.body;
+	  while (parent && parent !== body) {
+	    // Use the specific document body of the element
+	    // if (parent instanceof HTMLElement) {
+	    var parentStyle = getComputedStyle(parent);
+	    if (['scroll', 'auto'].includes(parentStyle.overflow) || ['scroll', 'auto'].includes(parentStyle.overflowX) || ['scroll', 'auto'].includes(parentStyle.overflowY)) {
+	      var parentRect = parent.getBoundingClientRect();
+	      var rect = element.getBoundingClientRect();
+	      if (rect.bottom < parentRect.top || rect.top > parentRect.bottom || rect.right < parentRect.left || rect.left > parentRect.right) {
+	        return true; // Element is hidden by parent's overflow
+	      }
+	    }
+	    // }
+	    parent = parent.parentNode;
+	  }
+	  return false; // No parent hides the element by overflow
+	};
+	var inViewport = function inViewport(el) {
+	  // check if the element's top left corner is within the window's viewport
+	  var rect = el.getBoundingClientRect();
+	  var isInViewport = rect.top < window.innerHeight && rect.left < window.innerWidth && rect.bottom > 0 && rect.right > 0;
+	  return isInViewport;
+	};
+	isTabbable.isTabbable = function isTabbable(el, openKeyNav) {
+	  var clickableElements = ['a', 'button', 'textarea', 'select', 'input', 'iframe', 'summary', '[onclick]'];
+	  var interactiveRoles = ['button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio'];
+	  var isTypicallyClickableElement = function isTypicallyClickableElement(el) {
+	    // Check if the element is a known clickable element
+	    if (el.matches(clickableElements.join())) {
+	      return true;
+	    }
+
+	    // Check if the element has an interactive ARIA role
+	    var role = el.getAttribute('role');
+	    if (role && interactiveRoles.includes(role)) {
+	      return true;
+	    }
+	    return false;
+	  };
+
+	  // Ensure el is an Element before accessing styles
+	  if (!(el instanceof Element)) {
+	    // console.log(`!(el instanceof Element)`, el); //debug
+	    return false;
+	  }
+
+	  // Check for inert attribute (on element or ancestors)
+	  if (el.inert) {
+	    return false;
+	  }
+
+	  // Check if any ancestor has inert attribute
+	  var parent = el.parentElement;
+	  while (parent) {
+	    if (parent.inert) {
+	      return false;
+	    }
+	    parent = parent.parentElement;
+	  }
+
+	  // Skip if the element is set to not display (not the same as having zero size)
+	  var style = getComputedStyle(el);
+	  if (style.display === 'none') {
+	    // console.log(`style.display === 'none'`, el); //debug
+	    return false;
+	  }
+
+	  // Skip if the element is hidden by a parent's overflow
+	  if (isHiddenByOverflow(el)) {
+	    // console.log(`isHiddenByOverflow(el)`, el); //debug
+	    return false;
+	  }
+
+	  // Skip if the element is within a <details> that is not open, but allow if it's a <summary> or a clickable element inside a <summary>
+	  // aka it's hidden by the collapsed detail
+	  if (el.matches('details:not([open]) *') && !el.matches('details:not([open]) > summary, details:not([open]) > summary *')) {
+	    // console.log(`hidden details element`, el); //debug
+	    return false;
+	  }
+
+	  // always include if tabindex > -1
+	  // include this after checking if the element is hidden by a parent's overflow, which most screen readers respect
+	  // (elements should not be tabbable by keyboard if they are visibly hidden,
+	  // so include visibly hidden items that are explicitly tabbable to help with accessibility bug discovery)
+	  // do not move this earlier in the heuristic
+	  var tabIndex = el.getAttribute('tabindex');
+	  if (tabIndex && parseInt(tabIndex, 10) > -1) {
+	    // console.log(`tabindex > -1`, el); //debug
+	    return true;
+	  }
+
+	  // Skip if the element is visually hidden (not the same as having zero size or set to not display)
+	  if (style.visibility === 'hidden') {
+	    // console.log(`style.visibility === 'hidden'`, el); //debug
+	    return false;
+	  }
+
+	  // console.log("isTabbable() -> openKeyNav", openKeyNav);
+
+	  // Skip if the element has no size (another way to visually hide something)
+	  if (!openKeyNav.isNonzeroSize(el)) {
+	    // console.log(`!openKeyNav.isNonzeroSize(el)`, el); //debug
+	    return false;
+	  }
+
+	  // Skip if the element's top left corner is not within the window's viewport
+	  // During a full-page audit we may want to include offscreen elements. The audit
+	  // runner can set `openKeyNav._auditIncludeOffscreen = true` to bypass this check.
+	  if (!openKeyNav._auditIncludeOffscreen && !inViewport(el)) {
+	    // console.log(`!inViewport(el)`, el); //debug
+	    return false;
+	  }
+
+	  // do isAnyCornerVisible check by default and disable the check if debug.screenReaderVisible is true
+	  if (!openKeyNav.config.debug.screenReaderVisible) {
+	    // Skip if the element's top left corner is covered by another element
+	    if (!openKeyNav.isAnyCornerVisible(el)) {
+	      // console.log(`!openKeyNav.isAnyCornerVisible(el)`, el); //debug
+	      return false;
+	    }
+	  }
+
+	  // Skip if <summary> is not the first <summary> element of a <details>
+	  if (el.tagName.toLowerCase() === 'summary') {
+	    var details = el.parentElement;
+	    if (details && details.tagName.toLowerCase() === 'details' && details.querySelector('summary') !== el) {
+	      // console.log(`<summary> is not the first <summary> element of a <details>`, el); //debug
+	      return false;
+	    }
+	  }
+
+	  // Lastly, flag likely pointer actions that do not have a conventional Tab stop.
+	  // Keep them in Click Mode so OpenKeyNav can still provide direct keyboard operation.
+
+	  if (tabIndex && parseInt(tabIndex, 10) == -1) {
+	    if (isTypicallyClickableElement(el)) {
+	      // if (openKeyNav.config.modes.clicking.value) {
+	      openKeyNav.flagAsInaccessible(el, "\n            <h2>Keyboard Focus Review</h2>\n            <h3>Detected</h3>\n            <p>This action uses <code>tabindex=\"-1\"</code>, so sequential keyboard navigation does not reach it.</p>\n            <p>OpenKeyNav Click Mode can still label and activate this target directly.</p>\n            <h3>Review</h3>\n            <p>Confirm the target's semantics, accessible name, focus behavior, and every keyboard path through the complete workflow.</p>\n            <p>When this action should participate in sequential focus navigation, use the appropriate native control or a <code>tabindex</code> value of <code>0</code>.</p>\n            ", "keyboard");
+	      // }
+	    }
+
+	    // return false; // let's keep it, since we are flagging it
+	  }
+
+	  // Skip if the element is an <a> without an href (unless it has an ARIA role that makes it tabbable)
+
+	  var role = el.getAttribute('role');
+	  switch (el.tagName.toLowerCase()) {
+	    case 'a':
+	      if (!el.hasAttribute('href') || el.getAttribute('href') === '') {
+	        if (!interactiveRoles.includes(role)) {
+	          // if (openKeyNav.config.modes.clicking.value) {
+	          openKeyNav.flagAsInaccessible(el, "\n                <h2>Anchor Interaction Review</h2>\n                <h3>Detected</h3>\n                <p>This anchor has no link destination or interactive role, so browsers do not expose it as a conventional keyboard control.</p>\n                <p>OpenKeyNav Click Mode can still label and activate this target directly.</p>\n                <h3>Review</h3>\n                <p>Use an anchor with a non-empty <code>href</code> for navigation. Use a native <code>&lt;button&gt;</code> for an action, or implement the complete semantics and keyboard behavior of the intended control.</p>\n                ", "keyboard");
+	          // return false;
+	          // }
+	        }
+	      }
+	      break;
+	    case 'button':
+	    case 'textarea':
+	    case 'select':
+	    case 'input':
+	    case 'iframe':
+	    case 'summary':
+	      break;
+	    default:
+	      if (!!role && !interactiveRoles.includes(role)) {
+	        if (openKeyNav.config.modesConfig.click.clickEventElements.has(el)) {
+	          openKeyNav.flagAsInaccessible(el, "\n              <!--\n                !el(a,button,textarea,select,input,iframe,summary)\n                !el[role('button', 'link', 'menuitem', 'option', 'tab', 'treeitem', 'checkbox', 'radio')]\n                fromClickEvents\n              -->\n              <h2>Pointer Action Review</h2>\n              <h3>Detected</h3>\n              <p>This element has a click handler without a conventional keyboard focus stop.</p>\n              <p>OpenKeyNav Click Mode can provide direct keyboard selection when it detects the target.</p>\n              <h3>Review options</h3>\n              <ol>\n                <li>\n                  <p>For navigation, use an anchor link (&lt;a&gt;) with a non-empty <em>href</em> attribute.</p>\n                </li>\n                <li>\n                  <p>For an action, use a native &lt;button&gt; or implement the complete semantics, focus behavior, and keyboard commands of the intended control.</p>\n                </li>\n                <li>\n                  <p>Remove click handlers that do not provide user-facing functionality.</p>\n                </li>\n              </ol>\n              ", "keyboard");
+	        }
+	        // return false;
+	        // }
+	      }
+	      break;
+	  }
+
+	  // it must be a valid tabbable element
+	  return true;
+	};
+
+	var keylabels = {};
+
+	var scrolling = {};
+
+	Object.defineProperty(scrolling, "__esModule", {
+	  value: true
+	});
+	scrolling.disableScrolling = void 0;
+	scrolling.disableScrolling = function disableScrolling(openKeyNav) {
+	  // Prevent scrolling on the webpage
+
+	  var disableScrollingForEl = function disableScrollingForEl(el) {
+	    el.addEventListener('scroll', openKeyNav.preventScroll, {
+	      passive: false
+	    });
+	    el.addEventListener('wheel', openKeyNav.preventScroll, {
+	      passive: false
+	    });
+	    el.addEventListener('touchmove', openKeyNav.preventScroll, {
+	      passive: false
+	    });
+	  };
+	  var disableScrollingForScrollableElements = function disableScrollingForScrollableElements() {
+	    disableScrollingForEl(window);
+	    openKeyNav.getScrollableElements().forEach(function (el) {
+	      disableScrollingForEl(el);
+	    });
+	  };
+	  disableScrollingForScrollableElements();
+	};
+
+	Object.defineProperty(keylabels, "__esModule", {
+	  value: true
+	});
+	keylabels.showMoveableFromOverlays = keylabels.showClickableOverlays = keylabels.showAssignedKeylabels = keylabels.repositionAssignedKeylabels = keylabels.generateValidKeyChars = keylabels.generateLabels = keylabels.filterRemainingOverlays = keylabels.clearAssignedKeylabels = keylabels.KEYLABEL_SYMBOLS = void 0;
+	var _escape = _escape$1;
+	var _isTabbable = isTabbable;
+	var _scrolling = scrolling;
+	function _typeof$3(o) {
+	  "@babel/helpers - typeof";
+
+	  return _typeof$3 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+	    return typeof o;
+	  } : function (o) {
+	    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+	  }, _typeof$3(o);
+	}
+	function _toConsumableArray$1(r) {
+	  return _arrayWithoutHoles$1(r) || _iterableToArray$1(r) || _unsupportedIterableToArray$2(r) || _nonIterableSpread$1();
+	}
+	function _nonIterableSpread$1() {
+	  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	}
+	function _iterableToArray$1(r) {
+	  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
+	}
+	function _arrayWithoutHoles$1(r) {
+	  if (Array.isArray(r)) return _arrayLikeToArray$2(r);
+	}
+	function _slicedToArray$2(r, e) {
+	  return _arrayWithHoles$2(r) || _iterableToArrayLimit$2(r, e) || _unsupportedIterableToArray$2(r, e) || _nonIterableRest$2();
+	}
+	function _nonIterableRest$2() {
+	  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	}
+	function _unsupportedIterableToArray$2(r, a) {
+	  if (r) {
+	    if ("string" == typeof r) return _arrayLikeToArray$2(r, a);
+	    var t = {}.toString.call(r).slice(8, -1);
+	    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$2(r, a) : void 0;
+	  }
+	}
+	function _arrayLikeToArray$2(r, a) {
+	  (null == a || a > r.length) && (a = r.length);
+	  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+	  return n;
+	}
+	function _iterableToArrayLimit$2(r, l) {
+	  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+	  if (null != t) {
+	    var e,
+	      n,
+	      i,
+	      u,
+	      a = [],
+	      f = true,
+	      o = false;
+	    try {
+	      if (i = (t = t.call(r)).next, 0 === l) ; else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+	    } catch (r) {
+	      o = true, n = r;
+	    } finally {
+	      try {
+	        if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return;
+	      } finally {
+	        if (o) throw n;
+	      }
+	    }
+	    return a;
+	  }
+	}
+	function _arrayWithHoles$2(r) {
+	  if (Array.isArray(r)) return r;
+	}
+	function _defineProperty$1(e, r, t) {
+	  return (r = _toPropertyKey$2(r)) in e ? Object.defineProperty(e, r, {
+	    value: t,
+	    enumerable: true,
+	    configurable: true,
+	    writable: true
+	  }) : e[r] = t, e;
+	}
+	function _toPropertyKey$2(t) {
+	  var i = _toPrimitive$2(t, "string");
+	  return "symbol" == _typeof$3(i) ? i : i + "";
+	}
+	function _toPrimitive$2(t, r) {
+	  if ("object" != _typeof$3(t) || !t) return t;
+	  var e = t[Symbol.toPrimitive];
+	  if (void 0 !== e) {
+	    var i = e.call(t, r);
+	    if ("object" != _typeof$3(i)) return i;
+	    throw new TypeError("@@toPrimitive must return a primitive value.");
+	  }
+	  return ("string" === r ? String : Number)(t);
+	}
+	var KEYLABEL_SYMBOLS = keylabels.KEYLABEL_SYMBOLS = Object.freeze({
+	  alt: '⌥',
+	  control: '⌃',
+	  meta: '⌘',
+	  shift: '⇧',
+	  tab: '⇥',
+	  left: '←',
+	  right: '→',
+	  up: '↑',
+	  down: '↓',
+	  horizontalAxis: '↔',
+	  verticalAxis: '↕',
+	  enter: '↵',
+	  space: '⎵'
+	});
+	var assignedTargetByOverlay = new WeakMap();
+	var assignedTargetsByOwner = new WeakMap();
+	var assignedModifierFeedbackByOpenKeyNav = new WeakMap();
+	var ASSIGNED_KEYLABEL_TARGET_ATTRIBUTE = 'data-openkeynav-keylabel-target-active';
+	var ASSIGNED_MODIFIER_BY_SYMBOL = Object.freeze(_defineProperty$1(_defineProperty$1(_defineProperty$1(_defineProperty$1({}, KEYLABEL_SYMBOLS.alt, 'alt'), KEYLABEL_SYMBOLS.control, 'control'), KEYLABEL_SYMBOLS.meta, 'meta'), KEYLABEL_SYMBOLS.shift, 'shift'));
+	var ASSIGNED_MODIFIER_EVENT_PROPERTIES = Object.freeze({
+	  alt: 'altKey',
+	  control: 'ctrlKey',
+	  meta: 'metaKey',
+	  shift: 'shiftKey'
+	});
+	var ASSIGNED_MODIFIER_BY_EVENT_KEY = Object.freeze({
+	  Alt: 'alt',
+	  Control: 'control',
+	  Meta: 'meta',
+	  Shift: 'shift'
+	});
+	var ownerDocument = function ownerDocument(openKeyNav) {
+	  var _openKeyNav$statusSer;
+	  return (openKeyNav === null || openKeyNav === void 0 || (_openKeyNav$statusSer = openKeyNav.statusService) === null || _openKeyNav$statusSer === void 0 ? void 0 : _openKeyNav$statusSer.document) || (typeof document === 'undefined' ? null : document);
+	};
+	var assignedModifierSymbols = function assignedModifierSymbols(openKeyNav) {
+	  var modifier = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+	  var documentObject = ownerDocument(openKeyNav);
+	  if (!(documentObject !== null && documentObject !== void 0 && documentObject.querySelectorAll)) return [];
+	  var symbols = Array.from(documentObject.querySelectorAll('.openKeyNav-label[data-openkeynav-keylabel-owner] ' + '[data-openkeynav-keylabel-modifier]'));
+	  return modifier ? symbols.filter(function (symbol) {
+	    return symbol.dataset.openkeynavKeylabelModifier === modifier;
+	  }) : symbols;
+	};
+	var updateAssignedModifierFeedback = function updateAssignedModifierFeedback(openKeyNav, modifier, pressed) {
+	  var feedback = assignedModifierFeedbackByOpenKeyNav.get(openKeyNav);
+	  if (!feedback) return;
+	  if (pressed) {
+	    feedback.pressedModifiers.add(modifier);
+	  } else {
+	    feedback.pressedModifiers.delete(modifier);
+	  }
+	  assignedModifierSymbols(openKeyNav, modifier).forEach(function (symbol) {
+	    if (pressed) {
+	      symbol.dataset.openkeynavKeylabelPressed = 'true';
+	    } else {
+	      delete symbol.dataset.openkeynavKeylabelPressed;
+	    }
+	  });
+	};
+	var ensureAssignedModifierFeedback = function ensureAssignedModifierFeedback(openKeyNav) {
+	  var existing = assignedModifierFeedbackByOpenKeyNav.get(openKeyNav);
+	  if (existing) return existing;
+	  var documentObject = ownerDocument(openKeyNav);
+	  if (!(documentObject !== null && documentObject !== void 0 && documentObject.addEventListener)) {
+	    return {
+	      pressedModifiers: new Set()
+	    };
+	  }
+	  var view = documentObject.defaultView;
+	  var feedback = {
+	    pressedModifiers: new Set()
+	  };
+	  var updateFromEvent = function updateFromEvent(event, isKeyDown) {
+	    Object.entries(ASSIGNED_MODIFIER_EVENT_PROPERTIES).forEach(function (_ref) {
+	      var _ref2 = _slicedToArray$2(_ref, 2),
+	        modifier = _ref2[0],
+	        property = _ref2[1];
+	      var isEventModifier = ASSIGNED_MODIFIER_BY_EVENT_KEY[event.key] === modifier;
+	      updateAssignedModifierFeedback(openKeyNav, modifier, isEventModifier ? isKeyDown : Boolean(event[property]));
+	    });
+	  };
+	  var handleKeyDown = function handleKeyDown(event) {
+	    updateFromEvent(event, true);
+	  };
+	  var handleKeyUp = function handleKeyUp(event) {
+	    updateFromEvent(event, false);
+	  };
+	  var reset = function reset() {
+	    return Object.keys(ASSIGNED_MODIFIER_EVENT_PROPERTIES).forEach(function (modifier) {
+	      return updateAssignedModifierFeedback(openKeyNav, modifier, false);
+	    });
+	  };
+	  var handleVisibilityChange = function handleVisibilityChange() {
+	    if (documentObject.visibilityState === 'hidden') reset();
+	  };
+	  Object.assign(feedback, {
+	    documentObject: documentObject,
+	    view: view,
+	    handleKeyDown: handleKeyDown,
+	    handleKeyUp: handleKeyUp,
+	    handleVisibilityChange: handleVisibilityChange,
+	    reset: reset
+	  });
+	  assignedModifierFeedbackByOpenKeyNav.set(openKeyNav, feedback);
+	  documentObject.addEventListener('keydown', handleKeyDown, true);
+	  documentObject.addEventListener('keyup', handleKeyUp, true);
+	  documentObject.addEventListener('visibilitychange', handleVisibilityChange, true);
+	  view === null || view === void 0 || view.addEventListener('blur', reset);
+	  return feedback;
+	};
+	var releaseAssignedModifierFeedback = function releaseAssignedModifierFeedback(openKeyNav) {
+	  var _feedback$view;
+	  if (assignedModifierSymbols(openKeyNav).length) return;
+	  var feedback = assignedModifierFeedbackByOpenKeyNav.get(openKeyNav);
+	  if (!feedback) return;
+	  feedback.documentObject.removeEventListener('keydown', feedback.handleKeyDown, true);
+	  feedback.documentObject.removeEventListener('keyup', feedback.handleKeyUp, true);
+	  feedback.documentObject.removeEventListener('visibilitychange', feedback.handleVisibilityChange, true);
+	  (_feedback$view = feedback.view) === null || _feedback$view === void 0 || _feedback$view.removeEventListener('blur', feedback.reset);
+	  assignedModifierFeedbackByOpenKeyNav.delete(openKeyNav);
+	};
+	var appendAssignedKeylabelSymbols = function appendAssignedKeylabelSymbols(element, symbols, feedback) {
+	  Array.from(symbols).forEach(function (symbol) {
+	    var modifierName = ASSIGNED_MODIFIER_BY_SYMBOL[symbol];
+	    if (!modifierName) {
+	      element.append(symbol);
+	      return;
+	    }
+	    var modifier = element.ownerDocument.createElement('span');
+	    modifier.className = 'openKeyNav-keylabel-modifier';
+	    modifier.dataset.openkeynavKeylabelModifier = modifierName;
+	    if (feedback !== null && feedback !== void 0 && feedback.pressedModifiers.has(modifierName)) {
+	      modifier.dataset.openkeynavKeylabelPressed = 'true';
+	    }
+	    modifier.textContent = symbol;
+	    element.appendChild(modifier);
+	  });
+	};
+	var ownedAssignedKeylabels = function ownedAssignedKeylabels(openKeyNav, owner) {
+	  var documentObject = ownerDocument(openKeyNav);
+	  if (!(documentObject !== null && documentObject !== void 0 && documentObject.querySelectorAll)) return [];
+	  return Array.from(documentObject.querySelectorAll('.openKeyNav-label[data-openkeynav-keylabel-owner]')).filter(function (overlay) {
+	    return overlay.dataset.openkeynavKeylabelOwner === owner;
+	  });
+	};
+	var releaseAssignedTargets = function releaseAssignedTargets(openKeyNav, owner) {
+	  var targetsByOwner = assignedTargetsByOwner.get(openKeyNav);
+	  var targets = targetsByOwner === null || targetsByOwner === void 0 ? void 0 : targetsByOwner.get(owner);
+	  if (!targets) return;
+	  targetsByOwner.delete(owner);
+	  targets.forEach(function (target) {
+	    var remainsAssigned = Array.from(targetsByOwner.values()).some(function (ownedTargets) {
+	      return ownedTargets.has(target);
+	    });
+	    if (!remainsAssigned) {
+	      var _target$removeAttribu;
+	      (_target$removeAttribu = target.removeAttribute) === null || _target$removeAttribu === void 0 || _target$removeAttribu.call(target, ASSIGNED_KEYLABEL_TARGET_ATTRIBUTE);
+	    }
+	  });
+	  if (targetsByOwner.size === 0) assignedTargetsByOwner.delete(openKeyNav);
+	};
+	var markAssignedTarget = function markAssignedTarget(openKeyNav, owner, target) {
+	  var _target$setAttribute;
+	  var targetsByOwner = assignedTargetsByOwner.get(openKeyNav);
+	  if (!targetsByOwner) {
+	    targetsByOwner = new Map();
+	    assignedTargetsByOwner.set(openKeyNav, targetsByOwner);
+	  }
+	  var targets = targetsByOwner.get(owner);
+	  if (!targets) {
+	    targets = new Set();
+	    targetsByOwner.set(owner, targets);
+	  }
+	  targets.add(target);
+	  (_target$setAttribute = target.setAttribute) === null || _target$setAttribute === void 0 || _target$setAttribute.call(target, ASSIGNED_KEYLABEL_TARGET_ATTRIBUTE, '');
+	};
+
+	/**
+	 * Removes one caller's descriptive keylabels without disturbing Click or Move
+	 * Mode labels. Callers own only the assignment data; this module owns the
+	 * overlay lifecycle.
+	 */
+	var clearAssignedKeylabels = keylabels.clearAssignedKeylabels = function clearAssignedKeylabels(openKeyNav, owner) {
+	  var _ref3 = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
+	    _ref3$preserveModifie = _ref3.preserveModifierFeedback,
+	    preserveModifierFeedback = _ref3$preserveModifie === void 0 ? false : _ref3$preserveModifie;
+	  ownedAssignedKeylabels(openKeyNav, owner).forEach(function (overlay) {
+	    return overlay.remove();
+	  });
+	  releaseAssignedTargets(openKeyNav, owner);
+	  if (!preserveModifierFeedback) releaseAssignedModifierFeedback(openKeyNav);
+	};
+
+	/**
+	 * Repositions an existing caller-owned set through OpenKeyNav's established
+	 * overlay placement routine.
+	 */
+	keylabels.repositionAssignedKeylabels = function repositionAssignedKeylabels(openKeyNav, owner) {
+	  ownedAssignedKeylabels(openKeyNav, owner).forEach(function (overlay) {
+	    var target = assignedTargetByOverlay.get(overlay);
+	    if (!(target !== null && target !== void 0 && target.isConnected)) {
+	      overlay.remove();
+	      return;
+	    }
+	    openKeyNav.updateOverlayPosition(target, overlay);
+	  });
+	};
+
+	/**
+	 * Renders caller-supplied descriptive labels with the existing keylabel
+	 * creation and positioning system. These labels are hints, not type-to-select
+	 * labels, so the page targets are deliberately left without
+	 * data-openkeynav-label attributes. The renderer applies the shared keylabel
+	 * target treatment through a non-selectable, owner-managed attribute instead.
+	 */
+	keylabels.showAssignedKeylabels = function showAssignedKeylabels(openKeyNav, assignments) {
+	  var _ref4 = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
+	    owner = _ref4.owner,
+	    _ref4$cssClass = _ref4.cssClass,
+	    cssClass = _ref4$cssClass === void 0 ? null : _ref4$cssClass,
+	    _ref4$focusedTarget = _ref4.focusedTarget,
+	    focusedTarget = _ref4$focusedTarget === void 0 ? null : _ref4$focusedTarget;
+	  if (!owner) {
+	    throw new TypeError('Assigned keylabels require an owner.');
+	  }
+	  clearAssignedKeylabels(openKeyNav, owner, {
+	    preserveModifierFeedback: true
+	  });
+	  var overlays = [];
+	  var assignmentsByTarget = new Map();
+	  Array.from(assignments || []).forEach(function (assignment) {
+	    var target = assignment === null || assignment === void 0 ? void 0 : assignment.target;
+	    var maxSymbols = Number.isInteger(assignment === null || assignment === void 0 ? void 0 : assignment.maxSymbols) && assignment.maxSymbols > 0 ? assignment.maxSymbols : 2;
+	    var symbols = Array.from(String((assignment === null || assignment === void 0 ? void 0 : assignment.symbols) || '')).slice(0, maxSymbols).join('');
+	    if (!(target !== null && target !== void 0 && target.isConnected) || !symbols) return;
+	    var existing = assignmentsByTarget.get(target);
+	    if (!existing) {
+	      assignmentsByTarget.set(target, {
+	        target: target,
+	        symbols: symbols,
+	        maxSymbols: maxSymbols,
+	        segments: [symbols],
+	        commands: assignment.command ? [String(assignment.command)] : []
+	      });
+	      // Make every target visible to the shared collision check before the
+	      // first overlay is positioned. This keeps placement single-pass while
+	      // preventing an early keylabel from obscuring a later target.
+	      markAssignedTarget(openKeyNav, owner, target);
+	      return;
+	    }
+	    var availableSymbols = existing.maxSymbols - Array.from(existing.symbols).length;
+	    if (Array.from(symbols).length > availableSymbols) return;
+	    existing.symbols += symbols;
+	    existing.segments.push(symbols);
+	    if (assignment.command) existing.commands.push(String(assignment.command));
+	  });
+	  var hasModifierSymbols = Array.from(assignmentsByTarget.values()).some(function (assignment) {
+	    return Array.from(assignment.symbols).some(function (symbol) {
+	      return ASSIGNED_MODIFIER_BY_SYMBOL[symbol];
+	    });
+	  });
+	  var modifierFeedback = hasModifierSymbols ? ensureAssignedModifierFeedback(openKeyNav) : null;
+	  assignmentsByTarget.forEach(function (_ref5) {
+	    var target = _ref5.target,
+	      symbols = _ref5.symbols,
+	      segments = _ref5.segments,
+	      commands = _ref5.commands;
+	    var overlay = openKeyNav.createOverlay(target, symbols, cssClass);
+	    overlay.dataset.openkeynavKeylabelOwner = owner;
+	    overlay.dataset.openkeynavKeylabelCommand = commands.join(' ');
+	    if (target.id) overlay.dataset.openkeynavKeylabelTarget = target.id;
+	    overlay.setAttribute('data-openkeynav-ui', "".concat(owner, "-keylabel"));
+	    overlay.setAttribute('aria-hidden', 'true');
+	    if (target === focusedTarget) {
+	      overlay.classList.add('openKeyNav-keylabel-focused');
+	      overlay.dataset.openkeynavKeylabelFocused = 'true';
+	    }
+	    if (segments.length > 1) {
+	      overlay.classList.add('openKeyNav-keylabel-alternatives');
+	      overlay.dataset.openkeynavKeylabelAlternatives = String(segments.length);
+	      var segmentElements = segments.map(function (segment) {
+	        var element = overlay.ownerDocument.createElement('span');
+	        element.className = 'openKeyNav-keylabel-alternative';
+	        appendAssignedKeylabelSymbols(element, segment, modifierFeedback);
+	        return element;
+	      });
+	      overlay.replaceChildren.apply(overlay, _toConsumableArray$1(segmentElements));
+	      openKeyNav.updateOverlayPosition(target, overlay);
+	    } else if (Array.from(symbols).some(function (symbol) {
+	      return ASSIGNED_MODIFIER_BY_SYMBOL[symbol];
+	    })) {
+	      overlay.replaceChildren();
+	      appendAssignedKeylabelSymbols(overlay, symbols, modifierFeedback);
+	      openKeyNav.updateOverlayPosition(target, overlay);
+	    }
+	    assignedTargetByOverlay.set(overlay, target);
+	    overlays.push(overlay);
+	  });
+	  if (!hasModifierSymbols) releaseAssignedModifierFeedback(openKeyNav);
+	  return overlays;
+	};
+	var generateLabels = keylabels.generateLabels = function generateLabels(openKeyNav, count) {
+	  var labels = [];
+	  var chars = generateValidKeyChars(openKeyNav);
+	  var maxLength = Math.pow(chars.length, 2);
+	  var useThirdChar = count > maxLength;
+	  if (useThirdChar) {
+	    maxLength = Math.pow(chars.length, 3);
+	  }
+	  for (var i = 0; i < count && labels.length < maxLength; i++) {
+	    var firstChar = chars[i % chars.length];
+	    var secondChar = chars[Math.floor(i / chars.length) % chars.length] || '';
+	    var thirdChar = useThirdChar ? chars[Math.floor(i / Math.pow(chars.length, 2)) % chars.length] : '';
+	    labels.push(firstChar + secondChar + thirdChar);
+	  }
+
+	  // Attempt to shorten labels that are uniquely identifiable by their first character
+	  var labelCounts = {};
+	  labels.forEach(function (label) {
+	    var firstChar = label[0];
+	    labelCounts[firstChar] = (labelCounts[firstChar] || 0) + 1;
+	  });
+	  labels = labels.map(function (label) {
+	    var firstChar = label[0];
+	    if (labelCounts[firstChar] === 1 && !label.includes('.')) {
+	      // Check for uniqueness and ensure not shortened if it's a prefix
+	      return firstChar;
+	    }
+	    return label;
+	  });
+
+	  // alert(labels)
+
+	  // now we have all the labels we will use.
+	  // Shuffle them for variable rewards. ++addiction
+	  // return shuffle(labels);
+
+	  return labels; // unshuffled
+	};
+	keylabels.showClickableOverlays = function showClickableOverlays(openKeyNav) {
+	  (0, _scrolling.disableScrolling)(openKeyNav);
+	  setTimeout(function () {
+	    // The user may dismiss Click Mode before this deferred discovery runs.
+	    if (!openKeyNav.config.modes.clicking.value) return;
+	    var allCandidates = _getAllCandidateElements(openKeyNav, document);
+	    var clickables = allCandidates.filter(function (el) {
+	      return (0, _isTabbable.isTabbable)(el, openKeyNav);
+	    });
+
+	    // Prefer the innermost target when nested candidates occupy the same area.
+	    clickables = clickables.filter(function (element) {
+	      var hasClickableDescendant = clickables.some(function (other) {
+	        if (other === element || !element.contains(other)) return false;
+	        var parentRect = element.getBoundingClientRect();
+	        var childRect = other.getBoundingClientRect();
+	        return Math.abs(parentRect.top - childRect.top) < 2 && Math.abs(parentRect.left - childRect.left) < 2 && Math.abs(parentRect.right - childRect.right) < 2 && Math.abs(parentRect.bottom - childRect.bottom) < 2;
+	      });
+	      return !hasClickableDescendant;
+	    });
+	    var labels = generateLabels(openKeyNav, clickables.length);
+	    clickables.forEach(function (element, index) {
+	      element.setAttribute('data-openkeynav-label', labels[index]);
+	    });
+	    clickables.forEach(function (element, index) {
+	      openKeyNav.createOverlay(element, labels[index]);
+	    });
+	  }, 0); // Use timeout to ensure the operation completes
+	};
+	keylabels.showMoveableFromOverlays = function showMoveableFromOverlays(openKeyNav) {
+	  // alert("showMoveableFromOverlays()");
+	  // return;
+
+	  // Combine all unique 'from' classes from moveConfig to query the document
+	  var moveables = [];
+
+	  // direct selectors of from elements
+	  var fromElementSelectors = _toConsumableArray$1(new Set(openKeyNav.config.modesConfig.move.config.filter(function (config) {
+	    return config.fromElements;
+	  }).map(function (config) {
+	    return config.fromElements;
+	  })));
+	  if (!!fromElementSelectors.length) {
+	    document.querySelectorAll(fromElementSelectors.join(', ')).forEach(function (element) {
+	      var config = openKeyNav.config.modesConfig.move.config.find(function (c) {
+	        return element.matches(c.fromElements);
+	      });
+	      if (config) {
+	        var configKey = openKeyNav.config.modesConfig.move.config.indexOf(config);
+	        if (openKeyNav.isNonzeroSize(element) && (!config.fromExclude || !element.matches(config.fromExclude))) {
+	          element.setAttribute('data-openkeynav-moveconfig', configKey); // Store the moveConfig key
+	          moveables.push(element);
+	        }
+	      }
+	    });
+	  }
+
+	  // containers of from elements
+	  var fromContainerSelectors = _toConsumableArray$1(new Set(openKeyNav.config.modesConfig.move.config.filter(function (config) {
+	    return config.fromContainer;
+	  }).map(function (config) {
+	    return config.fromContainer;
+	  })));
+	  if (!!fromContainerSelectors.length) {
+	    var fromContainers = document.querySelectorAll(fromContainerSelectors.join(', '));
+	    // Collect all direct children of each fromContainer as moveable elements
+	    fromContainers.forEach(function (container) {
+	      var config = openKeyNav.config.modesConfig.move.config.find(function (c) {
+	        return container.matches(c.fromContainer);
+	      });
+	      if (config) {
+	        var configKey = openKeyNav.config.modesConfig.move.config.indexOf(config);
+	        var children = Array.from(container.children);
+	        children.forEach(function (child) {
+	          if (openKeyNav.isNonzeroSize(child) && (!config.fromExclude || !child.matches(config.fromExclude))) {
+	            child.setAttribute('data-openkeynav-moveconfig', configKey); // Store the moveConfig key
+	            moveables.push(child);
+	          }
+	        });
+	      }
+	    });
+	  }
+
+	  // Resolve elements using provided callbacks if available
+	  openKeyNav.config.modesConfig.move.config.forEach(function (config) {
+	    if (config.resolveFromElements) {
+	      var resolvedElements = config.resolveFromElements();
+	      resolvedElements.forEach(function (element) {
+	        var configKey = openKeyNav.config.modesConfig.move.config.indexOf(config);
+	        if (openKeyNav.isNonzeroSize(element) && (!config.fromExclude || !element.matches(config.fromExclude))) {
+	          element.setAttribute('data-openkeynav-moveconfig', configKey); // Store the moveConfig key
+	          moveables.push(element);
+	        }
+	      });
+	    }
+	  });
+
+	  // filter out moveables that would not be clickable
+	  moveables = moveables.filter(function (el) {
+	    return (0, _isTabbable.isTabbable)(el, openKeyNav);
+	  });
+	  var labels = generateLabels(openKeyNav, moveables.length);
+	  moveables.forEach(function (element, index) {
+	    element.setAttribute('data-openkeynav-label', labels[index]);
+	  });
+	  moveables.forEach(function (element, index) {
+	    openKeyNav.createOverlay(element, labels[index]);
+	    element.setAttribute('data-openkeynav-draggable', 'true');
+	  });
+	};
+	keylabels.filterRemainingOverlays = function filterRemainingOverlays(openKeyNav, e) {
+	  // Filter overlays, removing non-matching ones
+	  document.querySelectorAll('.openKeyNav-label').forEach(function (overlay) {
+	    var label = overlay.textContent;
+
+	    // If the current typedLabel no longer matches the beginning of this element's label, remove both the overlay and clean up the target element
+	    if (!label.startsWith(openKeyNav.config.typedLabel.value)) {
+	      var targetElement = document.querySelector("[data-openkeynav-label=\"".concat(label, "\"]"));
+	      targetElement && targetElement.removeAttribute('data-openkeynav-label'); // Clean up the target element's attribute
+	      overlay.remove(); // Remove the overlay
+	    }
+	  });
+	  if (document.querySelectorAll('.openKeyNav-label').length == 0) {
+	    // there are no overlays left. clean up and unblock.
+	    (0, _escape.handleEscape)(openKeyNav, e);
+	    return true;
+	  }
+	};
+	var generateValidKeyChars = keylabels.generateValidKeyChars = function generateValidKeyChars(openKeyNav) {
+	  var chars = 'abcdefghijklmnopqrstuvwxyz';
+	  // let chars = '1234567890';
+	  // let chars = 'abcdefghijklmnopqrstuvwxyz1234567890'; // not a good idea because 1 and l can be confused
+
+	  // Remove letters from chars that are present in openKeyNav.config.keys
+	  // maybe this isn't necessary when in click mode (mode paradigm is common in screen readers)
+	  // Object.values(openKeyNav.config.keys).forEach(key => {
+	  //   chars = chars.replace(key, '');
+	  // });
+
+	  // remove the secondary escape key code
+	  chars = chars.replace(openKeyNav.config.keys.escape, '');
+	  return chars;
+	};
+	var _getAllCandidateElements = function getAllCandidateElements(openKeyNav, doc) {
+	  var allElements = Array.from(doc.querySelectorAll("a," +
+	  // can be made non-tabbable by removing the href attribute or setting tabindex="-1".
+	  "button:not([disabled])," +
+	  // are not tabbable when disabled.
+	  "textarea:not([disabled])," +
+	  // are not tabbable when disabled.
+	  "select:not([disabled])," +
+	  // are not tabbable when disabled.
+	  "input:not([disabled])," +
+	  // are not tabbable when disabled.
+	  // "label," +  // are not normally tabbable unless they contain tabbable content.
+	  "iframe," +
+	  // are tabbable by default.
+	  "details > summary," +
+	  // The summary element inside a details element can be tabbable
+	  "[role=button]," +
+	  // can be made non-tabbable by adding tabindex="-1".
+	  "[role=link]," +
+	  // can be made non-tabbable by adding tabindex="-1".
+	  "[role=menuitem]," +
+	  // can be made non-tabbable by adding tabindex="-1".
+	  "[role=option]," +
+	  // can be made non-tabbable by adding tabindex="-1".
+	  "[role=tab]," +
+	  // can be made non-tabbable by adding tabindex="-1".
+	  "[role=treeitem]," +
+	  // can be made non-tabbable by adding tabindex="-1".
+	  "[role=checkbox]," +
+	  // can be made non-tabbable by adding tabindex="-1".
+	  "[role=radio]," +
+	  // can be made non-tabbable by adding tabindex="-1".
+	  "[aria-checked]," +
+	  // not inherently tabbable or non-tabbable.
+	  "[contenteditable=true]," +
+	  // elements with contenteditable="true" are tabbable.
+	  "[contenteditable=plaintext-only]," +
+	  // elements with contenteditable="plaintext-only" are tabbable.
+	  "[tabindex]," +
+	  // elements with a tabindex attribute can be made tabbable or non-tabbable depending on the value of tabindex.
+	  "[onclick]" // elements with an onclick attribute are not inherently tabbable or non-tabbable.
+	  ));
+	  var iframes = doc.querySelectorAll('iframe');
+	  iframes.forEach(function (iframe) {
+	    try {
+	      var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+	      var iframeElements = _getAllCandidateElements(openKeyNav, iframeDoc);
+	      allElements = allElements.concat(Array.from(iframeElements)); // Add elements from each iframe
+	    } catch (error) {
+	      console.log('Access denied to iframe content:', error);
+	    }
+	  });
+
+	  // Merge with clickEventElements
+	  var mergedSet = new Set([].concat(_toConsumableArray$1(allElements), _toConsumableArray$1(openKeyNav.config.modesConfig.click.clickEventElements)));
+	  return Array.from(mergedSet);
+
+	  // return allElements;
+	};
+
+	var lifecycle = {};
+
+	Object.defineProperty(lifecycle, "__esModule", {
+	  value: true
+	});
+	lifecycle.enable = lifecycle.disable = void 0;
+	lifecycle.enable = function enable() {};
+	lifecycle.disable = function disable() {};
+
+	var structuralNavigation = {};
+
+	var keyboardEvents = {};
+
+	Object.defineProperty(keyboardEvents, "__esModule", {
+	  value: true
+	});
+	keyboardEvents.preventAcceptedCommand = keyboardEvents.normalizeShortcut = keyboardEvents.matchesShortcut = keyboardEvents.MODIFIER_KEYS = void 0;
+	function _typeof$2(o) {
+	  "@babel/helpers - typeof";
+
+	  return _typeof$2 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+	    return typeof o;
+	  } : function (o) {
+	    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+	  }, _typeof$2(o);
+	}
+	var MODIFIER_KEYS = keyboardEvents.MODIFIER_KEYS = Object.freeze(['altKey', 'ctrlKey', 'metaKey', 'shiftKey']);
+	var normalizeShortcut = keyboardEvents.normalizeShortcut = function normalizeShortcut(shortcut) {
+	  if (!shortcut) return null;
+	  if (typeof shortcut === 'string') return {
+	    key: shortcut
+	  };
+	  if (_typeof$2(shortcut) === 'object' && typeof shortcut.key === 'string') {
+	    return shortcut;
+	  }
+	  return null;
+	};
+	var keysEqual = function keysEqual(left, right) {
+	  if (left.length === 1 && right.length === 1) {
+	    return left.toLowerCase() === right.toLowerCase();
+	  }
+	  return left === right;
+	};
+
+	/**
+	 * Match a configured shortcut exactly. Modifiers omitted by the configuration
+	 * are treated as false so browser and application chords do not collide.
+	 * A caller may permit specific extra modifiers without weakening an explicit
+	 * `true` or `false` requirement in the configured shortcut.
+	 */
+	keyboardEvents.matchesShortcut = function matchesShortcut(event, shortcut) {
+	  var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+	  var normalized = normalizeShortcut(shortcut);
+	  if (!normalized || !keysEqual(event.key, normalized.key)) return false;
+
+	  // Preserve the original string form for callers that deliberately need to
+	  // ignore a modifier entirely. New ownership overrides should use
+	  // `allowedExtraModifiers` so explicit shortcut requirements remain exact.
+	  var optionBag = _typeof$2(options) === 'object' && options !== null ? options : {};
+	  var ignoredModifier = typeof options === 'string' ? options : optionBag.ignoredModifier || null;
+	  var allowedExtras = optionBag.allowedExtraModifiers || [];
+	  var allowedExtraModifiers = new Set(Array.isArray(allowedExtras) ? allowedExtras : [allowedExtras].filter(Boolean));
+	  return MODIFIER_KEYS.every(function (modifier) {
+	    if (modifier === ignoredModifier) return true;
+	    var eventHasModifier = Boolean(event[modifier]);
+	    var shortcutDeclaresModifier = Object.prototype.hasOwnProperty.call(normalized, modifier);
+	    if (allowedExtraModifiers.has(modifier) && !shortcutDeclaresModifier && eventHasModifier) {
+	      return true;
+	    }
+	    return eventHasModifier === Boolean(normalized[modifier]);
+	  });
+	};
+
+	/**
+	 * Cancel one keyboard command after OpenKeyNav has accepted ownership of it.
+	 */
+	keyboardEvents.preventAcceptedCommand = function preventAcceptedCommand(event) {
+	  event.preventDefault();
+	  event.stopPropagation();
+	  return true;
+	};
 
 	Object.defineProperty(structuralNavigation, "__esModule", {
 	  value: true
@@ -5789,7 +5810,7 @@
 	  var _dragAndDrop = dragAndDrop;
 	  var _escape = _escape$1;
 	  var _focus = focus;
-	  var _isTabbable = isTabbable$1;
+	  var _isTabbable = isTabbable;
 	  var _keylabels = keylabels;
 	  var _keyButton = keyButton;
 	  var _structuralNavigation = structuralNavigation;
@@ -6014,7 +6035,7 @@
 	        */
 
 	        (0, _keyboardEvents.preventAcceptedCommand)(e);
-	        (0, _focus.focusOnHeadings)(openKeyNav, 'h1, h2, h3, h4, h5, h6', e);
+	        (0, _focus.focusOnHeadings)(openKeyNav, 'h1, h2, h3, h4, h5, h6, [role="heading"][aria-level]', e);
 	        return true;
 	      case openKeyNav.config.keys.scroll.toLowerCase():
 	        /*
@@ -6036,7 +6057,7 @@
 	    var headingLevel = configuredHeadingLevel(openKeyNav, e);
 	    if (headingLevel !== null) {
 	      (0, _keyboardEvents.preventAcceptedCommand)(e);
-	      (0, _focus.focusOnHeadings)(openKeyNav, "h".concat(headingLevel), e);
+	      (0, _focus.focusOnHeadings)(openKeyNav, "h".concat(headingLevel, ", [role=\"heading\"][aria-level=\"").concat(headingLevel, "\"]"), e);
 	      return true;
 	    }
 	  };
@@ -7581,6 +7602,7 @@
 	        headings: {
 	          currentHeadingIndex: -1,
 	          // Start before the first heading
+	          currentHeading: null,
 	          list: []
 	        },
 	        scrollables: {

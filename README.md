@@ -105,7 +105,7 @@ required by [WCAG 2.2 Success Criterion 1.4.4 Resize Text](https://www.w3.org/WA
 ## Keyboard operation modes and tools
 
 - **Click Mode:** Displays typeable labels beside detected targets so a user can focus or activate one directly.
-- **Heading navigation:** Moves focus among headings with `h` or a specific heading level from `1` through `6`.
+- **Heading navigation:** `h` or a specific level from `1` through `6` cycles through authored heading contexts that contain tabbable content and focuses each context's first tabbable element.
 - **Move Mode:** Provides a two-step keyboard path between application-configured sources and destinations.
 - **Configurable shortcuts:** Lets applications remap the activation and mode keys to avoid conflicts.
 - **Development diagnostics:** Uses a focused heuristic to identify actions for manual review of semantics, focus, activation, and task completion.
@@ -132,8 +132,8 @@ Letter commands are unmodified keys unless the table says otherwise.
 | Turn OpenKeyNav on or off | `Shift+o` |
 | Open the shortcut guide | `o` |
 | Enter Click Mode | `k` |
-| Move through headings | `h` |
-| Move through headings of a specific level | `1`–`6` |
+| Move through heading contexts with tabbable content | `h` |
+| Move through eligible heading contexts of a specific level | `1`–`6` |
 | Move through scrollable regions | `s` |
 | Move backward through headings or scrollable regions | Hold `Shift` with `h`, `1`–`6`, or `s` |
 | Enter configured Move Mode | `m` |

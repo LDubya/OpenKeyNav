@@ -274,7 +274,11 @@ export const handleKeyPress = (openKeyNav, e) => {
         */
   
           preventAcceptedCommand(e);
-          focusOnHeadings(openKeyNav, 'h1, h2, h3, h4, h5, h6', e);
+          focusOnHeadings(
+            openKeyNav,
+            'h1, h2, h3, h4, h5, h6, [role="heading"][aria-level]',
+            e
+          );
           return true;
           break;
   
@@ -302,7 +306,11 @@ export const handleKeyPress = (openKeyNav, e) => {
       const headingLevel = configuredHeadingLevel(openKeyNav, e);
       if (headingLevel !== null) {
         preventAcceptedCommand(e);
-        focusOnHeadings(openKeyNav, `h${headingLevel}`, e);
+        focusOnHeadings(
+          openKeyNav,
+          `h${headingLevel}, [role="heading"][aria-level="${headingLevel}"]`,
+          e
+        );
         return true;
       }
 }

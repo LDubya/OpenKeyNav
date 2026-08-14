@@ -4,28 +4,37 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.focusOnScrollables = exports.focusOnHeadings = void 0;
+var _structuralModel = require("./structuralModel.js");
+var _tabbableTargets = require("./tabbableTargets.js");
 var focusOnHeadings = exports.focusOnHeadings = function focusOnHeadings(openKeyNav, headings, e) {
-  openKeyNav.config.headings.list = Array.from(document.querySelectorAll(headings)) // Get all headings in the view
-  .filter(function (el) {
-    // Skip if the element is visually hidden
-    var style = getComputedStyle(el);
-    if (style.display === 'none' || style.visibility === 'hidden') return false;
-
-    // debug mode: debug mode: do isAnyCornerVisible check by default and disable the check if debug.screenReaderVisible is true
-    if (!openKeyNav.config.debug.screenReaderVisible) {
-      // Skip if the element's top left corner is covered by another element
-      if (!openKeyNav.isAnyCornerVisible(el)) {
-        return false;
-      }
-    }
-    return true;
+  var targets = (0, _tabbableTargets.discoverTabbableTargets)(document, {
+    displayCheck: openKeyNav.config.debug.screenReaderVisible ? 'none' : 'full',
+    getShadowRoot: true,
+    includeProgrammatic: false
+  });
+  var model = (0, _structuralModel.buildStructuralModel)({
+    root: document,
+    targets: targets
+  });
+  var routes = model.headingRoutes.filter(function (route) {
+    return route.heading.matches(headings);
+  }).filter(function (route) {
+    return route.targets.length > 0;
+  });
+  openKeyNav.config.headings.list = routes.map(function (route) {
+    return route.targets[0];
   });
   if (openKeyNav.config.headings.list.length == 0) {
     return true;
   }
   var headingState = openKeyNav.config.headings;
   var lastIndex = headingState.list.length - 1;
-  var focusedHeadingIndex = headingState.list.indexOf(document.activeElement);
+  var currentRouteIndex = routes.findIndex(function (route) {
+    return route.heading === headingState.currentHeading && route.targets[0] === document.activeElement;
+  });
+  var focusedHeadingIndex = currentRouteIndex >= 0 ? currentRouteIndex : routes.reduce(function (activeIndex, route, routeIndex) {
+    return route.targets.includes(document.activeElement) ? routeIndex : activeIndex;
+  }, -1);
   if (focusedHeadingIndex >= 0) {
     headingState.currentHeadingIndex = focusedHeadingIndex;
   } else {
@@ -50,20 +59,10 @@ var focusOnHeadings = exports.focusOnHeadings = function focusOnHeadings(openKey
       headingState.currentHeadingIndex = 0;
     }
   }
-  var nextHeading = headingState.list[headingState.currentHeadingIndex];
-  if (!nextHeading.hasAttribute('tabindex')) {
-    nextHeading.setAttribute('tabindex', '-1'); // Make the heading focusable
-    nextHeading.setAttribute('data-openkeynav-tabIndexed', true);
-  }
-  openKeyNav.focus(nextHeading); // Set focus on the next heading
-  // Listen for the blur event to remove the tabindex attribute
-  nextHeading.addEventListener('blur', function handler() {
-    if (nextHeading.hasAttribute('data-openkeynav-tabIndexed')) {
-      nextHeading.removeAttribute('tabindex'); // Remove the tabindex attribute
-      nextHeading.removeAttribute('data-openkeynav-tabIndexed');
-    }
-    nextHeading.removeEventListener('blur', handler); // Clean up the event listener
-  });
+  var nextRoute = routes[headingState.currentHeadingIndex];
+  var nextTarget = nextRoute.targets[0];
+  headingState.currentHeading = nextRoute.heading;
+  openKeyNav.focus(nextTarget);
 };
 var focusOnScrollables = exports.focusOnScrollables = function focusOnScrollables(openKeyNav, e) {
   openKeyNav.config.scrollables.list = openKeyNav.getScrollableElements(); // Populate or refresh the list of scrollable elements

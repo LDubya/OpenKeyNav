@@ -805,17 +805,17 @@ test.describe('structural navigation mode', () => {
     const indicator = page.locator('.openKeyNav-structural-context-outline');
 
     await page.keyboard.press('KeyH');
-    await expectDeepFocus(page, 'site-title');
+    await expectDeepFocus(page, 'product-a');
     await expect.poll(() => page.evaluate(
       () => (window as any).okn.config.modes.structuralNavigation.value
     )).toBe(true);
-    await expect(page.locator('#site-title')).toHaveAttribute('tabindex', '-1');
-    await expect(structuralStatus).toContainText('Context: OpenKeyNav test shop');
-    await expect(indicator).toHaveAttribute('data-context-name', 'OpenKeyNav test shop');
+    await expect(page.locator('#results-title')).not.toHaveAttribute('tabindex', '-1');
+    await expect(structuralStatus).toContainText('Context: Results');
+    await expect(indicator).toHaveAttribute('data-context-name', 'Results');
     await expect(page.locator('.openKeyNav-structural-exit-status')).toHaveCount(0);
 
     await structuralNavigate(page, 'nextTarget');
-    await expectDeepFocus(page, 'search-input');
+    await expectDeepFocus(page, 'product-b');
     expect(await page.evaluate(() => {
       const state = (window as any).okn.getStructuralNavigationState();
       return state.activeContext.targets.includes(state.target);
@@ -823,12 +823,12 @@ test.describe('structural navigation mode', () => {
 
     await focusFixtureTarget(page, 'clear-filters');
     await page.keyboard.press('Digit2');
-    await expectDeepFocus(page, 'search-title');
+    await expectDeepFocus(page, 'product-a');
     await expect.poll(() => page.evaluate(
       () => (window as any).okn.config.modes.structuralNavigation.value
     )).toBe(true);
-    await expect(structuralStatus).toContainText('Context: Search');
-    await expect(indicator).toHaveAttribute('data-context-name', 'Search');
+    await expect(structuralStatus).toContainText('Context: Results');
+    await expect(indicator).toHaveAttribute('data-context-name', 'Results');
 
     await page.evaluate(() => {
       (window as any).okn.getScrollableElements = () => [

@@ -117,12 +117,19 @@ test.describe('OpenKeyNav E2E', () => {
     await page.keyboard.press('Shift+KeyO');
     await page.waitForTimeout(300);
     
-    // Press h to focus first heading
+    // Press h to focus the first tabbable target in the first eligible heading.
     await page.keyboard.press('KeyH');
     await page.waitForTimeout(300);
     
-    const focused = await page.evaluate(() => document.activeElement?.tagName);
-    expect(['H1', 'H2', 'H3', 'H4']).toContain(focused);
+    const focused = await page.evaluate(() => ({
+      id: document.activeElement?.id,
+      tagName: document.activeElement?.tagName,
+      text: document.activeElement?.textContent?.trim(),
+      syntheticTabIndex: document.activeElement?.hasAttribute('data-openkeynav-tabIndexed'),
+    }));
+    expect(focused.text).toBe('DOM second, tabindex 1');
+    expect(focused.tagName).toBe('BUTTON');
+    expect(focused.syntheticTabIndex).toBe(false);
     
     await page.screenshot({ path: path.join(artifactsDir, '06-heading-focus.png'), fullPage: true });
   });

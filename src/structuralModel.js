@@ -1086,6 +1086,26 @@ export const buildStructuralModel = ({
     );
   });
 
+  // Keep heading commands grounded in the same authored ranges as Structural
+  // Navigation. The routes include empty headings so callers can deliberately
+  // skip them without ever turning a heading into a synthetic focus target.
+  const headingRoutes = headings.map(heading => {
+    const headingContext = headingContexts.find(context => (
+      context.boundary === heading
+    ));
+    const associatedContext = allContexts.find(context => (
+      context.associatedHeading === heading
+    ));
+    const context = headingContext || associatedContext || null;
+    const memberSet = context?.memberSet || new Set();
+
+    return {
+      heading,
+      level: headingRank(heading),
+      targets: liveTargets.filter(target => memberSet.has(target)),
+    };
+  });
+
   return {
     root,
     targets: liveTargets,
@@ -1094,6 +1114,7 @@ export const buildStructuralModel = ({
     directContextByTarget,
     typedContexts: typedContextMap,
     typedContextsByTarget,
+    headingRoutes,
     rejectedContexts,
     getDirectContext(target) {
       return directContextByTarget.get(target) || null;
