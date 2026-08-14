@@ -726,6 +726,9 @@ test.describe('structural navigation mode', () => {
 
   test('changes authored levels inside one contenteditable target', async ({ page }) => {
     await page.evaluate(() => {
+      const beforeEditor = document.createElement('button');
+      beforeEditor.id = 'before-rich-document-editor';
+      beforeEditor.textContent = 'Before rich document editor';
       const editor = document.createElement('div');
       editor.id = 'rich-document-editor';
       editor.setAttribute('role', 'region');
@@ -738,9 +741,10 @@ test.describe('structural navigation mode', () => {
         <p>Section detail</p>
       `;
       document.body.prepend(editor);
+      document.body.prepend(beforeEditor);
     });
     await enableOpenKeyNav(page);
-    await focusFixtureTarget(page, 'rich-document-editor');
+    await focusFixtureTarget(page, 'before-rich-document-editor');
     await page.evaluate(() => {
       (window as any).okn.enterStructuralNavigation();
     });
@@ -752,6 +756,25 @@ test.describe('structural navigation mode', () => {
     const status = page.locator(
       '.openKeyNav-structural-status .openKeyNav-status__content'
     );
+
+    await page.keyboard.press('KeyH');
+    await expectDeepFocus(page, 'rich-document-editor');
+    await expect(status).toContainText('Context: Rich document title.');
+    await expect(status).toContainText('Heading level: 2.');
+    await expect(page.locator('.openKeyNav-structural-context-outline'))
+      .toHaveAttribute('data-heading-level', '2');
+
+    await page.keyboard.press('Control+KeyH');
+    await expectDeepFocus(page, 'rich-document-editor');
+    await expect(status).toContainText('Context: Rich skipped-rank section.');
+    await expect(status).toContainText('Heading level: 4.');
+    await expect(page.locator('.openKeyNav-structural-context-outline'))
+      .toHaveAttribute('data-heading-level', '4');
+    await expect(page.locator('.openKeyNav-structural-context-heading-level'))
+      .toHaveText('h4');
+
+    await page.keyboard.press('Control+Shift+KeyH');
+    await expectDeepFocus(page, 'rich-document-editor');
     await expect(status).toContainText('Context: Rich document title.');
     await expect(status).toContainText('Heading level: 2.');
 

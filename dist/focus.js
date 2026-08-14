@@ -7,6 +7,7 @@ exports.focusOnScrollables = exports.focusOnHeadings = void 0;
 var _structuralModel = require("./structuralModel.js");
 var _tabbableTargets = require("./tabbableTargets.js");
 var focusOnHeadings = exports.focusOnHeadings = function focusOnHeadings(openKeyNav, headings, e) {
+  var _openKeyNav$structura, _openKeyNav$structura2, _openKeyNav$structura3, _openKeyNav$structura4;
   var targets = (0, _tabbableTargets.discoverTabbableTargets)(document, {
     displayCheck: openKeyNav.config.debug.screenReaderVisible ? 'none' : 'full',
     getShadowRoot: true,
@@ -29,12 +30,19 @@ var focusOnHeadings = exports.focusOnHeadings = function focusOnHeadings(openKey
   }
   var headingState = openKeyNav.config.headings;
   var lastIndex = headingState.list.length - 1;
-  var currentRouteIndex = routes.findIndex(function (route) {
+  var activeStructuralHeading = (_openKeyNav$structura = openKeyNav.structuralNavigation) === null || _openKeyNav$structura === void 0 || (_openKeyNav$structura2 = _openKeyNav$structura.activeAuthoredHeading) === null || _openKeyNav$structura2 === void 0 ? void 0 : _openKeyNav$structura2.call(_openKeyNav$structura);
+  var structuralRouteIndex = routes.findIndex(function (route) {
+    return route.heading === activeStructuralHeading && route.targets.includes(document.activeElement);
+  });
+  var rememberedRouteIndex = routes.findIndex(function (route) {
     return route.heading === headingState.currentHeading && route.targets[0] === document.activeElement;
   });
-  var focusedHeadingIndex = currentRouteIndex >= 0 ? currentRouteIndex : routes.reduce(function (activeIndex, route, routeIndex) {
-    return route.targets.includes(document.activeElement) ? routeIndex : activeIndex;
-  }, -1);
+  var focusedHeadingIndex = structuralRouteIndex >= 0 ? structuralRouteIndex : rememberedRouteIndex;
+  if (focusedHeadingIndex < 0) {
+    focusedHeadingIndex = routes.reduce(function (activeIndex, route, routeIndex) {
+      return route.targets.includes(document.activeElement) ? routeIndex : activeIndex;
+    }, -1);
+  }
   if (focusedHeadingIndex >= 0) {
     headingState.currentHeadingIndex = focusedHeadingIndex;
   } else {
@@ -62,7 +70,8 @@ var focusOnHeadings = exports.focusOnHeadings = function focusOnHeadings(openKey
   var nextRoute = routes[headingState.currentHeadingIndex];
   var nextTarget = nextRoute.targets[0];
   headingState.currentHeading = nextRoute.heading;
-  openKeyNav.focus(nextTarget);
+  var settledTarget = openKeyNav.focus(nextTarget);
+  (_openKeyNav$structura3 = openKeyNav.structuralNavigation) === null || _openKeyNav$structura3 === void 0 || (_openKeyNav$structura4 = _openKeyNav$structura3.selectAuthoredHeading) === null || _openKeyNav$structura4 === void 0 || _openKeyNav$structura4.call(_openKeyNav$structura3, nextRoute.heading, settledTarget);
 };
 var focusOnScrollables = exports.focusOnScrollables = function focusOnScrollables(openKeyNav, e) {
   openKeyNav.config.scrollables.list = openKeyNav.getScrollableElements(); // Populate or refresh the list of scrollable elements

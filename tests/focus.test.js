@@ -132,6 +132,38 @@ describe('OpenKeyNav focus', () => {
     expect(openKeyNav.config.headings.currentHeading.id).toBe('heading-three');
   });
 
+  it('synchronizes a shared tabbable target with the active structural heading', () => {
+    document.body.innerHTML = `
+      <div id="editor" contenteditable="true">
+        <h2 id="heading-two">Two</h2>
+        <p>Introduction</p>
+        <h3 id="heading-three">Three</h3>
+        <p>Detail</p>
+      </div>
+    `;
+    openKeyNav.config.debug.screenReaderVisible = true;
+    const editor = document.getElementById('editor');
+    const headingTwo = document.getElementById('heading-two');
+    const headingThree = document.getElementById('heading-three');
+    editor.focus();
+    vi.spyOn(openKeyNav.structuralNavigation, 'activeAuthoredHeading')
+      .mockReturnValue(headingTwo);
+    const selectHeading = vi.spyOn(
+      openKeyNav.structuralNavigation,
+      'selectAuthoredHeading'
+    ).mockReturnValue(true);
+
+    focusOnHeadings(
+      openKeyNav,
+      'h1, h2, h3, h4, h5, h6',
+      { shiftKey: false }
+    );
+
+    expect(document.activeElement).toBe(editor);
+    expect(openKeyNav.config.headings.currentHeading).toBe(headingThree);
+    expect(selectHeading).toHaveBeenCalledWith(headingThree, editor);
+  });
+
   it('cycles scroll regions through the declared scrollable state', () => {
     document.body.innerHTML = `
       <div id="scroll-one">One</div>

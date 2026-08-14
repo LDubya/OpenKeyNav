@@ -139,9 +139,18 @@ export const handleKeyPress = (openKeyNav, e) => {
       openKeyNav.config.modes.structuralNavigation.value &&
       !hasForegroundMode(openKeyNav)
     ) {
+      const inputEscapeModifier = openKeyNav.config.keys.inputEscape;
+      const usesInputEscape = Boolean(
+        isTextInputActive &&
+        inputEscapeModifier &&
+        e[inputEscapeModifier]
+      );
       if (
-        pageOwnsCharacterCommand(openKeyNav, e) ||
-        hasSystemShortcutModifier(e)
+        !usesInputEscape &&
+        (
+          pageOwnsCharacterCommand(openKeyNav, e) ||
+          hasSystemShortcutModifier(e)
+        )
       ) {
         return true;
       }

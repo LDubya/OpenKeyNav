@@ -533,6 +533,35 @@ describe('keypress structural-mode arbitration', () => {
     expect(openKeyNav.config.modes.menu.value).toBe(false);
   });
 
+  it('uses the configured input escape to continue heading navigation in an editor', () => {
+    document.body.innerHTML = `
+      <div id="editor" contenteditable="true" tabindex="0">
+        <h2 id="editor-heading-two">Two</h2>
+        <p>Introduction</p>
+        <h3 id="editor-heading-three">Three</h3>
+        <p>Detail</p>
+      </div>
+    `;
+    openKeyNav = createOpenKeyNav();
+    const editor = document.getElementById('editor');
+    editor.focus();
+    openKeyNav.enterStructuralNavigation();
+
+    const event = dispatchKey(
+      editor,
+      'h',
+      'KeyH',
+      { ctrlKey: true }
+    );
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(editor);
+    expect(openKeyNav.config.headings.currentHeading.id)
+      .toBe('editor-heading-three');
+    expect(openKeyNav.structuralNavigation.activeAuthoredHeading().id)
+      .toBe('editor-heading-three');
+  });
+
   it.each([
     {
       label: 'text input',

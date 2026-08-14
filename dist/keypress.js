@@ -116,7 +116,9 @@ var handleKeyPress = exports.handleKeyPress = function handleKeyPress(openKeyNav
   // characters and system shortcuts pass through. Other OpenKeyNav commands
   // continue through the ordinary router without ending structural mode.
   if (openKeyNav.config.modes.structuralNavigation.value && !hasForegroundMode(openKeyNav)) {
-    if (pageOwnsCharacterCommand(openKeyNav, e) || hasSystemShortcutModifier(e)) {
+    var inputEscapeModifier = openKeyNav.config.keys.inputEscape;
+    var usesInputEscape = Boolean(isTextInputActive && inputEscapeModifier && e[inputEscapeModifier]);
+    if (!usesInputEscape && (pageOwnsCharacterCommand(openKeyNav, e) || hasSystemShortcutModifier(e))) {
       return true;
     }
   }

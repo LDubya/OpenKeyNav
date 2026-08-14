@@ -21,17 +21,26 @@ export const focusOnHeadings = (openKeyNav, headings, e) => {
 
     const headingState = openKeyNav.config.headings;
     const lastIndex = headingState.list.length - 1;
-    const currentRouteIndex = routes.findIndex(route => (
+    const activeStructuralHeading = openKeyNav.structuralNavigation
+      ?.activeAuthoredHeading?.();
+    const structuralRouteIndex = routes.findIndex(route => (
+      route.heading === activeStructuralHeading &&
+      route.targets.includes(document.activeElement)
+    ));
+    const rememberedRouteIndex = routes.findIndex(route => (
       route.heading === headingState.currentHeading &&
       route.targets[0] === document.activeElement
     ));
-    const focusedHeadingIndex = currentRouteIndex >= 0
-      ? currentRouteIndex
-      : routes.reduce((activeIndex, route, routeIndex) => (
+    let focusedHeadingIndex = structuralRouteIndex >= 0
+      ? structuralRouteIndex
+      : rememberedRouteIndex;
+    if (focusedHeadingIndex < 0) {
+      focusedHeadingIndex = routes.reduce((activeIndex, route, routeIndex) => (
         route.targets.includes(document.activeElement)
           ? routeIndex
           : activeIndex
       ), -1);
+    }
     if (focusedHeadingIndex >= 0) {
       headingState.currentHeadingIndex = focusedHeadingIndex;
     } else {
@@ -59,7 +68,11 @@ export const focusOnHeadings = (openKeyNav, headings, e) => {
     const nextRoute = routes[headingState.currentHeadingIndex];
     const nextTarget = nextRoute.targets[0];
     headingState.currentHeading = nextRoute.heading;
-    openKeyNav.focus(nextTarget);
+    const settledTarget = openKeyNav.focus(nextTarget);
+    openKeyNav.structuralNavigation?.selectAuthoredHeading?.(
+      nextRoute.heading,
+      settledTarget
+    );
 };
 
 export const focusOnScrollables = (openKeyNav, e) => {

@@ -481,6 +481,14 @@ var contextHeadingLevel = function contextHeadingLevel(context) {
   var level = Number(context === null || context === void 0 ? void 0 : context.headingLevel);
   return Number.isInteger(level) && level > 0 ? level : null;
 };
+var authoredHeadingForContext = function authoredHeadingForContext(context) {
+  if (!context) return null;
+  if ((0, _domUtilities.isElement)(context.associatedHeading)) return context.associatedHeading;
+  if (context.source === 'heading' && (0, _domUtilities.isElement)(context.boundary)) {
+    return context.boundary;
+  }
+  return null;
+};
 var contextOrder = function contextOrder(context) {
   var order = Number(context === null || context === void 0 ? void 0 : context.order);
   return Number.isFinite(order) ? order : Number.MAX_SAFE_INTEGER;
@@ -1260,6 +1268,12 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
       return headingContextForRoute(this.model, structuralRoute, this.currentTarget);
     }
   }, {
+    key: "activeAuthoredHeading",
+    value: function activeAuthoredHeading() {
+      if (!this.active) return null;
+      return authoredHeadingForContext(this.activeHeadingContext());
+    }
+  }, {
     key: "moveTarget",
     value: function moveTarget(direction) {
       var sequence = this.activeSequence();
@@ -1365,6 +1379,23 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
           });
         }
       }, 0);
+    }
+  }, {
+    key: "selectAuthoredHeading",
+    value: function selectAuthoredHeading(heading, target) {
+      if (!this.active || !heading || !target) return false;
+      if (this.dirty || !this.model) this.refresh();
+      var context = structuralContextForElement(this.model, heading);
+      if (contextHeadingLevel(context) === null || !this.targetSet.has(target) || !contextTargets(context).includes(target)) {
+        return false;
+      }
+      this.currentTarget = target;
+      this.activeStructuralContext = context;
+      this.activeTypedContext = null;
+      this.showTransientContextIndicator();
+      this.updateStatus();
+      this.scheduleKeylabelUpdate();
+      return true;
     }
   }, {
     key: "moveSiblingContext",

@@ -41,7 +41,7 @@
 	  value: true
 	});
 	version.version = void 0;
-	version.version = "0.1.260";
+	version.version = "0.1.261";
 
 	var signals = {};
 
@@ -2588,6 +2588,7 @@
 	var _structuralModel$1 = structuralModel;
 	var _tabbableTargets$1 = tabbableTargets;
 	focus.focusOnHeadings = function focusOnHeadings(openKeyNav, headings, e) {
+	  var _openKeyNav$structura, _openKeyNav$structura2, _openKeyNav$structura3, _openKeyNav$structura4;
 	  var targets = (0, _tabbableTargets$1.discoverTabbableTargets)(document, {
 	    displayCheck: openKeyNav.config.debug.screenReaderVisible ? 'none' : 'full',
 	    getShadowRoot: true,
@@ -2610,12 +2611,19 @@
 	  }
 	  var headingState = openKeyNav.config.headings;
 	  var lastIndex = headingState.list.length - 1;
-	  var currentRouteIndex = routes.findIndex(function (route) {
+	  var activeStructuralHeading = (_openKeyNav$structura = openKeyNav.structuralNavigation) === null || _openKeyNav$structura === void 0 || (_openKeyNav$structura2 = _openKeyNav$structura.activeAuthoredHeading) === null || _openKeyNav$structura2 === void 0 ? void 0 : _openKeyNav$structura2.call(_openKeyNav$structura);
+	  var structuralRouteIndex = routes.findIndex(function (route) {
+	    return route.heading === activeStructuralHeading && route.targets.includes(document.activeElement);
+	  });
+	  var rememberedRouteIndex = routes.findIndex(function (route) {
 	    return route.heading === headingState.currentHeading && route.targets[0] === document.activeElement;
 	  });
-	  var focusedHeadingIndex = currentRouteIndex >= 0 ? currentRouteIndex : routes.reduce(function (activeIndex, route, routeIndex) {
-	    return route.targets.includes(document.activeElement) ? routeIndex : activeIndex;
-	  }, -1);
+	  var focusedHeadingIndex = structuralRouteIndex >= 0 ? structuralRouteIndex : rememberedRouteIndex;
+	  if (focusedHeadingIndex < 0) {
+	    focusedHeadingIndex = routes.reduce(function (activeIndex, route, routeIndex) {
+	      return route.targets.includes(document.activeElement) ? routeIndex : activeIndex;
+	    }, -1);
+	  }
 	  if (focusedHeadingIndex >= 0) {
 	    headingState.currentHeadingIndex = focusedHeadingIndex;
 	  } else {
@@ -2643,7 +2651,8 @@
 	  var nextRoute = routes[headingState.currentHeadingIndex];
 	  var nextTarget = nextRoute.targets[0];
 	  headingState.currentHeading = nextRoute.heading;
-	  openKeyNav.focus(nextTarget);
+	  var settledTarget = openKeyNav.focus(nextTarget);
+	  (_openKeyNav$structura3 = openKeyNav.structuralNavigation) === null || _openKeyNav$structura3 === void 0 || (_openKeyNav$structura4 = _openKeyNav$structura3.selectAuthoredHeading) === null || _openKeyNav$structura4 === void 0 || _openKeyNav$structura4.call(_openKeyNav$structura3, nextRoute.heading, settledTarget);
 	};
 	focus.focusOnScrollables = function focusOnScrollables(openKeyNav, e) {
 	  openKeyNav.config.scrollables.list = openKeyNav.getScrollableElements(); // Populate or refresh the list of scrollable elements
@@ -4213,6 +4222,14 @@
 	  var level = Number(context === null || context === void 0 ? void 0 : context.headingLevel);
 	  return Number.isInteger(level) && level > 0 ? level : null;
 	};
+	var authoredHeadingForContext = function authoredHeadingForContext(context) {
+	  if (!context) return null;
+	  if ((0, _domUtilities$1.isElement)(context.associatedHeading)) return context.associatedHeading;
+	  if (context.source === 'heading' && (0, _domUtilities$1.isElement)(context.boundary)) {
+	    return context.boundary;
+	  }
+	  return null;
+	};
 	var contextOrder = function contextOrder(context) {
 	  var order = Number(context === null || context === void 0 ? void 0 : context.order);
 	  return Number.isFinite(order) ? order : Number.MAX_SAFE_INTEGER;
@@ -4992,6 +5009,12 @@
 	      return headingContextForRoute(this.model, structuralRoute, this.currentTarget);
 	    }
 	  }, {
+	    key: "activeAuthoredHeading",
+	    value: function activeAuthoredHeading() {
+	      if (!this.active) return null;
+	      return authoredHeadingForContext(this.activeHeadingContext());
+	    }
+	  }, {
 	    key: "moveTarget",
 	    value: function moveTarget(direction) {
 	      var sequence = this.activeSequence();
@@ -5097,6 +5120,23 @@
 	          });
 	        }
 	      }, 0);
+	    }
+	  }, {
+	    key: "selectAuthoredHeading",
+	    value: function selectAuthoredHeading(heading, target) {
+	      if (!this.active || !heading || !target) return false;
+	      if (this.dirty || !this.model) this.refresh();
+	      var context = structuralContextForElement(this.model, heading);
+	      if (contextHeadingLevel(context) === null || !this.targetSet.has(target) || !contextTargets(context).includes(target)) {
+	        return false;
+	      }
+	      this.currentTarget = target;
+	      this.activeStructuralContext = context;
+	      this.activeTypedContext = null;
+	      this.showTransientContextIndicator();
+	      this.updateStatus();
+	      this.scheduleKeylabelUpdate();
+	      return true;
 	    }
 	  }, {
 	    key: "moveSiblingContext",
@@ -5917,7 +5957,9 @@
 	    // characters and system shortcuts pass through. Other OpenKeyNav commands
 	    // continue through the ordinary router without ending structural mode.
 	    if (openKeyNav.config.modes.structuralNavigation.value && !hasForegroundMode(openKeyNav)) {
-	      if (pageOwnsCharacterCommand(openKeyNav, e) || hasSystemShortcutModifier(e)) {
+	      var inputEscapeModifier = openKeyNav.config.keys.inputEscape;
+	      var usesInputEscape = Boolean(isTextInputActive && inputEscapeModifier && e[inputEscapeModifier]);
+	      if (!usesInputEscape && (pageOwnsCharacterCommand(openKeyNav, e) || hasSystemShortcutModifier(e))) {
 	        return true;
 	      }
 	    }

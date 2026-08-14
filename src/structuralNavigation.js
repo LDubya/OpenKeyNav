@@ -635,6 +635,15 @@ const contextHeadingLevel = context => {
   return Number.isInteger(level) && level > 0 ? level : null;
 };
 
+const authoredHeadingForContext = context => {
+  if (!context) return null;
+  if (isElement(context.associatedHeading)) return context.associatedHeading;
+  if (context.source === 'heading' && isElement(context.boundary)) {
+    return context.boundary;
+  }
+  return null;
+};
+
 const contextOrder = context => {
   const order = Number(context?.order);
   return Number.isFinite(order) ? order : Number.MAX_SAFE_INTEGER;
@@ -1662,6 +1671,11 @@ export class StructuralNavigationController {
     );
   }
 
+  activeAuthoredHeading() {
+    if (!this.active) return null;
+    return authoredHeadingForContext(this.activeHeadingContext());
+  }
+
   moveTarget(direction) {
     const sequence = this.activeSequence();
     if (!sequence.length) {
@@ -1768,6 +1782,28 @@ export class StructuralNavigationController {
         this.synchronizeFocus({ preserveRoute: true });
       }
     }, 0);
+  }
+
+  selectAuthoredHeading(heading, target) {
+    if (!this.active || !heading || !target) return false;
+    if (this.dirty || !this.model) this.refresh();
+
+    const context = structuralContextForElement(this.model, heading);
+    if (
+      contextHeadingLevel(context) === null ||
+      !this.targetSet.has(target) ||
+      !contextTargets(context).includes(target)
+    ) {
+      return false;
+    }
+
+    this.currentTarget = target;
+    this.activeStructuralContext = context;
+    this.activeTypedContext = null;
+    this.showTransientContextIndicator();
+    this.updateStatus();
+    this.scheduleKeylabelUpdate();
+    return true;
   }
 
   moveSiblingContext(direction) {
