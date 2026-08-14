@@ -15,6 +15,8 @@ navigation mode described in `structural-navigation-mode-brief.md`.
 - One core `StatusService` owns both `emitNotification()` and structural status.
   Notifications remain assertive and transient; structural context changes
   update one persistent, scoped `role="status"`/`aria-live="polite"` channel.
+  The channel is visually hidden by default; the structural navigation
+  `debug` flag exposes its persistent visual box without changing announcements.
   Exit clears that channel and emits one time-limited polite status in the same
   document, modal, element, or open ShadowRoot. Visible structural status uses
   the same optional OpenKeyNav branding as notifications, controlled by
@@ -28,10 +30,10 @@ navigation mode described in `structural-navigation-mode-brief.md`.
   their status reports an authored level only when the underlying structural
   route has one. The persistent status does not name horizontal
   contexts; attempted boundary commands still report unavailable relationships.
-  It reports applicable typed routes as a bounded count. `Shift+Escape` closes
-  the visual surface without moving focus or disabling its visually hidden
-  polite live updates. Escape-owning widgets keep that chord, and true mode
-  re-entry restores the visible surface.
+  It reports applicable typed routes as a bounded count. With structural debug
+  enabled, `Shift+Escape` closes the visual surface without moving focus or
+  disabling its visually hidden polite live updates. Escape-owning widgets keep
+  that chord, and true mode re-entry restores the visible debug surface.
 - Status messages are inserted as text by default. Only OpenKeyNav-owned markup
   explicitly passed with `trustedHtml: true` is interpreted as HTML.
 - Composed-tree traversal, deep active-element lookup, generated-interface
@@ -167,8 +169,9 @@ previous/next target commands or invoke them programmatically. The default
 mapping uses Shift+Left/Right for same-level heading-backed contexts,
 Shift+Up/Down for authored heading-rank changes, `r` for entry
 or toggle when character commands are available,
-`Alt+r` for reliable exit, and `Shift+Escape` to dismiss the visible status when
-Escape is available to the mode. Previous/next target and typed-context cycling
+`Alt+r` for reliable exit, and, when the debug surface is enabled,
+`Shift+Escape` to dismiss the visible status when Escape is available to the
+mode. Previous/next target and typed-context cycling
 begin with empty bindings; bare arrows remain native. Applications declare
 custom ownership with `ownsKey` or `data-openkeynav-key-owner`.
 

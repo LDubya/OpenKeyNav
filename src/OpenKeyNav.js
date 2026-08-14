@@ -169,6 +169,7 @@ class OpenKeyNav {
           },
           structuralNavigation: {
             enabled: true,
+            debug: false,
             escapeExits: false,
             exitCommand: null,
             overrideModifier: 'altKey',

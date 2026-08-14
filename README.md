@@ -157,7 +157,7 @@ OpenKeyNav includes a compact, persistent keyboard-command strip so applications
 
 The strip can be present before `init()` or added later by a client-side framework. With the default configuration, it shows `Shift+o` while shortcuts are off. Once they are on, it shows `o` as the command for opening its shortcut guide; the expanded guide lists `k` for Click Mode, the configured Structural Navigation key (`r` by default) when that mode is enabled, and `m` only when Move Mode is configured. While a mode is active, the strip changes to the relevant exit hint. This is persistent, contextual guidance rather than a complete command catalog or live announcement, so pair it with the command table above or an application-specific help page for heading, scroll-region, structural movement, and custom commands.
 
-The current release provides the compact strip layout. Sidebar and settings-page block variants are candidates for a later release. Enable, disable, Click Mode, and Move Mode notification alerts are a separate OpenKeyNav surface and do not replace persistent command discovery. They are transient by default; a zero duration makes them persistent and dismissible. Structural Navigation uses its own persistent status.
+The current release provides the compact strip layout. Sidebar and settings-page block variants are candidates for a later release. Enable, disable, Click Mode, and Move Mode notification alerts are a separate OpenKeyNav surface and do not replace persistent command discovery. They are transient by default; a zero duration makes them persistent and dismissible. Structural Navigation uses a polite live status that is visually hidden by default. Set `modesConfig.structuralNavigation.debug: true` to show its persistent debug box.
 
 ## Development diagnostics
 
@@ -315,9 +315,11 @@ height, and adds only its attached shape.
 Unheaded contexts do not receive an invented level tab. Applications can keep the outline
 visible throughout Structural Navigation with
 `modesConfig.structuralNavigation.contextIndicator.enabled: true`.
-The persistent status says `Heading level` only when the current route resolves
-to an authored H1–H6 context. It never presents semantic nesting as a numbered
-level.
+The structural live status says `Heading level` only when the current route
+resolves to an authored H1–H6 context. It never presents semantic nesting as a
+numbered level. Its visible debug box is off by default and can be enabled with
+`modesConfig.structuralNavigation.debug: true`; polite announcements remain
+available either way.
 
 Previous/next target and typed-route commands begin with empty key bindings so applications can assign shortcuts that fit the host interface; each command is also available programmatically. Read the [Structural Navigation documentation](https://openkeynav.com/docs/usage/structural_navigation) for configuration, APIs, focus-scope behavior, and keyboard ownership.
 

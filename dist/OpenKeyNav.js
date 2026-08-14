@@ -210,6 +210,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
         },
         structuralNavigation: {
           enabled: true,
+          debug: false,
           escapeExits: false,
           exitCommand: null,
           overrideModifier: 'altKey',

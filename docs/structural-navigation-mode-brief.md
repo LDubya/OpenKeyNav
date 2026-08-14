@@ -841,12 +841,16 @@ Use OpenKeyNav's existing status, notification, toolbar, and focus-marker facili
 Requirements:
 
 - Status never takes focus during traversal.
-- Context-only changes are visible and exposed through a concise polite live announcement.
-- Persistent status does not name previous or next horizontal contexts or
+- Context-only changes are exposed through a concise polite live announcement.
+  A default-off structural-navigation debug flag may also expose that status as
+  a persistent visual surface.
+- Structural status does not name previous or next horizontal contexts or
   enumerate a peer lane. An attempted command still announces a horizontal,
   parent/child, target, or typed-route boundary when the relationship is
   unavailable.
-- A configurable, non-focus-stealing status-dismissal command may close the visual surface while retaining visually hidden polite updates, and must defer to controls or applications that own the key.
+- When the debug surface is enabled, a configurable, non-focus-stealing
+  status-dismissal command may close it while retaining visually hidden polite
+  updates, and must defer to controls or applications that own the key.
 - Repeated navigation does not queue long or redundant announcements.
 - OpenKeyNav may augment a weak page focus indicator but must not suppress the page's native or authored focus styles.
 - An opt-in generated visual context indicator may outline the active context,
@@ -874,7 +878,8 @@ Follow OpenKeyNav's current public configuration conventions. Provide capabiliti
 - Filtering targets without mutating them.
 - Opting into programmatic-only targets, if supported.
 - Enabling optional semantic adapters such as static tables.
-- Controlling status and announcements.
+- Controlling status and announcements, including a default-off debug flag for
+  the persistent visual status.
 - Opting into the large visual context indicator when the focused keylabel is
   not sufficient for the host interface.
 

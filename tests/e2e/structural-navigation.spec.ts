@@ -14,8 +14,11 @@ async function loadFixture(page: Page) {
   });
   // Most routing tests also exercise the optional context indicator.
   await page.evaluate(() => {
-    const contextIndicator = (window as any).okn.config.modesConfig
-      .structuralNavigation.contextIndicator;
+    const structuralNavigation = (window as any).okn.config.modesConfig
+      .structuralNavigation;
+    (window as any).defaultStructuralDebug = structuralNavigation.debug;
+    structuralNavigation.debug = true;
+    const contextIndicator = structuralNavigation.contextIndicator;
     (window as any).defaultContextIndicatorEnabled = contextIndicator.enabled;
     contextIndicator.enabled = true;
   });
@@ -92,6 +95,38 @@ test.describe('structural navigation mode', () => {
     await expect(logo).toHaveAttribute('aria-label', 'OpenKeyNav');
     await page.waitForTimeout(500);
     await expect(notification).toBeVisible();
+  });
+
+  test('keeps structural status visual output behind a default-off debug flag', async ({ page }) => {
+    expect(await page.evaluate(() => (
+      (window as any).defaultStructuralDebug
+    ))).toBe(false);
+    await page.evaluate(() => {
+      (window as any).okn.config.modesConfig.structuralNavigation.debug = false;
+    });
+
+    await enableOpenKeyNav(page);
+    await page.keyboard.press('KeyR');
+    await expect.poll(() => page.evaluate(
+      () => (window as any).okn.config.modes.structuralNavigation.value
+    )).toBe(true);
+
+    const status = page.locator('.openKeyNav-structural-status');
+    await expect(status).toHaveClass(/openKeyNav-status--visually-hidden/);
+    await expect(status).toHaveAttribute('role', 'status');
+    await expect(status).toHaveAttribute('aria-live', 'polite');
+    await expect(status.locator('.openKeyNav-status__content'))
+      .toContainText('Structural navigation active.');
+    await expect(status.locator('.openKeyNav-status__hint')).toHaveCount(0);
+
+    await page.keyboard.press('Alt+KeyR');
+    await page.evaluate(() => {
+      (window as any).okn.config.modesConfig.structuralNavigation.debug = true;
+    });
+    await enterStructuralNavigation(page);
+    await expect(status).not.toHaveClass(/openKeyNav-status--visually-hidden/);
+    await expect(status.locator('.openKeyNav-status__hint'))
+      .toHaveText('Shift+Esc to close.');
   });
 
   test('keeps the large context outline off by default', async ({ page }) => {

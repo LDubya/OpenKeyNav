@@ -1147,7 +1147,9 @@ export class StructuralNavigationController {
           ui: 'structural-status',
           politeness: 'polite',
           visible:
-            statusConfig.visible !== false && !statusWasDismissed,
+            this.config.debug === true &&
+            statusConfig.visible !== false &&
+            !statusWasDismissed,
           duration: exitDuration,
           toolName: this.openKeyNav.config.notifications.displayToolName,
           host: exitHost,
@@ -1245,6 +1247,7 @@ export class StructuralNavigationController {
     );
     const dismissStatus = Boolean(
       dismissShortcut &&
+      this.config.debug === true &&
       statusConfig.enabled !== false &&
       statusConfig.visible !== false &&
       !this.statusDismissed &&
@@ -2621,6 +2624,7 @@ export class StructuralNavigationController {
     const dismissLabel = shortcutLabel(this.config.status?.dismissCommand);
     const dismissDescription = (
       dismissLabel &&
+      this.config.debug === true &&
       this.config.status?.visible !== false &&
       !this.statusDismissed
     ) ? `${dismissLabel} to close.` : '';
@@ -2641,7 +2645,9 @@ export class StructuralNavigationController {
       politeness:
         this.config.status.announcements === false ? 'off' : 'polite',
       visible:
-        this.config.status.visible !== false && !this.statusDismissed,
+        this.config.debug === true &&
+        this.config.status.visible !== false &&
+        !this.statusDismissed,
       hint: dismissDescription,
       toolName: this.openKeyNav.config.notifications.displayToolName,
       host: this.root,

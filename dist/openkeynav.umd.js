@@ -41,7 +41,7 @@
 	  value: true
 	});
 	version.version = void 0;
-	version.version = "0.1.266";
+	version.version = "0.1.267";
 
 	var signals = {};
 
@@ -4664,7 +4664,7 @@
 	          className: 'openKeyNav-structural-exit-status',
 	          ui: 'structural-status',
 	          politeness: 'polite',
-	          visible: statusConfig.visible !== false && !statusWasDismissed,
+	          visible: this.config.debug === true && statusConfig.visible !== false && !statusWasDismissed,
 	          duration: exitDuration,
 	          toolName: this.openKeyNav.config.notifications.displayToolName,
 	          host: exitHost
@@ -4726,7 +4726,7 @@
 	      var dismissIsArrowKey = event.key.startsWith('Arrow');
 	      var dismissIsCharacterKey = event.key.length === 1;
 	      var pageOwnsDismissShortcut = Boolean(ownership.all || event.key === 'Escape' && ownership.escape || dismissIsArrowKey && ownership.arrows || dismissIsCharacterKey && ownership.character);
-	      var dismissStatus = Boolean(dismissShortcut && statusConfig.enabled !== false && statusConfig.visible !== false && !this.statusDismissed && this.openKeyNav.getStatusElement(STRUCTURAL_STATUS_CHANNEL) && !pageOwnsDismissShortcut && matchesStructuralShortcut(event, dismissShortcut));
+	      var dismissStatus = Boolean(dismissShortcut && this.config.debug === true && statusConfig.enabled !== false && statusConfig.visible !== false && !this.statusDismissed && this.openKeyNav.getStatusElement(STRUCTURAL_STATUS_CHANNEL) && !pageOwnsDismissShortcut && matchesStructuralShortcut(event, dismissShortcut));
 	      if (dismissStatus) {
 	        (0, _keyboardEvents.preventAcceptedCommand)(event);
 	        this.clearTransientContextIndicator();
@@ -5833,14 +5833,14 @@
 	      var typedContexts = typedContextsForTarget(this.model, this.currentTarget);
 	      var typedDescription = typedContexts.length ? "".concat(typedContexts.length, " alternate ").concat(typedContexts.length === 1 ? 'route' : 'routes', " available.") : '';
 	      var dismissLabel = shortcutLabel((_this$config$status2 = this.config.status) === null || _this$config$status2 === void 0 ? void 0 : _this$config$status2.dismissCommand);
-	      var dismissDescription = dismissLabel && ((_this$config$status3 = this.config.status) === null || _this$config$status3 === void 0 ? void 0 : _this$config$status3.visible) !== false && !this.statusDismissed ? "".concat(dismissLabel, " to close.") : '';
+	      var dismissDescription = dismissLabel && this.config.debug === true && ((_this$config$status3 = this.config.status) === null || _this$config$status3 === void 0 ? void 0 : _this$config$status3.visible) !== false && !this.statusDismissed ? "".concat(dismissLabel, " to close.") : '';
 	      var contextDescription = this.activeTypedContext ? "Typed context: ".concat(contextName, ".") : "Context: ".concat(contextName, ".");
 	      var message = [prefix, contextDescription, headingDescription, targetDescription ? "".concat(targetDescription, ".") : '', typedDescription].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
 	      this.openKeyNav.setStatus(STRUCTURAL_STATUS_CHANNEL, message, {
 	        className: 'openKeyNav-structural-status',
 	        ui: 'structural-status',
 	        politeness: this.config.status.announcements === false ? 'off' : 'polite',
-	        visible: this.config.status.visible !== false && !this.statusDismissed,
+	        visible: this.config.debug === true && this.config.status.visible !== false && !this.statusDismissed,
 	        hint: dismissDescription,
 	        toolName: this.openKeyNav.config.notifications.displayToolName,
 	        host: this.root,
@@ -7615,6 +7615,7 @@
 	          },
 	          structuralNavigation: {
 	            enabled: true,
+	            debug: false,
 	            escapeExits: false,
 	            exitCommand: null,
 	            overrideModifier: 'altKey',

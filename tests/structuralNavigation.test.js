@@ -13,6 +13,7 @@ const createOpenKeyNav = (options = {}) => {
   const openKeyNav = new OpenKeyNav();
   openKeyNav.config.debug.keyboardAccessible = false;
   openKeyNav.config.modesConfig.structuralNavigation.displayCheck = 'none';
+  openKeyNav.config.modesConfig.structuralNavigation.debug = true;
   openKeyNav.deepMerge(openKeyNav.config, options);
   openKeyNav.meta.enabled.value = true;
   return openKeyNav;
@@ -110,6 +111,8 @@ describe('structural navigation key policy', () => {
   it('uses an exact Shift+Escape status dismissal command by default', () => {
     const openKeyNav = new OpenKeyNav();
 
+    expect(openKeyNav.config.modesConfig.structuralNavigation.debug)
+      .toBe(false);
     expect(openKeyNav.config.modesConfig.structuralNavigation.status.dismissCommand)
       .toEqual({ key: 'Escape', shiftKey: true });
     expect(openKeyNav.config.modesConfig.structuralNavigation.keylabels.tab)

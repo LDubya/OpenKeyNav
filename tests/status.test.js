@@ -304,6 +304,7 @@ describe('OpenKeyNav shared status lifecycle', () => {
       </main>
     `;
     openKeyNav.config.modesConfig.structuralNavigation.displayCheck = 'none';
+    openKeyNav.config.modesConfig.structuralNavigation.debug = true;
     openKeyNav.meta.enabled.value = true;
     document.getElementById('target').focus();
 
