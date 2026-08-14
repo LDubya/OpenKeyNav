@@ -138,7 +138,11 @@ static-table row/column inference is intentionally deferred.
   active context boundary or heading range. It is disabled by default and never
   enters target discovery or page focus. A non-interactive tab protrudes from
   an available box edge and labels an authored heading context only as `h1`
-  through `h6`; unheaded contexts do not receive a fabricated rank.
+  through `h6`; unheaded contexts do not receive a fabricated rank. The box
+  uses a dashed line and the existing neutral label palette so it remains
+  distinct from the solid focus treatment. The tab uses those existing label
+  and text colors, inherits the host page's typography, and owns only its
+  attached shape.
 - A heading range is capped by the nearest authored composed-DOM wrapper that
   groups that heading with a following exposed target, when that wrapper ends
   before the enclosing semantic context. This keeps final heading families

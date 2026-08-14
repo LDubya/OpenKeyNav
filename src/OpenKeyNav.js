@@ -186,13 +186,7 @@ class OpenKeyNav {
               dismissCommand: { key: 'Escape', shiftKey: true }
             },
             contextIndicator: {
-              enabled: false,
-              color: '#000000',
-              contrastColor: '#ffffff',
-              contrastWidth: 2,
-              style: 'dashed',
-              width: 3,
-              offset: 10
+              enabled: false
             },
             keylabels: {
               enabled: true,

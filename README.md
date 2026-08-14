@@ -304,12 +304,14 @@ the existing thin keylabel outline remains white.
 The large active-context outline is not persistent by default. It appears while
 Shift+Up, Shift+Down, Shift+Left, or Shift+Right changes the heading context,
 follows consecutive heading-context moves, and clears on the next different
-action such as Tab. Its dashed black outline sits 10px outside the context and
-uses a white contrast layer, keeping it visually distinct from the page's focus
-indicator. When the active context is backed by an authored heading, a small,
+action such as Tab. Its dashed neutral outline sits 10px outside the context so
+it remains distinct from the solid focus treatment. It reuses OpenKeyNav's
+existing label palette instead of introducing another visual configuration.
+When the active context is backed by an authored heading, a small,
 non-interactive tab protrudes from an available outline edge and shows only its
-level (`h1` through `h6`). Unheaded contexts do not receive an invented level
-tab. Applications can keep the outline
+level (`h1` through `h6`). The tab uses the same existing neutral label and text
+colors, inherits the host page's typography, and adds only its attached shape.
+Unheaded contexts do not receive an invented level tab. Applications can keep the outline
 visible throughout Structural Navigation with
 `modesConfig.structuralNavigation.contextIndicator.enabled: true`.
 The persistent status says `Heading level` only when the current route resolves

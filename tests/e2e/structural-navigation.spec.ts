@@ -142,9 +142,41 @@ test.describe('structural navigation mode', () => {
         boxShadow: style.boxShadow,
       };
     })).toEqual({
-      borderColor: 'rgb(0, 0, 0)',
+      borderColor: 'rgb(51, 51, 51)',
       borderStyle: 'dashed',
       boxShadow: 'rgb(255, 255, 255) 0px 0px 0px 2px',
+    });
+    expect(await headingLevelTab.evaluate(element => {
+      const tabStyle = getComputedStyle(element);
+      const pageStyle = getComputedStyle(document.body);
+      return {
+        tab: {
+          fontFamily: tabStyle.fontFamily,
+          fontSize: tabStyle.fontSize,
+          fontWeight: tabStyle.fontWeight,
+          lineHeight: tabStyle.lineHeight,
+        },
+        page: {
+          fontFamily: pageStyle.fontFamily,
+          fontSize: pageStyle.fontSize,
+          fontWeight: pageStyle.fontWeight,
+          lineHeight: pageStyle.lineHeight,
+        },
+        color: tabStyle.color,
+        backgroundColor: tabStyle.backgroundColor,
+      };
+    })).toMatchObject({
+      tab: await page.locator('body').evaluate(element => {
+        const style = getComputedStyle(element);
+        return {
+          fontFamily: style.fontFamily,
+          fontSize: style.fontSize,
+          fontWeight: style.fontWeight,
+          lineHeight: style.lineHeight,
+        };
+      }),
+      color: 'rgb(255, 255, 255)',
+      backgroundColor: 'rgb(51, 51, 51)',
     });
     expect(await page.locator('.openKeyNav-structural-keylabel').evaluateAll(
       (labels, contextIndicator) => labels.every(label => (

@@ -46,6 +46,9 @@ var STRUCTURAL_STATUS_CHANNEL = 'structural-navigation';
 var STRUCTURAL_EXIT_STATUS_CHANNEL = 'structural-navigation-exit';
 var STRUCTURAL_KEYLABEL_OWNER = 'structural-navigation';
 var STRUCTURAL_KEYLABEL_CLASS = 'openKeyNav-structural-keylabel';
+var CONTEXT_INDICATOR_OFFSET = 10;
+var CONTEXT_INDICATOR_WIDTH = 2;
+var CONTEXT_INDICATOR_CONTRAST_WIDTH = 2;
 var HEADING_CONTEXT_ARROW_COMMANDS = new Set([STRUCTURAL_NAVIGATION_COMMANDS.previousSiblingContext, STRUCTURAL_NAVIGATION_COMMANDS.nextSiblingContext, STRUCTURAL_NAVIGATION_COMMANDS.broadenContext, STRUCTURAL_NAVIGATION_COMMANDS.narrowContext]);
 var MODIFIER_KEY_EVENTS = new Set(['Alt', 'Control', 'Meta', 'Shift']);
 var NATIVE_SCROLL_KEYS = new Set(['ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'End', 'Home', 'PageDown', 'PageUp']);
@@ -1835,6 +1838,7 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
   }, {
     key: "updateContextIndicatorHeadingLevel",
     value: function updateContextIndicatorHeadingLevel(_ref10) {
+      var _this$openKeyNav$conf;
       var context = _ref10.context,
         left = _ref10.left,
         top = _ref10.top,
@@ -1843,8 +1847,7 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
         viewportWidth = _ref10.viewportWidth,
         viewportHeight = _ref10.viewportHeight,
         width = _ref10.width,
-        color = _ref10.color,
-        contrastColor = _ref10.contrastColor;
+        color = _ref10.color;
       var tab = this.contextIndicatorHeadingLevelElement;
       var indicator = this.contextIndicatorElement;
       if (!tab || !indicator) return;
@@ -1861,7 +1864,7 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
       tab.textContent = "h".concat(headingLevel);
       indicator.dataset.headingLevel = String(headingLevel);
       tab.style.setProperty('--openkeynav-context-indicator-color', color);
-      tab.style.setProperty('--openkeynav-context-indicator-contrast-color', contrastColor);
+      tab.style.setProperty('--openkeynav-context-indicator-text-color', ((_this$openKeyNav$conf = this.openKeyNav.config.spot) === null || _this$openKeyNav$conf === void 0 ? void 0 : _this$openKeyNav$conf.fontColor) || 'currentColor');
       tab.style.setProperty('--openkeynav-context-indicator-width', "".concat(width, "px"));
       var setPosition = function setPosition(position, tabLeft, tabTop) {
         indicator.dataset.headingTabPosition = position;
@@ -1923,7 +1926,7 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
   }, {
     key: "updateContextIndicator",
     value: function updateContextIndicator() {
-      var _this$document$docume, _this$document$docume2, _this$config$contextI2, _this$config$contextI3, _this$config$contextI4, _this$config$contextI5, _this$config$contextI6, _this$config$contextI7;
+      var _this$document$docume, _this$document$docume2, _this$openKeyNav$conf2, _this$openKeyNav$conf3;
       if (!this.active || !this.contextIndicatorShouldDisplay()) {
         var _this$contextIndicato5;
         this.hideContextIndicator();
@@ -1964,8 +1967,7 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
         this.hideContextIndicator();
         return;
       }
-      var configuredOffset = Number((_this$config$contextI2 = this.config.contextIndicator) === null || _this$config$contextI2 === void 0 ? void 0 : _this$config$contextI2.offset);
-      var offset = Number.isFinite(configuredOffset) ? Math.max(0, configuredOffset) : 10;
+      var offset = CONTEXT_INDICATOR_OFFSET;
       var left = Math.max(0, rect.left - offset);
       var top = Math.max(0, rect.top - offset);
       var right = Math.min(viewportWidth, rect.right + offset);
@@ -1974,20 +1976,16 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
         this.hideContextIndicator();
         return;
       }
-      var configuredWidth = Number((_this$config$contextI3 = this.config.contextIndicator) === null || _this$config$contextI3 === void 0 ? void 0 : _this$config$contextI3.width);
-      var width = Number.isFinite(configuredWidth) ? Math.max(1, configuredWidth) : 3;
-      var color = ((_this$config$contextI4 = this.config.contextIndicator) === null || _this$config$contextI4 === void 0 ? void 0 : _this$config$contextI4.color) || '#000000';
-      var contrastColor = ((_this$config$contextI5 = this.config.contextIndicator) === null || _this$config$contextI5 === void 0 ? void 0 : _this$config$contextI5.contrastColor) || '#ffffff';
-      var configuredContrastWidth = Number((_this$config$contextI6 = this.config.contextIndicator) === null || _this$config$contextI6 === void 0 ? void 0 : _this$config$contextI6.contrastWidth);
-      var contrastWidth = Number.isFinite(configuredContrastWidth) ? Math.max(0, configuredContrastWidth) : 2;
-      var style = ((_this$config$contextI7 = this.config.contextIndicator) === null || _this$config$contextI7 === void 0 ? void 0 : _this$config$contextI7.style) || 'dashed';
+      var width = CONTEXT_INDICATOR_WIDTH;
+      var color = ((_this$openKeyNav$conf2 = this.openKeyNav.config.spot) === null || _this$openKeyNav$conf2 === void 0 ? void 0 : _this$openKeyNav$conf2.backgroundColor) || 'currentColor';
+      var contrastColor = ((_this$openKeyNav$conf3 = this.openKeyNav.config.spot) === null || _this$openKeyNav$conf3 === void 0 ? void 0 : _this$openKeyNav$conf3.fontColor) || 'currentColor';
       indicator.style.display = 'block';
       indicator.style.left = "".concat(left, "px");
       indicator.style.top = "".concat(top, "px");
       indicator.style.width = "".concat(right - left, "px");
       indicator.style.height = "".concat(bottom - top, "px");
-      indicator.style.border = "".concat(width, "px ").concat(style, " ").concat(color);
-      indicator.style.boxShadow = "0 0 0 ".concat(contrastWidth, "px ").concat(contrastColor);
+      indicator.style.border = "".concat(width, "px dashed ").concat(color);
+      indicator.style.boxShadow = "0 0 0 ".concat(CONTEXT_INDICATOR_CONTRAST_WIDTH, "px ").concat(contrastColor);
       this.updateContextIndicatorHeadingLevel({
         context: context,
         left: left,
@@ -1997,8 +1995,7 @@ var StructuralNavigationController = exports.StructuralNavigationController = /*
         viewportWidth: viewportWidth,
         viewportHeight: viewportHeight,
         width: width,
-        color: color,
-        contrastColor: contrastColor
+        color: color
       });
       indicator.dataset.contextId = String(contextId(context) || '');
       indicator.dataset.contextName = context.name || 'Document';

@@ -42,6 +42,9 @@ const STRUCTURAL_STATUS_CHANNEL = 'structural-navigation';
 const STRUCTURAL_EXIT_STATUS_CHANNEL = 'structural-navigation-exit';
 const STRUCTURAL_KEYLABEL_OWNER = 'structural-navigation';
 const STRUCTURAL_KEYLABEL_CLASS = 'openKeyNav-structural-keylabel';
+const CONTEXT_INDICATOR_OFFSET = 10;
+const CONTEXT_INDICATOR_WIDTH = 2;
+const CONTEXT_INDICATOR_CONTRAST_WIDTH = 2;
 const HEADING_CONTEXT_ARROW_COMMANDS = new Set([
   STRUCTURAL_NAVIGATION_COMMANDS.previousSiblingContext,
   STRUCTURAL_NAVIGATION_COMMANDS.nextSiblingContext,
@@ -2362,7 +2365,6 @@ export class StructuralNavigationController {
     viewportHeight,
     width,
     color,
-    contrastColor,
   }) {
     const tab = this.contextIndicatorHeadingLevelElement;
     const indicator = this.contextIndicatorElement;
@@ -2386,8 +2388,8 @@ export class StructuralNavigationController {
       color
     );
     tab.style.setProperty(
-      '--openkeynav-context-indicator-contrast-color',
-      contrastColor
+      '--openkeynav-context-indicator-text-color',
+      this.openKeyNav.config.spot?.fontColor || 'currentColor'
     );
     tab.style.setProperty(
       '--openkeynav-context-indicator-width',
@@ -2497,10 +2499,7 @@ export class StructuralNavigationController {
       return;
     }
 
-    const configuredOffset = Number(this.config.contextIndicator?.offset);
-    const offset = Number.isFinite(configuredOffset)
-      ? Math.max(0, configuredOffset)
-      : 10;
+    const offset = CONTEXT_INDICATOR_OFFSET;
     const left = Math.max(0, rect.left - offset);
     const top = Math.max(0, rect.top - offset);
     const right = Math.min(viewportWidth, rect.right + offset);
@@ -2510,28 +2509,17 @@ export class StructuralNavigationController {
       return;
     }
 
-    const configuredWidth = Number(this.config.contextIndicator?.width);
-    const width = Number.isFinite(configuredWidth)
-      ? Math.max(1, configuredWidth)
-      : 3;
-    const color = this.config.contextIndicator?.color || '#000000';
-    const contrastColor = this.config.contextIndicator?.contrastColor ||
-      '#ffffff';
-    const configuredContrastWidth = Number(
-      this.config.contextIndicator?.contrastWidth
-    );
-    const contrastWidth = Number.isFinite(configuredContrastWidth)
-      ? Math.max(0, configuredContrastWidth)
-      : 2;
-    const style = this.config.contextIndicator?.style || 'dashed';
+    const width = CONTEXT_INDICATOR_WIDTH;
+    const color = this.openKeyNav.config.spot?.backgroundColor || 'currentColor';
+    const contrastColor = this.openKeyNav.config.spot?.fontColor || 'currentColor';
     indicator.style.display = 'block';
     indicator.style.left = `${left}px`;
     indicator.style.top = `${top}px`;
     indicator.style.width = `${right - left}px`;
     indicator.style.height = `${bottom - top}px`;
-    indicator.style.border = `${width}px ${style} ${color}`;
+    indicator.style.border = `${width}px dashed ${color}`;
     indicator.style.boxShadow =
-      `0 0 0 ${contrastWidth}px ${contrastColor}`;
+      `0 0 0 ${CONTEXT_INDICATOR_CONTRAST_WIDTH}px ${contrastColor}`;
     this.updateContextIndicatorHeadingLevel({
       context,
       left,
@@ -2542,7 +2530,6 @@ export class StructuralNavigationController {
       viewportHeight,
       width,
       color,
-      contrastColor,
     });
     indicator.dataset.contextId = String(contextId(context) || '');
     indicator.dataset.contextName = context.name || 'Document';

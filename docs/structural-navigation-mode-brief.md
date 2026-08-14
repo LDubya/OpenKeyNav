@@ -853,7 +853,11 @@ Requirements:
   but it is disabled by default, `aria-hidden`, ignores pointer events, never
   receives focus, and is removed on mode exit. When the context has an authored
   heading rank, a small tab protrudes from an available edge and contains only
-  `h1` through `h6`; an unheaded context receives no fabricated rank tab.
+  `h1` through `h6`; an unheaded context receives no fabricated rank tab. The
+  outline is dashed and uses the existing neutral label palette so it cannot be
+  mistaken for the solid focus indication. The tab uses those existing label
+  and text colors and inherits page typography rather than adding a second
+  visual configuration.
 - No generated item is presented as a second focused page target.
 
 ## Public configuration

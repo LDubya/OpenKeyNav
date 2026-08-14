@@ -591,7 +591,6 @@ export const injectStylesheet = (parent, replace) => {
           z-index: 2147483645;
           display: none;
           border-radius: 4px;
-          background: transparent;
           pointer-events: none;
         }
 
@@ -605,9 +604,8 @@ export const injectStylesheet = (parent, replace) => {
             var(--openkeynav-context-indicator-color);
           border-block-end: 0;
           border-radius: 4px 4px 0 0;
-          line-height: 1;
           white-space: nowrap;
-          color: var(--openkeynav-context-indicator-contrast-color);
+          color: var(--openkeynav-context-indicator-text-color);
           background-color: var(--openkeynav-context-indicator-color);
           pointer-events: none;
           user-select: none;

@@ -119,14 +119,7 @@ describe('structural navigation key policy', () => {
     expect(openKeyNav.config.modesConfig.structuralNavigation.keylabels.nativeArrows)
       .toBe(true);
     expect(openKeyNav.config.modesConfig.structuralNavigation.contextIndicator)
-      .toMatchObject({
-        enabled: false,
-        color: '#000000',
-        contrastColor: '#ffffff',
-        contrastWidth: 2,
-        style: 'dashed',
-        offset: 10,
-      });
+      .toEqual({ enabled: false });
 
     openKeyNav.destroy();
   });
@@ -1859,6 +1852,14 @@ describe('StructuralNavigationController', () => {
     });
 
     openKeyNav = createOpenKeyNav({
+      focus: {
+        outlineColor: 'rgb(1, 2, 3)',
+        outlineStyle: 'dotted',
+      },
+      spot: {
+        backgroundColor: 'rgb(7, 8, 9)',
+        fontColor: 'rgb(4, 5, 6)',
+      },
       modesConfig: {
         structuralNavigation: {
           contextIndicator: { enabled: true },
@@ -1884,6 +1885,24 @@ describe('StructuralNavigationController', () => {
     expect(headingLevelTab.textContent).toBe('h2');
     expect(headingLevelTab.hidden).toBe(false);
     expect(indicator.dataset.headingLevel).toBe('2');
+    expect(headingLevelTab.style.color).toBe('');
+    expect(headingLevelTab.style.backgroundColor).toBe('');
+    expect(headingLevelTab.style.fontFamily).toBe('');
+    expect(headingLevelTab.style.fontSize).toBe('');
+    expect(headingLevelTab.style.fontWeight).toBe('');
+    expect(headingLevelTab.style.lineHeight).toBe('');
+    expect(headingLevelTab.style.getPropertyValue(
+      '--openkeynav-context-indicator-contrast-color'
+    )).toBe('');
+    expect(headingLevelTab.style.getPropertyValue(
+      '--openkeynav-context-indicator-color'
+    )).toBe('rgb(7, 8, 9)');
+    expect(headingLevelTab.style.getPropertyValue(
+      '--openkeynav-context-indicator-text-color'
+    )).toBe('rgb(4, 5, 6)');
+    expect(indicator.style.border).toBe('2px dashed rgb(7, 8, 9)');
+    expect(indicator.style.boxShadow)
+      .toBe('0 0 0 2px rgb(4, 5, 6)');
     expect(indicator.style.left).toBe('10px');
     expect(indicator.style.top).toBe('20px');
 
