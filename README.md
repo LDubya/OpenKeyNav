@@ -262,7 +262,9 @@ nesting.
 While the mode is active, its keylabels show the structural destinations
 available from the current focus: `⇧←` / `⇧→` for region movement and
 `⇧↑` / `⇧↓` for heading-level movement, plus
-`⇧⇥` / `⇥` for the previous and next native Tab destinations. The focused
+`⇧⇥` / `⇥` when the previous or next native Tab destination crosses a direct
+semantic-context boundary. Familiar in-context Tab movement remains unlabeled
+so its hints do not compete with the active focus. The focused
 native control or focusable ARIA widget shows `↵` when Enter is its preferred
 activation key. This includes correctly authored custom buttons; the application
 remains responsible for implementing their Enter and Space behavior. OpenKeyNav
@@ -282,8 +284,8 @@ Set
 `modesConfig.structuralNavigation.keylabels.enabled` to `false` to hide them,
 or independently disable its `tab`, `contextJump`, `horizontal`, `vertical`,
 or `activation` groups. Set `keylabels.contextJump` to `false` to hide
-configured context-start hints, or set `keylabels.tab` to `false` to hide native
-Tab and Shift+Tab hints.
+configured context-start hints, or set `keylabels.tab` to `false` to hide the
+native Tab and Shift+Tab context-boundary hints.
 While Shift is held, the `⇧` symbol in every Shift-based label highlights as a
 pressed key and returns to its normal treatment on release.
 When the focused control owns its arrow keys, structural destinations remain

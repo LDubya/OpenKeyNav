@@ -541,7 +541,7 @@ test.describe('structural navigation mode', () => {
     await expect(structuralLabel('previousTabTarget', 'preorder'))
       .toHaveText('⇧⇥');
     await expect(structuralLabel('nextTabTarget', 'product-b'))
-      .toHaveText('⇥');
+      .toHaveCount(0);
     await expect(structuralLabel('previousSiblingContext', 'in-stock'))
       .toHaveText('⇧←');
     await expect(structuralLabel('previousSiblingContext', 'in-stock'))
@@ -622,7 +622,7 @@ test.describe('structural navigation mode', () => {
     ))).toBe('none');
     expect(await page.locator('#product-b').evaluate(element => (
       getComputedStyle(element).boxShadow
-    ))).not.toBe('none');
+    ))).toBe('none');
     expect(await page.locator('#clear-filters').evaluate(element => (
       getComputedStyle(element).outlineStyle
     ))).toBe('solid');

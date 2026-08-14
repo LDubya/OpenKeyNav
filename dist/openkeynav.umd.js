@@ -41,7 +41,7 @@
 	  value: true
 	});
 	version.version = void 0;
-	version.version = "0.1.270";
+	version.version = "0.1.271";
 
 	var signals = {};
 
@@ -5306,8 +5306,10 @@
 	    value: function keylabelAssignments() {
 	      var _this$document0,
 	        _this$document1,
+	        _this$model3,
+	        _this$model4,
 	        _this1 = this,
-	        _this$model3;
+	        _this$model5;
 	      var assignments = [];
 	      var keylabelConfig = this.config.keylabels || {};
 	      var tabTargets = this.targets.filter(function (target) {
@@ -5316,7 +5318,7 @@
 	      var currentTabIndex = tabTargets.indexOf(this.currentTarget);
 	      var focused = (0, _domUtilities$1.getDeepActiveElement)(this.root);
 	      var hasInitialDocumentFocus = (0, _domUtilities$1.isDocument)(this.root) && (focused === ((_this$document0 = this.document) === null || _this$document0 === void 0 ? void 0 : _this$document0.body) || focused === ((_this$document1 = this.document) === null || _this$document1 === void 0 ? void 0 : _this$document1.documentElement));
-	      var nativeTabAssignments = currentTabIndex < 0 ? hasInitialDocumentFocus && tabTargets[0] ? [{
+	      var sequentialTabAssignments = currentTabIndex < 0 ? hasInitialDocumentFocus && tabTargets[0] ? [{
 	        target: tabTargets[0],
 	        symbols: _keylabels.KEYLABEL_SYMBOLS.tab,
 	        command: 'nextTabTarget'
@@ -5330,6 +5332,12 @@
 	        command: 'nextTabTarget'
 	      }].filter(function (assignment) {
 	        return assignment.target;
+	      });
+	      var currentTabContext = this.currentTarget ? directContextForTarget(this.model, this.currentTarget) || ((_this$model3 = this.model) === null || _this$model3 === void 0 ? void 0 : _this$model3.rootContext) || null : structuralContextForElement(this.model, focused) || this.activeStructuralContext || ((_this$model4 = this.model) === null || _this$model4 === void 0 ? void 0 : _this$model4.rootContext) || null;
+	      var nativeTabAssignments = sequentialTabAssignments.filter(function (assignment) {
+	        var _this1$model;
+	        var destinationContext = directContextForTarget(_this1.model, assignment.target) || ((_this1$model = _this1.model) === null || _this1$model === void 0 ? void 0 : _this1$model.rootContext) || null;
+	        return contextId(destinationContext) !== contextId(currentTabContext);
 	      });
 	      var nativeTabDestinations = new Set(nativeTabAssignments.map(function (assignment) {
 	        return assignment.target;
@@ -5351,7 +5359,7 @@
 	      var contextStartDestinations = new Set(contextStartAssignments.map(function (assignment) {
 	        return assignment.target;
 	      }));
-	      var selectedStructuralRoute = (this.activeTypedContext && this.currentTarget ? directContextForTarget(this.model, this.currentTarget) : this.activeStructuralContext) || ((_this$model3 = this.model) === null || _this$model3 === void 0 ? void 0 : _this$model3.rootContext);
+	      var selectedStructuralRoute = (this.activeTypedContext && this.currentTarget ? directContextForTarget(this.model, this.currentTarget) : this.activeStructuralContext) || ((_this$model5 = this.model) === null || _this$model5 === void 0 ? void 0 : _this$model5.rootContext);
 	      var headingRoute = headingContextForRoute(this.model, selectedStructuralRoute, this.currentTarget);
 	      var add = function add(target, symbols, command) {
 	        var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
@@ -5372,7 +5380,9 @@
 	        assignments.push(assignment);
 	      };
 
-	      // Ordinary sequential focus is always the simplest useful route.
+	      // Native Tab is familiar without a persistent hint. Label it only where
+	      // the next or previous sequential stop crosses the same direct semantic
+	      // context boundary used by horizontal structural navigation.
 	      if (keylabelConfig.tab !== false) {
 	        nativeTabAssignments.forEach(function (assignment) {
 	          return assignments.push(_objectSpread(_objectSpread({}, assignment), {}, {

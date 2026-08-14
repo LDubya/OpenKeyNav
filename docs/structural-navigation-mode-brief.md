@@ -656,9 +656,11 @@ Do not repurpose Enter or Space as structural-navigation commands. They retain t
 While structural navigation is the foreground mode, use the existing OpenKeyNav
 keylabel renderer and placement logic to show compact destination hints:
 
-- `⇥` on the next native Tab destination and `⇧⇥` on the previous one. Show
-  these sequential-navigation hints by default, with a configuration switch to
-  hide them.
+- `⇥` on the next native Tab destination and `⇧⇥` on the previous one only
+  when that sequential move crosses the direct semantic-context boundary used
+  by horizontal structural navigation. Familiar in-context Tab movement stays
+  unlabeled. Show these boundary hints by default, with a configuration switch
+  to hide them.
 - `⇧←` and `⇧→` on the first targets reached by the available previous and
   next horizontal context commands.
 - `⇧↑` and `⇧↓` on different targets focused by the available broaden and

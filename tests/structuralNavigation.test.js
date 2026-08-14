@@ -167,7 +167,7 @@ describe('StructuralNavigationController', () => {
     expect(firstLabel?.textContent).toBe('⇥');
   });
 
-  it('imports keylabels for native Tab routes, horizontal routes, and activation', async () => {
+  it('omits in-context Tab labels while showing structural routes and activation', async () => {
     document.body.innerHTML = `
       <section aria-labelledby="previous-title">
         <h2 id="previous-title">Previous</h2>
@@ -200,12 +200,8 @@ describe('StructuralNavigationController', () => {
     expect(labelsFor('previous-target')).toEqual([
       { command: 'previousSiblingContext', symbols: '⇧←' },
     ]);
-    expect(labelsFor('previous-tab-target')).toEqual([
-      { command: 'previousTabTarget', symbols: '⇧⇥' },
-    ]);
-    expect(labelsFor('next-tab-target')).toEqual([
-      { command: 'nextTabTarget', symbols: '⇥' },
-    ]);
+    expect(labelsFor('previous-tab-target')).toEqual([]);
+    expect(labelsFor('next-tab-target')).toEqual([]);
     expect(labelsFor('next-context-target')).toEqual([
       { command: 'nextSiblingContext', symbols: '⇧→' },
     ]);
@@ -236,7 +232,7 @@ describe('StructuralNavigationController', () => {
     openKeyNav.config.modes.clicking.value = false;
     await new Promise(resolve => setTimeout(resolve, 25));
     expect(document.querySelectorAll('.openKeyNav-structural-keylabel'))
-      .toHaveLength(5);
+      .toHaveLength(3);
     expect(document.getElementById('current-target')
       .hasAttribute('data-openkeynav-keylabel-target-active')).toBe(true);
   });
@@ -368,9 +364,7 @@ describe('StructuralNavigationController', () => {
     expect(contextLabel('nextContextStart')?.dataset.openkeynavKeylabelTarget)
       .toBe('dewdrop-blossom');
     expect(contextLabel('nextContextStart')?.textContent).toBe('⌥⇥');
-    expect(contextLabel('nextTabTarget')?.dataset.openkeynavKeylabelTarget)
-      .toBe('fern-latch');
-    expect(contextLabel('nextTabTarget')?.textContent).toBe('⇥');
+    expect(contextLabel('nextTabTarget')).toBeNull();
 
     const nativeTab = dispatchKey(rootLantern, 'Tab');
     expect(nativeTab.defaultPrevented).toBe(false);
@@ -545,7 +539,7 @@ describe('StructuralNavigationController', () => {
     expect(labelFor('broadenContext')).toBeUndefined();
     expect(labelFor('previousContextStart')).toBeUndefined();
     expect(labelFor('narrowContext')).toBeUndefined();
-    expect(labelFor('nextTabTarget')).toBe('⇥');
+    expect(labelFor('nextTabTarget')).toBeUndefined();
     expect(Array.from(document.querySelectorAll(
       '.openKeyNav-structural-keylabel'
     )).filter(label => label.textContent.startsWith('⌥')).every(label => (

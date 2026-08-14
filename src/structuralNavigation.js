@@ -1972,7 +1972,7 @@ export class StructuralNavigationController {
       focused === this.document?.body ||
       focused === this.document?.documentElement
     );
-    const nativeTabAssignments = currentTabIndex < 0
+    const sequentialTabAssignments = currentTabIndex < 0
       ? (hasInitialDocumentFocus && tabTargets[0]
         ? [{
           target: tabTargets[0],
@@ -1992,6 +1992,19 @@ export class StructuralNavigationController {
           command: 'nextTabTarget',
         },
       ].filter(assignment => assignment.target);
+    const currentTabContext = this.currentTarget
+      ? directContextForTarget(this.model, this.currentTarget) ||
+        this.model?.rootContext || null
+      : structuralContextForElement(this.model, focused) ||
+        this.activeStructuralContext ||
+        this.model?.rootContext || null;
+    const nativeTabAssignments = sequentialTabAssignments.filter(assignment => {
+      const destinationContext = directContextForTarget(
+        this.model,
+        assignment.target
+      ) || this.model?.rootContext || null;
+      return contextId(destinationContext) !== contextId(currentTabContext);
+    });
     const nativeTabDestinations = new Set(
       nativeTabAssignments.map(assignment => assignment.target)
     );
@@ -2049,7 +2062,9 @@ export class StructuralNavigationController {
       assignments.push(assignment);
     };
 
-    // Ordinary sequential focus is always the simplest useful route.
+    // Native Tab is familiar without a persistent hint. Label it only where
+    // the next or previous sequential stop crosses the same direct semantic
+    // context boundary used by horizontal structural navigation.
     if (keylabelConfig.tab !== false) {
       nativeTabAssignments.forEach(assignment => assignments.push({
         ...assignment,

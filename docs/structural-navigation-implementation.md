@@ -236,7 +236,9 @@ palette.
 `modesConfig.structuralNavigation.keylabels` enables structural and activation
 hints by default and provides independent `tab`, `horizontal`, `vertical`,
 `nativeArrows`, and `activation` switches. The `tab` group is on by default and
-shows `⇥` and `⇧⇥` destination hints; setting it to `false` hides them.
+shows `⇥` and `⇧⇥` only when native sequential focus crosses the same direct
+semantic-context boundary used by horizontal navigation. In-context Tab routes
+remain unlabeled; setting `tab` to `false` hides the boundary hints as well.
 
 An accepted structural command has precedence in OpenKeyNav's capture listener.
 Native-owned keys, application-owned character commands, and unhandled system
