@@ -5,6 +5,20 @@ const toolbarStyleClassname ="okn-toolbar-stylesheet";
 const minimumWhiteTextContrast = 4.5;
 const fallbackFocusLabelRgb = [0, 90, 133];
 
+export const getKeylabelFontSize = ({
+  fontSize = 'inherit',
+  minimumFontSize = '16px',
+} = {}) => {
+  if (fontSize !== 'inherit' || minimumFontSize === false) return fontSize;
+
+  const normalizedMinimum = typeof minimumFontSize === 'number'
+    ? `${minimumFontSize}px`
+    : String(minimumFontSize || '').trim();
+  return normalizedMinimum
+    ? `max(${normalizedMinimum}, 1em)`
+    : fontSize;
+};
+
 const parseCssRgb = color => {
   if (typeof color !== 'string') return null;
 
@@ -304,6 +318,7 @@ export const injectStylesheet = (parent, replace) => {
       openKeyNav.config.focus.outlineColor,
       document
     );
+    const keylabelFontSize = getKeylabelFontSize(openKeyNav.config.spot);
 
 
     if(document.querySelectorAll('.'+styleClassname).length > 0){
@@ -329,7 +344,7 @@ export const injectStylesheet = (parent, replace) => {
         // border-radius: calc( 4px );
         color: ${openKeyNav.config.spot.fontColor}; 
         display: inline-block;
-        font-size: ${openKeyNav.config.spot.fontSize}; 
+        font-size: ${keylabelFontSize};
         // outline : 2px solid ${openKeyNav.config.focus.outlineColor}; 
         outline-offset: -2px !important;
         // +"font-weight: bold;"

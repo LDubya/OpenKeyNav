@@ -298,18 +298,6 @@ var isSubset = function isSubset(candidate, container) {
   }
   return true;
 };
-var contextDepth = function contextDepth(context) {
-  var depth = 0;
-  var current = context;
-  var seen = new Set();
-  while ((_current = current) !== null && _current !== void 0 && _current.parent && !seen.has(current)) {
-    var _current;
-    seen.add(current);
-    depth += 1;
-    current = current.parent;
-  }
-  return depth;
-};
 var isContextAncestor = function isContextAncestor(ancestor, context) {
   var current = context;
   var seen = new Set();
@@ -433,12 +421,18 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
     return headingRank(element) !== null && !isSemanticallyHidden(element, root) && isOperativeSemanticElement(element, root);
   });
   var ownedHeadingByTarget = new Map();
+  var ownedHeadingsByTarget = new Map();
   liveTargets.forEach(function (target) {
-    var firstContainedHeading = headings.find(function (heading) {
+    var containedHeadings = headings.filter(function (heading) {
       return (0, _domUtilities.isComposedWithin)(target, heading);
     });
+    var firstContainedHeading = containedHeadings[0];
     if (firstContainedHeading) {
+      var _target$getAttribute;
       ownedHeadingByTarget.set(target, firstContainedHeading);
+      var contentEditableValue = (_target$getAttribute = target.getAttribute) === null || _target$getAttribute === void 0 ? void 0 : _target$getAttribute.call(target, 'contenteditable');
+      var contentEditable = target.isContentEditable || contentEditableValue === '' || (contentEditableValue === null || contentEditableValue === void 0 ? void 0 : contentEditableValue.toLowerCase()) === 'true';
+      ownedHeadingsByTarget.set(target, new Set(contentEditable ? containedHeadings : [firstContainedHeading]));
     }
   });
   automaticContexts.forEach(function (context) {
@@ -595,8 +589,8 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
       var context = closing.context;
       context.rangeEnd = Math.min(closing.scopeEnd, requestedEnd);
       context.memberTargets = liveTargets.filter(function (target) {
-        var ownedHeading = ownedHeadingByTarget.get(target);
-        return (ownedHeading ? ownedHeading === context.boundary : targetOrder(target) >= context.rangeStart && targetOrder(target) < context.rangeEnd) && container.memberSet.has(target) && !isSemanticallyHidden(target, root) && (0, _domUtilities.isComposedWithin)(context.rangeBoundary, target);
+        var ownedHeadings = ownedHeadingsByTarget.get(target);
+        return (ownedHeadings ? ownedHeadings.has(context.boundary) : targetOrder(target) >= context.rangeStart && targetOrder(target) < context.rangeEnd) && container.memberSet.has(target) && !isSemanticallyHidden(target, root) && (0, _domUtilities.isComposedWithin)(context.rangeBoundary, target);
       });
       context.memberSet = new Set(context.memberTargets);
     };
@@ -782,7 +776,9 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
   while (collapsedContext) {
     collapsedContext = false;
     var bottomUp = usableContexts.slice(1).sort(function (left, right) {
-      return contextDepth(right) - contextDepth(left);
+      if (isContextAncestor(left, right)) return 1;
+      if (isContextAncestor(right, left)) return -1;
+      return right.order - left.order;
     });
     var _iterator3 = _createForOfIteratorHelper(bottomUp),
       _step3;
@@ -824,19 +820,26 @@ var buildStructuralModel = exports.buildStructuralModel = function buildStructur
     });
     if (!children.length) return context;
     children.sort(function (left, right) {
-      return contextDepth(right) - contextDepth(left) || left.memberSet.size - right.memberSet.size || left.order - right.order;
+      return left.memberSet.size - right.memberSet.size || left.order - right.order;
     });
     return _deepestContextForTarget(children[0], target);
   };
   var directContextByTarget = new Map();
   liveTargets.forEach(function (target) {
-    var direct = _deepestContextForTarget(rootContext, target);
+    var _ownedHeadingsByTarge;
+    var primaryOwnedHeading = ownedHeadingByTarget.get(target);
+    var ownsMultipleHeadings = ((_ownedHeadingsByTarge = ownedHeadingsByTarget.get(target)) === null || _ownedHeadingsByTarge === void 0 ? void 0 : _ownedHeadingsByTarge.size) > 1;
+    var primaryOwnedHeadingContext = ownsMultipleHeadings && primaryOwnedHeading ? usableContexts.find(function (context) {
+      return context.boundary === primaryOwnedHeading;
+    }) : null;
+    var direct = primaryOwnedHeadingContext || _deepestContextForTarget(rootContext, target);
     directContextByTarget.set(target, direct);
     direct.directTargets.push(target);
   });
   usableContexts.forEach(function (context) {
     context.targets = liveTargets.filter(function (target) {
-      return isContextAncestor(context, directContextByTarget.get(target));
+      var _ownedHeadingsByTarge2;
+      return isContextAncestor(context, directContextByTarget.get(target)) || context.source === 'heading' && ((_ownedHeadingsByTarge2 = ownedHeadingsByTarget.get(target)) === null || _ownedHeadingsByTarge2 === void 0 ? void 0 : _ownedHeadingsByTarge2.size) > 1 && ownedHeadingsByTarget.get(target).has(context.boundary);
     });
   });
   var contexts = new Map(usableContexts.map(function (context) {

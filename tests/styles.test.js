@@ -1,4 +1,8 @@
-import { getAccessibleFocusLabelBackground } from '../src/styles.js';
+import OpenKeyNav from '../src/OpenKeyNav.js';
+import {
+  getAccessibleFocusLabelBackground,
+  getKeylabelFontSize,
+} from '../src/styles.js';
 
 const parseRgb = color => color.match(/[\d.]+/g).slice(0, 3).map(Number);
 
@@ -31,5 +35,32 @@ describe('focused keylabel color', () => {
 
     expect(background).toBe('rgb(0, 90, 133)');
     expect(contrastWithWhite(background)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe('keylabel font sizing', () => {
+  it('uses a 16px floor while preserving larger inherited text by default', () => {
+    const openKeyNav = new OpenKeyNav();
+
+    expect(getKeylabelFontSize(openKeyNav.config.spot))
+      .toBe('max(16px, 1em)');
+  });
+
+  it('allows the minimum to be disabled', () => {
+    expect(getKeylabelFontSize({
+      fontSize: 'inherit',
+      minimumFontSize: false,
+    })).toBe('inherit');
+  });
+
+  it('allows either the minimum or the complete font size to be overridden', () => {
+    expect(getKeylabelFontSize({
+      fontSize: 'inherit',
+      minimumFontSize: '18px',
+    })).toBe('max(18px, 1em)');
+    expect(getKeylabelFontSize({
+      fontSize: '1.25rem',
+      minimumFontSize: '18px',
+    })).toBe('1.25rem');
   });
 });

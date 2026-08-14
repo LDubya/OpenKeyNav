@@ -35,7 +35,11 @@ describe('keylabels', () => {
       <button id="next">Next</button>
       <button id="activate">Activate</button>
     `;
+    const markedTargetsAtPlacement = [];
     const createOverlay = vi.fn((target, label, cssClass) => {
+      markedTargetsAtPlacement.push(Array.from(document.querySelectorAll(
+        '[data-openkeynav-keylabel-target-active]'
+      )).map(element => element.id));
       const overlay = document.createElement('div');
       overlay.className = `openKeyNav-label ${cssClass}`;
       overlay.textContent = label;
@@ -79,6 +83,11 @@ describe('keylabels', () => {
     });
 
     expect(createOverlay).toHaveBeenCalledTimes(3);
+    expect(markedTargetsAtPlacement[0]).toEqual([
+      'previous',
+      'next',
+      'activate',
+    ]);
     expect(overlays.map(overlay => overlay.textContent)).toEqual([
       '⇧←',
       '⇧→',

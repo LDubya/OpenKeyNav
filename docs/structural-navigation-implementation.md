@@ -21,11 +21,12 @@ navigation mode described in `structural-navigation-mode-brief.md`.
   `notifications.displayToolName`.
 - Structural status identifies the active structural, document/root, or typed
   context and reports the target's position. A heading-backed context reports
-  its authored H1–H6 level; an unheaded context reports its one-based canonical
-  hierarchy level, with the document or scoped root at level 1. Typed contexts
-  are overlapping routes rather than tree nodes, so their status reports the
-  corresponding level of the underlying structural context that Shift+Up/Down
-  returns to. The persistent status does not name previous or next horizontal
+  its authored H1–H6 level; an unheaded context does not invent a heading level.
+  Vertical movement from an unheaded context enters the authored level ladder
+  from its shallowest or deepest available edge without deriving a rank from
+  DOM nesting. Typed contexts are overlapping routes rather than tree nodes, so
+  their status reports an authored level only when the underlying structural
+  route has one. The persistent status does not name horizontal
   contexts; attempted boundary commands still report unavailable relationships.
   It reports applicable typed routes as a bounded count. `Shift+Escape` closes
   the visual surface without moving focus or disabling its visually hidden
@@ -110,21 +111,24 @@ static-table row/column inference is intentionally deferred.
   next enters at the first item and previous enters at the last.
 - Horizontal movement does not wrap. A heading-backed context traverses every
   nonempty heading-backed context with the same authored H1–H6 level in the
-  active root, in document order, regardless of structural parent or inferred
-  tree depth. An unheaded context uses only its structural siblings. Movement
+  active root, in document order, regardless of generic DOM wrappers. An
+  unheaded context has no horizontal heading lane. Movement
   always enters the destination's first target.
 - Broaden from a heading-backed H2–H6 selects the nearest preceding lower-level
   heading context in the authored outline and focuses its first target. This
-  crosses generic-wrapper parent boundaries. Broaden from an unheaded context,
-  or from an H1 with no authored outline parent, selects the immediate
-  structural parent and retains focus. Narrow first selects the child on the
-  current target's direct-context path and retains focus. When no such child
-  exists, narrow scans forward without wrapping. From a heading-backed H1–H5 it
-  finds the first nonempty H(n+1), regardless of inferred tree depth. From an
-  unheaded hierarchy level n it prefers the first nonempty H(n+1), then falls
-  back to an unheaded context exactly one canonical structural level deeper.
-  The fallback activates that context and focuses its first target. H6 blocks
-  only this forward fallback, not a real child containing the current target.
+  crosses generic-wrapper parent boundaries. From an unheaded context, broaden
+  enters the deepest authored level present and narrow enters the shallowest,
+  without assigning a heading rank to that context.
+  Narrow within a heading-backed context first selects the closest deeper
+  authored child on the current target's path and retains focus; when no such
+  child exists, it scans forward without wrapping for that closest available
+  deeper rank, regardless of generic DOM wrappers. H6 blocks only this forward
+  fallback, not a real child containing the current target.
+- A contenteditable focus target that contains an authored outline contributes
+  that same real focus target to each contained heading rank. Vertical commands
+  can therefore change the active heading level without moving focus out of the
+  editor. Non-editable multi-heading wrappers remain owned only by their first
+  contained heading.
 - Explicit peer-context commands cycle through structural routing and the
   applicable typed contexts. That typed ring wraps and changing typed peers
   retains focus. Typed cycling has no default keyboard binding; applications
@@ -150,8 +154,8 @@ does not pull focus back.
 
 Native Tab/Shift+Tab provide sequential focus. Applications assign bindings to
 previous/next target commands or invoke them programmatically. The default
-mapping uses Shift+Left/Right for same-level heading-backed contexts or true
-siblings of unheaded contexts, Shift+Up/Down for broaden/narrow, `r` for entry
+mapping uses Shift+Left/Right for same-level heading-backed contexts,
+Shift+Up/Down for authored heading-rank changes, `r` for entry
 or toggle when character commands are available,
 `Alt+r` for reliable exit, and `Shift+Escape` to dismiss the visible status when
 Escape is available to the mode. Previous/next target and typed-context cycling

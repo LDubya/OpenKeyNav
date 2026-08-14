@@ -82,6 +82,26 @@ OpenKeyNav remembers the user's enabled or disabled choice in a cookie.
 
 Production integrations should not require users to discover these commands by chance. Add the [built-in keyboard-command strip](#make-keyboard-commands-discoverable) or provide an equally discoverable, accessibly presented explanation of the commands the application enables.
 
+### Keylabel text size
+
+WCAG does not prescribe a universal minimum font size, but it does require text
+to remain usable when resized to 200%. OpenKeyNav keylabels therefore inherit
+larger host-page text while using a 16 CSS-pixel legibility floor by default.
+Applications can change the floor, disable it, or supply an exact font size:
+
+```javascript
+openKeyNav.init({
+  spot: {
+    minimumFontSize: '18px', // Use false to disable the minimum.
+    fontSize: 'inherit',     // Any other CSS size directly overrides the floor.
+  },
+});
+```
+
+The floor and explicit CSS-pixel sizes still scale with browser zoom. Verify the
+finished integration at 200% without clipped, obscured, or missing labels, as
+required by [WCAG 2.2 Success Criterion 1.4.4 Resize Text](https://www.w3.org/WAI/WCAG22/Understanding/resize-text.html).
+
 ## Keyboard operation modes and tools
 
 - **Click Mode:** Displays typeable labels beside detected targets so a user can focus or activate one directly.
@@ -209,8 +229,13 @@ heading level (H1 through H6) across the page and enter the first target in the
 previous or next matching context. Semantic nesting does not create another
 level: when focus is inside a landmark, section, form, fieldset, or list,
 Shift+Arrow routing resolves through its enclosing authored heading context.
-If no authored heading contains the route, no numeric level or Shift+Arrow
-destination is reported.
+If no authored heading contains the route, no numeric level is reported and
+horizontal heading-lane movement has no destination. Vertical movement can
+still enter the authored heading-level ladder without inventing a starting
+rank: `Shift+Down` enters the first context at the shallowest level present,
+and `Shift+Up` enters the last context at the deepest level present. DOM
+containment never supplies a heading level. Same-rank headings remain
+horizontal destinations rather than vertical ones.
 When a native Tab stop wraps a heading, the wrapper remains the focus target and
 the first exposed heading it contains supplies that target's authored heading
 level.
@@ -229,14 +254,21 @@ supported environments require another binding.
 
 `Shift+Up` follows the authored heading outline to the nearest preceding heading
 with a lower rank number and enters its first target. `Shift+Down` reverses that
-progression: H1–H5 can enter the first following H(n+1).
+progression by entering the closest available deeper authored rank, including
+across skipped ranks. From a region not associated with a heading,
+`Shift+Down` enters from the shallowest authored level present and `Shift+Up`
+enters from the deepest. Neither command derives a rank from DOM or landmark
+nesting.
 
 While the mode is active, its keylabels show the structural destinations
 available from the current focus: `⇧←` / `⇧→` for lateral movement and
 `⇧↑` / `⇧↓` for broaden/narrow, `⌥⇧⇥` / `⌥⇥` for context starts, plus
-`⇧⇥` / `⇥` for the previous and next native Tab destinations. The
-focused native control also shows `↵` and/or `⎵` when Enter and/or Space
-provide its standard activation. These
+`⇧⇥` / `⇥` for the previous and next native Tab destinations. The focused
+native control or focusable ARIA widget shows `↵` when Enter is its preferred
+activation key. This includes correctly authored custom buttons; the application
+remains responsible for implementing their Enter and Space behavior. OpenKeyNav
+shows `⎵` only for controls, such as checkboxes and radio buttons, where Space is
+the sole standard activation key. These
 visual hints use the existing keylabel creation and positioning system; they do
 not intercept native Tab or activation behavior. When ordinary Tab or
 Shift+Tab already reaches a structural destination, that target shows only the
@@ -263,8 +295,8 @@ highlights its modifier glyph until the key is released.
 Native radio groups additionally label the browser's bare-arrow focus routes:
 `←↑` for the previous radio and `→↓` for the next. In a two-radio group, the
 single peer uses `↔↕`. OpenKeyNav describes these routes without handling the
-arrow events. A divider separates symbols that mean “or,” such as the Enter or
-Space alternatives in `↵⎵`; chord symbols such as `⇧←` remain joined.
+arrow events. A divider separates symbols that mean “or”; chord symbols such as
+`⇧←` remain joined.
 The label attached to the actively focused element uses the configured focus-ring
 color with white text so it stands apart from destinations. When necessary, its
 background is darkened just enough to maintain at least 4.5:1 text contrast while

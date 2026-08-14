@@ -267,6 +267,10 @@ var showAssignedKeylabels = exports.showAssignedKeylabels = function showAssigne
         segments: [symbols],
         commands: assignment.command ? [String(assignment.command)] : []
       });
+      // Make every target visible to the shared collision check before the
+      // first overlay is positioned. This keeps placement single-pass while
+      // preventing an early keylabel from obscuring a later target.
+      markAssignedTarget(openKeyNav, owner, target);
       return;
     }
     var availableSymbols = existing.maxSymbols - Array.from(existing.symbols).length;
@@ -315,7 +319,6 @@ var showAssignedKeylabels = exports.showAssignedKeylabels = function showAssigne
       openKeyNav.updateOverlayPosition(target, overlay);
     }
     assignedTargetByOverlay.set(overlay, target);
-    markAssignedTarget(openKeyNav, owner, target);
     overlays.push(overlay);
   });
   if (!hasModifierSymbols) releaseAssignedModifierFeedback(openKeyNav);

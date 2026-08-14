@@ -62,6 +62,79 @@ describe('updateOverlayPosition', () => {
     expect(overlay.getAttribute('data-openkeynav-position')).toBe('right');
   });
 
+  it('does not place a keylabel over another assigned keylabel target', () => {
+    const okn = new OpenKeyNav();
+    okn.config.spot.arrowSize_px = 4;
+
+    const target = document.createElement('div');
+    document.body.appendChild(target);
+    target.getBoundingClientRect = () => mockRect({
+      left: 100,
+      top: 100,
+      width: 20,
+      height: 20,
+    });
+
+    const otherTarget = document.createElement('button');
+    otherTarget.setAttribute('data-openkeynav-keylabel-target-active', '');
+    document.body.appendChild(otherTarget);
+    const otherTargetRect = mockRect({
+      left: 65,
+      top: 100,
+      width: 32,
+      height: 20,
+    });
+    otherTarget.getBoundingClientRect = () => otherTargetRect;
+    document.elementFromPoint = (x, y) => (
+      x >= otherTargetRect.left && x <= otherTargetRect.right &&
+      y >= otherTargetRect.top && y <= otherTargetRect.bottom
+        ? otherTarget
+        : null
+    );
+
+    const overlay = document.createElement('div');
+    document.body.appendChild(overlay);
+    overlay.getBoundingClientRect = rectFromStyle(overlay, 30, 10);
+
+    okn.updateOverlayPosition(target, overlay);
+
+    expect(overlay.getAttribute('data-openkeynav-position')).toBe('right');
+  });
+
+  it('does not overlap an existing keylabel that intersects its target', () => {
+    const okn = new OpenKeyNav();
+    okn.config.spot.arrowSize_px = 4;
+
+    const target = document.createElement('button');
+    document.body.appendChild(target);
+    target.getBoundingClientRect = () => mockRect({
+      left: 100,
+      top: 100,
+      width: 20,
+      height: 20,
+    });
+
+    const existingLabel = document.createElement('div');
+    existingLabel.className = 'openKeyNav-label';
+    existingLabel.setAttribute('data-openkeynav-label', 'Existing');
+    document.body.appendChild(existingLabel);
+    existingLabel.getBoundingClientRect = () => mockRect({
+      left: 70,
+      top: 90,
+      width: 40,
+      height: 20,
+    });
+
+    const overlay = document.createElement('div');
+    overlay.className = 'openKeyNav-label';
+    document.body.appendChild(overlay);
+    overlay.getBoundingClientRect = rectFromStyle(overlay, 30, 10);
+
+    okn.updateOverlayPosition(target, overlay);
+
+    expect(overlay.getAttribute('data-openkeynav-position')).toBe('right');
+  });
+
   it('falls back to no position when all placements are invalid', () => {
     const okn = new OpenKeyNav();
     okn.config.spot.arrowSize_px = 4;

@@ -324,18 +324,6 @@ const isSubset = (candidate, container) => {
   return true;
 };
 
-const contextDepth = context => {
-  let depth = 0;
-  let current = context;
-  const seen = new Set();
-  while (current?.parent && !seen.has(current)) {
-    seen.add(current);
-    depth += 1;
-    current = current.parent;
-  }
-  return depth;
-};
-
 const isContextAncestor = (ancestor, context) => {
   let current = context;
   const seen = new Set();
@@ -491,12 +479,22 @@ export const buildStructuralModel = ({
     isOperativeSemanticElement(element, root)
   );
   const ownedHeadingByTarget = new Map();
+  const ownedHeadingsByTarget = new Map();
   liveTargets.forEach(target => {
-    const firstContainedHeading = headings.find(heading => (
+    const containedHeadings = headings.filter(heading => (
       isComposedWithin(target, heading)
     ));
+    const firstContainedHeading = containedHeadings[0];
     if (firstContainedHeading) {
       ownedHeadingByTarget.set(target, firstContainedHeading);
+      const contentEditableValue = target.getAttribute?.('contenteditable');
+      const contentEditable = target.isContentEditable ||
+        contentEditableValue === '' ||
+        contentEditableValue?.toLowerCase() === 'true';
+      ownedHeadingsByTarget.set(
+        target,
+        new Set(contentEditable ? containedHeadings : [firstContainedHeading])
+      );
     }
   });
 
@@ -718,11 +716,11 @@ export const buildStructuralModel = ({
       const context = closing.context;
       context.rangeEnd = Math.min(closing.scopeEnd, requestedEnd);
       context.memberTargets = liveTargets.filter(target => {
-        const ownedHeading = ownedHeadingByTarget.get(target);
+        const ownedHeadings = ownedHeadingsByTarget.get(target);
         return (
           (
-            ownedHeading
-              ? ownedHeading === context.boundary
+            ownedHeadings
+              ? ownedHeadings.has(context.boundary)
               : (
                 targetOrder(target) >= context.rangeStart &&
                 targetOrder(target) < context.rangeEnd
@@ -948,7 +946,11 @@ export const buildStructuralModel = ({
   while (collapsedContext) {
     collapsedContext = false;
     const bottomUp = usableContexts.slice(1)
-      .sort((left, right) => contextDepth(right) - contextDepth(left));
+      .sort((left, right) => {
+        if (isContextAncestor(left, right)) return 1;
+        if (isContextAncestor(right, left)) return -1;
+        return right.order - left.order;
+      });
 
     for (const context of bottomUp) {
       const parent = context.parent;
@@ -978,7 +980,6 @@ export const buildStructuralModel = ({
     const children = context.children.filter(child => child.memberSet.has(target));
     if (!children.length) return context;
     children.sort((left, right) => (
-      contextDepth(right) - contextDepth(left) ||
       left.memberSet.size - right.memberSet.size ||
       left.order - right.order
     ));
@@ -987,14 +988,25 @@ export const buildStructuralModel = ({
 
   const directContextByTarget = new Map();
   liveTargets.forEach(target => {
-    const direct = deepestContextForTarget(rootContext, target);
+    const primaryOwnedHeading = ownedHeadingByTarget.get(target);
+    const ownsMultipleHeadings = ownedHeadingsByTarget.get(target)?.size > 1;
+    const primaryOwnedHeadingContext = ownsMultipleHeadings && primaryOwnedHeading
+      ? usableContexts.find(context => context.boundary === primaryOwnedHeading)
+      : null;
+    const direct = primaryOwnedHeadingContext ||
+      deepestContextForTarget(rootContext, target);
     directContextByTarget.set(target, direct);
     direct.directTargets.push(target);
   });
   usableContexts.forEach(context => {
-    context.targets = liveTargets.filter(target =>
-      isContextAncestor(context, directContextByTarget.get(target))
-    );
+    context.targets = liveTargets.filter(target => (
+      isContextAncestor(context, directContextByTarget.get(target)) ||
+      (
+        context.source === 'heading' &&
+        ownedHeadingsByTarget.get(target)?.size > 1 &&
+        ownedHeadingsByTarget.get(target).has(context.boundary)
+      )
+    ));
   });
 
   const contexts = new Map(

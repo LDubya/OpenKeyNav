@@ -50,7 +50,8 @@ OpenKeyNav.init({
         backgroundColor : 'rgba(236, 255, 128, 1)',
         fontColor: 'black',
         outlineColor : 'rgb(134 148 53)',
-        fontSize : '14px',
+        fontSize : 'inherit',
+        minimumFontSize: '16px',
     },
     focus : {
         outlineColor : '#0088cc',
@@ -95,6 +96,7 @@ class OpenKeyNav {
           backgroundColor: '#333',
           insetColor: '#000',
           fontSize: 'inherit',
+          minimumFontSize: '16px',
           arrowSize_px: 4
         },
         focus: {
@@ -445,11 +447,21 @@ class OpenKeyNav {
   
     // avoids overlaps
     updateOverlayPosition(element, overlay) {
-        const elementsToAvoid = document.querySelectorAll('[data-openkeynav-label], .openKeyNav-label-selected, .openKeyNav-toolBar'); // maybe also add labeled elements to this list dynamically
+        const elementsToAvoid = Array.from(document.querySelectorAll(
+          '[data-openkeynav-label], ' +
+          '[data-openkeynav-keylabel-target-active], ' +
+          '.openKeyNav-label-selected, .openKeyNav-toolBar'
+        ));
         const rectAvoid = element.getBoundingClientRect();
         const overlayWidth = overlay.getBoundingClientRect().width;
         const overlayHeight = overlay.getBoundingClientRect().height;
         const arrowWidth = this.config.spot.arrowSize_px;
+
+        const isOpenKeyNavOverlay = avoidEl => (
+          avoidEl.classList?.contains('openKeyNav-label') ||
+          avoidEl.classList?.contains('openKeyNav-label-selected') ||
+          avoidEl.classList?.contains('openKeyNav-toolBar')
+        );
   
         function isBoundingBoxIntersecting(rectOverlay, rectAvoid) {
   
@@ -462,6 +474,13 @@ class OpenKeyNav {
         const isOverlapping = (overlay, avoidEl) => {
           const rectOverlay = overlay.getBoundingClientRect();
           const rectAvoid = avoidEl.getBoundingClientRect();
+
+          // OpenKeyNav overlays share the same visual plane. Their bounding
+          // boxes must never intersect, even when one overlay also crosses the
+          // target that the other overlay describes.
+          if (isOpenKeyNavOverlay(avoidEl)) {
+            return isBoundingBoxIntersecting(rectOverlay, rectAvoid);
+          }
   
           const isOverlapping_OnTop = () => {
   
@@ -514,18 +533,20 @@ class OpenKeyNav {
         }
   
         function checkOverlap(overlay) {
-            return isCutOff(overlay) || Array.from(elementsToAvoid).some(avoidEl => {
+            return isCutOff(overlay) || elementsToAvoid.some(avoidEl => {
               if (avoidEl === overlay || avoidEl === element) {
                 return false;
               }
   
               // Check if the element is directly on top of the avoidEl
-              const rectElement = element.getBoundingClientRect();
               const rectAvoidEl = avoidEl.getBoundingClientRect();
+
+              const isElementOnTop = isBoundingBoxIntersecting(
+                rectAvoid,
+                rectAvoidEl
+              )
   
-              const isElementOnTop = isBoundingBoxIntersecting(rectElement, rectAvoidEl)
-  
-              if (isElementOnTop) {
+              if (isElementOnTop && !isOpenKeyNavOverlay(avoidEl)) {
                   return false;
               }
   

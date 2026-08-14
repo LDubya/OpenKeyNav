@@ -209,7 +209,7 @@ describe('StructuralNavigationController', () => {
       { command: 'nextContextStart', symbols: '⌥⇥' },
     ]);
     expect(labelsFor('current-target')).toEqual([
-      { command: 'activateEnter activateSpace', symbols: '↵⎵' },
+      { command: 'activateEnter', symbols: '↵' },
     ]);
     expect(document.querySelector(
       '.openKeyNav-structural-keylabel' +
@@ -238,6 +238,25 @@ describe('StructuralNavigationController', () => {
       .toHaveLength(5);
     expect(document.getElementById('current-target')
       .hasAttribute('data-openkeynav-keylabel-target-active')).toBe(true);
+  });
+
+  it('labels authored ARIA buttons with their preferred activation key', async () => {
+    document.body.innerHTML = `
+      <h2>Custom controls</h2>
+      <div id="role-button" role="button" tabindex="0">Open card</div>
+    `;
+    openKeyNav = createOpenKeyNav();
+    document.getElementById('role-button').focus();
+
+    openKeyNav.enterStructuralNavigation();
+    await new Promise(resolve => setTimeout(resolve, 25));
+
+    const label = document.querySelector(
+      '.openKeyNav-structural-keylabel' +
+      '[data-openkeynav-keylabel-target="role-button"]'
+    );
+    expect(label?.dataset.openkeynavKeylabelCommand).toBe('activateEnter');
+    expect(label?.textContent).toBe('↵');
   });
 
   it('prefers a context-start keylabel over Shift+Down for the same target', async () => {
@@ -1010,6 +1029,122 @@ describe('StructuralNavigationController', () => {
     expect(document.activeElement.id).toBe('result-a');
   });
 
+  it('enters the authored heading-level ladder without using DOM nesting', async () => {
+    document.body.innerHTML = `
+      <nav aria-label="Primary actions">
+        <div><div><div>
+          <button id="home">Home</button>
+          <button id="browse">Browse sheets</button>
+          <button id="sticky">Sticky note</button>
+        </div></div></div>
+      </nav>
+      <section aria-labelledby="folders-heading">
+        <h2 id="folders-heading">Folders</h2>
+        <a id="inbox" href="#inbox">Inbox</a>
+      </section>
+      <section aria-labelledby="custom-folders-heading">
+        <h3 id="custom-folders-heading">Custom Folders</h3>
+        <button id="new-folder">Create a new folder</button>
+      </section>
+    `;
+    openKeyNav = createOpenKeyNav({
+      modesConfig: {
+        structuralNavigation: {
+          keylabels: { contextJump: false },
+        },
+      },
+    });
+    openKeyNav.addKeydownEventListener();
+    const unheaded = document.getElementById('home');
+    unheaded.focus();
+    openKeyNav.enterStructuralNavigation();
+    await new Promise(resolve => setTimeout(resolve, 25));
+
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Primary actions');
+    expect(document.querySelector(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    ).textContent).not.toContain('Heading level:');
+    expect(document.querySelector(
+      '.openKeyNav-structural-keylabel' +
+      '[data-openkeynav-keylabel-command="broadenContext"]' +
+      '[data-openkeynav-keylabel-target="new-folder"]'
+    )?.textContent).toBe('⇧↑');
+    expect(document.querySelector(
+      '.openKeyNav-structural-keylabel' +
+      '[data-openkeynav-keylabel-command="narrowContext"]' +
+      '[data-openkeynav-keylabel-target="inbox"]'
+    )?.textContent).toBe('⇧↓');
+
+    const previousHeading = dispatchKey(unheaded, 'ArrowUp', {
+      shiftKey: true,
+    });
+    expect(previousHeading.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('new-folder');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Custom Folders');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.headingLevel)
+      .toBe(3);
+
+    unheaded.focus();
+    await nextTask();
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Primary actions');
+
+    const nextHeading = dispatchKey(unheaded, 'ArrowDown', {
+      shiftKey: true,
+    });
+    expect(nextHeading.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('inbox');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Folders');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.headingLevel)
+      .toBe(2);
+  });
+
+  it('changes authored levels inside one contenteditable focus target', () => {
+    document.body.innerHTML = `
+      <div id="editor" role="region" aria-label="Detail" contenteditable="true">
+        <h2>Document title</h2>
+        <p>Introduction</p>
+        <h4>Skipped-rank section</h4>
+        <p>Section detail</p>
+      </div>
+    `;
+    openKeyNav = createOpenKeyNav();
+    openKeyNav.addKeydownEventListener();
+    const editor = document.getElementById('editor');
+    editor.focus();
+    openKeyNav.enterStructuralNavigation();
+
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Document title');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.headingLevel)
+      .toBe(2);
+
+    const narrow = dispatchKey(editor, 'ArrowDown', {
+      altKey: true,
+      shiftKey: true,
+    });
+    expect(narrow.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(editor);
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Skipped-rank section');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.headingLevel)
+      .toBe(4);
+
+    const broaden = dispatchKey(editor, 'ArrowUp', {
+      altKey: true,
+      shiftKey: true,
+    });
+    expect(broaden.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(editor);
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Document title');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.headingLevel)
+      .toBe(2);
+  });
+
   it('moves between same-rank headings across parents and enters the first target', () => {
     document.body.innerHTML = `
       <h2>First family</h2>
@@ -1134,7 +1269,7 @@ describe('StructuralNavigationController', () => {
     expect(nextLevelThree.parent).not.toBe(currentLevelThree.parent);
   });
 
-  it('bridges the same authored heading rank across hierarchy depths', () => {
+  it('bridges the same authored heading rank across different DOM containers', () => {
     document.body.innerHTML = `
       <main aria-labelledby="catalog-title">
         <h1 id="catalog-title">Catalog</h1>

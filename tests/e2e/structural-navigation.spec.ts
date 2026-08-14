@@ -254,7 +254,7 @@ test.describe('structural navigation mode', () => {
     expect(await focusStyle('recommendation-a')).toEqual(expectedRecommendationStyle);
   });
 
-  test('routes real focus through hierarchy, boundaries, broaden/narrow, and horizontal contexts', async ({ page }) => {
+  test('routes real focus through headings, boundaries, broaden/narrow, and horizontal contexts', async ({ page }) => {
     await enableOpenKeyNav(page);
     await focusFixtureTarget(page, 'in-stock');
     await page.evaluate(() => (window as any).fixture.resetLogs());
@@ -491,22 +491,23 @@ test.describe('structural navigation mode', () => {
 
     await focusFixtureTarget(page, 'native-button');
     await expect(structuralLabel('activateEnter', 'native-button'))
-      .toHaveText('↵⎵');
+      .toHaveText('↵');
     await expect(structuralLabel('activateSpace', 'native-button'))
-      .toHaveText('↵⎵');
-    const activationAlternatives = structuralLabel(
-      'activateEnter',
-      'native-button'
-    );
-    await expect(activationAlternatives)
-      .toHaveAttribute('data-openkeynav-keylabel-alternatives', '2');
-    await expect(activationAlternatives.locator(
-      '.openKeyNav-keylabel-alternative'
-    )).toHaveCount(2);
-    expect(await activationAlternatives.locator(
-      '.openKeyNav-keylabel-alternative'
-    ).nth(1).evaluate(element => getComputedStyle(element).borderLeftStyle))
-      .toBe('solid');
+      .toHaveCount(0);
+
+    await page.evaluate(() => {
+      const roleButton = document.createElement('div');
+      roleButton.id = 'role-button';
+      roleButton.setAttribute('role', 'button');
+      roleButton.tabIndex = 0;
+      roleButton.textContent = 'Run authored action';
+      document.getElementById('native-behavior')!.appendChild(roleButton);
+    });
+    await focusFixtureTarget(page, 'role-button');
+    await expect(structuralLabel('activateEnter', 'role-button'))
+      .toHaveText('↵');
+    await expect(structuralLabel('activateSpace', 'role-button'))
+      .toHaveCount(0);
 
     await focusFixtureTarget(page, 'radio-one');
     await expect(structuralLabel('nativeArrowRight', 'radio-two'))
@@ -549,6 +550,139 @@ test.describe('structural navigation mode', () => {
     await expect(page.locator('.openKeyNav-structural-keylabel')).toHaveCount(0);
     await expect(page.locator('[data-openkeynav-keylabel-target-active]'))
       .toHaveCount(0);
+  });
+
+  test('enters the authored heading-level ladder without using DOM nesting', async ({ page }) => {
+    await page.evaluate(() => {
+      const fixture = document.createElement('div');
+      fixture.id = 'unheaded-heading-fallback-fixture';
+      fixture.innerHTML = `
+        <nav aria-label="Primary actions">
+          <div><div><div>
+            <button id="fallback-home">Home</button>
+            <button id="fallback-browse">Browse sheets</button>
+            <button id="fallback-sticky">Sticky note</button>
+          </div></div></div>
+        </nav>
+        <section aria-labelledby="fallback-folders-heading">
+          <h2 id="fallback-folders-heading">Folders</h2>
+          <a id="fallback-inbox" href="#inbox">Inbox</a>
+        </section>
+        <section aria-labelledby="fallback-custom-folders-heading">
+          <h3 id="fallback-custom-folders-heading">Custom Folders</h3>
+          <button id="fallback-new-folder">Create a new folder</button>
+        </section>
+      `;
+      document.body.prepend(fixture);
+      const structural = (window as any).okn.config.modesConfig
+        .structuralNavigation;
+      structural.keylabels.contextJump = false;
+      structural.activeRoot = fixture;
+    });
+    await enableOpenKeyNav(page);
+    await focusFixtureTarget(page, 'fallback-home');
+    await enterStructuralNavigation(page);
+
+    const status = page.locator(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    );
+    await expect(status).toContainText('Context: Primary actions.');
+    await expect(status).not.toContainText('Heading level:');
+    await expect(page.locator(
+      '.openKeyNav-structural-keylabel' +
+      '[data-openkeynav-keylabel-command="broadenContext"]' +
+      '[data-openkeynav-keylabel-target="fallback-new-folder"]'
+    )).toHaveText('⇧↑');
+    await expect(page.locator(
+      '.openKeyNav-structural-keylabel' +
+      '[data-openkeynav-keylabel-command="narrowContext"]' +
+      '[data-openkeynav-keylabel-target="fallback-inbox"]'
+    )).toHaveText('⇧↓');
+
+    await page.keyboard.press('Shift+ArrowUp');
+    await expectDeepFocus(page, 'fallback-new-folder');
+    await expect(status).toContainText('Context: Custom Folders.');
+    await expect(status).toContainText('Heading level: 3.');
+
+    await focusFixtureTarget(page, 'fallback-home');
+    await expect(status).toContainText('Context: Primary actions.');
+    await page.keyboard.press('Shift+ArrowDown');
+    await expectDeepFocus(page, 'fallback-inbox');
+    await expect(status).toContainText('Context: Folders.');
+    await expect(status).toContainText('Heading level: 2.');
+  });
+
+  test('changes authored levels inside one contenteditable target', async ({ page }) => {
+    await page.evaluate(() => {
+      const editor = document.createElement('div');
+      editor.id = 'rich-document-editor';
+      editor.setAttribute('role', 'region');
+      editor.setAttribute('aria-label', 'Rich document detail');
+      editor.contentEditable = 'true';
+      editor.innerHTML = `
+        <h2>Rich document title</h2>
+        <p>Introduction</p>
+        <h4>Rich skipped-rank section</h4>
+        <p>Section detail</p>
+      `;
+      document.body.prepend(editor);
+    });
+    await enableOpenKeyNav(page);
+    await focusFixtureTarget(page, 'rich-document-editor');
+    await page.evaluate(() => {
+      (window as any).okn.enterStructuralNavigation();
+    });
+    await expect.poll(() => page.evaluate(
+      () => (window as any).okn.config.modes.structuralNavigation.value
+    )).toBe(true);
+    await expect(page.locator('.openKeyNav-structural-status')).toBeVisible();
+
+    const status = page.locator(
+      '.openKeyNav-structural-status .openKeyNav-status__content'
+    );
+    await expect(status).toContainText('Context: Rich document title.');
+    await expect(status).toContainText('Heading level: 2.');
+
+    await page.keyboard.press('Alt+Shift+ArrowDown');
+    await expectDeepFocus(page, 'rich-document-editor');
+    await expect(status).toContainText('Context: Rich skipped-rank section.');
+    await expect(status).toContainText('Heading level: 4.');
+
+    await page.keyboard.press('Alt+Shift+ArrowUp');
+    await expectDeepFocus(page, 'rich-document-editor');
+    await expect(status).toContainText('Context: Rich document title.');
+    await expect(status).toContainText('Heading level: 2.');
+  });
+
+  test('applies a configurable minimum keylabel font size', async ({ page }) => {
+    await page.evaluate(() => {
+      document.body.style.fontSize = '10px';
+    });
+    await enableOpenKeyNav(page);
+    await focusFixtureTarget(page, 'product-a');
+    await enterStructuralNavigation(page);
+
+    const label = page.locator('.openKeyNav-structural-keylabel').first();
+    const fontSize = () => label.evaluate(element => (
+      getComputedStyle(element).fontSize
+    ));
+
+    await expect.poll(fontSize).toBe('16px');
+
+    await page.evaluate(() => {
+      const openKeyNav = (window as any).okn;
+      openKeyNav.config.spot.minimumFontSize = false;
+      openKeyNav.injectStyles(true);
+    });
+    await expect.poll(fontSize).toBe('10px');
+
+    await page.evaluate(() => {
+      const openKeyNav = (window as any).okn;
+      openKeyNav.config.spot.minimumFontSize = '24px';
+      openKeyNav.config.spot.fontSize = '20px';
+      openKeyNav.injectStyles(true);
+    });
+    await expect.poll(fontSize).toBe('20px');
   });
 
   test('keeps Structural Navigation active around heading and scroll commands without stealing editable characters', async ({ page }) => {
@@ -812,7 +946,7 @@ test.describe('structural navigation mode', () => {
     await expect(indicator).toHaveAttribute('data-context-name', 'Recommendations');
   });
 
-  test('crosses inferred hierarchy depth when headings share an authored level', async ({ page }) => {
+  test('crosses DOM containers when headings share an authored level', async ({ page }) => {
     await enableOpenKeyNav(page);
     await focusFixtureTarget(page, 'native-button');
     await enterStructuralNavigation(page);
@@ -964,10 +1098,10 @@ test.describe('structural navigation mode', () => {
       'moves sequentially using native browser focus'
     );
     await expect(page.locator('#structural-navigation-guide')).toContainText(
-      'H1–H5 advances to the next nonempty H(n+1) in document order'
+      'Down enters the closest available deeper rank'
     );
     await expect(page.locator('#structural-navigation-guide')).toContainText(
-      'the document enters the first nonempty H2'
+      'DOM nesting never supplies a heading rank'
     );
     await expect(page.locator('#structural-navigation-guide')).toContainText(
       'even across different structural parents'

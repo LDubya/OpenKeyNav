@@ -166,6 +166,26 @@ describe('buildStructuralModel', () => {
     )).toBe(nonTabbableDetail);
   });
 
+  it('exposes every authored level inside one contenteditable focus target', () => {
+    document.body.innerHTML = `
+      <div id="editor" role="region" aria-label="Detail" contenteditable="true">
+        <h2>Document title</h2>
+        <p>Introduction</p>
+        <h4>Skipped-rank section</h4>
+        <p>Section detail</p>
+      </div>
+    `;
+    const editor = document.getElementById('editor');
+    const model = buildStructuralModel({ root: document, targets: [editor] });
+    const documentTitle = contextNamed(model, 'Document title');
+    const skippedRank = contextNamed(model, 'Skipped-rank section');
+
+    expect(documentTitle.targets).toEqual([editor]);
+    expect(skippedRank.targets).toEqual([editor]);
+    expect(model.directContextByTarget.get(editor)).toBe(documentTitle);
+    expect(skippedRank.parent).toBe(documentTitle);
+  });
+
   it('preserves same-rank heading contexts across different parents', () => {
     document.body.innerHTML = `
       <h2>First family</h2>

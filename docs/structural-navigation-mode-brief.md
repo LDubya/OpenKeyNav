@@ -42,9 +42,10 @@ The first complete release must provide:
 - Target discovery without pressing Tab.
 - A deterministic structural context tree.
 - Previous and next target movement within an active context.
-- Previous and next horizontal-peer movement using authored heading-level lanes
-  for heading-backed contexts and true siblings for unheaded contexts.
-- Broaden-to-parent, narrow-on-path, and page-forward next-level context changes.
+- Previous and next horizontal-peer movement using authored heading-level lanes;
+  unheaded contexts have no invented horizontal lane.
+- Rank-based broaden, narrow-on-path, and page-forward next-level changes,
+  including entry from unheaded routes.
 - Native Tab, Shift+Tab, Enter, Space, and widget behavior.
 - Real-focus synchronization after keyboard, pointer, script, and OpenKeyNav focus changes.
 - Correct behavior on dynamic pages.
@@ -461,17 +462,15 @@ When the current target belongs to one or more typed contexts:
   this wrapping behavior.
 - Changing the active peer context retains current focus.
 - Previous and next use the active typed context's explicit order.
-- Structural parent, child, and horizontal commands leave the typed route.
-  Parent/child commands operate on the canonical tree; horizontal commands use
-  authored heading-level lanes or, for unheaded contexts, true structural
-  siblings as described below.
+- Structural vertical and horizontal commands leave the typed route. Vertical
+  commands operate on authored heading ranks; horizontal commands use authored
+  heading-level lanes.
 - Returning to structural navigation selects the innermost structural context containing the current target.
 
-Typed contexts have no heading or hierarchy level of their own. Status for a
-typed route reports the authored heading level of its underlying direct context
-when one exists; otherwise it reports that context's one-based structural
-hierarchy level. Shift+Up/Down returns to that underlying structural context
-before navigating.
+Typed contexts have no heading level of their own. Status reports the authored
+heading level of the underlying direct context when one exists and otherwise
+does not invent one. Shift+Up/Down returns to that underlying structural route
+before applying the rank-based command.
 
 Typed-route cycling is an explicit extension command and has no default key binding. If no typed context applies, it reports the boundary and does nothing.
 
@@ -481,14 +480,16 @@ Define relationship commands independently of their key bindings:
 
 1. Previous target in the active context.
 2. Next target in the active context.
-3. Previous horizontal peer at the active authored heading level, or previous
-   structural sibling when the active context is unheaded.
-4. Next horizontal peer at the active authored heading level, or next
-   structural sibling when the active context is unheaded.
-5. Broaden to the authored outline parent for a heading-backed context, or the
-   structural parent for an unheaded context.
-6. Narrow to the structural child on the current target's path, or advance to
-   the next qualifying deeper context when that path has no child.
+3. Previous horizontal peer at the active authored heading level; an unheaded
+   context has no horizontal heading lane.
+4. Next horizontal peer at the active authored heading level; an unheaded
+   context has no horizontal heading lane.
+5. Broaden to the closest available shallower authored heading rank. From an
+   unheaded context, enter the deepest authored level present.
+6. Narrow to the closest available deeper authored heading rank on the current
+   target's path, or advance to the next qualifying context at that rank when
+   the path has none. From an unheaded context, enter the shallowest authored
+   level present.
 7. Previous applicable peer context.
 8. Next applicable peer context.
 9. Exit the mode without OpenKeyNav moving focus.
@@ -500,10 +501,10 @@ Integrate with OpenKeyNav's configurable shortcut system. A reasonable initial m
 | Key | Relationship command |
 | --- | --- |
 | `Shift+Tab` / `Tab` | Native browser sequential focus; not intercepted |
-| `Shift+ArrowUp` | Broaden to the authored outline parent, or structural parent for an unheaded context |
-| `Shift+ArrowDown` | Narrow along the current target's path, or advance one qualifying level |
-| `Shift+ArrowLeft` | Previous context at the same authored heading level, or previous structural sibling for an unheaded context |
-| `Shift+ArrowRight` | Next context at the same authored heading level, or next structural sibling for an unheaded context |
+| `Shift+ArrowUp` | Move to the closest available shallower authored heading rank |
+| `Shift+ArrowDown` | Move to the closest available deeper authored heading rank |
+| `Shift+ArrowLeft` | Previous context at the same authored heading level |
+| `Shift+ArrowRight` | Next context at the same authored heading level |
 | Application-configured command | Previous or next target in active context |
 | Application-configured command | Previous or next applicable typed context |
 | Configured mode-exit command | Exit and preserve current focus |
@@ -542,13 +543,13 @@ Use the active context's ordered target sequence.
 When the active context is heading-backed, its authored H1–H6 level defines the
 horizontal lane. The lane contains every nonempty heading-backed context at the
 same authored level in the active navigation root, ordered by document order.
-Structural parentage and inferred tree depth do not split that lane. Thus an H3
+Generic DOM containment does not split that lane. Thus an H3
 under one H2 can move horizontally to an H3 under another H2, while an
 intervening H2 is skipped. A semantic region associated with a heading inherits
 that heading's authored level and participates in the same lane.
 
-When the active context has no heading level, horizontal movement uses only the
-nonempty children of its structural parent.
+When the active context has no heading level, horizontal movement has no
+destination because no authored heading lane is active.
 
 Malformed heading ranks are preserved rather than silently repaired. Heading
 order problems belong to accessibility auditing; they do not cause horizontal
@@ -574,9 +575,10 @@ sequence. In well-ranked content, an H3 therefore broadens to its governing H2
 even when generic DOM wrappers gave the two contexts different inferred
 parents.
 
-For an unheaded context, broaden to the immediate structural parent and keep
-focus on the same target. An H1 with no lower-level authored outline parent also
-uses its structural parent.
+For a context not associated with any heading, enter the last nonempty context
+at the deepest authored level present and focus its first target. The unheaded
+context remains unheaded; neither DOM ancestry nor semantic-container nesting
+supplies a numeric rank.
 
 At the root, do nothing and announce the boundary.
 
@@ -589,16 +591,15 @@ fallback rather than selecting an arbitrary child of the active context:
 
 - Scan contexts after the active context in document order. Do not wrap.
 - Skip contexts with no focus targets.
-- When the active context is heading-backed H1–H5, require the next authored
-  heading level, H(n+1), regardless of its inferred structural-tree depth.
+- When the active context is heading-backed H1–H5, require the closest available
+  deeper authored rank, regardless of generic DOM wrappers.
   Semantic regions associated with headings use their inherited level. This
-  prevents an H2 command from entering an unrelated unheaded context or an H4
-  merely because either appears first.
-- When the active context is unheaded at hierarchy level n, first look for the
-  next nonempty authored H(n+1) context. If none exists, require a nonempty
-  unheaded destination exactly one canonical structural hierarchy level deeper.
-  Thus the document/root at level 1 can narrow to the first available H2, and a
-  second command from that H2 can narrow to the first following H3.
+  prevents an H2 command from entering an unrelated unheaded context or an H5
+  merely because it appears before an available H3 or H4.
+- When the active context is unheaded, enter the first nonempty context at the
+  shallowest authored heading level present. Do not derive a starting rank from
+  DOM ancestry or semantic-container nesting. Another command continues from
+  that newly active authored rank.
 - Activate the first qualifying context and focus the first target in its
   flattened sequence.
 - H6 is the boundary for this page-forward heading fallback. It does not block a
@@ -827,11 +828,10 @@ Use OpenKeyNav's existing status, notification, toolbar, and focus-marker facili
 - Current target name.
 - Active document/root, structural, or typed context name.
 - Position within the active target sequence.
-- The active context's authored heading level when it is heading-backed;
-  otherwise its one-based level in the canonical structural hierarchy, with the
-  document or scoped root at level 1. A typed route reports the corresponding
-  level of its underlying direct structural context rather than inventing
-  another parent.
+- The active context's authored heading level when it is heading-backed. An
+  unheaded context does not report an invented heading level. Vertical entry
+  uses the shallowest or deepest authored level actually present, never a
+  numeric value inferred from DOM nesting.
 - Context changes.
 - A bounded count of applicable typed contexts.
 - Boundaries and unavailable relationships.
@@ -952,13 +952,14 @@ Demonstrate:
 2. Explicit configured or programmatic next/previous target commands move real
    focus within a narrow context, while native Tab remains unmodified.
 3. Broaden from a heading-backed context activates the nearest preceding
-   lower-level heading and focuses its first target. Broaden from an unheaded
-   context retains focus and enlarges the available flattened sequence.
+   lower-level heading and focuses its first target. From an unheaded context,
+   it enters the deepest authored level present.
 4. Narrow follows the current target's path and retains focus. From the
-   document/root, its fallback enters the first nonempty H2. When an H1–H5
-   context has no child on that path, it advances without wrapping to the first
-   nonempty H(n+1) in document order, regardless of inferred structural depth,
-   and focuses that destination's first target; H6 is the fallback boundary.
+   document/root or another unheaded context, its fallback enters the shallowest
+   authored level present. When a heading-backed context has no deeper child on that path, it
+   advances without wrapping to the first context at the closest available
+   deeper rank, regardless of generic DOM wrappers, and focuses that
+   destination's first target; H6 is the fallback boundary.
 5. Horizontal movement lands on a real target and activates the destination
    context.
 6. From an H3 under the first H2, next-horizontal movement enters the first
@@ -966,8 +967,8 @@ Demonstrate:
    it. Both active contexts remain H3 contexts.
 7. From Recommendations, an authored H2, next-horizontal movement skips
    unrelated unheaded and H3 contexts and enters the first target of the next
-   nonempty H2, even when the two H2 contexts have different inferred
-   structural depths. Previous-horizontal movement reverses it.
+   nonempty H2, even when the two H2 contexts use different DOM containers.
+   Previous-horizontal movement reverses it.
 8. A broadened explicit previous/next target command may cross descendant
    groups without silently narrowing.
 9. Boundaries do not wrap by default.
@@ -1077,11 +1078,10 @@ Cover pure logic for:
 - Heading-stack behavior and duplicate-context collapse.
 - Direct-context assignment.
 - Flattened target sequences.
-- True structural siblings, differently ranked heading-backed peers across
-  parents at equal canonical depth, rejection at different depths, and
-  exclusion of unrelated unheaded contexts across parents.
-- Broaden, in-path narrow, page-forward next-depth/next-rank fallback, and H6
-  boundary transitions.
+- Heading-backed peers across structural parents, rank separation, and no
+  invented lane for unrelated unheaded contexts.
+- Rank-based broaden, in-path narrow, unheaded edge entry,
+  page-forward deeper-rank fallback, skipped ranks, and H6 boundaries.
 - No-current-target behavior.
 - Typed-context membership and cycling.
 - Dynamic invalidation and stale-reference removal.
@@ -1106,7 +1106,7 @@ Use Playwright or the repository's current browser runner for:
 - Rapid input and key repeat.
 - Page focus handlers that redirect focus.
 - Repeated mode entry, exit, disable, and teardown.
-- In-path narrow focus retention, page-forward next-depth/next-rank entry at the
+- In-path narrow focus retention and page-forward next-rank entry at the
   destination's first target, and the H6 fallback boundary.
 
 Run the full relevant browser suite, not one or two manual interactions.

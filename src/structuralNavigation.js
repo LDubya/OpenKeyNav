@@ -344,8 +344,14 @@ const structuralArrowSymbols = (target, shortcut, config) => {
   return shortcutSymbols(shortcut, { extraModifiers });
 };
 
-const nativeActivationSymbols = target => {
-  if (!isElement(target) || target.hasAttribute('disabled')) return [];
+const activationSymbols = target => {
+  if (
+    !isElement(target) ||
+    target.hasAttribute('disabled') ||
+    target.getAttribute('aria-disabled') === 'true'
+  ) {
+    return [];
+  }
   const tagName = target.tagName.toLowerCase();
   const both = [KEYLABEL_SYMBOLS.enter, KEYLABEL_SYMBOLS.space];
 
@@ -356,7 +362,13 @@ const nativeActivationSymbols = target => {
   ) {
     return [KEYLABEL_SYMBOLS.enter];
   }
-  if (tagName !== 'input') return [];
+  if (tagName !== 'input') {
+    const role = (target.getAttribute('role') || '').toLowerCase();
+    if (role === 'button') return both;
+    if (role === 'link') return [KEYLABEL_SYMBOLS.enter];
+    if (SPACE_ACTIVATION_ROLES.has(role)) return [KEYLABEL_SYMBOLS.space];
+    return [];
+  }
 
   const inputType = (target.getAttribute('type') || 'text').toLowerCase();
   if (['button', 'submit', 'reset', 'image'].includes(inputType)) return both;
@@ -366,14 +378,15 @@ const nativeActivationSymbols = target => {
   return [];
 };
 
+const preferredActivationSymbols = target => {
+  const symbols = activationSymbols(target);
+  return symbols.includes(KEYLABEL_SYMBOLS.enter)
+    ? [KEYLABEL_SYMBOLS.enter]
+    : symbols;
+};
+
 const targetUsesSpaceForActivation = target => {
-  if (nativeActivationSymbols(target).includes(KEYLABEL_SYMBOLS.space)) {
-    return true;
-  }
-  if (!isElement(target)) return false;
-  return SPACE_ACTIVATION_ROLES.has(
-    (target.getAttribute('role') || '').toLowerCase()
-  );
+  return activationSymbols(target).includes(KEYLABEL_SYMBOLS.space);
 };
 
 const isNativeKeyboardScroll = (event, ownership, target) => {
@@ -561,7 +574,7 @@ const structuralContextForElement = (model, element) => {
   });
 
   return containing.sort((left, right) => (
-    contextHierarchyLevel(model, right) - contextHierarchyLevel(model, left) ||
+    compareContextSpecificity(model, left, right) ||
     contextTargets(left).length - contextTargets(right).length ||
     contextOrder(left) - contextOrder(right)
   ))[0] || model.rootContext || null;
@@ -588,18 +601,23 @@ const parentContext = (model, context) => {
     : modelContextById(model, context.parent);
 };
 
-const contextHierarchyLevel = (model, context) => {
-  let level = 0;
-  let current = context;
+const contextDescendsFrom = (model, context, possibleAncestor) => {
+  let current = parentContext(model, context);
   const seen = new Set();
 
   while (current && !seen.has(current)) {
+    if (current === possibleAncestor) return true;
     seen.add(current);
-    level += 1;
     current = parentContext(model, current);
   }
 
-  return Math.max(1, level);
+  return false;
+};
+
+const compareContextSpecificity = (model, left, right) => {
+  if (contextDescendsFrom(model, left, right)) return -1;
+  if (contextDescendsFrom(model, right, left)) return 1;
+  return 0;
 };
 
 const modelStructuralContexts = model => {
@@ -652,9 +670,34 @@ const headingContextForTarget = (model, target, headingLevel = null) => {
       contextTargets(context).includes(target)
     ))
     .sort((left, right) => (
-      contextHierarchyLevel(model, right) - contextHierarchyLevel(model, left) ||
+      contextHeadingLevel(right) - contextHeadingLevel(left) ||
+      compareContextSpecificity(model, left, right) ||
       contextTargets(left).length - contextTargets(right).length ||
       contextOrder(right) - contextOrder(left)
+    ))[0] || null;
+};
+
+const nextDeeperHeadingContextForTarget = (model, target, context) => {
+  const headingLevel = contextHeadingLevel(context);
+  if (!model || !target || headingLevel === null || headingLevel >= 6) {
+    return null;
+  }
+  const deeperContexts = modelStructuralContexts(model)
+    .filter(candidate => (
+      contextHeadingLevel(candidate) > headingLevel &&
+      contextOrder(candidate) > contextOrder(context) &&
+      contextTargets(candidate).includes(target)
+    ));
+  const nextHeadingLevel = Math.min(
+    ...deeperContexts.map(contextHeadingLevel)
+  );
+  if (!Number.isFinite(nextHeadingLevel)) return null;
+
+  return deeperContexts
+    .filter(candidate => contextHeadingLevel(candidate) === nextHeadingLevel)
+    .sort((left, right) => (
+      contextOrder(left) - contextOrder(right) ||
+      String(contextId(left)).localeCompare(String(contextId(right)))
     ))[0] || null;
 };
 
@@ -709,8 +752,9 @@ const previousBroaderHeadingContext = (model, context) => {
 };
 
 /**
- * Finds the next page-forward context at the next authored heading level.
- * Semantic nesting is deliberately excluded from the level model.
+ * Finds the next page-forward context at the closest available deeper
+ * authored heading level. Semantic nesting is deliberately excluded from the
+ * level model, and skipped heading ranks do not create a dead end.
  */
 const nextNarrowFallbackContext = (model, context) => {
   const headingLevel = contextHeadingLevel(context);
@@ -727,9 +771,46 @@ const nextNarrowFallbackContext = (model, context) => {
     ? orderedContexts.slice(currentIndex + 1)
     : orderedContexts;
 
-  return followingContexts.find(candidate => (
-    contextHeadingLevel(candidate) === headingLevel + 1
+  const deeperContexts = followingContexts.filter(candidate => (
+    contextHeadingLevel(candidate) > headingLevel
+  ));
+  const nextHeadingLevel = Math.min(
+    ...deeperContexts.map(contextHeadingLevel)
+  );
+  if (!Number.isFinite(nextHeadingLevel)) return null;
+
+  return deeperContexts.find(candidate => (
+    contextHeadingLevel(candidate) === nextHeadingLevel
   )) || null;
+};
+
+/**
+ * An unassociated region has no heading rank. A vertical command enters the
+ * authored heading-level ladder from the requested edge; DOM containment
+ * never supplies an implicit starting rank.
+ */
+const headingEdgeEntryContext = (model, direction) => {
+  if (direction === 0) return null;
+  const headingContexts = modelStructuralContexts(model)
+    .filter(candidate => (
+      contextTargets(candidate).length > 0 &&
+      contextHeadingLevel(candidate) !== null
+    ))
+    .sort((left, right) => (
+      contextOrder(left) - contextOrder(right) ||
+      String(contextId(left)).localeCompare(String(contextId(right)))
+    ));
+  const headingLevels = headingContexts.map(contextHeadingLevel);
+  const destinationLevel = direction < 0
+    ? Math.max(...headingLevels)
+    : Math.min(...headingLevels);
+  if (!Number.isFinite(destinationLevel)) return null;
+  const destinations = headingContexts.filter(candidate => (
+    contextHeadingLevel(candidate) === destinationLevel
+  ));
+  return direction < 0
+    ? destinations[destinations.length - 1] || null
+    : destinations[0] || null;
 };
 
 const targetName = target => {
@@ -1726,7 +1807,15 @@ export class StructuralNavigationController {
 
     const activeContext = this.activeHeadingContext();
     if (!activeContext) {
-      this.updateStatus('No authored heading context is active.');
+      const previousHeadingLevel = headingEdgeEntryContext(this.model, -1);
+      if (!previousHeadingLevel) {
+        this.updateStatus('No authored heading level is available.');
+        return;
+      }
+      this.showTransientContextIndicator();
+      this.activeStructuralContext = previousHeadingLevel;
+      this.activeTypedContext = null;
+      this.focusTarget(contextTargets(previousHeadingLevel)[0]);
       return;
     }
     const headingParent = previousBroaderHeadingContext(
@@ -1746,16 +1835,24 @@ export class StructuralNavigationController {
     this.useStructuralRoute();
     const activeContext = this.activeHeadingContext();
     if (!activeContext) {
-      this.updateStatus('No authored heading context is active.');
+      const nextHeadingLevel = headingEdgeEntryContext(this.model, 1);
+      if (!nextHeadingLevel) {
+        this.updateStatus('No authored heading level is available.');
+        return;
+      }
+      this.showTransientContextIndicator();
+      this.activeStructuralContext = nextHeadingLevel;
+      this.activeTypedContext = null;
+      this.focusTarget(contextTargets(nextHeadingLevel)[0]);
       return;
     }
 
     const headingLevel = contextHeadingLevel(activeContext);
     const child = this.currentTarget && headingLevel < 6
-      ? headingContextForTarget(
+      ? nextDeeperHeadingContextForTarget(
         this.model,
         this.currentTarget,
-        headingLevel + 1
+        activeContext
       )
       : null;
     if (child) {
@@ -2008,7 +2105,7 @@ export class StructuralNavigationController {
       });
     }
 
-    if (keylabelConfig.vertical !== false && headingRoute) {
+    if (keylabelConfig.vertical !== false) {
       const commandSource = getDeepActiveElement(this.root);
       const addVertical = (command, target) => {
         const shortcut = this.config.commands?.[command];
@@ -2029,31 +2126,44 @@ export class StructuralNavigationController {
         });
       };
 
-      const headingParent = previousBroaderHeadingContext(
-        this.model,
-        headingRoute
-      );
-      if (headingParent) {
+      if (!headingRoute) {
+        const previousHeadingLevel = headingEdgeEntryContext(this.model, -1);
+        const nextHeadingLevel = headingEdgeEntryContext(this.model, 1);
         addVertical(
           'broadenContext',
-          contextTargets(headingParent)[0]
+          contextTargets(previousHeadingLevel)[0]
         );
-      }
-
-      const headingLevel = contextHeadingLevel(headingRoute);
-      const child = this.currentTarget && headingLevel < 6
-        ? headingContextForTarget(
+        addVertical(
+          'narrowContext',
+          contextTargets(nextHeadingLevel)[0]
+        );
+      } else {
+        const headingParent = previousBroaderHeadingContext(
           this.model,
-          this.currentTarget,
-          headingLevel + 1
-        )
-        : null;
-      if (!child) {
-        const fallback = headingLevel < 6
-          ? nextNarrowFallbackContext(this.model, headingRoute)
+          headingRoute
+        );
+        if (headingParent) {
+          addVertical(
+            'broadenContext',
+            contextTargets(headingParent)[0]
+          );
+        }
+
+        const headingLevel = contextHeadingLevel(headingRoute);
+        const child = this.currentTarget && headingLevel < 6
+          ? nextDeeperHeadingContextForTarget(
+            this.model,
+            this.currentTarget,
+            headingRoute
+          )
           : null;
-        if (fallback) {
-          addVertical('narrowContext', contextTargets(fallback)[0]);
+        if (!child) {
+          const fallback = headingLevel < 6
+            ? nextNarrowFallbackContext(this.model, headingRoute)
+            : null;
+          if (fallback) {
+            addVertical('narrowContext', contextTargets(fallback)[0]);
+          }
         }
       }
     }
@@ -2066,7 +2176,7 @@ export class StructuralNavigationController {
     }));
 
     if (keylabelConfig.activation !== false && this.currentTarget) {
-      nativeActivationSymbols(this.currentTarget).forEach(symbols => {
+      preferredActivationSymbols(this.currentTarget).forEach(symbols => {
         add(
           this.currentTarget,
           symbols,

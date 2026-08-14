@@ -72,7 +72,8 @@ OpenKeyNav.init({
         backgroundColor : 'rgba(236, 255, 128, 1)',
         fontColor: 'black',
         outlineColor : 'rgb(134 148 53)',
-        fontSize : '14px',
+        fontSize : 'inherit',
+        minimumFontSize: '16px',
     },
     focus : {
         outlineColor : '#0088cc',
@@ -118,6 +119,7 @@ var OpenKeyNav = /*#__PURE__*/function () {
         backgroundColor: '#333',
         insetColor: '#000',
         fontSize: 'inherit',
+        minimumFontSize: '16px',
         arrowSize_px: 4
       },
       focus: {
@@ -518,17 +520,28 @@ var OpenKeyNav = /*#__PURE__*/function () {
   }, {
     key: "updateOverlayPosition",
     value: function updateOverlayPosition(element, overlay) {
-      var elementsToAvoid = document.querySelectorAll('[data-openkeynav-label], .openKeyNav-label-selected, .openKeyNav-toolBar'); // maybe also add labeled elements to this list dynamically
+      var elementsToAvoid = Array.from(document.querySelectorAll('[data-openkeynav-label], ' + '[data-openkeynav-keylabel-target-active], ' + '.openKeyNav-label-selected, .openKeyNav-toolBar'));
       var rectAvoid = element.getBoundingClientRect();
       var overlayWidth = overlay.getBoundingClientRect().width;
       var overlayHeight = overlay.getBoundingClientRect().height;
       var arrowWidth = this.config.spot.arrowSize_px;
+      var isOpenKeyNavOverlay = function isOpenKeyNavOverlay(avoidEl) {
+        var _avoidEl$classList, _avoidEl$classList2, _avoidEl$classList3;
+        return ((_avoidEl$classList = avoidEl.classList) === null || _avoidEl$classList === void 0 ? void 0 : _avoidEl$classList.contains('openKeyNav-label')) || ((_avoidEl$classList2 = avoidEl.classList) === null || _avoidEl$classList2 === void 0 ? void 0 : _avoidEl$classList2.contains('openKeyNav-label-selected')) || ((_avoidEl$classList3 = avoidEl.classList) === null || _avoidEl$classList3 === void 0 ? void 0 : _avoidEl$classList3.contains('openKeyNav-toolBar'));
+      };
       function isBoundingBoxIntersecting(rectOverlay, rectAvoid) {
         return !(rectOverlay.right <= rectAvoid.left || rectOverlay.left >= rectAvoid.right || rectOverlay.bottom <= rectAvoid.top || rectOverlay.top >= rectAvoid.bottom);
       }
       var isOverlapping = function isOverlapping(overlay, avoidEl) {
         var rectOverlay = overlay.getBoundingClientRect();
         var rectAvoid = avoidEl.getBoundingClientRect();
+
+        // OpenKeyNav overlays share the same visual plane. Their bounding
+        // boxes must never intersect, even when one overlay also crosses the
+        // target that the other overlay describes.
+        if (isOpenKeyNavOverlay(avoidEl)) {
+          return isBoundingBoxIntersecting(rectOverlay, rectAvoid);
+        }
         var isOverlapping_OnTop = function isOverlapping_OnTop() {
           // et's check if they are right above each other in the view.
           // this ensures elements inside modals or other containers visually hiding avoidEls can still have adjacent labels.
@@ -580,16 +593,15 @@ var OpenKeyNav = /*#__PURE__*/function () {
         return rect.left < 0 || rect.right > window.innerWidth || rect.top < 0 || rect.bottom > window.innerHeight;
       }
       function checkOverlap(overlay) {
-        return isCutOff(overlay) || Array.from(elementsToAvoid).some(function (avoidEl) {
+        return isCutOff(overlay) || elementsToAvoid.some(function (avoidEl) {
           if (avoidEl === overlay || avoidEl === element) {
             return false;
           }
 
           // Check if the element is directly on top of the avoidEl
-          var rectElement = element.getBoundingClientRect();
           var rectAvoidEl = avoidEl.getBoundingClientRect();
-          var isElementOnTop = isBoundingBoxIntersecting(rectElement, rectAvoidEl);
-          if (isElementOnTop) {
+          var isElementOnTop = isBoundingBoxIntersecting(rectAvoid, rectAvoidEl);
+          if (isElementOnTop && !isOpenKeyNavOverlay(avoidEl)) {
             return false;
           }
           return isOverlapping(overlay, avoidEl);

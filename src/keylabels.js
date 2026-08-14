@@ -288,6 +288,10 @@ export const showAssignedKeylabels = (
         segments: [symbols],
         commands: assignment.command ? [String(assignment.command)] : [],
       });
+      // Make every target visible to the shared collision check before the
+      // first overlay is positioned. This keeps placement single-pass while
+      // preventing an early keylabel from obscuring a later target.
+      markAssignedTarget(openKeyNav, owner, target);
       return;
     }
 
@@ -335,7 +339,6 @@ export const showAssignedKeylabels = (
       openKeyNav.updateOverlayPosition(target, overlay);
     }
     assignedTargetByOverlay.set(overlay, target);
-    markAssignedTarget(openKeyNav, owner, target);
     overlays.push(overlay);
   });
   if (!hasModifierSymbols) releaseAssignedModifierFeedback(openKeyNav);
