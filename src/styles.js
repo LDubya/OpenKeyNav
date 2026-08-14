@@ -598,8 +598,10 @@ export const injectStylesheet = (parent, replace) => {
           box-sizing: border-box;
           position: fixed;
           z-index: 2147483645;
-          display: block;
-          padding: .2em .45em;
+          display: flex;
+          align-items: center;
+          block-size: calc(${keylabelFontSize} + 8px);
+          padding: 0 .35em;
           border: var(--openkeynav-context-indicator-width) solid
             var(--openkeynav-context-indicator-color);
           border-block-end: 0;

@@ -142,7 +142,7 @@ static-table row/column inference is intentionally deferred.
   uses a dashed line and the existing neutral label palette so it remains
   distinct from the solid focus treatment. The tab uses those existing label
   and text colors, inherits the host page's typography, and owns only its
-  attached shape.
+  attached shape. Its box height follows the existing keylabel scale.
 - A heading range is capped by the nearest authored composed-DOM wrapper that
   groups that heading with a following exposed target, when that wrapper ends
   before the enclosing semantic context. This keeps final heading families

@@ -310,7 +310,8 @@ existing label palette instead of introducing another visual configuration.
 When the active context is backed by an authored heading, a small,
 non-interactive tab protrudes from an available outline edge and shows only its
 level (`h1` through `h6`). The tab uses the same existing neutral label and text
-colors, inherits the host page's typography, and adds only its attached shape.
+colors, inherits the host page's typography, matches the compact keylabel box
+height, and adds only its attached shape.
 Unheaded contexts do not receive an invented level tab. Applications can keep the outline
 visible throughout Structural Navigation with
 `modesConfig.structuralNavigation.contextIndicator.enabled: true`.

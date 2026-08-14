@@ -178,6 +178,14 @@ test.describe('structural navigation mode', () => {
       color: 'rgb(255, 255, 255)',
       backgroundColor: 'rgb(51, 51, 51)',
     });
+    const contextTabHeight = await headingLevelTab.evaluate(
+      element => element.getBoundingClientRect().height
+    );
+    const structuralKeylabelHeight = await page.locator(
+      '.openKeyNav-structural-keylabel'
+    ).first().evaluate(element => element.getBoundingClientRect().height);
+    expect(Math.abs(contextTabHeight - structuralKeylabelHeight))
+      .toBeLessThanOrEqual(1);
     expect(await page.locator('.openKeyNav-structural-keylabel').evaluateAll(
       (labels, contextIndicator) => labels.every(label => (
         Number(getComputedStyle(label).zIndex) >
