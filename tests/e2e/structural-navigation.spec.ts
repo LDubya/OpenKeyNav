@@ -853,6 +853,14 @@ test.describe('structural navigation mode', () => {
     await expect(structuralStatus).toContainText('Context: Results');
     await expect(indicator).toHaveAttribute('data-context-name', 'Results');
 
+    await page.keyboard.press('Digit2');
+    await expectDeepFocus(page, 'recommendation-a');
+    await expect(structuralStatus).toContainText('Context: Recommendations');
+
+    await page.keyboard.press('Shift+Digit2');
+    await expectDeepFocus(page, 'product-a');
+    await expect(structuralStatus).toContainText('Context: Results');
+
     await page.evaluate(() => {
       (window as any).okn.getScrollableElements = () => [
         document.getElementById('scroll-region-a'),

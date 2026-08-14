@@ -10,9 +10,23 @@ export const focusOnHeadings = (openKeyNav, headings, e) => {
       includeProgrammatic: false,
     });
     const model = buildStructuralModel({ root: document, targets });
-    const routes = model.headingRoutes
-      .filter(route => route.heading.matches(headings))
-      .filter(route => route.targets.length > 0);
+    const discoveredRouteIndex = new Map(
+      model.headingRoutes.map((route, index) => [route, index])
+    );
+    const compareRoutesInDocumentOrder = (left, right) => {
+      if (left.heading === right.heading) return 0;
+      const position = left.heading.compareDocumentPosition(right.heading);
+      if (!(position & Node.DOCUMENT_POSITION_DISCONNECTED)) {
+        if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+        if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+      }
+      return discoveredRouteIndex.get(left) - discoveredRouteIndex.get(right);
+    };
+    const allRoutes = model.headingRoutes
+      .filter(route => route.targets.length > 0)
+      .sort(compareRoutesInDocumentOrder);
+    const routes = allRoutes
+      .filter(route => route.heading.matches(headings));
     openKeyNav.config.headings.list = routes.map(route => route.targets[0]);
 
     if (openKeyNav.config.headings.list.length == 0) {
@@ -20,52 +34,79 @@ export const focusOnHeadings = (openKeyNav, headings, e) => {
     }
 
     const headingState = openKeyNav.config.headings;
-    const lastIndex = headingState.list.length - 1;
+    const lastIndex = routes.length - 1;
+    const activeElement = document.activeElement;
     const activeStructuralHeading = openKeyNav.structuralNavigation
       ?.activeAuthoredHeading?.();
-    const structuralRouteIndex = routes.findIndex(route => (
-      route.heading === activeStructuralHeading &&
-      route.targets.includes(document.activeElement)
-    ));
-    const rememberedRouteIndex = routes.findIndex(route => (
-      route.heading === headingState.currentHeading &&
-      route.targets[0] === document.activeElement
-    ));
-    let focusedHeadingIndex = structuralRouteIndex >= 0
-      ? structuralRouteIndex
-      : rememberedRouteIndex;
-    if (focusedHeadingIndex < 0) {
-      focusedHeadingIndex = routes.reduce((activeIndex, route, routeIndex) => (
-        route.targets.includes(document.activeElement)
-          ? routeIndex
-          : activeIndex
-      ), -1);
-    }
-    if (focusedHeadingIndex >= 0) {
-      headingState.currentHeadingIndex = focusedHeadingIndex;
-    } else {
-      // The current focus is outside this particular heading route. Start at
-      // its boundary instead of reusing an index from another heading level.
-      headingState.currentHeadingIndex = -1;
+    const rememberedHeading = headingState.currentHeading;
+    const inferredHeading = model.headingRoutes
+      .slice()
+      .sort(compareRoutesInDocumentOrder)
+      .reduce((nearestHeading, route) => {
+        const heading = route.heading;
+        if (heading === activeElement || heading.contains(activeElement)) {
+          return heading;
+        }
+        const position = heading.compareDocumentPosition(activeElement);
+        return position & Node.DOCUMENT_POSITION_FOLLOWING
+          ? heading
+          : nearestHeading;
+      }, null);
+    const currentHeading = activeStructuralHeading?.isConnected
+      ? activeStructuralHeading
+      : rememberedHeading?.isConnected
+        ? rememberedHeading
+        : inferredHeading;
+    const currentDocumentRouteIndex = currentHeading
+      ? -1
+      : allRoutes.reduce((activeIndex, route, routeIndex) => (
+          route.targets.includes(activeElement)
+            ? routeIndex
+            : activeIndex
+        ), -1);
+    const routeDocumentIndices = routes.map(route => allRoutes.indexOf(route));
+    let nextRouteIndex = e.shiftKey ? lastIndex : 0;
+
+    // Move from the current authored heading's document position, even when
+    // it is a different level from the requested numbered heading command.
+    // This makes 1–6 mean "next/previous valid heading of this level" rather
+    // than "start this level's list from the beginning."
+    if (currentHeading && e.shiftKey) {
+      for (let index = lastIndex; index >= 0; index--) {
+        const position = currentHeading.compareDocumentPosition(
+          routes[index].heading
+        );
+        if (position & Node.DOCUMENT_POSITION_PRECEDING) {
+          nextRouteIndex = index;
+          break;
+        }
+      }
+    } else if (currentHeading) {
+      const followingRouteIndex = routes.findIndex(route => (
+        currentHeading.compareDocumentPosition(route.heading) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+      ));
+      if (followingRouteIndex >= 0) {
+        nextRouteIndex = followingRouteIndex;
+      }
+    } else if (e.shiftKey) {
+      for (let index = lastIndex; index >= 0; index--) {
+        if (routeDocumentIndices[index] < currentDocumentRouteIndex) {
+          nextRouteIndex = index;
+          break;
+        }
+      }
+    } else if (currentDocumentRouteIndex >= 0) {
+      const followingRouteIndex = routeDocumentIndices.findIndex(
+        routeIndex => routeIndex > currentDocumentRouteIndex
+      );
+      if (followingRouteIndex >= 0) {
+        nextRouteIndex = followingRouteIndex;
+      }
     }
 
-    // handle moving to the next / previous heading
-    if (e.shiftKey) {
-      // shift key is pressed, so move backwards. If at the beginning, go to the end.
-      if (headingState.currentHeadingIndex > 0) {
-        headingState.currentHeadingIndex--;
-      } else {
-        headingState.currentHeadingIndex = lastIndex;
-      }
-    } else {
-      // Move to the next heading. If at the end, go to the beginning.
-      if (headingState.currentHeadingIndex < lastIndex) {
-        headingState.currentHeadingIndex++;
-      } else {
-        headingState.currentHeadingIndex = 0;
-      }
-    }
-    const nextRoute = routes[headingState.currentHeadingIndex];
+    headingState.currentHeadingIndex = nextRouteIndex;
+    const nextRoute = routes[nextRouteIndex];
     const nextTarget = nextRoute.targets[0];
     headingState.currentHeading = nextRoute.heading;
     const settledTarget = openKeyNav.focus(nextTarget);

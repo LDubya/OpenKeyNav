@@ -132,6 +132,72 @@ describe('OpenKeyNav focus', () => {
     expect(openKeyNav.config.headings.currentHeading.id).toBe('heading-three');
   });
 
+  it('continues numbered heading navigation from a different active level', () => {
+    document.body.innerHTML = `
+      <h3 id="earlier-three">Earlier three</h3>
+      <button id="earlier-three-target">Earlier three target</button>
+      <h2 id="current-two">Current two</h2>
+      <button id="current-two-target">Current two target</button>
+      <h3 id="later-three">Later three</h3>
+      <button id="later-three-target">Later three target</button>
+    `;
+    openKeyNav.config.debug.screenReaderVisible = true;
+    const currentHeading = document.getElementById('current-two');
+    const currentTarget = document.getElementById('current-two-target');
+    currentTarget.focus();
+    openKeyNav.config.headings.currentHeading = currentHeading;
+
+    focusOnHeadings(openKeyNav, 'h3', { shiftKey: false });
+    expect(document.activeElement.id).toBe('later-three-target');
+
+    currentTarget.focus();
+    openKeyNav.config.headings.currentHeading = currentHeading;
+    focusOnHeadings(openKeyNav, 'h3', { shiftKey: true });
+    expect(document.activeElement.id).toBe('earlier-three-target');
+  });
+
+  it('keeps the active authored heading authoritative across target refreshes', () => {
+    document.body.innerHTML = `
+      <h2 id="earlier-two">Earlier two</h2>
+      <button id="earlier-two-target">Earlier two target</button>
+      <h3 id="current-three">Current three</h3>
+      <h2 id="later-two">Later two</h2>
+      <button id="later-two-target">Later two target</button>
+      <button id="refreshed-target">Target from a refreshed route</button>
+    `;
+    openKeyNav.config.debug.screenReaderVisible = true;
+    const currentHeading = document.getElementById('current-three');
+    document.getElementById('refreshed-target').focus();
+
+    // A reactive page can refresh the discovered target set between entering
+    // Structural Navigation and issuing a numbered heading command. The
+    // authored heading identity remains the navigation origin.
+    vi.spyOn(openKeyNav.structuralNavigation, 'activeAuthoredHeading')
+      .mockReturnValue(currentHeading);
+
+    focusOnHeadings(openKeyNav, 'h2', { shiftKey: false });
+    expect(document.activeElement.id).toBe('later-two-target');
+  });
+
+  it('infers the authored origin from focus when no heading is remembered', () => {
+    document.body.innerHTML = `
+      <h2>Earlier two</h2>
+      <button id="earlier-two-target">Earlier two target</button>
+      <h3>Current three</h3>
+      <button id="current-three-target">Current three target</button>
+      <h2>Later two</h2>
+      <button id="later-two-target">Later two target</button>
+    `;
+    openKeyNav.config.debug.screenReaderVisible = true;
+    document.getElementById('current-three-target').focus();
+    vi.spyOn(openKeyNav.structuralNavigation, 'activeAuthoredHeading')
+      .mockReturnValue(null);
+
+    focusOnHeadings(openKeyNav, 'h2', { shiftKey: false });
+
+    expect(document.activeElement.id).toBe('later-two-target');
+  });
+
   it('synchronizes a shared tabbable target with the active structural heading', () => {
     document.body.innerHTML = `
       <div id="editor" contenteditable="true">
