@@ -221,7 +221,7 @@ After enabling OpenKeyNav with `Shift+o`, press `r` to enter Structural Navigati
 | Move to the previous or next structural context start | `Alt+Shift+Tab` / `Alt+Tab` |
 | Move to the previous or next lateral structural context | `Shift+Left` / `Shift+Right` |
 | Broaden or narrow the active context | `Shift+Up` / `Shift+Down` |
-| Hide the visible status without leaving the mode | `Shift+Escape` |
+| Hide the visible debug status without leaving the mode | `Shift+Escape` |
 | Exit Structural Navigation | `Alt+r` |
 
 For a heading-backed context, `Shift+Left` and `Shift+Right` follow the authored
