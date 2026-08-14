@@ -128,6 +128,12 @@ test.describe('structural navigation mode', () => {
     await expectDeepFocus(page, 'clear-filters');
     await expect(indicator).toBeVisible();
     await expect(indicator).toHaveAttribute('data-context-name', 'Catalog');
+    const headingLevelTab = page.locator(
+      '.openKeyNav-structural-context-heading-level'
+    );
+    await expect(headingLevelTab).toBeVisible();
+    await expect(headingLevelTab).toHaveText('h1');
+    await expect(indicator).toHaveAttribute('data-heading-level', '1');
     expect(await indicator.evaluate(element => {
       const style = getComputedStyle(element);
       return {
@@ -151,11 +157,14 @@ test.describe('structural navigation mode', () => {
     await page.keyboard.press('Shift+ArrowDown');
     await expect(indicator).toBeVisible();
     await expect(indicator).toHaveAttribute('data-context-name', 'Filters');
+    await expect(headingLevelTab).toHaveText('h2');
+    await expect(indicator).toHaveAttribute('data-heading-level', '2');
 
     await page.keyboard.press('Shift+ArrowRight');
     await expectDeepFocus(page, 'product-a');
     await expect(indicator).toBeVisible();
     await expect(indicator).toHaveAttribute('data-context-name', 'Results');
+    await expect(headingLevelTab).toHaveText('h2');
 
     const scrollTopBefore = await page.evaluate(() => window.scrollY);
     await page.keyboard.press('ArrowDown');
@@ -1160,10 +1169,20 @@ test.describe('structural navigation mode', () => {
     await expect(indicator).toHaveAttribute('aria-hidden', 'true');
     await expect(indicator).not.toHaveAttribute('tabindex', /.+/);
     await expect(indicator).toHaveAttribute('data-context-name', 'Filters');
+    const headingLevelTab = page.locator(
+      '.openKeyNav-structural-context-heading-level'
+    );
+    await expect(headingLevelTab).toBeVisible();
+    await expect(headingLevelTab).toHaveText('h2');
+    await expect(indicator).toHaveAttribute('data-heading-level', '2');
+    await expect(indicator).toHaveAttribute('data-heading-tab-position', 'top');
     const filtersBox = await page.locator('#filters').boundingBox();
     const filtersIndicatorBox = await indicator.boundingBox();
+    const headingLevelTabBox = await headingLevelTab.boundingBox();
     expect(filtersBox).not.toBeNull();
     expect(filtersIndicatorBox).not.toBeNull();
+    expect(headingLevelTabBox).not.toBeNull();
+    expect(headingLevelTabBox!.y).toBeLessThan(filtersIndicatorBox!.y);
     expect(filtersIndicatorBox!.x).toBeLessThan(filtersBox!.x);
     expect(filtersIndicatorBox!.y).toBeLessThan(filtersBox!.y);
     expect(filtersIndicatorBox!.width).toBeGreaterThan(filtersBox!.width);
@@ -1180,6 +1199,7 @@ test.describe('structural navigation mode', () => {
     await expect(filtersStatusContent).not.toContainText('Previous context:');
     await expect(filtersStatusContent).not.toContainText('Next context:');
     await expect(indicator).toHaveAttribute('data-context-name', 'Results');
+    await expect(headingLevelTab).toHaveText('h2');
 
     await page.keyboard.press('Alt+KeyR');
     await expect(indicator).toHaveCount(0);

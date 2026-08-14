@@ -594,6 +594,57 @@ export const injectStylesheet = (parent, replace) => {
           background: transparent;
           pointer-events: none;
         }
+
+        .openKeyNav-structural-context-heading-level {
+          box-sizing: border-box;
+          position: fixed;
+          z-index: 2147483645;
+          display: block;
+          padding: .2em .45em;
+          border: var(--openkeynav-context-indicator-width) solid
+            var(--openkeynav-context-indicator-color);
+          border-block-end: 0;
+          border-radius: 4px 4px 0 0;
+          line-height: 1;
+          white-space: nowrap;
+          color: var(--openkeynav-context-indicator-contrast-color);
+          background-color: var(--openkeynav-context-indicator-color);
+          pointer-events: none;
+          user-select: none;
+        }
+
+        .openKeyNav-structural-context-heading-level[hidden] {
+          display: none;
+        }
+
+        .openKeyNav-structural-context-heading-level[data-heading-tab-position="right"] {
+          border-inline-start: 0;
+          border-block-end: var(--openkeynav-context-indicator-width) solid
+            var(--openkeynav-context-indicator-color);
+          border-radius: 0 4px 4px 0;
+        }
+
+        .openKeyNav-structural-context-heading-level[data-heading-tab-position="bottom"] {
+          border-block-start: 0;
+          border-block-end: var(--openkeynav-context-indicator-width) solid
+            var(--openkeynav-context-indicator-color);
+          border-radius: 0 0 4px 4px;
+        }
+
+        .openKeyNav-structural-context-heading-level[data-heading-tab-position="left"] {
+          border-inline-end: 0;
+          border-block-end: var(--openkeynav-context-indicator-width) solid
+            var(--openkeynav-context-indicator-color);
+          border-radius: 4px 0 0 4px;
+        }
+
+        .openKeyNav-structural-context-heading-level[data-heading-tab-position="inside"] {
+          border-inline-start: 0;
+          border-block-start: 0;
+          border-block-end: var(--openkeynav-context-indicator-width) solid
+            var(--openkeynav-context-indicator-color);
+          border-radius: 0 0 4px 0;
+        }
       `;
 
     document.head.appendChild(style);

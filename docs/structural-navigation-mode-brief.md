@@ -849,7 +849,9 @@ Requirements:
 - OpenKeyNav may augment a weak page focus indicator but must not suppress the page's native or authored focus styles.
 - An opt-in generated visual context indicator may outline the active context,
   but it is disabled by default, `aria-hidden`, ignores pointer events, never
-  receives focus, and is removed on mode exit.
+  receives focus, and is removed on mode exit. When the context has an authored
+  heading rank, a small tab protrudes from an available edge and contains only
+  `h1` through `h6`; an unheaded context receives no fabricated rank tab.
 - No generated item is presented as a second focused page target.
 
 ## Public configuration

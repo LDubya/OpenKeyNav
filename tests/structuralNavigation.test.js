@@ -1777,12 +1777,20 @@ describe('StructuralNavigationController', () => {
     );
     expect(indicator?.dataset.contextName).toBe('Catalog');
     expect(indicator?.style.display).toBe('block');
+    const headingLevelTab = document.querySelector(
+      '.openKeyNav-structural-context-heading-level'
+    );
+    expect(headingLevelTab.textContent).toBe('h1');
+    expect(headingLevelTab.hidden).toBe(false);
+    expect(indicator.dataset.headingLevel).toBe('1');
 
     expect(dispatchKey(clear, 'ArrowDown', { shiftKey: true }).defaultPrevented)
       .toBe(true);
     openKeyNav.structuralNavigation.updateContextIndicator();
     expect(indicator.dataset.contextName).toBe('Filters');
     expect(indicator.style.display).toBe('block');
+    expect(headingLevelTab.textContent).toBe('h2');
+    expect(indicator.dataset.headingLevel).toBe('2');
 
     expect(dispatchKey(clear, 'ArrowRight', { shiftKey: true }).defaultPrevented)
       .toBe(true);
@@ -1790,6 +1798,7 @@ describe('StructuralNavigationController', () => {
     expect(document.activeElement.id).toBe('transient-result');
     expect(indicator.dataset.contextName).toBe('Results');
     expect(indicator.style.display).toBe('block');
+    expect(headingLevelTab.textContent).toBe('h2');
 
     for (const key of ['ArrowDown', 'PageDown', ' ']) {
       expect(dispatchKey(document.activeElement, key).defaultPrevented)
@@ -1809,6 +1818,7 @@ describe('StructuralNavigationController', () => {
       .toBe(false);
     openKeyNav.structuralNavigation.updateContextIndicator();
     expect(indicator.style.display).toBe('none');
+    expect(headingLevelTab.hidden).toBe(true);
 
     clear.focus();
     await nextTask();
@@ -1866,6 +1876,14 @@ describe('StructuralNavigationController', () => {
     expect(indicator.getAttribute('aria-hidden')).toBe('true');
     expect(indicator.hasAttribute('tabindex')).toBe(false);
     expect(indicator.dataset.contextName).toBe('Filters');
+    const headingLevelTab = document.querySelector(
+      '.openKeyNav-structural-context-heading-level'
+    );
+    expect(indicator.contains(headingLevelTab)).toBe(false);
+    expect(headingLevelTab.getAttribute('aria-hidden')).toBe('true');
+    expect(headingLevelTab.textContent).toBe('h2');
+    expect(headingLevelTab.hidden).toBe(false);
+    expect(indicator.dataset.headingLevel).toBe('2');
     expect(indicator.style.left).toBe('10px');
     expect(indicator.style.top).toBe('20px');
 
@@ -1875,6 +1893,8 @@ describe('StructuralNavigationController', () => {
     expect(openKeyNav.getStructuralNavigationState().activeContext.name)
       .toBe('Catalog');
     expect(indicator.dataset.contextName).toBe('Catalog');
+    expect(headingLevelTab.textContent).toBe('h1');
+    expect(indicator.dataset.headingLevel).toBe('1');
     expect(indicator.style.left).toBe('0px');
     expect(indicator.style.top).toBe('0px');
     expect(indicator.style.width).toBe('510px');
@@ -1899,6 +1919,8 @@ describe('StructuralNavigationController', () => {
     expect(openKeyNav.getStructuralNavigationState().activeContext.name)
       .toBe('Results');
     expect(indicator.dataset.contextName).toBe('Results');
+    expect(headingLevelTab.textContent).toBe('h2');
+    expect(indicator.dataset.headingLevel).toBe('2');
     expect(indicator.style.left).toBe('240px');
     expect(indicator.style.top).toBe('20px');
     expect(indicator.style.width).toBe('250px');
@@ -1910,6 +1932,43 @@ describe('StructuralNavigationController', () => {
     openKeyNav.exitStructuralNavigation();
     expect(document.querySelector('.openKeyNav-structural-context-outline'))
       .toBeNull();
+    expect(document.querySelector(
+      '.openKeyNav-structural-context-heading-level'
+    )).toBeNull();
+  });
+
+  it('does not put an invented heading level on an unheaded context outline', () => {
+    document.body.innerHTML = `
+      <nav id="tools" aria-label="Tools">
+        <button id="home">Home</button>
+      </nav>
+    `;
+    document.getElementById('tools').getBoundingClientRect = () => ({
+      left: 10, top: 10, right: 110, bottom: 110, width: 100, height: 100,
+    });
+
+    openKeyNav = createOpenKeyNav({
+      modesConfig: {
+        structuralNavigation: {
+          contextIndicator: { enabled: true },
+        },
+      },
+    });
+    document.getElementById('home').focus();
+    openKeyNav.enterStructuralNavigation();
+    openKeyNav.structuralNavigation.updateContextIndicator();
+
+    const indicator = document.querySelector(
+      '.openKeyNav-structural-context-outline'
+    );
+    const headingLevelTab = document.querySelector(
+      '.openKeyNav-structural-context-heading-level'
+    );
+    expect(indicator.dataset.contextName).toBe('Document');
+    expect(indicator.hasAttribute('data-heading-level')).toBe(false);
+    expect(indicator.hasAttribute('data-heading-tab-position')).toBe(false);
+    expect(headingLevelTab.hidden).toBe(true);
+    expect(headingLevelTab.textContent).toBe('');
   });
 
   it('invalidates lazily and re-enters at the first live target after removal', async () => {

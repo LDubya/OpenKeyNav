@@ -41,7 +41,7 @@
 	  value: true
 	});
 	version.version = void 0;
-	version.version = "0.1.250";
+	version.version = "0.1.252";
 
 	var signals = {};
 
@@ -4360,6 +4360,7 @@
 	    this.observedShadowRoots = new Set();
 	    this.focusSyncToken = 0;
 	    this.contextIndicatorElement = null;
+	    this.contextIndicatorHeadingLevelElement = null;
 	    this.contextIndicatorFrame = null;
 	    this.contextIndicatorResizeObserver = null;
 	    this.contextIndicatorObservedElements = new Set();
@@ -5439,22 +5440,97 @@
 	        element.className = 'openKeyNav-structural-context-outline';
 	        element.setAttribute('data-openkeynav-ui', 'structural-context-outline');
 	        element.setAttribute('aria-hidden', 'true');
+	        var _headingLevel = this.document.createElement('span');
+	        _headingLevel.className = 'openKeyNav-structural-context-heading-level';
+	        _headingLevel.setAttribute('data-openkeynav-ui', 'structural-context-heading-level');
+	        _headingLevel.setAttribute('aria-hidden', 'true');
+	        _headingLevel.hidden = true;
 	        this.contextIndicatorElement = element;
+	        this.contextIndicatorHeadingLevelElement = _headingLevel;
 	      }
 	      var host = this.contextIndicatorHost();
 	      if (host && this.contextIndicatorElement.parentNode !== host) {
 	        host.appendChild(this.contextIndicatorElement);
 	      }
+	      var headingLevel = this.contextIndicatorHeadingLevelElement;
+	      if (host && headingLevel && headingLevel.parentNode !== host) {
+	        host.appendChild(headingLevel);
+	      }
 	    }
 	  }, {
 	    key: "removeContextIndicator",
 	    value: function removeContextIndicator() {
-	      var _this$contextIndicato2, _this$contextIndicato3;
+	      var _this$contextIndicato2, _this$contextIndicato3, _this$contextIndicato4;
 	      (_this$contextIndicato2 = this.contextIndicatorResizeObserver) === null || _this$contextIndicato2 === void 0 || _this$contextIndicato2.disconnect();
 	      this.contextIndicatorResizeObserver = null;
 	      this.contextIndicatorObservedElements.clear();
 	      (_this$contextIndicato3 = this.contextIndicatorElement) === null || _this$contextIndicato3 === void 0 || _this$contextIndicato3.remove();
+	      (_this$contextIndicato4 = this.contextIndicatorHeadingLevelElement) === null || _this$contextIndicato4 === void 0 || _this$contextIndicato4.remove();
 	      this.contextIndicatorElement = null;
+	      this.contextIndicatorHeadingLevelElement = null;
+	    }
+	  }, {
+	    key: "hideContextIndicator",
+	    value: function hideContextIndicator() {
+	      if (this.contextIndicatorElement) {
+	        this.contextIndicatorElement.style.display = 'none';
+	      }
+	      if (this.contextIndicatorHeadingLevelElement) {
+	        this.contextIndicatorHeadingLevelElement.hidden = true;
+	      }
+	    }
+	  }, {
+	    key: "updateContextIndicatorHeadingLevel",
+	    value: function updateContextIndicatorHeadingLevel(_ref10) {
+	      var context = _ref10.context,
+	        left = _ref10.left,
+	        top = _ref10.top,
+	        right = _ref10.right,
+	        bottom = _ref10.bottom,
+	        viewportWidth = _ref10.viewportWidth,
+	        viewportHeight = _ref10.viewportHeight,
+	        width = _ref10.width,
+	        color = _ref10.color,
+	        contrastColor = _ref10.contrastColor;
+	      var tab = this.contextIndicatorHeadingLevelElement;
+	      var indicator = this.contextIndicatorElement;
+	      if (!tab || !indicator) return;
+	      var headingLevel = contextHeadingLevel(context);
+	      if (headingLevel === null) {
+	        tab.hidden = true;
+	        tab.textContent = '';
+	        delete indicator.dataset.headingLevel;
+	        delete indicator.dataset.headingTabPosition;
+	        delete tab.dataset.headingTabPosition;
+	        return;
+	      }
+	      tab.hidden = false;
+	      tab.textContent = "h".concat(headingLevel);
+	      indicator.dataset.headingLevel = String(headingLevel);
+	      tab.style.setProperty('--openkeynav-context-indicator-color', color);
+	      tab.style.setProperty('--openkeynav-context-indicator-contrast-color', contrastColor);
+	      tab.style.setProperty('--openkeynav-context-indicator-width', "".concat(width, "px"));
+	      var setPosition = function setPosition(position, tabLeft, tabTop) {
+	        indicator.dataset.headingTabPosition = position;
+	        tab.dataset.headingTabPosition = position;
+	        tab.style.left = "".concat(tabLeft, "px");
+	        tab.style.top = "".concat(tabTop, "px");
+	      };
+	      setPosition('inside', left, top);
+	      var tabRect = tab.getBoundingClientRect();
+	      var tabWidth = tabRect.width || tab.scrollWidth || 24;
+	      var tabHeight = tabRect.height || tab.scrollHeight || 24;
+	      if (top >= tabHeight) {
+	        setPosition('top', left, top - tabHeight + width);
+	        return;
+	      }
+	      if (viewportWidth - right >= tabWidth) {
+	        setPosition('right', right - width, top);
+	      } else if (viewportHeight - bottom >= tabHeight) {
+	        setPosition('bottom', left, bottom - width);
+	      } else if (left >= tabWidth) {
+	        setPosition('left', left - tabWidth + width, top);
+	      }
 	    }
 	  }, {
 	    key: "contextIndicatorElements",
@@ -5496,18 +5572,19 @@
 	    value: function updateContextIndicator() {
 	      var _this$document$docume, _this$document$docume2, _this$config$contextI2, _this$config$contextI3, _this$config$contextI4, _this$config$contextI5, _this$config$contextI6, _this$config$contextI7;
 	      if (!this.active || !this.contextIndicatorShouldDisplay()) {
-	        var _this$contextIndicato4;
-	        if (this.contextIndicatorElement) {
-	          this.contextIndicatorElement.style.display = 'none';
-	        }
-	        (_this$contextIndicato4 = this.contextIndicatorResizeObserver) === null || _this$contextIndicato4 === void 0 || _this$contextIndicato4.disconnect();
+	        var _this$contextIndicato5;
+	        this.hideContextIndicator();
+	        (_this$contextIndicato5 = this.contextIndicatorResizeObserver) === null || _this$contextIndicato5 === void 0 || _this$contextIndicato5.disconnect();
 	        this.contextIndicatorObservedElements.clear();
 	        return;
 	      }
 	      this.ensureContextIndicator();
 	      var indicator = this.contextIndicatorElement;
 	      var context = this.activeTypedContext || this.activeStructuralContext;
-	      if (!indicator || !context) return;
+	      if (!indicator || !context) {
+	        this.hideContextIndicator();
+	        return;
+	      }
 	      var view = this.document.defaultView;
 	      var viewportWidth = (view === null || view === void 0 ? void 0 : view.innerWidth) || ((_this$document$docume = this.document.documentElement) === null || _this$document$docume === void 0 ? void 0 : _this$document$docume.clientWidth) || 0;
 	      var viewportHeight = (view === null || view === void 0 ? void 0 : view.innerHeight) || ((_this$document$docume2 = this.document.documentElement) === null || _this$document$docume2 === void 0 ? void 0 : _this$document$docume2.clientHeight) || 0;
@@ -5531,7 +5608,7 @@
 	      }
 	      this.observeContextIndicatorElements(elements);
 	      if (!rect || !viewportWidth || !viewportHeight) {
-	        indicator.style.display = 'none';
+	        this.hideContextIndicator();
 	        return;
 	      }
 	      var configuredOffset = Number((_this$config$contextI2 = this.config.contextIndicator) === null || _this$config$contextI2 === void 0 ? void 0 : _this$config$contextI2.offset);
@@ -5541,7 +5618,7 @@
 	      var right = Math.min(viewportWidth, rect.right + offset);
 	      var bottom = Math.min(viewportHeight, rect.bottom + offset);
 	      if (right <= left || bottom <= top) {
-	        indicator.style.display = 'none';
+	        this.hideContextIndicator();
 	        return;
 	      }
 	      var configuredWidth = Number((_this$config$contextI3 = this.config.contextIndicator) === null || _this$config$contextI3 === void 0 ? void 0 : _this$config$contextI3.width);
@@ -5558,6 +5635,18 @@
 	      indicator.style.height = "".concat(bottom - top, "px");
 	      indicator.style.border = "".concat(width, "px ").concat(style, " ").concat(color);
 	      indicator.style.boxShadow = "0 0 0 ".concat(contrastWidth, "px ").concat(contrastColor);
+	      this.updateContextIndicatorHeadingLevel({
+	        context: context,
+	        left: left,
+	        top: top,
+	        right: right,
+	        bottom: bottom,
+	        viewportWidth: viewportWidth,
+	        viewportHeight: viewportHeight,
+	        width: width,
+	        color: color,
+	        contrastColor: contrastColor
+	      });
 	      indicator.dataset.contextId = String(contextId(context) || '');
 	      indicator.dataset.contextName = context.name || 'Document';
 	      indicator.dataset.contextType = this.activeTypedContext ? this.activeTypedContext.type || 'typed' : 'structural';
@@ -5567,9 +5656,9 @@
 	    value: function updateStatus() {
 	      var _this$config$status, _this$config$status2, _this$config$status3;
 	      var prefix = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-	      var _ref10 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
-	        _ref10$force = _ref10.force,
-	        force = _ref10$force === void 0 ? false : _ref10$force;
+	      var _ref11 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+	        _ref11$force = _ref11.force,
+	        force = _ref11$force === void 0 ? false : _ref11$force;
 	      if (!this.active && !force) return;
 	      if (this.active) {
 	        this.scheduleContextIndicatorUpdate();
@@ -6240,7 +6329,7 @@
 	  // `;
 	  // ensuring hidden labeled elements are made visible
 	  style.textContent += "\n        [data-openkeynav-label]:not(.openKeyNav-label):not(:focus),\n        [data-openkeynav-keylabel-target-active]:not(:focus){\n          opacity:1 !important;\n          visibility:visible !important;\n        }\n      ";
-	  style.textContent += "\n        [data-openkeynav-focused]{\n          outline: 2px ".concat(openKeyNav.config.focus.outlineStyle, " ").concat(openKeyNav.config.focus.outlineColor, " !important; \n          outline-offset: -2px !important;\n        }\n\n        .openKeyNav-structural-context-outline {\n          box-sizing: border-box;\n          position: fixed;\n          z-index: 2147483645;\n          display: none;\n          border-radius: 4px;\n          background: transparent;\n          pointer-events: none;\n        }\n      ");
+	  style.textContent += "\n        [data-openkeynav-focused]{\n          outline: 2px ".concat(openKeyNav.config.focus.outlineStyle, " ").concat(openKeyNav.config.focus.outlineColor, " !important; \n          outline-offset: -2px !important;\n        }\n\n        .openKeyNav-structural-context-outline {\n          box-sizing: border-box;\n          position: fixed;\n          z-index: 2147483645;\n          display: none;\n          border-radius: 4px;\n          background: transparent;\n          pointer-events: none;\n        }\n\n        .openKeyNav-structural-context-heading-level {\n          box-sizing: border-box;\n          position: fixed;\n          z-index: 2147483645;\n          display: block;\n          padding: .2em .45em;\n          border: var(--openkeynav-context-indicator-width) solid\n            var(--openkeynav-context-indicator-color);\n          border-block-end: 0;\n          border-radius: 4px 4px 0 0;\n          line-height: 1;\n          white-space: nowrap;\n          color: var(--openkeynav-context-indicator-contrast-color);\n          background-color: var(--openkeynav-context-indicator-color);\n          pointer-events: none;\n          user-select: none;\n        }\n\n        .openKeyNav-structural-context-heading-level[hidden] {\n          display: none;\n        }\n\n        .openKeyNav-structural-context-heading-level[data-heading-tab-position=\"right\"] {\n          border-inline-start: 0;\n          border-block-end: var(--openkeynav-context-indicator-width) solid\n            var(--openkeynav-context-indicator-color);\n          border-radius: 0 4px 4px 0;\n        }\n\n        .openKeyNav-structural-context-heading-level[data-heading-tab-position=\"bottom\"] {\n          border-block-start: 0;\n          border-block-end: var(--openkeynav-context-indicator-width) solid\n            var(--openkeynav-context-indicator-color);\n          border-radius: 0 0 4px 4px;\n        }\n\n        .openKeyNav-structural-context-heading-level[data-heading-tab-position=\"left\"] {\n          border-inline-end: 0;\n          border-block-end: var(--openkeynav-context-indicator-width) solid\n            var(--openkeynav-context-indicator-color);\n          border-radius: 4px 0 0 4px;\n        }\n\n        .openKeyNav-structural-context-heading-level[data-heading-tab-position=\"inside\"] {\n          border-inline-start: 0;\n          border-block-start: 0;\n          border-block-end: var(--openkeynav-context-indicator-width) solid\n            var(--openkeynav-context-indicator-color);\n          border-radius: 0 0 4px 0;\n        }\n      ");
 	  document.head.appendChild(style);
 	};
 	var deleteStylesheets = styles.deleteStylesheets = function deleteStylesheets() {

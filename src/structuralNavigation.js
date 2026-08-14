@@ -933,6 +933,7 @@ export class StructuralNavigationController {
     this.observedShadowRoots = new Set();
     this.focusSyncToken = 0;
     this.contextIndicatorElement = null;
+    this.contextIndicatorHeadingLevelElement = null;
     this.contextIndicatorFrame = null;
     this.contextIndicatorResizeObserver = null;
     this.contextIndicatorObservedElements = new Set();
@@ -2309,12 +2310,26 @@ export class StructuralNavigationController {
       element.className = 'openKeyNav-structural-context-outline';
       element.setAttribute('data-openkeynav-ui', 'structural-context-outline');
       element.setAttribute('aria-hidden', 'true');
+      const headingLevel = this.document.createElement('span');
+      headingLevel.className =
+        'openKeyNav-structural-context-heading-level';
+      headingLevel.setAttribute(
+        'data-openkeynav-ui',
+        'structural-context-heading-level'
+      );
+      headingLevel.setAttribute('aria-hidden', 'true');
+      headingLevel.hidden = true;
       this.contextIndicatorElement = element;
+      this.contextIndicatorHeadingLevelElement = headingLevel;
     }
 
     const host = this.contextIndicatorHost();
     if (host && this.contextIndicatorElement.parentNode !== host) {
       host.appendChild(this.contextIndicatorElement);
+    }
+    const headingLevel = this.contextIndicatorHeadingLevelElement;
+    if (host && headingLevel && headingLevel.parentNode !== host) {
+      host.appendChild(headingLevel);
     }
   }
 
@@ -2323,7 +2338,83 @@ export class StructuralNavigationController {
     this.contextIndicatorResizeObserver = null;
     this.contextIndicatorObservedElements.clear();
     this.contextIndicatorElement?.remove();
+    this.contextIndicatorHeadingLevelElement?.remove();
     this.contextIndicatorElement = null;
+    this.contextIndicatorHeadingLevelElement = null;
+  }
+
+  hideContextIndicator() {
+    if (this.contextIndicatorElement) {
+      this.contextIndicatorElement.style.display = 'none';
+    }
+    if (this.contextIndicatorHeadingLevelElement) {
+      this.contextIndicatorHeadingLevelElement.hidden = true;
+    }
+  }
+
+  updateContextIndicatorHeadingLevel({
+    context,
+    left,
+    top,
+    right,
+    bottom,
+    viewportWidth,
+    viewportHeight,
+    width,
+    color,
+    contrastColor,
+  }) {
+    const tab = this.contextIndicatorHeadingLevelElement;
+    const indicator = this.contextIndicatorElement;
+    if (!tab || !indicator) return;
+
+    const headingLevel = contextHeadingLevel(context);
+    if (headingLevel === null) {
+      tab.hidden = true;
+      tab.textContent = '';
+      delete indicator.dataset.headingLevel;
+      delete indicator.dataset.headingTabPosition;
+      delete tab.dataset.headingTabPosition;
+      return;
+    }
+
+    tab.hidden = false;
+    tab.textContent = `h${headingLevel}`;
+    indicator.dataset.headingLevel = String(headingLevel);
+    tab.style.setProperty(
+      '--openkeynav-context-indicator-color',
+      color
+    );
+    tab.style.setProperty(
+      '--openkeynav-context-indicator-contrast-color',
+      contrastColor
+    );
+    tab.style.setProperty(
+      '--openkeynav-context-indicator-width',
+      `${width}px`
+    );
+
+    const setPosition = (position, tabLeft, tabTop) => {
+      indicator.dataset.headingTabPosition = position;
+      tab.dataset.headingTabPosition = position;
+      tab.style.left = `${tabLeft}px`;
+      tab.style.top = `${tabTop}px`;
+    };
+    setPosition('inside', left, top);
+    const tabRect = tab.getBoundingClientRect();
+    const tabWidth = tabRect.width || tab.scrollWidth || 24;
+    const tabHeight = tabRect.height || tab.scrollHeight || 24;
+    if (top >= tabHeight) {
+      setPosition('top', left, top - tabHeight + width);
+      return;
+    }
+    if (viewportWidth - right >= tabWidth) {
+      setPosition('right', right - width, top);
+    } else if (viewportHeight - bottom >= tabHeight) {
+      setPosition('bottom', left, bottom - width);
+    } else if (left >= tabWidth) {
+      setPosition('left', left - tabWidth + width, top);
+    }
   }
 
   contextIndicatorElements(context) {
@@ -2363,9 +2454,7 @@ export class StructuralNavigationController {
 
   updateContextIndicator() {
     if (!this.active || !this.contextIndicatorShouldDisplay()) {
-      if (this.contextIndicatorElement) {
-        this.contextIndicatorElement.style.display = 'none';
-      }
+      this.hideContextIndicator();
       this.contextIndicatorResizeObserver?.disconnect();
       this.contextIndicatorObservedElements.clear();
       return;
@@ -2374,7 +2463,10 @@ export class StructuralNavigationController {
     this.ensureContextIndicator();
     const indicator = this.contextIndicatorElement;
     const context = this.activeTypedContext || this.activeStructuralContext;
-    if (!indicator || !context) return;
+    if (!indicator || !context) {
+      this.hideContextIndicator();
+      return;
+    }
 
     const view = this.document.defaultView;
     const viewportWidth = view?.innerWidth || this.document.documentElement?.clientWidth || 0;
@@ -2401,7 +2493,7 @@ export class StructuralNavigationController {
 
     this.observeContextIndicatorElements(elements);
     if (!rect || !viewportWidth || !viewportHeight) {
-      indicator.style.display = 'none';
+      this.hideContextIndicator();
       return;
     }
 
@@ -2414,7 +2506,7 @@ export class StructuralNavigationController {
     const right = Math.min(viewportWidth, rect.right + offset);
     const bottom = Math.min(viewportHeight, rect.bottom + offset);
     if (right <= left || bottom <= top) {
-      indicator.style.display = 'none';
+      this.hideContextIndicator();
       return;
     }
 
@@ -2440,6 +2532,18 @@ export class StructuralNavigationController {
     indicator.style.border = `${width}px ${style} ${color}`;
     indicator.style.boxShadow =
       `0 0 0 ${contrastWidth}px ${contrastColor}`;
+    this.updateContextIndicatorHeadingLevel({
+      context,
+      left,
+      top,
+      right,
+      bottom,
+      viewportWidth,
+      viewportHeight,
+      width,
+      color,
+      contrastColor,
+    });
     indicator.dataset.contextId = String(contextId(context) || '');
     indicator.dataset.contextName = context.name || 'Document';
     indicator.dataset.contextType = this.activeTypedContext

@@ -136,7 +136,9 @@ static-table row/column inference is intentionally deferred.
   and `structuralNavigate('nextPeerContext')` programmatically.
 - An optional generated, `aria-hidden`, pointer-transparent box can follow the
   active context boundary or heading range. It is disabled by default and never
-  enters target discovery or page focus.
+  enters target discovery or page focus. A non-interactive tab protrudes from
+  an available box edge and labels an authored heading context only as `h1`
+  through `h6`; unheaded contexts do not receive a fabricated rank.
 - A heading range is capped by the nearest authored composed-DOM wrapper that
   groups that heading with a following exposed target, when that wrapper ends
   before the enclosing semantic context. This keeps final heading families
