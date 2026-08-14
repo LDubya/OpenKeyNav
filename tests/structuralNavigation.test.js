@@ -123,6 +123,11 @@ describe('structural navigation key policy', () => {
       .toBe(true);
     expect(openKeyNav.config.modesConfig.structuralNavigation.contextIndicator)
       .toEqual({ enabled: false });
+    expect(openKeyNav.config.modesConfig.structuralNavigation.commands)
+      .toMatchObject({
+        previousContextStart: null,
+        nextContextStart: null,
+      });
 
     openKeyNav.destroy();
   });
@@ -193,7 +198,7 @@ describe('StructuralNavigationController', () => {
     }));
 
     expect(labelsFor('previous-target')).toEqual([
-      { command: 'previousContextStart', symbols: '⌥⇧⇥' },
+      { command: 'previousSiblingContext', symbols: '⇧←' },
     ]);
     expect(labelsFor('previous-tab-target')).toEqual([
       { command: 'previousTabTarget', symbols: '⇧⇥' },
@@ -202,7 +207,7 @@ describe('StructuralNavigationController', () => {
       { command: 'nextTabTarget', symbols: '⇥' },
     ]);
     expect(labelsFor('next-context-target')).toEqual([
-      { command: 'nextContextStart', symbols: '⌥⇥' },
+      { command: 'nextSiblingContext', symbols: '⇧→' },
     ]);
     expect(labelsFor('current-target')).toEqual([
       { command: 'activateEnter', symbols: '↵' },
@@ -255,7 +260,7 @@ describe('StructuralNavigationController', () => {
     expect(label?.textContent).toBe('↵');
   });
 
-  it('prefers a context-start keylabel over Shift+Down for the same target', async () => {
+  it('prefers a horizontal region keylabel over Shift+Down for the same target', async () => {
     document.body.innerHTML = `
       <section aria-labelledby="current-title">
         <h2 id="current-title">Current context</h2>
@@ -277,9 +282,9 @@ describe('StructuralNavigationController', () => {
       '.openKeyNav-structural-keylabel' +
       '[data-openkeynav-keylabel-target="child-target"]'
     );
-    expect(childLabel?.textContent).toBe('⌥⇥');
+    expect(childLabel?.textContent).toBe('⇧→');
     expect(childLabel?.dataset.openkeynavKeylabelCommand)
-      .toBe('nextContextStart');
+      .toBe('nextSiblingContext');
   });
 
   it('restores keylabels after live page mutations and native scroll keys', async () => {
@@ -317,7 +322,7 @@ describe('StructuralNavigationController', () => {
     expect(openKeyNav.structuralNavigation.dirty).toBe(false);
   });
 
-  it('jumps between context starts without changing native Tab behavior', async () => {
+  it('supports configured context-start chords without changing native Tab behavior', async () => {
     document.body.innerHTML = `
       <section aria-labelledby="root-title">
         <h1 id="root-title">Root Hollow</h1>
@@ -334,7 +339,20 @@ describe('StructuralNavigationController', () => {
         <button id="mothwing-lantern">Mothwing lantern</button>
       </section>
     `;
-    openKeyNav = createOpenKeyNav();
+    openKeyNav = createOpenKeyNav({
+      modesConfig: {
+        structuralNavigation: {
+          commands: {
+            previousContextStart: {
+              key: 'Tab',
+              altKey: true,
+              shiftKey: true,
+            },
+            nextContextStart: { key: 'Tab', altKey: true },
+          },
+        },
+      },
+    });
     openKeyNav.addKeydownEventListener();
     const rootLantern = document.getElementById('root-lantern');
     const fernLatch = document.getElementById('fern-latch');
@@ -391,7 +409,7 @@ describe('StructuralNavigationController', () => {
     expect(nativeShiftTab.defaultPrevented).toBe(false);
   });
 
-  it('uses the configured override modifier for context-start chords', async () => {
+  it('uses explicitly configured context-start chords', async () => {
     document.body.innerHTML = `
       <section aria-label="Alpha">
         <input id="alpha-editor" aria-label="Alpha editor">
@@ -404,7 +422,14 @@ describe('StructuralNavigationController', () => {
     openKeyNav = createOpenKeyNav({
       modesConfig: {
         structuralNavigation: {
-          overrideModifier: 'ctrlKey',
+          commands: {
+            previousContextStart: {
+              key: 'Tab',
+              ctrlKey: true,
+              shiftKey: true,
+            },
+            nextContextStart: { key: 'Tab', ctrlKey: true },
+          },
         },
       },
     });
@@ -430,8 +455,6 @@ describe('StructuralNavigationController', () => {
     expect(configuredOverride.defaultPrevented).toBe(true);
     expect(document.activeElement.id).toBe('beta-start');
 
-    openKeyNav.config.modesConfig.structuralNavigation.overrideModifier =
-      'shiftKey';
     const nativeShiftTab = dispatchKey(
       document.getElementById('beta-start'),
       'Tab',
@@ -473,32 +496,26 @@ describe('StructuralNavigationController', () => {
     expect(statusContent).not.toContain('Hierarchy level:');
     expect(statusContent).not.toContain('Context depth:');
 
-    const contextJumpLabel = document.querySelector(
-      '.openKeyNav-structural-keylabel' +
-      '[data-openkeynav-keylabel-command="nextContextStart"]' +
-      '[data-openkeynav-keylabel-target="dewdrop-blossom"]'
-    );
-    expect(contextJumpLabel?.textContent).toBe('⌥⇥');
-
-    const nextHeading = dispatchKey(
+    const nextRegion = dispatchKey(
       rootLantern,
       'ArrowRight',
       { shiftKey: true }
+    );
+    expect(nextRegion.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('dewdrop-blossom');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Dewdrop Perch');
+
+    openKeyNav.config.debug.screenReaderVisible = true;
+    const nextHeading = dispatchKey(
+      document.getElementById('dewdrop-blossom'),
+      'h',
+      { code: 'KeyH' }
     );
     expect(nextHeading.defaultPrevented).toBe(true);
     expect(document.activeElement.id).toBe('next-h2-start');
     expect(openKeyNav.getStructuralNavigationState().activeContext.headingLevel)
       .toBe(2);
-
-    rootLantern.focus();
-    await nextTask();
-    const nextSemanticContext = dispatchKey(
-      rootLantern,
-      'Tab',
-      { altKey: true }
-    );
-    expect(nextSemanticContext.defaultPrevented).toBe(true);
-    expect(document.activeElement.id).toBe('dewdrop-blossom');
   });
 
   it('includes the configured ownership override in input-owned arrow routes', async () => {
@@ -507,6 +524,7 @@ describe('StructuralNavigationController', () => {
       <a id="parent-detail" href="#detail">Parent detail</a>
       <h3>Current</h3>
       <input id="editor" value="abc">
+      <button id="current-tail">Current tail</button>
       <h4>Child</h4>
       <button id="child-target">Child target</button>
       <h3>Peer</h3>
@@ -525,7 +543,7 @@ describe('StructuralNavigationController', () => {
 
     expect(labelFor('nextSiblingContext')).toBe('⌥⇧→');
     expect(labelFor('broadenContext')).toBeUndefined();
-    expect(labelFor('previousContextStart')).toBe('⌥⇧⇥');
+    expect(labelFor('previousContextStart')).toBeUndefined();
     expect(labelFor('narrowContext')).toBeUndefined();
     expect(labelFor('nextTabTarget')).toBe('⇥');
     expect(Array.from(document.querySelectorAll(
@@ -535,7 +553,7 @@ describe('StructuralNavigationController', () => {
     ))).toBe(true);
   });
 
-  it('prefers context-start chords over vertical heading labels for the same targets', async () => {
+  it('prefers explicitly configured context-start chords over structural arrows for the same targets', async () => {
     document.body.innerHTML = `
       <a id="parent-heading-target" href="#parent">
         <h2>Visualization Authoring Tools</h2>
@@ -544,7 +562,20 @@ describe('StructuralNavigationController', () => {
       <h3>Latest and Greatest</h3>
       <a id="child-heading-target" href="#child">GoFish</a>
     `;
-    openKeyNav = createOpenKeyNav();
+    openKeyNav = createOpenKeyNav({
+      modesConfig: {
+        structuralNavigation: {
+          commands: {
+            previousContextStart: {
+              key: 'Tab',
+              altKey: true,
+              shiftKey: true,
+            },
+            nextContextStart: { key: 'Tab', altKey: true },
+          },
+        },
+      },
+    });
     const parentTarget = document.getElementById('parent-heading-target');
     const childTarget = document.getElementById('child-heading-target');
     childTarget.focus();
@@ -610,7 +641,7 @@ describe('StructuralNavigationController', () => {
     expect(nativeArrow.defaultPrevented).toBe(false);
   });
 
-  it('moves real focus, broadens/narrows without moving, and navigates horizontally', async () => {
+  it('moves real focus through nested semantic regions in document order', async () => {
     document.body.innerHTML = `
       <main aria-labelledby="main-title">
         <h1 id="main-title">Catalog</h1>
@@ -657,6 +688,11 @@ describe('StructuralNavigationController', () => {
     expect(document.activeElement.id).toBe('clear-filters');
     expect(openKeyNav.getStructuralNavigationState().activeContext.name)
       .toBe('Filters');
+
+    openKeyNav.structuralNavigate('nextSiblingContext');
+    expect(document.activeElement.id).toBe('stock');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Availability');
 
     openKeyNav.structuralNavigate('nextSiblingContext');
     expect(document.activeElement.id).toBe('result-a');
@@ -949,7 +985,7 @@ describe('StructuralNavigationController', () => {
     expect(openKeyNav.getStructuralNavigationState().activeTypedContext).toBeNull();
   });
 
-  it('does not turn unheaded structural siblings into heading levels', () => {
+  it('moves between unheaded semantic regions without inventing heading levels', () => {
     document.body.innerHTML = `
       <main aria-label="Catalog">
         <section aria-label="Filters">
@@ -986,18 +1022,16 @@ describe('StructuralNavigationController', () => {
       { shiftKey: true }
     );
     expect(previousSibling.defaultPrevented).toBe(true);
-    expect(document.activeElement.id).toBe('result-b');
+    expect(document.activeElement.id).toBe('clear');
     expect(openKeyNav.getStructuralNavigationState().activeContext.name)
-      .toBe('Results');
-    expect(document.querySelector('.openKeyNav-structural-status').textContent)
-      .toContain('No authored heading context is active');
+      .toBe('Filters');
 
     const previousContextStart = dispatchKey(
-      document.getElementById('result-b'),
+      document.getElementById('clear'),
       'Tab',
       { altKey: true, shiftKey: true }
     );
-    expect(previousContextStart.defaultPrevented).toBe(true);
+    expect(previousContextStart.defaultPrevented).toBe(false);
     expect(document.activeElement.id).toBe('clear');
 
     const bareArrows = ['ArrowLeft', 'ArrowRight', 'ArrowDown'].map(key => (
@@ -1012,16 +1046,16 @@ describe('StructuralNavigationController', () => {
       { shiftKey: true }
     );
     expect(nextSibling.defaultPrevented).toBe(true);
-    expect(document.activeElement.id).toBe('clear');
+    expect(document.activeElement.id).toBe('result-a');
     expect(openKeyNav.getStructuralNavigationState().activeContext.name)
-      .toBe('Filters');
+      .toBe('Results');
 
     const nextContextStart = dispatchKey(
-      document.getElementById('clear'),
+      document.getElementById('result-a'),
       'Tab',
       { altKey: true }
     );
-    expect(nextContextStart.defaultPrevented).toBe(true);
+    expect(nextContextStart.defaultPrevented).toBe(false);
     expect(document.activeElement.id).toBe('result-a');
   });
 
@@ -1068,9 +1102,9 @@ describe('StructuralNavigationController', () => {
     )?.textContent).toBe('⇧↑');
     expect(document.querySelector(
       '.openKeyNav-structural-keylabel' +
-      '[data-openkeynav-keylabel-command="narrowContext"]' +
+      '[data-openkeynav-keylabel-command="nextSiblingContext"]' +
       '[data-openkeynav-keylabel-target="inbox"]'
-    )?.textContent).toBe('⇧↓');
+    )?.textContent).toBe('⇧→');
 
     const previousHeading = dispatchKey(unheaded, 'ArrowUp', {
       shiftKey: true,
@@ -1141,7 +1175,7 @@ describe('StructuralNavigationController', () => {
       .toBe(2);
   });
 
-  it('moves between same-rank headings across parents and enters the first target', () => {
+  it('moves between consecutive heading-backed regions and enters the first target', () => {
     document.body.innerHTML = `
       <h2>First family</h2>
       <h3>Current level-three context</h3>
@@ -1177,12 +1211,12 @@ describe('StructuralNavigationController', () => {
       '.openKeyNav-structural-status .openKeyNav-status__hint'
     )?.getAttribute('aria-hidden')).toBe('true');
 
-    const nextLevel = dispatchKey(
+    const nextRegion = dispatchKey(
       document.getElementById('current-last'),
       'ArrowRight',
       { shiftKey: true }
     );
-    expect(nextLevel.defaultPrevented).toBe(true);
+    expect(nextRegion.defaultPrevented).toBe(true);
     expect(document.activeElement.id).toBe('next-first');
     expect(openKeyNav.getStructuralNavigationState().activeContext.name)
       .toBe('Next level-three context');
@@ -1193,12 +1227,12 @@ describe('StructuralNavigationController', () => {
       'Next first, 1 of 2.'
     );
 
-    const previousLevel = dispatchKey(
+    const previousRegion = dispatchKey(
       document.getElementById('next-first'),
       'ArrowLeft',
       { shiftKey: true }
     );
-    expect(previousLevel.defaultPrevented).toBe(true);
+    expect(previousRegion.defaultPrevented).toBe(true);
     expect(document.activeElement.id).toBe('current-first');
     expect(openKeyNav.getStructuralNavigationState().activeContext.name)
       .toBe('Current level-three context');
@@ -1211,7 +1245,7 @@ describe('StructuralNavigationController', () => {
     expect(boundary.defaultPrevented).toBe(true);
     expect(document.activeElement.id).toBe('current-first');
     expect(document.querySelector('.openKeyNav-structural-status').textContent)
-      .toContain('No previous peer context at heading level 3');
+      .toContain('No previous semantic region');
 
     openKeyNav.structuralNavigate('broadenContext');
     expect(openKeyNav.getStructuralNavigationState().activeContext.name)
@@ -1229,7 +1263,7 @@ describe('StructuralNavigationController', () => {
       .toContain('Already at the broadest heading level');
   });
 
-  it('keeps differently ranked headings in separate horizontal lanes', () => {
+  it('moves to the next semantic region regardless of its heading rank', () => {
     document.body.innerHTML = `
       <h1>Parent context</h1>
       <button id="parent-target">Parent target</button>
@@ -1250,22 +1284,22 @@ describe('StructuralNavigationController', () => {
     expect(currentLevelThree.name).toBe('Current level-three context');
     expect(currentLevelThree.headingLevel).toBe(3);
 
-    const nextPeer = dispatchKey(
+    const nextRegion = dispatchKey(
       document.getElementById('current-level-three-target'),
       'ArrowRight',
       { shiftKey: true }
     );
-    const nextLevelThree = openKeyNav.getStructuralNavigationState()
+    const nextContext = openKeyNav.getStructuralNavigationState()
       .activeContext;
 
-    expect(nextPeer.defaultPrevented).toBe(true);
-    expect(document.activeElement.id).toBe('next-level-three-target');
-    expect(nextLevelThree.name).toBe('Next level-three context');
-    expect(nextLevelThree.headingLevel).toBe(3);
-    expect(nextLevelThree.parent).not.toBe(currentLevelThree.parent);
+    expect(nextRegion.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('level-two-target');
+    expect(nextContext.name).toBe('Level-two sibling');
+    expect(nextContext.headingLevel).toBe(2);
+    expect(nextContext).not.toBe(currentLevelThree);
   });
 
-  it('bridges the same authored heading rank across different DOM containers', () => {
+  it('crosses unheaded and headed semantic regions in document order', () => {
     document.body.innerHTML = `
       <main aria-labelledby="catalog-title">
         <h1 id="catalog-title">Catalog</h1>
@@ -1301,7 +1335,7 @@ describe('StructuralNavigationController', () => {
       '.openKeyNav-structural-status .openKeyNav-status__content'
     ).textContent).toContain('Heading level: 2.');
 
-    const nextPeer = dispatchKey(
+    const nextRegion = dispatchKey(
       document.getElementById('recommendation-a'),
       'ArrowRight',
       { shiftKey: true }
@@ -1309,7 +1343,7 @@ describe('StructuralNavigationController', () => {
     const intervening = openKeyNav.getStructuralNavigationState()
       .activeContext;
 
-    expect(nextPeer.defaultPrevented).toBe(true);
+    expect(nextRegion.defaultPrevented).toBe(true);
     expect(document.activeElement.id).toBe('unheaded-target');
     expect(intervening.name).toBe('Intervening family');
     expect(intervening.headingLevel).toBe(2);
@@ -1317,28 +1351,28 @@ describe('StructuralNavigationController', () => {
       '.openKeyNav-structural-status .openKeyNav-status__content'
     ).textContent).toContain('Heading level: 2.');
 
-    const nextSameRank = dispatchKey(
+    const nextHeadingRegion = dispatchKey(
       document.getElementById('unheaded-target'),
       'ArrowRight',
       { shiftKey: true }
     );
-    expect(nextSameRank.defaultPrevented).toBe(true);
+    expect(nextHeadingRegion.defaultPrevented).toBe(true);
     expect(document.activeElement.id).toBe('current-first');
     expect(openKeyNav.getStructuralNavigationState().activeContext.name)
-      .toBe('First heading family');
+      .toBe('Current level-three context');
 
-    const previousPeer = dispatchKey(
+    const previousRegion = dispatchKey(
       document.getElementById('current-first'),
       'ArrowLeft',
       { shiftKey: true }
     );
-    expect(previousPeer.defaultPrevented).toBe(true);
+    expect(previousRegion.defaultPrevented).toBe(true);
     expect(document.activeElement.id).toBe('unheaded-target');
     expect(openKeyNav.getStructuralNavigationState().activeContext)
       .toBe(intervening);
   });
 
-  it('uses authored H3 lanes across the card and people structures from vis.mit.edu', () => {
+  it('uses semantic region order across the card and people structures from vis.mit.edu', () => {
     document.body.innerHTML = `
       <div class="research-card">
         <div class="theme-summary">
@@ -1414,12 +1448,22 @@ describe('StructuralNavigationController', () => {
     expect(openKeyNav.getStructuralNavigationState().activeContext.name)
       .toBe('Latest & Greatest');
 
-    const nextH3 = dispatchKey(
+    const nextRegion = dispatchKey(
       document.getElementById('gofish'),
       'ArrowRight',
       { shiftKey: true }
     );
-    expect(nextH3.defaultPrevented).toBe(true);
+    expect(nextRegion.defaultPrevented).toBe(true);
+    expect(document.activeElement.id).toBe('cognition-theme');
+    expect(openKeyNav.getStructuralNavigationState().activeContext.name)
+      .toBe('Cognition and Visualization');
+
+    const nextNestedRegion = dispatchKey(
+      document.getElementById('cognition-theme'),
+      'ArrowRight',
+      { shiftKey: true }
+    );
+    expect(nextNestedRegion.defaultPrevented).toBe(true);
     expect(document.activeElement.id).toBe('cognition-paper');
     expect(openKeyNav.getStructuralNavigationState().activeContext.name)
       .toBe('Recent Publications');

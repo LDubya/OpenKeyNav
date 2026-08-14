@@ -111,11 +111,12 @@ static-table row/column inference is intentionally deferred.
 - Explicit previous/next target commands use the active structural flattened
   sequence or active typed sequence. They do not wrap. With no current target,
   next enters at the first item and previous enters at the last.
-- Horizontal movement does not wrap. A heading-backed context traverses every
-  nonempty heading-backed context with the same authored H1–H6 level in the
-  active root, in document order, regardless of generic DOM wrappers. An
-  unheaded context has no horizontal heading lane. Movement
-  always enters the destination's first target.
+- Horizontal movement does not wrap. It traverses the context-start route formed
+  by each focus target's direct semantic context in native target order.
+  Consecutive targets in the same context form one route stop. Headed and
+  unheaded landmarks, named regions, sections, articles, forms/search regions,
+  fieldsets, lists, and configured regions all participate. Movement always
+  enters the destination's first target.
 - Broaden from a heading-backed H2–H6 selects the nearest preceding lower-level
   heading context in the authored outline and focuses its first target. This
   crosses generic-wrapper parent boundaries. From an unheaded context, broaden
@@ -166,13 +167,15 @@ does not pull focus back.
 
 Native Tab/Shift+Tab provide sequential focus. Applications assign bindings to
 previous/next target commands or invoke them programmatically. The default
-mapping uses Shift+Left/Right for same-level heading-backed contexts,
+mapping uses Shift+Left/Right for previous/next semantic regions,
 Shift+Up/Down for authored heading-rank changes, `r` for entry
 or toggle when character commands are available,
 `Alt+r` for reliable exit, and, when the debug surface is enabled,
 `Shift+Escape` to dismiss the visible status when Escape is available to the
-mode. Previous/next target and typed-context cycling
-begin with empty bindings; bare arrows remain native. Applications declare
+mode. Previous/next target, context-start, and typed-context cycling commands
+begin with empty bindings; bare arrows remain native. Context-start commands
+reuse the semantic-region route but are not derived from `overrideModifier`.
+Applications declare
 custom ownership with `ownsKey` or `data-openkeynav-key-owner`.
 
 Tab, Shift+Tab, Enter, Space, bare arrows, and unconfigured modifier
@@ -188,13 +191,15 @@ Applications may declare ownership with `ownsKey` or the
 
 ## Structural keylabels
 
-The default visual hints are `⇧←` / `⇧→` for previous / next horizontal
-context and `⇧↑` / `⇧↓` for broaden / narrow. Each structural
+The default visual hints are `⇧←` / `⇧→` for previous / next semantic region
+and `⇧↑` / `⇧↓` for heading-level movement. Each structural
 label is attached only to a different target the command will focus. A
 context-only broaden or narrow operation has no destination label. When the
 current widget owns the arrow chord, the destination remains labeled with the
 configured ownership override prepended, such as `⌥⇧→` for the default Alt
-override. The focused target gets `↵` and/or `⎵` only for stable native activation semantics: links use
+override. Explicitly configured context-start bindings get labels through the
+`contextJump` keylabel group and take precedence when they converge with an
+arrow route. The focused target gets `↵` and/or `⎵` only for stable native activation semantics: links use
 Enter, buttons and summaries use Enter and Space, and checkboxes/radios use
 Space.
 When focus is on a native HTML radio, the browser's own focus destinations get

@@ -245,6 +245,8 @@ var OpenKeyNav = /*#__PURE__*/function () {
           commands: {
             previousTarget: null,
             nextTarget: null,
+            previousContextStart: null,
+            nextContextStart: null,
             previousSiblingContext: {
               key: 'ArrowLeft',
               shiftKey: true

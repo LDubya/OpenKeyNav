@@ -45,7 +45,7 @@ const STRUCTURAL_KEYLABEL_CLASS = 'openKeyNav-structural-keylabel';
 const CONTEXT_INDICATOR_OFFSET = 10;
 const CONTEXT_INDICATOR_WIDTH = 2;
 const CONTEXT_INDICATOR_CONTRAST_WIDTH = 2;
-const HEADING_CONTEXT_ARROW_COMMANDS = new Set([
+const CONTEXT_ARROW_COMMANDS = new Set([
   STRUCTURAL_NAVIGATION_COMMANDS.previousSiblingContext,
   STRUCTURAL_NAVIGATION_COMMANDS.nextSiblingContext,
   STRUCTURAL_NAVIGATION_COMMANDS.broadenContext,
@@ -647,30 +647,6 @@ const authoredHeadingForContext = context => {
 const contextOrder = context => {
   const order = Number(context?.order);
   return Number.isFinite(order) ? order : Number.MAX_SAFE_INTEGER;
-};
-
-/**
- * Heading-backed contexts use the authored heading level as their horizontal
- * lane, regardless of inferred container ancestry. Semantic nesting does not
- * create additional levels.
- */
-const horizontalContextPeers = (model, context) => {
-  const headingLevel = contextHeadingLevel(context);
-  const contexts = headingLevel === null
-    ? []
-    : modelStructuralContexts(model).filter(candidate => (
-      contextHeadingLevel(candidate) === headingLevel
-    ));
-
-  return {
-    headingLevel,
-    contexts: contexts
-      .filter(candidate => contextTargets(candidate).length > 0)
-      .sort((left, right) => (
-        contextOrder(left) - contextOrder(right) ||
-        String(contextId(left)).localeCompare(String(contextId(right)))
-      )),
-  };
 };
 
 const headingContextForTarget = (model, target, headingLevel = null) => {
@@ -1374,7 +1350,7 @@ export class StructuralNavigationController {
     this.focusSyncToken += 1;
     this.refresh();
     this.synchronizeFocus({ preserveRoute: true, announce: false, refresh: false });
-    if (!HEADING_CONTEXT_ARROW_COMMANDS.has(command)) {
+    if (!CONTEXT_ARROW_COMMANDS.has(command)) {
       this.clearTransientContextIndicator();
     }
 
@@ -1702,16 +1678,10 @@ export class StructuralNavigationController {
   }
 
   contextStartShortcut(direction) {
-    const modifier = this.config.overrideModifier;
-    if (!MODIFIER_KEYS.includes(modifier) || modifier === 'shiftKey') {
-      return null;
-    }
-
-    return {
-      key: 'Tab',
-      [modifier]: true,
-      ...(direction < 0 ? { shiftKey: true } : {}),
-    };
+    const command = direction < 0
+      ? STRUCTURAL_NAVIGATION_COMMANDS.previousContextStart
+      : STRUCTURAL_NAVIGATION_COMMANDS.nextContextStart;
+    return normalizeShortcut(this.config.commands?.[command]);
   }
 
   contextStartRoute() {
@@ -1811,38 +1781,21 @@ export class StructuralNavigationController {
 
   moveSiblingContext(direction) {
     this.useStructuralRoute();
-
-    const activeContext = this.activeHeadingContext();
-    if (!activeContext) {
-      this.updateStatus('No authored heading context is active.');
+    const destination = this.contextStartDestination(direction);
+    if (!destination) {
+      this.updateStatus(direction > 0
+        ? 'No next semantic region.'
+        : 'No previous semantic region.');
       return;
     }
 
-    const {
-      contexts: peers,
-      headingLevel,
-    } = horizontalContextPeers(
-      this.model,
-      activeContext
+    const previousActiveContextId = contextId(
+      this.activeTypedContext || this.activeStructuralContext
     );
-    const currentIndex = peers.indexOf(activeContext);
-    const nextIndex = currentIndex + direction;
-    if (currentIndex < 0 || nextIndex < 0 || nextIndex >= peers.length) {
-      this.updateStatus(
-        direction > 0
-          ? `No next peer context at heading level ${headingLevel}.`
-          : `No previous peer context at heading level ${headingLevel}.`
-      );
-      return;
-    }
-
-    const peer = peers[nextIndex];
-    const target = contextTargets(peer)[0];
-
-    this.showTransientContextIndicator();
-    this.activeStructuralContext = peer;
+    this.activeStructuralContext = destination.context;
     this.activeTypedContext = null;
-    this.focusTarget(target);
+    this.showContextChange(previousActiveContextId);
+    this.focusTarget(destination.target);
   }
 
   broadenContext() {
@@ -2113,16 +2066,7 @@ export class StructuralNavigationController {
       ).forEach(addNativeFocusRoute);
     }
 
-    if (
-      keylabelConfig.horizontal !== false &&
-      this.currentTarget &&
-      headingRoute
-    ) {
-      const { contexts: peers } = horizontalContextPeers(
-        this.model,
-        headingRoute
-      );
-      const currentIndex = peers.indexOf(headingRoute);
+    if (keylabelConfig.horizontal !== false && this.currentTarget) {
       [
         [-1, 'previousSiblingContext'],
         [1, 'nextSiblingContext'],
@@ -2133,14 +2077,8 @@ export class StructuralNavigationController {
           shortcut,
           this.config
         );
-        if (
-          currentIndex < 0 ||
-          !symbols
-        ) {
-          return;
-        }
-        const peer = peers[currentIndex + direction];
-        const target = contextTargets(peer)[0];
+        if (!symbols) return;
+        const target = this.contextStartDestination(direction)?.target;
         if (contextStartDestinations.has(target)) return;
         add(target, symbols, command, {
           maxSymbols: Array.from(symbols).length,
@@ -2211,8 +2149,8 @@ export class StructuralNavigationController {
       }
     }
 
-    // A context-start Tab chord that skips sequential stops is more useful
-    // than a structural arrow chord when both reach the same target.
+    // An explicitly configured context-start chord takes priority over a
+    // structural arrow chord when both reach the same target.
     contextStartAssignments.forEach(assignment => assignments.push({
       ...assignment,
       maxSymbols: Array.from(assignment.symbols).length,

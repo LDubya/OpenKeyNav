@@ -218,39 +218,38 @@ After enabling OpenKeyNav with `Shift+o`, press `r` to enter Structural Navigati
 | Action | Default command |
 | --- | --- |
 | Enter Structural Navigation | `r` |
-| Move to the previous or next structural context start | `Alt+Shift+Tab` / `Alt+Tab` |
-| Move to the previous or next lateral structural context | `Shift+Left` / `Shift+Right` |
-| Broaden or narrow the active context | `Shift+Up` / `Shift+Down` |
+| Move to the previous or next semantic region | `Shift+Left` / `Shift+Right` |
+| Move to a shallower or deeper authored heading level | `Shift+Up` / `Shift+Down` |
+| Move through headings containing keyboard targets | `h`, or `1` through `6` for one heading level |
 | Hide the visible debug status without leaving the mode | `Shift+Escape` |
 | Exit Structural Navigation | `Alt+r` |
 
-For a heading-backed context, `Shift+Left` and `Shift+Right` follow the authored
-heading level (H1 through H6) across the page and enter the first target in the
-previous or next matching context. Semantic nesting does not create another
-level: when focus is inside a landmark, section, form, fieldset, or list,
-Shift+Arrow routing resolves through its enclosing authored heading context.
-If no authored heading contains the route, no numeric level is reported and
-horizontal heading-lane movement has no destination. Vertical movement can
-still enter the authored heading-level ladder without inventing a starting
-rank: `Shift+Down` enters the first context at the shallowest level present,
-and `Shift+Up` enters the last context at the deepest level present. DOM
-containment never supplies a heading level. Same-rank headings remain
-horizontal destinations rather than vertical ones.
+`Shift+Left` and `Shift+Right` traverse semantic regions in native focus order.
+The route includes headed and unheaded landmarks, named regions, sections,
+articles, forms and search regions, fieldsets, semantic lists, and configured
+application regions. Consecutive targets in the same direct region form one
+stop. Movement does not wrap and always focuses the destination region's first
+keyboard target. Region traversal does not assign a heading level to unheaded
+structure.
+
+`h` and `1` through `6` remain the heading routes. They consider only headings
+whose context contains a keyboard target and focus the first such target rather
+than moving focus to the heading itself. Repeating a command continues from the
+current focus instead of restarting at the beginning.
+
+Vertical movement can enter the authored heading-level ladder without inventing
+a starting rank: `Shift+Down` enters the first context at the shallowest level
+present, and `Shift+Up` enters the last context at the deepest level present.
+DOM containment never supplies a heading level.
 When a native Tab stop wraps a heading, the wrapper remains the focus target and
 the first exposed heading it contains supplies that target's authored heading
 level.
 
-`Alt+Tab` and `Alt+Shift+Tab` use the configured ownership-override modifier
-to enter the first native Tab stop in the next or previous innermost structural
-context. This route follows focus rather than the selected context, so it stays
-available after native Tab moves into deeper content without narrowing the
-active route. Plain `Tab` and `Shift+Tab` remain browser-owned. If
-`overrideModifier` is changed to `ctrlKey` or `metaKey`, the context-start chord
-uses that modifier instead; `shiftKey` disables the chord so native
-`Shift+Tab` is never intercepted. Platforms may reserve modifier-plus-Tab
-chords before a page receives them, so applications should also expose the
-`previousContextStart` and `nextContextStart` programmatic commands where their
-supported environments require another binding.
+The `previousContextStart` and `nextContextStart` commands expose the same
+semantic-region route programmatically. They have no default key bindings.
+Applications may configure bindings for them independently when needed; those
+bindings are not derived from `overrideModifier`. Plain `Tab` and `Shift+Tab`
+always remain browser-owned.
 
 `Shift+Up` follows the authored heading outline to the nearest preceding heading
 with a lower rank number and enters its first target. `Shift+Down` reverses that
@@ -261,8 +260,8 @@ enters from the deepest. Neither command derives a rank from DOM or landmark
 nesting.
 
 While the mode is active, its keylabels show the structural destinations
-available from the current focus: `⇧←` / `⇧→` for lateral movement and
-`⇧↑` / `⇧↓` for broaden/narrow, `⌥⇧⇥` / `⌥⇥` for context starts, plus
+available from the current focus: `⇧←` / `⇧→` for region movement and
+`⇧↑` / `⇧↓` for heading-level movement, plus
 `⇧⇥` / `⇥` for the previous and next native Tab destinations. The focused
 native control or focusable ARIA widget shows `↵` when Enter is its preferred
 activation key. This includes correctly authored custom buttons; the application
@@ -272,8 +271,9 @@ the sole standard activation key. These
 visual hints use the existing keylabel creation and positioning system; they do
 not intercept native Tab or activation behavior. When ordinary Tab or
 Shift+Tab already reaches a structural destination, that target shows only the
-simpler native Tab chord. Otherwise, when a context-start chord and a heading
-arrow reach the same target, the context-start chord takes precedence. Labeled
+simpler native Tab chord. An explicitly configured context-start binding also
+gets a destination label and takes precedence when it converges with an arrow
+route. Labeled
 targets also receive
 the existing keylabel target outline without becoming type-to-select targets.
 The actively focused target retains the page's normal focus outline; OpenKeyNav's
@@ -282,15 +282,15 @@ Set
 `modesConfig.structuralNavigation.keylabels.enabled` to `false` to hide them,
 or independently disable its `tab`, `contextJump`, `horizontal`, `vertical`,
 or `activation` groups. Set `keylabels.contextJump` to `false` to hide
-context-start hints, or set `keylabels.tab` to `false` to hide native Tab and
-Shift+Tab hints.
+configured context-start hints, or set `keylabels.tab` to `false` to hide native
+Tab and Shift+Tab hints.
 While Shift is held, the `⇧` symbol in every Shift-based label highlights as a
 pressed key and returns to its normal treatment on release.
 When the focused control owns its arrow keys, structural destinations remain
 visible and prepend the configured ownership override to the chord—for example,
 `⌥⇧→` with the default Alt override. Ownership-override arrows and the reverse
-context-start chord can use three-symbol labels; other labels remain limited to
-two symbols. Holding the override also
+configured context-start chords can use three-symbol labels; other labels remain
+limited to two symbols. Holding the override also
 highlights its modifier glyph until the key is released.
 Native radio groups additionally label the browser's bare-arrow focus routes:
 `←↑` for the previous radio and `→↓` for the next. In a two-radio group, the

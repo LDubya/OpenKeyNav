@@ -41,7 +41,7 @@
 	  value: true
 	});
 	version.version = void 0;
-	version.version = "0.1.268";
+	version.version = "0.1.269";
 
 	var signals = {};
 
@@ -3821,7 +3821,7 @@
 	var CONTEXT_INDICATOR_OFFSET = 10;
 	var CONTEXT_INDICATOR_WIDTH = 2;
 	var CONTEXT_INDICATOR_CONTRAST_WIDTH = 2;
-	var HEADING_CONTEXT_ARROW_COMMANDS = new Set([STRUCTURAL_NAVIGATION_COMMANDS.previousSiblingContext, STRUCTURAL_NAVIGATION_COMMANDS.nextSiblingContext, STRUCTURAL_NAVIGATION_COMMANDS.broadenContext, STRUCTURAL_NAVIGATION_COMMANDS.narrowContext]);
+	var CONTEXT_ARROW_COMMANDS = new Set([STRUCTURAL_NAVIGATION_COMMANDS.previousSiblingContext, STRUCTURAL_NAVIGATION_COMMANDS.nextSiblingContext, STRUCTURAL_NAVIGATION_COMMANDS.broadenContext, STRUCTURAL_NAVIGATION_COMMANDS.narrowContext]);
 	var MODIFIER_KEY_EVENTS = new Set(['Alt', 'Control', 'Meta', 'Shift']);
 	var NATIVE_SCROLL_KEYS = new Set(['ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'End', 'Home', 'PageDown', 'PageUp']);
 	var SPACE_ACTIVATION_ROLES = new Set(['button', 'checkbox', 'menuitemcheckbox', 'menuitemradio', 'option', 'radio', 'switch']);
@@ -4264,26 +4264,6 @@
 	var contextOrder = function contextOrder(context) {
 	  var order = Number(context === null || context === void 0 ? void 0 : context.order);
 	  return Number.isFinite(order) ? order : Number.MAX_SAFE_INTEGER;
-	};
-
-	/**
-	 * Heading-backed contexts use the authored heading level as their horizontal
-	 * lane, regardless of inferred container ancestry. Semantic nesting does not
-	 * create additional levels.
-	 */
-	var horizontalContextPeers = function horizontalContextPeers(model, context) {
-	  var headingLevel = contextHeadingLevel(context);
-	  var contexts = headingLevel === null ? [] : modelStructuralContexts(model).filter(function (candidate) {
-	    return contextHeadingLevel(candidate) === headingLevel;
-	  });
-	  return {
-	    headingLevel: headingLevel,
-	    contexts: contexts.filter(function (candidate) {
-	      return contextTargets(candidate).length > 0;
-	    }).sort(function (left, right) {
-	      return contextOrder(left) - contextOrder(right) || String(contextId(left)).localeCompare(String(contextId(right)));
-	    })
-	  };
 	};
 	var headingContextForTarget = function headingContextForTarget(model, target) {
 	  var headingLevel = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
@@ -4807,7 +4787,7 @@
 	        announce: false,
 	        refresh: false
 	      });
-	      if (!HEADING_CONTEXT_ARROW_COMMANDS.has(command)) {
+	      if (!CONTEXT_ARROW_COMMANDS.has(command)) {
 	        this.clearTransientContextIndicator();
 	      }
 	      switch (command) {
@@ -5064,15 +5044,9 @@
 	  }, {
 	    key: "contextStartShortcut",
 	    value: function contextStartShortcut(direction) {
-	      var modifier = this.config.overrideModifier;
-	      if (!_keyboardEvents.MODIFIER_KEYS.includes(modifier) || modifier === 'shiftKey') {
-	        return null;
-	      }
-	      return _objectSpread(_defineProperty({
-	        key: 'Tab'
-	      }, modifier, true), direction < 0 ? {
-	        shiftKey: true
-	      } : {});
+	      var _this$config$commands;
+	      var command = direction < 0 ? STRUCTURAL_NAVIGATION_COMMANDS.previousContextStart : STRUCTURAL_NAVIGATION_COMMANDS.nextContextStart;
+	      return (0, _keyboardEvents.normalizeShortcut)((_this$config$commands = this.config.commands) === null || _this$config$commands === void 0 ? void 0 : _this$config$commands[command]);
 	    }
 	  }, {
 	    key: "contextStartRoute",
@@ -5173,26 +5147,16 @@
 	    key: "moveSiblingContext",
 	    value: function moveSiblingContext(direction) {
 	      this.useStructuralRoute();
-	      var activeContext = this.activeHeadingContext();
-	      if (!activeContext) {
-	        this.updateStatus('No authored heading context is active.');
+	      var destination = this.contextStartDestination(direction);
+	      if (!destination) {
+	        this.updateStatus(direction > 0 ? 'No next semantic region.' : 'No previous semantic region.');
 	        return;
 	      }
-	      var _horizontalContextPee = horizontalContextPeers(this.model, activeContext),
-	        peers = _horizontalContextPee.contexts,
-	        headingLevel = _horizontalContextPee.headingLevel;
-	      var currentIndex = peers.indexOf(activeContext);
-	      var nextIndex = currentIndex + direction;
-	      if (currentIndex < 0 || nextIndex < 0 || nextIndex >= peers.length) {
-	        this.updateStatus(direction > 0 ? "No next peer context at heading level ".concat(headingLevel, ".") : "No previous peer context at heading level ".concat(headingLevel, "."));
-	        return;
-	      }
-	      var peer = peers[nextIndex];
-	      var target = contextTargets(peer)[0];
-	      this.showTransientContextIndicator();
-	      this.activeStructuralContext = peer;
+	      var previousActiveContextId = contextId(this.activeTypedContext || this.activeStructuralContext);
+	      this.activeStructuralContext = destination.context;
 	      this.activeTypedContext = null;
-	      this.focusTarget(target);
+	      this.showContextChange(previousActiveContextId);
+	      this.focusTarget(destination.target);
 	    }
 	  }, {
 	    key: "broadenContext",
@@ -5419,22 +5383,16 @@
 	      if (keylabelConfig.nativeArrows !== false) {
 	        nativeRadioArrowAssignments((0, _domUtilities$1.getDeepActiveElement)(this.root), this.root, this.config.displayCheck || 'full', this.config.targetFilter).forEach(addNativeFocusRoute);
 	      }
-	      if (keylabelConfig.horizontal !== false && this.currentTarget && headingRoute) {
-	        var _horizontalContextPee2 = horizontalContextPeers(this.model, headingRoute),
-	          peers = _horizontalContextPee2.contexts;
-	        var currentIndex = peers.indexOf(headingRoute);
+	      if (keylabelConfig.horizontal !== false && this.currentTarget) {
 	        [[-1, 'previousSiblingContext'], [1, 'nextSiblingContext']].forEach(function (_ref0) {
-	          var _this1$config$command;
+	          var _this1$config$command, _this1$contextStartDe;
 	          var _ref1 = _slicedToArray$1(_ref0, 2),
 	            direction = _ref1[0],
 	            command = _ref1[1];
 	          var shortcut = (_this1$config$command = _this1.config.commands) === null || _this1$config$command === void 0 ? void 0 : _this1$config$command[command];
 	          var symbols = structuralArrowSymbols(_this1.currentTarget, shortcut, _this1.config);
-	          if (currentIndex < 0 || !symbols) {
-	            return;
-	          }
-	          var peer = peers[currentIndex + direction];
-	          var target = contextTargets(peer)[0];
+	          if (!symbols) return;
+	          var target = (_this1$contextStartDe = _this1.contextStartDestination(direction)) === null || _this1$contextStartDe === void 0 ? void 0 : _this1$contextStartDe.target;
 	          if (contextStartDestinations.has(target)) return;
 	          add(target, symbols, command, {
 	            maxSymbols: Array.from(symbols).length
@@ -5475,8 +5433,8 @@
 	        }
 	      }
 
-	      // A context-start Tab chord that skips sequential stops is more useful
-	      // than a structural arrow chord when both reach the same target.
+	      // An explicitly configured context-start chord takes priority over a
+	      // structural arrow chord when both reach the same target.
 	      contextStartAssignments.forEach(function (assignment) {
 	        return assignments.push(_objectSpread(_objectSpread({}, assignment), {}, {
 	          maxSymbols: Array.from(assignment.symbols).length
@@ -7650,6 +7608,8 @@
 	            commands: {
 	              previousTarget: null,
 	              nextTarget: null,
+	              previousContextStart: null,
+	              nextContextStart: null,
 	              previousSiblingContext: {
 	                key: 'ArrowLeft',
 	                shiftKey: true

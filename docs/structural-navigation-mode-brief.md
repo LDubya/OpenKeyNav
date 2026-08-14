@@ -316,7 +316,7 @@ Build and normalize that tree deterministically:
    the application as a context the user must be able to select. Never collapse
    an authored heading level merely because it currently has the same targets
    as its parent; each real heading level remains selectable for parent/child
-   and same-level movement.
+   heading-level movement.
 
 These rules prevent the same authored section or heading from appearing repeatedly under slightly different inferred identities.
 
@@ -465,8 +465,8 @@ When the current target belongs to one or more typed contexts:
 - Changing the active peer context retains current focus.
 - Previous and next use the active typed context's explicit order.
 - Structural vertical and horizontal commands leave the typed route. Vertical
-  commands operate on authored heading ranks; horizontal commands use authored
-  heading-level lanes.
+  commands operate on authored heading ranks; horizontal commands use the
+  semantic-region route in native focus order.
 - Returning to structural navigation selects the innermost structural context containing the current target.
 
 Typed contexts have no heading level of their own. Status reports the authored
@@ -482,10 +482,8 @@ Define relationship commands independently of their key bindings:
 
 1. Previous target in the active context.
 2. Next target in the active context.
-3. Previous horizontal peer at the active authored heading level; an unheaded
-   context has no horizontal heading lane.
-4. Next horizontal peer at the active authored heading level; an unheaded
-   context has no horizontal heading lane.
+3. Previous semantic region in native focus order.
+4. Next semantic region in native focus order.
 5. Broaden to the closest available shallower authored heading rank. From an
    unheaded context, enter the deepest authored level present.
 6. Narrow to the closest available deeper authored heading rank on the current
@@ -494,7 +492,9 @@ Define relationship commands independently of their key bindings:
    level present.
 7. Previous applicable peer context.
 8. Next applicable peer context.
-9. Exit the mode without OpenKeyNav moving focus.
+9. Previous or next context start, unbound by default, using the same semantic
+   region route as horizontal movement.
+10. Exit the mode without OpenKeyNav moving focus.
 
 ### Proposed default bindings
 
@@ -505,9 +505,10 @@ Integrate with OpenKeyNav's configurable shortcut system. A reasonable initial m
 | `Shift+Tab` / `Tab` | Native browser sequential focus; not intercepted |
 | `Shift+ArrowUp` | Move to the closest available shallower authored heading rank |
 | `Shift+ArrowDown` | Move to the closest available deeper authored heading rank |
-| `Shift+ArrowLeft` | Previous context at the same authored heading level |
-| `Shift+ArrowRight` | Next context at the same authored heading level |
+| `Shift+ArrowLeft` | Previous semantic region in native focus order |
+| `Shift+ArrowRight` | Next semantic region in native focus order |
 | Application-configured command | Previous or next target in active context |
+| Application-configured command | Previous or next context start |
 | Application-configured command | Previous or next applicable typed context |
 | Configured mode-exit command | Exit and preserve current focus |
 
@@ -542,23 +543,16 @@ Use the active context's ordered target sequence.
 
 ### Previous and next horizontal context
 
-When the active context is heading-backed, its authored H1–H6 level defines the
-horizontal lane. The lane contains every nonempty heading-backed context at the
-same authored level in the active navigation root, ordered by document order.
-Generic DOM containment does not split that lane. Thus an H3
-under one H2 can move horizontally to an H3 under another H2, while an
-intervening H2 is skipped. A semantic region associated with a heading inherits
-that heading's authored level and participates in the same lane.
+Build the horizontal route from the direct semantic context of each target in
+native focus order. Collapse consecutive targets that share the same direct
+context into one stop. Include headed and unheaded landmarks, named regions,
+sections, articles, forms/search regions, fieldsets, semantic lists, and
+configured application regions. Page/root targets may form a route stop where
+no narrower semantic context applies.
 
-When the active context has no heading level, horizontal movement has no
-destination because no authored heading lane is active.
-
-Malformed heading ranks are preserved rather than silently repaired. Heading
-order problems belong to accessibility auditing; they do not cause horizontal
-navigation to reinterpret an H2 as an H3 or vice versa.
-
-Horizontal movement does not wrap. At the first or last context in the active
-lane, keep focus and context unchanged and announce the boundary.
+Horizontal movement does not wrap. At the first or last semantic region in the
+route, keep focus and context unchanged and announce the boundary. Heading rank
+does not filter or reorder this route.
 
 When moving horizontally, use the first target in the destination's flattened
 target sequence. Previous focus history does not change the entry point.
@@ -622,6 +616,11 @@ Typed-route commands have no default key binding. Applications may configure bin
 Previous- and next-target relationship commands likewise have no default key
 binding. Native Tab and Shift+Tab provide ordinary sequential focus; an
 application may invoke target commands explicitly for a specialized route.
+
+Previous- and next-context-start commands expose the horizontal semantic-region
+route programmatically and likewise have no default binding. If an application
+configures those commands, the configured chords are independent of the
+arrow-ownership override modifier.
 
 Do not include ordinary structural ancestors in this cycle; broaden and narrow already traverse them.
 
@@ -975,13 +974,10 @@ Demonstrate:
    destination's first target; H6 is the fallback boundary.
 5. Horizontal movement lands on a real target and activates the destination
    context.
-6. From an H3 under the first H2, next-horizontal movement enters the first
-   target of the H3 under the second H2; previous-horizontal movement reverses
-   it. Both active contexts remain H3 contexts.
-7. From Recommendations, an authored H2, next-horizontal movement skips
-   unrelated unheaded and H3 contexts and enters the first target of the next
-   nonempty H2, even when the two H2 contexts use different DOM containers.
-   Previous-horizontal movement reverses it.
+6. From a Filters section, next-horizontal movement enters its nested
+   Availability fieldset before moving to the following Results section.
+7. From an unheaded landmark or configured region, horizontal movement enters
+   the adjacent semantic region without inventing a heading rank.
 8. A broadened explicit previous/next target command may cross descendant
    groups without silently narrowing.
 9. Boundaries do not wrap by default.

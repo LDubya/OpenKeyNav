@@ -201,6 +201,8 @@ class OpenKeyNav {
             commands: {
               previousTarget: null,
               nextTarget: null,
+              previousContextStart: null,
+              nextContextStart: null,
               previousSiblingContext: { key: 'ArrowLeft', shiftKey: true },
               nextSiblingContext: { key: 'ArrowRight', shiftKey: true },
               broadenContext: { key: 'ArrowUp', shiftKey: true },
