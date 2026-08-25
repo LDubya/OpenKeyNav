@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/openkeynav.svg)](https://www.npmjs.com/package/openkeynav)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-OpenKeyNav is an MIT-licensed JavaScript library for adding direct keyboard operation to websites and web apps. Click Mode labels detected targets for direct selection, navigation commands create faster routes through a page, and Move Mode maps application-defined sources and destinations into keyboard drag-and-drop workflows.
+OpenKeyNav is a JavaScript library that developers add to websites and web apps to improve keyboard accessibility. It gives keyboard users direct routes to detected actions, page structure, scrollable regions, and application-configured drag-and-drop workflows through Click Mode, navigation commands, and Move Mode.
 
 ## As seen in
 
@@ -16,13 +16,13 @@ OpenKeyNav is an MIT-licensed JavaScript library for adding direct keyboard oper
   <a href="https://www.ihdconference.org/2025/sessions/moving-away-from-mouse-dependency-empowering-productive-web-experiences-with-keyboard-accessibility/"><img src="https://raw.githubusercontent.com/LDubya/OpenKeyNav/main/media/as-seen-in/ihd-evidence-for-success-2025.png" alt="IHD Evidence for Success Disability Conference 2025" height="38"></a>
 </p>
 
-[WCAG 2.1 Success Criterion 2.1.1](https://www.w3.org/WAI/WCAG21/Understanding/keyboard.html) requires content functionality to be operable through a keyboard interface. OpenKeyNav provides reusable keyboard paths for detected targets and application-configured workflows. Teams verify every required action, state change, and outcome across the complete task.
+[WCAG 2.1 Success Criterion 2.1.1](https://www.w3.org/WAI/WCAG21/Understanding/keyboard.html) requires content functionality to be operable through a keyboard interface. OpenKeyNav provides reusable keyboard paths for detected targets and application-configured workflows. Development teams connect those paths to the application's semantics, state, focus behavior, and feedback, then verify every required action and outcome across the complete task.
 
 [![Three-step Click Mode demonstration: enable OpenKeyNav shortcuts with Shift+O, press K to enter Click Mode and show labels beside four detected targets, then type d to select Juniper.](https://raw.githubusercontent.com/LDubya/OpenKeyNav/main/media/openkeynav-click-mode-steps.jpg)](https://openkeynav.com/#demo)
 
 [Live demo](https://openkeynav.com/#demo) · [Documentation](https://openkeynav.com/docs/getting_started/quick_start_guide) · [OpenKeyNav on npm](https://www.npmjs.com/package/openkeynav) · [GitHub](https://github.com/LDubya/OpenKeyNav)
 
-## Install and try OpenKeyNav
+## Add OpenKeyNav to your site or app
 
 ### npm
 
@@ -69,9 +69,9 @@ Load the pinned UMD browser build before the closing `</body>` tag:
 
 The UMD build exposes `OpenKeyNav` as a browser global. Update the version pin deliberately when adopting a newer release.
 
-### First interaction
+### Preview the keyboard-user experience
 
-With focus outside an editable field:
+After adding and initializing OpenKeyNav, use these steps to test the experience keyboard users receive. With focus outside an editable field:
 
 1. If OpenKeyNav shortcuts are off, press `Shift+o` to turn them on.
 2. Press `k` to enter Click Mode.
@@ -80,7 +80,7 @@ With focus outside an editable field:
 
 OpenKeyNav remembers the user's enabled or disabled choice in a cookie.
 
-Production integrations should not require users to discover these commands by chance. Add the [built-in keyboard-command strip](#make-keyboard-commands-discoverable) or provide an equally discoverable, accessibly presented explanation of the commands the application enables.
+Before shipping, make these commands discoverable instead of requiring users to encounter them by chance. Add the [built-in keyboard-command strip](#make-keyboard-commands-discoverable) or provide an equally discoverable, accessibly presented explanation of the commands the application enables.
 
 ### Keylabel text size
 
@@ -102,7 +102,7 @@ The floor and explicit CSS-pixel sizes still scale with browser zoom. Verify the
 finished integration at 200% without clipped, obscured, or missing labels, as
 required by [WCAG 2.2 Success Criterion 1.4.4 Resize Text](https://www.w3.org/WAI/WCAG22/Understanding/resize-text.html).
 
-## Keyboard operation modes and tools
+## Keyboard operation modes and development tools
 
 - **Click Mode:** Displays typeable labels beside detected targets so a user can focus or activate one directly.
 - **Heading navigation:** `h` or a specific level from `1` through `6` cycles through authored heading contexts that contain tabbable content and focuses each context's first tabbable element.
